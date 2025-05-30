@@ -1,0 +1,274 @@
+# 🎬 Movie Theater Management System - GitLab CI/CD Pipeline
+# Automated build, test, and deployment pipeline
+
+stages:
+  - validate
+  - build
+  - test
+  - package
+  - deploy
+
+variables:
+  # Maven settings
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version"
+  
+  # Docker settings
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  
+  # Application settings
+  SPRING_PROFILES_ACTIVE: "test"
+  
+  # Database settings for testing
+  MYSQL_ROOT_PASSWORD: "test123"
+  MYSQL_DATABASE: "cinema_test_db"
+  MYSQL_USER: "test_user"
+  MYSQL_PASSWORD: "test_password"
+
+# Cache Maven dependencies
+cache:
+  paths:
+    - .m2/repository/
+    - target/
+
+# 🔍 Stage 1: Validate
+validate:
+  stage: validate
+  image: maven:3.9.9-eclipse-temurin-21
+  script:
+    - echo "🔍 Validating project structure and dependencies..."
+    - mvn $MAVEN_CLI_OPTS validate
+    - mvn $MAVEN_CLI_OPTS dependency:resolve
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# 🏗️ Stage 2: Build
+build:
+  stage: build
+  image: maven:3.9.9-eclipse-temurin-21
+  script:
+    - echo "🏗️ Building Movie Theater application..."
+    - mvn $MAVEN_CLI_OPTS clean compile
+  artifacts:
+    paths:
+      - target/classes/
+    expire_in: 1 hour
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# 🧪 Stage 3: Test
+unit-tests:
+  stage: test
+  image: maven:3.9.9-eclipse-temurin-21
+  script:
+    - echo "🧪 Running unit tests..."
+    - mvn $MAVEN_CLI_OPTS test
+  artifacts:
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+    paths:
+      - target/surefire-reports/
+    expire_in: 1 week
+  coverage: '/Total.*?([0-9]{1,3})%/'
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# 🗄️ Integration Tests với MySQL
+integration-tests:
+  stage: test
+  image: maven:3.9.9-eclipse-temurin-21
+  services:
+    - name: mysql:8.0
+      alias: mysql
+      command: ["--default-authentication-plugin=mysql_native_password"]
+  variables:
+    SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/cinema_test_db"
+    SPRING_DATASOURCE_USERNAME: $MYSQL_USER
+    SPRING_DATASOURCE_PASSWORD: $MYSQL_PASSWORD
+    SPRING_JPA_HIBERNATE_DDL_AUTO: "create-drop"
+  script:
+    - echo "🗄️ Running integration tests with MySQL..."
+    - echo "Waiting for MySQL to be ready..."
+    - sleep 30
+    - mvn $MAVEN_CLI_OPTS verify -Dspring.profiles.active=test
+  artifacts:
+    reports:
+      junit:
+        - target/failsafe-reports/TEST-*.xml
+    paths:
+      - target/failsafe-reports/
+    expire_in: 1 week
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# 🔐 Authentication API Tests
+auth-tests:
+  stage: test
+  image: maven:3.9.9-eclipse-temurin-21
+  services:
+    - name: mysql:8.0
+      alias: mysql
+      command: ["--default-authentication-plugin=mysql_native_password"]
+  variables:
+    SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/cinema_test_db"
+    SPRING_DATASOURCE_USERNAME: $MYSQL_USER
+    SPRING_DATASOURCE_PASSWORD: $MYSQL_PASSWORD
+    SPRING_JPA_HIBERNATE_DDL_AUTO: "create-drop"
+    SPRING_PROFILES_ACTIVE: "test"
+  before_script:
+    - echo "🔐 Setting up authentication tests..."
+    - apt-get update -qq && apt-get install -y -qq curl jq
+    - echo "Waiting for MySQL to be ready..."
+    - sleep 30
+  script:
+    - echo "🚀 Starting Spring Boot application for testing..."
+    - mvn $MAVEN_CLI_OPTS spring-boot:run -Dspring.profiles.active=test &
+    - APP_PID=$!
+    - echo "Waiting for application to start..."
+    - sleep 60
+    - echo "🧪 Running authentication tests..."
+    - chmod +x test-auth-ci.sh
+    - ./test-auth-ci.sh
+    - echo "🛑 Stopping application..."
+    - kill $APP_PID || true
+  artifacts:
+    paths:
+      - auth-test-results.log
+    expire_in: 1 week
+  only:
+    - merge_requests
+    - main
+    - develop
+  allow_failure: false
+
+# 📦 Stage 4: Package
+package:
+  stage: package
+  image: maven:3.9.9-eclipse-temurin-21
+  script:
+    - echo "📦 Packaging Movie Theater application..."
+    - mvn $MAVEN_CLI_OPTS package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+    - tags
+
+# 🐳 Build Docker Image
+docker-build:
+  stage: package
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  before_script:
+    - docker info
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - echo "🐳 Building Docker image..."
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
+    - docker build -t $CI_REGISTRY_IMAGE:latest .
+    - echo "📤 Pushing Docker image to registry..."
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
+  only:
+    - main
+    - develop
+    - tags
+
+# 🚀 Stage 5: Deploy
+deploy-staging:
+  stage: deploy
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  environment:
+    name: staging
+    url: http://staging.movietheater.com
+  script:
+    - echo "🚀 Deploying to staging environment..."
+    - cd docker
+    - docker-compose -f docker-compose.yml down || true
+    - docker-compose -f docker-compose.yml pull
+    - docker-compose -f docker-compose.yml up -d
+    - echo "✅ Staging deployment completed!"
+  only:
+    - develop
+  when: manual
+
+deploy-production:
+  stage: deploy
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  environment:
+    name: production
+    url: http://movietheater.com
+  script:
+    - echo "🚀 Deploying to production environment..."
+    - cd docker
+    - docker-compose -f docker-compose.yml down || true
+    - docker-compose -f docker-compose.yml pull
+    - docker-compose -f docker-compose.yml up -d
+    - echo "✅ Production deployment completed!"
+  only:
+    - main
+    - tags
+  when: manual
+
+# 🧹 Cleanup job
+cleanup:
+  stage: deploy
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  script:
+    - echo "🧹 Cleaning up old Docker images..."
+    - docker system prune -f
+    - docker image prune -a -f --filter "until=72h"
+  only:
+    - schedules
+  when: manual
+
+# 📊 Code Quality Analysis (Optional)
+code-quality:
+  stage: test
+  image: maven:3.9.9-eclipse-temurin-21
+  script:
+    - echo "📊 Running code quality analysis..."
+    - mvn $MAVEN_CLI_OPTS checkstyle:check
+    - mvn $MAVEN_CLI_OPTS pmd:check
+  artifacts:
+    reports:
+      codequality: target/checkstyle-result.xml
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+
+# 🔒 Security Scan (Optional)
+security-scan:
+  stage: test
+  image: maven:3.9.9-eclipse-temurin-21
+  script:
+    - echo "🔒 Running security vulnerability scan..."
+    - mvn $MAVEN_CLI_OPTS org.owasp:dependency-check-maven:check
+  artifacts:
+    reports:
+      dependency_scanning: target/dependency-check-report.xml
+  allow_failure: true
+  only:
+    - main
+    - develop 

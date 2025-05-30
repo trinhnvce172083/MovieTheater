@@ -1,0 +1,158 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /cinema
+#  ssl:
+#    key-store: classpath:movietheater.p12
+#    key-store-password: 12345678
+#    key-store-type: PKCS12
+#    key-alias: movietheater
+#    enabled: true
+
+spring:
+  datasource:
+    url: "jdbc:mysql://host.docker.internal:3306/cinema_db"
+    username: root
+    password: 12345Aa
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  # File upload configuration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  # Web configuration
+  web:
+    resources:
+      add-mappings: true
+  mvc:
+    throw-exception-if-no-handler-found: false
+    static-path-pattern: /static/**
+
+  # Email configuration
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:your-email@gmail.com}
+    password: ${MAIL_PASSWORD:your-app-password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
+
+  # Thymeleaf configuration for email templates
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false
+
+  # Security configuration
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:your-google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:your-google-client-secret}
+            scope:
+              - email
+              - profile
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:bW92aWVUaGVhdGVyU2VjcmV0S2V5MjAyNUZvckpXVFRva2VuR2VuZXJhdGlvbg==}
+  expiration: 900000 # 15 minutes in milliseconds
+
+# Email Configuration
+email:
+  from: ${EMAIL_FROM:noreply@movietheater.com}
+  from-name: ${EMAIL_FROM_NAME:Movie Theater System}
+  verification:
+    expiration-hours: 24
+    base-url: ${EMAIL_VERIFICATION_BASE_URL:http://localhost:8080/cinema}
+  templates:
+    verification: email/verification
+    welcome: email/welcome
+    password-reset: email/password-reset
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+# Actuator Configuration for Docker health checks
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+    mail:
+      enabled: true
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    com.swp.MovieTheaterService: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.mail: DEBUG
+
+# Application specific configuration
+app:
+  name: Movie Theater Management System
+  version: 1.0.0
+  description: A comprehensive movie theater management system
+  
+  # File storage configuration
+  file:
+    upload-dir: uploads/
+    max-size: 10MB
+    allowed-types: jpg,jpeg,png,gif,pdf
+    
+  # Business rules
+  booking:
+    max-seats-per-booking: 8
+    booking-deadline-hours: 2 # Hours before showtime
+    
+  # Pagination defaults
+  pagination:
+    default-page-size: 20
+    max-page-size: 100 

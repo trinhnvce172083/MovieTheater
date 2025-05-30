@@ -1,0 +1,103 @@
+# 🎬 Movie Theater Management System - .gitignore
+
+# === Dependencies ===
+node_modules/
+*/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# === NextJS Frontend ===
+movie-theater-frontend/.next/
+movie-theater-frontend/out/
+movie-theater-frontend/.env*.local
+movie-theater-frontend/.vercel
+
+# === Spring Boot Backend ===
+movie-theater-backend/target/
+movie-theater-backend/*.jar
+movie-theater-backend/*.war
+movie-theater-backend/*.ear
+movie-theater-backend/.mvn/
+movie-theater-backend/mvnw
+movie-theater-backend/mvnw.cmd
+
+# === IDEs ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === OS Files ===
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# === Logs ===
+logs/
+*.log
+lerna-debug.log*
+
+# === Runtime data ===
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# === Coverage directory used by tools like istanbul ===
+coverage/
+*.lcov
+
+# === nyc test coverage ===
+.nyc_output/
+
+# === Dependency directories ===
+jspm_packages/
+
+# === TypeScript cache ===
+*.tsbuildinfo
+
+# === Optional npm cache directory ===
+.npm
+
+# === Optional eslint cache ===
+.eslintcache
+
+# === Microbundle cache ===
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# === Optional REPL history ===
+.node_repl_history
+
+# === Output of 'npm pack' ===
+*.tgz
+
+# === Yarn Integrity file ===
+.yarn-integrity
+
+# === Environment variables ===
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# === Docker ===
+.docker/
+docker-compose.override.yml
+
+# === Local development ===
+.vscode/
+.idea/
+*.log
+temp/
+tmp/ 

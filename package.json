@@ -1,0 +1,46 @@
+{
+    "name": "movie-theater-system",
+    "version": "1.0.0",
+    "description": "Movie Theater Management System - NextJS Frontend + Spring Boot Backend",
+    "private": true,
+    "scripts": {
+        "dev": "npm run dev --prefix movie-theater-frontend",
+        "build": "npm run build --prefix movie-theater-frontend",
+        "start": "npm run start --prefix movie-theater-frontend",
+        "lint": "npm run lint --prefix movie-theater-frontend",
+        "type-check": "npm run type-check --prefix movie-theater-frontend",
+        "frontend:dev": "cd movie-theater-frontend && npm run dev",
+        "frontend:build": "cd movie-theater-frontend && npm run build",
+        "frontend:install": "cd movie-theater-frontend && npm install",
+        "backend:dev": "cd movie-theater-backend && ./mvnw spring-boot:run",
+        "backend:build": "cd movie-theater-backend && ./mvnw clean package",
+        "docker:dev": "docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up --build",
+        "docker:prod": "docker compose -f docker/docker-compose.yml -f docker/docker-compose.prod.yml up --build",
+        "docker:stop": "docker compose -f docker/docker-compose.yml down",
+        "setup": "npm run frontend:install && echo 'Frontend dependencies installed successfully!'",
+        "clean": "cd movie-theater-frontend && rm -rf .next node_modules && cd ../movie-theater-backend && ./mvnw clean"
+    },
+    "workspaces": [
+        "movie-theater-frontend"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/username/movie-theater-system.git"
+    },
+    "keywords": [
+        "movie-theater",
+        "nextjs",
+        "spring-boot",
+        "react",
+        "java",
+        "typescript",
+        "tailwindcss",
+        "shadcn-ui"
+    ],
+    "author": "Your Name",
+    "license": "MIT",
+    "engines": {
+        "node": ">=20.0.0",
+        "npm": ">=10.0.0"
+    }
+}
