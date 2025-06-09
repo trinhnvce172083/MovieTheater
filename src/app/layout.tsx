@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 // import ScrollToTopButton from "@/components/ScrollToTopButton";
 import BackTop from "antd/es/float-button/BackTop";
 
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -35,7 +36,9 @@ export default function RootLayout({
           <Header />
         </header>
         <main className="min-h-screen pt-24">{children}</main>
-        <Footer />
+        <footer className="mt-8">
+          <Footer />
+        </footer>
         <BackTop duration={200} visibilityHeight={50} />
       </body>
     </html>
