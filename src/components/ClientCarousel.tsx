@@ -1,9 +1,7 @@
-//Banner Carousel Component
-
 "use client";
 
-import { Carousel as AntCarousel, Card } from "antd";
-import { CarouselRef } from "antd/es/carousel";
+import { Carousel as AntCarousel } from "antd";
+import type { CarouselRef } from "antd/es/carousel";
 import { useRef } from "react";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 
@@ -11,7 +9,7 @@ interface CarouselProps {
   children: React.ReactNode;
   autoplay?: boolean;
   effect?: "scrollx" | "fade";
-  [x: string]: any;
+  [key: string]: unknown; // để nhận thêm props tùy ý
 }
 
 export default function ClientCarousel({
@@ -45,29 +43,29 @@ export default function ClientCarousel({
         easing="ease-in-out"
         vertical={false}
         verticalSwiping={false}
-        infinite={true}
+        infinite
         effect={effect}
-        
         {...rest}
       >
         {children}
       </AntCarousel>
-      
-      {/* Custom Navigation Buttons */}
-      <button 
+
+      <button
         onClick={goToPrev}
         className="absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-60 hover:bg-opacity-90 rounded-full w-10 h-10 flex items-center justify-center z-10 shadow-md transition-all"
         aria-label="Previous slide"
+        type="button"
       >
-        <LeftOutlined style={{ fontSize: '16px' }} />
+        <LeftOutlined style={{ fontSize: 16 }} />
       </button>
-      
-      <button 
+
+      <button
         onClick={goToNext}
         className="absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-60 hover:bg-opacity-90 rounded-full w-10 h-10 flex items-center justify-center z-10 shadow-md transition-all"
         aria-label="Next slide"
+        type="button"
       >
-        <RightOutlined style={{ fontSize: '16px' }} />
+        <RightOutlined style={{ fontSize: 16 }} />
       </button>
     </div>
   );
