@@ -57,7 +57,7 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD:-jstdgruqurruswtc}
       EMAIL_FROM: ${EMAIL_FROM:-lumierecinema25@gmail.com}
       EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Lumiere Cinema}
-      EMAIL_VERIFICATION_BASE_URL: ${EMAIL_VERIFICATION_BASE_URL:-https://lumierecinema.vn}
+      EMAIL_VERIFICATION_BASE_URL: ${EMAIL_VERIFICATION_BASE_URL:-http://localhost:8080}
 
       # Google OAuth
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-your-google-client-id}

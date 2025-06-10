@@ -101,22 +101,22 @@ public class AuthServiceImpl implements AuthService {
         }
         log.info("✅ Request object is not null");
 
-        // 2. Validate critical dependencies
+        // 2. Validate critical dependencies (should not happen in production)
         if (accountRepository == null) {
             log.error("AccountRepository is null");
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "AccountRepository dependency is null");
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "System configuration error");
         }
         log.info("✅ AccountRepository is not null");
 
         if (passwordEncoder == null) {
             log.error("PasswordEncoder is null");
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "PasswordEncoder dependency is null");
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "System configuration error");
         }
         log.info("✅ PasswordEncoder is not null");
 
         if (jwtService == null) {
             log.error("JwtService is null");
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "JwtService dependency is null");
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "System configuration error");
         }
         log.info("✅ JwtService is not null");
 
@@ -181,9 +181,12 @@ public class AuthServiceImpl implements AuthService {
                 throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
             }
             log.info("✅ No existing records found");
+        } catch (AppException e) {
+            // Re-throw AppException với error code đúng
+            throw e;
         } catch (Exception e) {
-            log.error("Error checking existing records: {}", e.getMessage(), e);
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Database error while checking existing records");
+            log.error("Database error checking existing records: {}", e.getMessage(), e);
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Unable to validate user data");
         }
 
         // 5. Encode password
@@ -193,12 +196,14 @@ public class AuthServiceImpl implements AuthService {
             encodedPassword = passwordEncoder.encode(request.getPassword());
             if (encodedPassword == null || encodedPassword.trim().isEmpty()) {
                 log.error("Password encoding returned null or empty");
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Password encoding failed");
+                throw new AppException(ErrorCode.PASSWORD_INVALID, "Password processing failed");
             }
             log.info("✅ Password encoded successfully");
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error encoding password: {}", e.getMessage(), e);
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Password encoding failed");
+            throw new AppException(ErrorCode.PASSWORD_INVALID, "Password processing failed");
         }
 
         // 6. Build Account object
@@ -226,12 +231,14 @@ public class AuthServiceImpl implements AuthService {
 
             if (account == null) {
                 log.error("Account.builder() returned null");
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Account creation failed");
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Account creation failed");
             }
             log.info("✅ Account object built successfully");
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error building Account object: {}", e.getMessage(), e);
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Account creation failed");
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Account creation failed");
         }
 
         // 7. Save to database
@@ -240,16 +247,32 @@ public class AuthServiceImpl implements AuthService {
             account = accountRepository.save(account);
             if (account == null) {
                 log.error("accountRepository.save() returned null");
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Account save failed");
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Registration failed");
             }
             if (account.getAccountId() == null) {
                 log.error("Saved account has null accountId");
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Account ID generation failed");
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Registration failed");
             }
             log.info("✅ Account saved successfully with ID: {}", account.getAccountId());
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error saving account: {}", e.getMessage(), e);
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Database save operation failed");
+
+            // Check for common database constraints
+            String errorMessage = e.getMessage();
+            if (errorMessage != null && errorMessage.toLowerCase().contains("duplicate")) {
+                if (errorMessage.contains("username")) {
+                    throw new AppException(ErrorCode.USERNAME_ALREADY_EXISTS);
+                } else if (errorMessage.contains("email")) {
+                    throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
+                } else if (errorMessage.contains("phone")) {
+                    throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
+                }
+                throw new AppException(ErrorCode.USER_ALREADY_EXISTS);
+            }
+
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Registration failed");
         }
 
         // 8. Send verification email (optional, don't fail registration)
@@ -274,18 +297,20 @@ public class AuthServiceImpl implements AuthService {
             accessToken = jwtService.generateAccessToken(account);
             if (accessToken == null || accessToken.trim().isEmpty()) {
                 log.error("Access token generation returned null or empty");
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Access token generation failed");
+                throw new AppException(ErrorCode.TOKEN_INVALID, "Token generation failed");
             }
 
             refreshToken = jwtService.generateRefreshToken(account);
             if (refreshToken == null || refreshToken.trim().isEmpty()) {
                 log.error("Refresh token generation returned null or empty");
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Refresh token generation failed");
+                throw new AppException(ErrorCode.TOKEN_INVALID, "Token generation failed");
             }
             log.info("✅ JWT tokens generated successfully");
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error generating JWT tokens: {}", e.getMessage(), e);
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "JWT token generation failed");
+            throw new AppException(ErrorCode.TOKEN_INVALID, "Token generation failed");
         }
 
         // 10. Build response
@@ -308,14 +333,16 @@ public class AuthServiceImpl implements AuthService {
 
             if (response == null) {
                 log.error("AuthResponse.builder() returned null");
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Response building failed");
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Registration failed");
             }
 
             log.info("✅ REGISTER METHOD COMPLETED SUCCESSFULLY ===");
             return response;
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error building response: {}", e.getMessage(), e);
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "Response building failed");
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Registration failed");
         }
     }
 
@@ -323,14 +350,26 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse login(LoginRequest request) {
         log.info("User login attempt with username: {}", request.getUsername());
 
+        // Validate request
+        if (request == null || request.getUsername() == null || request.getPassword() == null) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Username and password are required");
+        }
+
         // Lấy thông tin user trước khi authenticate
         Account account = accountRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(
+                        () -> new AppException(ErrorCode.INVALID_CREDENTIALS, "Username hoặc mật khẩu không đúng"));
+
+        // Kiểm tra account active
+        if (!account.getIsActive()) {
+            log.warn("Login attempt on inactive account: {}", request.getUsername());
+            throw new AppException(ErrorCode.ACCOUNT_LOCKED, "Tài khoản đã bị vô hiệu hóa");
+        }
 
         // Kiểm tra account lockout
         if (account.isAccountLocked()) {
             log.warn("Login attempt on locked account: {}", request.getUsername());
-            throw new AppException(ErrorCode.ACCOUNT_LOCKED);
+            throw new AppException(ErrorCode.ACCOUNT_LOCKED, "Tài khoản đã bị khóa do quá nhiều lần đăng nhập sai");
         }
 
         try {
@@ -342,6 +381,7 @@ public class AuthServiceImpl implements AuthService {
 
             // Reset failed login attempts on successful login
             account.resetFailedLoginAttempts();
+            account.setLastLogin(LocalDateTime.now());
             accountRepository.save(account);
 
         } catch (BadCredentialsException e) {
@@ -353,34 +393,47 @@ public class AuthServiceImpl implements AuthService {
                     request.getUsername(), account.getFailedLoginAttempts());
 
             if (account.isAccountLocked()) {
-                throw new AppException(ErrorCode.ACCOUNT_LOCKED);
+                throw new AppException(ErrorCode.ACCOUNT_LOCKED, "Tài khoản đã bị khóa do quá nhiều lần đăng nhập sai");
             } else {
                 int remainingAttempts = 5 - account.getFailedLoginAttempts();
                 throw new AppException(ErrorCode.INVALID_CREDENTIALS,
-                        "Email hoặc mật khẩu không đúng. Còn " + remainingAttempts + " lần thử.");
+                        "Username hoặc mật khẩu không đúng. Còn " + remainingAttempts + " lần thử.");
             }
+        } catch (Exception e) {
+            log.error("Unexpected error during authentication for user: {} - {}", request.getUsername(),
+                    e.getMessage());
+            throw new AppException(ErrorCode.AUTHENTICATION_FAILED, "Đăng nhập thất bại");
         }
 
         // Tạo JWT token
-        String accessToken = jwtService.generateAccessToken(account);
-        String refreshToken = jwtService.generateRefreshToken(account);
+        try {
+            String accessToken = jwtService.generateAccessToken(account);
+            String refreshToken = jwtService.generateRefreshToken(account);
 
-        log.info("User logged in successfully: {}", account.getUsername());
+            if (accessToken == null || refreshToken == null) {
+                throw new AppException(ErrorCode.TOKEN_INVALID, "Token generation failed");
+            }
 
-        return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .expiresIn(jwtService.getExpirationTime())
-                .user(AuthResponse.UserInfo.builder()
-                        .id(account.getAccountId())
-                        .username(account.getUsername())
-                        .email(account.getEmail())
-                        .fullName(account.getFullName())
-                        .phoneNumber(account.getPhoneNumber())
-                        .role(account.getRole())
-                        .emailVerified(account.isEmailVerified())
-                        .build())
-                .build();
+            log.info("User logged in successfully: {}", account.getUsername());
+
+            return AuthResponse.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .expiresIn(jwtService.getExpirationTime())
+                    .user(AuthResponse.UserInfo.builder()
+                            .id(account.getAccountId())
+                            .username(account.getUsername())
+                            .email(account.getEmail())
+                            .fullName(account.getFullName())
+                            .phoneNumber(account.getPhoneNumber())
+                            .role(account.getRole())
+                            .emailVerified(account.isEmailVerified())
+                            .build())
+                    .build();
+        } catch (Exception e) {
+            log.error("Error generating tokens for user: {} - {}", request.getUsername(), e.getMessage());
+            throw new AppException(ErrorCode.TOKEN_INVALID, "Đăng nhập thành công nhưng không thể tạo token");
+        }
     }
 
     @Override

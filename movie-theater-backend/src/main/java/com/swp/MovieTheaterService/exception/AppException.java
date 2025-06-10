@@ -5,7 +5,7 @@ package com.swp.MovieTheaterService.exception;
  * Centralized exception handling with ErrorCode enum
  * 
  * @author Dũng_Solo
- * @version 2.0.0 (Enhanced)
+ * @version 3.0.0 (Cleaned up)
  */
 public class AppException extends RuntimeException {
 
@@ -34,49 +34,8 @@ public class AppException extends RuntimeException {
         this.messageParams = messageParams;
     }
 
-    // ==================== FACTORY METHODS ====================
-    
-    /**
-     * Quick factory methods cho các lỗi phổ biến
-     */
-    public static AppException badRequest(String message) {
-        return new AppException(ErrorCode.VALIDATION_ERROR);
-    }
-    
-    public static AppException notFound(String resource) {
-        return new AppException(ErrorCode.RESOURCE_NOT_FOUND);
-    }
-    
-    public static AppException unauthorized() {
-        return new AppException(ErrorCode.UNAUTHENTICATED);
-    }
-    
-    public static AppException forbidden() {
-        return new AppException(ErrorCode.UNAUTHORIZED);
-    }
-    
-    public static AppException conflict(String message) {
-        return new AppException(ErrorCode.USER_ALREADY_EXISTS);
-    }
-    
-    public static AppException validationError() {
-        return new AppException(ErrorCode.VALIDATION_ERROR);
-    }
-    
-    public static AppException accountLocked() {
-        return new AppException(ErrorCode.ACCOUNT_LOCKED);
-    }
-    
-    public static AppException tokenExpired() {
-        return new AppException(ErrorCode.TOKEN_EXPIRED);
-    }
-    
-    public static AppException tokenInvalid() {
-        return new AppException(ErrorCode.TOKEN_INVALID);
-    }
+    // ==================== GETTERS & SETTERS ====================
 
-    // ==================== GETTERS ====================
-    
     public ErrorCode getErrorCode() {
         return errorCode;
     }
@@ -88,4 +47,4 @@ public class AppException extends RuntimeException {
     public void setErrorCode(ErrorCode errorCode) {
         this.errorCode = errorCode;
     }
-} 
+}

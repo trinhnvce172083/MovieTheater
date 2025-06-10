@@ -55,7 +55,7 @@ spring:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME:lumierecinema25@gmail.com}
-    password: ${MAIL_PASSWORD:jstdgruqurruswtc}
+    password: ${MAIL_PASSWORD:juvcrzwuvuwknpqj}
     properties:
       mail:
         smtp:
@@ -97,7 +97,7 @@ email:
   from-name: ${EMAIL_FROM_NAME:Lumiere Cinema}
   verification:
     expiration-hours: 24
-    base-url: ${EMAIL_VERIFICATION_BASE_URL:https://lumierecinema.vn}
+    base-url: ${EMAIL_VERIFICATION_BASE_URL:http://localhost:8080}
   templates:
     verification: email/verification
     welcome: email/welcome
@@ -190,6 +190,12 @@ app:
   name: Movie Theater Management System
   version: 1.0.0
   description: A comprehensive movie theater management system
+  
+  # Email configuration for EmailService
+  email:
+    company-name: Lumiere Cinema
+    support-email: lumierecinema25@gmail.com
+    website-url: http://localhost:8080
   
   # File storage configuration
   file:

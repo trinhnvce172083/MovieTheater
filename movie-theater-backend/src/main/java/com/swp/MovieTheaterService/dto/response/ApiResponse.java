@@ -27,28 +27,28 @@ public class ApiResponse<T> {
 
     @Schema(description = "Trạng thái thành công của request", example = "true")
     private boolean success;
-    
+
     @Schema(description = "Mã trạng thái", example = "200")
-    private int code;
-    
+    private Integer code;
+
     @Schema(description = "Thông báo mô tả kết quả", example = "Thao tác thành công")
     private String message;
-    
+
     @Schema(description = "Dữ liệu trả về của API")
     private T data;
-    
+
     @Schema(description = "Thông báo lỗi (nếu có)", example = "Dữ liệu không hợp lệ")
     private String error;
-    
+
     @Schema(description = "Mã lỗi chi tiết (nếu có)", example = "VALIDATION_ERROR")
     private String errorCode;
-    
+
     @Schema(description = "Danh sách lỗi chi tiết (nếu có)")
     private List<ErrorDetail> errors;
-    
+
     @Schema(description = "Thời gian xử lý request", example = "2025-06-06T12:00:00")
     private LocalDateTime timestamp;
-    
+
     @Schema(description = "Metadata bổ sung")
     private Object metadata;
 
@@ -63,21 +63,20 @@ public class ApiResponse<T> {
     public static class ErrorDetail {
         @Schema(description = "Tên field bị lỗi", example = "email")
         private String field;
-        
+
         @Schema(description = "Thông báo lỗi", example = "Email không đúng định dạng")
         private String message;
-        
+
         @Schema(description = "Giá trị được reject", example = "invalid-email")
         private Object rejectedValue;
     }
 
     // ==================== SUCCESS METHODS ====================
-    
+
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
                 .success(true)
-                .code(200)
-                .message("Thao tác thành công")
+                .message("Request successful")
                 .data(data)
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -86,65 +85,50 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> success(String message, T data) {
         return ApiResponse.<T>builder()
                 .success(true)
-                .code(200)
                 .message(message)
                 .data(data)
                 .timestamp(LocalDateTime.now())
                 .build();
     }
 
-    public static <T> ApiResponse<T> success(String message, T data, Object metadata) {
+    public static <T> ApiResponse<T> success(String message) {
         return ApiResponse.<T>builder()
                 .success(true)
-                .code(200)
                 .message(message)
-                .data(data)
-                .metadata(metadata)
                 .timestamp(LocalDateTime.now())
                 .build();
     }
 
     // ==================== ERROR METHODS ====================
-    
-    public static <T> ApiResponse<T> error(String error) {
-        return ApiResponse.<T>builder()
-                .success(false)
-                .code(500)
-                .message("Có lỗi xảy ra")
-                .error(error)
-                .timestamp(LocalDateTime.now())
-                .build();
-    }
 
-    public static <T> ApiResponse<T> error(String message, String error) {
+    public static <T> ApiResponse<T> error(Integer code, String errorCode, String message) {
         return ApiResponse.<T>builder()
                 .success(false)
-                .code(500)
-                .message(message)
-                .error(error)
-                .timestamp(LocalDateTime.now())
-                .build();
-    }
-
-    public static <T> ApiResponse<T> error(String message, String error, String errorCode) {
-        return ApiResponse.<T>builder()
-                .success(false)
-                .code(500)
-                .message(message)
-                .error(error)
+                .code(code)
                 .errorCode(errorCode)
+                .message(message)
                 .timestamp(LocalDateTime.now())
                 .build();
     }
 
-    public static <T> ApiResponse<T> validationError(String message, List<ErrorDetail> errors) {
+    public static <T> ApiResponse<T> error(Integer code, String errorCode, String message, T data) {
         return ApiResponse.<T>builder()
                 .success(false)
-                .code(400)
+                .code(code)
+                .errorCode(errorCode)
                 .message(message)
-                .error("Dữ liệu không hợp lệ")
+                .data(data)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    public static <T> ApiResponse<T> validationError(String message, T validationErrors) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .code(1002)
                 .errorCode("VALIDATION_ERROR")
-                .errors(errors)
+                .message(message)
+                .data(validationErrors)
                 .timestamp(LocalDateTime.now())
                 .build();
     }
@@ -225,4 +209,9 @@ public class ApiResponse<T> {
                 .timestamp(LocalDateTime.now())
                 .build();
     }
-} 
+
+    public ApiResponse<T> withMetadata(Object metadata) {
+        this.metadata = metadata;
+        return this;
+    }
+}
