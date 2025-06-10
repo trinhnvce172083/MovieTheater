@@ -1,12 +1,9 @@
 package com.swp.MovieTheaterService.mapper;
 
-import com.swp.MovieTheaterService.dto.booking.BookingCreateRequest;
-import com.swp.MovieTheaterService.dto.booking.BookingResponse;
-
-import com.swp.MovieTheaterService.dto.booking.BookingUpdateRequest;
-import com.swp.MovieTheaterService.entity.Booking;
-import com.swp.MovieTheaterService.entity.BookingSeat;
+import com.swp.MovieTheaterService.dto.booking.*;
+import com.swp.MovieTheaterService.entity.*;
 import com.swp.MovieTheaterService.enums.BookingStatus;
+import org.mapstruct.*;
 import org.springframework.stereotype.Component;
 
 import java.text.NumberFormat;
@@ -15,26 +12,29 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Booking Mapper
- * Maps between Booking entity and DTOs
+ * Booking Mapper v2.0.0 (Builder Pattern Compatible)
+ * Object mapping between Booking entities and DTOs
  * 
  * @author Dũng_Solo
- * @version 1.0.0
+ * @version 2.0.0
  */
 @Component
 public class BookingMapper {
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
-    private static final NumberFormat CURRENCY_FORMATTER = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = 
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final DateTimeFormatter DATE_FORMATTER = 
+            DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter TIME_FORMATTER = 
+            DateTimeFormatter.ofPattern("HH:mm");
+    private static final NumberFormat CURRENCY_FORMATTER = 
+            NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 
     /**
-     * Convert BookingCreateRequest to Booking entity
+     * Convert BookingCreateRequest to Booking Entity
      */
     public Booking toEntity(BookingCreateRequest request) {
         if (request == null) {
@@ -42,31 +42,10 @@ public class BookingMapper {
         }
 
         Booking booking = new Booking();
-        booking.setBookingCode(generateBookingCode());
-        booking.setBookingDate(LocalDateTime.now());
-        booking.setBookingStatus(BookingStatus.PENDING);
-        booking.setSeatCount(request.getSelectedSeats().size());
+        booking.setCustomerName(request.getCustomerName());
+        booking.setCustomerEmail(request.getCustomerEmail());
+        booking.setCustomerPhone(request.getCustomerPhone());
         booking.setNotes(request.getNotes());
-        booking.setIsCheckedIn(false);
-        booking.setIsActive(true);
-        booking.setCreatedAt(LocalDateTime.now());
-        booking.setUpdatedAt(LocalDateTime.now());
-
-        // Set customer information for guest bookings
-        if (request.isGuestBooking()) {
-            booking.setCustomerName(request.getCustomerName());
-            booking.setCustomerEmail(request.getCustomerEmail());
-            booking.setCustomerPhone(request.getCustomerPhone());
-        }
-
-        // Calculate total amount
-        double totalAmount = request.getSelectedSeats().stream()
-                .mapToDouble(BookingCreateRequest.SeatSelectionRequest::getSeatPrice)
-                .sum();
-        booking.setTotalAmount(totalAmount);
-        booking.setDiscountAmount(0.0);
-        booking.setFinalAmount(totalAmount);
-
         return booking;
     }
 
@@ -87,207 +66,183 @@ public class BookingMapper {
         if (request.getCustomerPhone() != null) {
             booking.setCustomerPhone(request.getCustomerPhone());
         }
-        if (request.getBookingStatus() != null) {
-            booking.setBookingStatus(request.getBookingStatus());
-        }
-        if (request.getPaymentMethod() != null) {
-            booking.setPaymentMethod(request.getPaymentMethod());
-        }
-        if (request.getPaymentReference() != null) {
-            booking.setPaymentReference(request.getPaymentReference());
-        }
-        if (request.getDiscountAmount() != null) {
-            booking.applyDiscount(request.getDiscountAmount());
-        }
         if (request.getNotes() != null) {
             booking.setNotes(request.getNotes());
         }
-        if (request.getCancellationReason() != null) {
-            booking.setCancellationReason(request.getCancellationReason());
-        }
-        if (request.getIsActive() != null) {
-            booking.setIsActive(request.getIsActive());
-        }
-
+        
         booking.setUpdatedAt(LocalDateTime.now());
     }
 
     /**
-     * Convert Booking entity to BookingResponse
+     * Convert Booking Entity to BookingResponse DTO
      */
     public BookingResponse toResponse(Booking booking) {
         if (booking == null) {
             return null;
         }
 
-        BookingResponse response = new BookingResponse();
-        response.setBookingId(booking.getBookingId());
-        response.setBookingCode(booking.getBookingCode());
-        response.setBookingDate(booking.getBookingDate());
-        response.setTotalAmount(booking.getTotalAmount());
-        response.setDiscountAmount(booking.getDiscountAmount());
-        response.setFinalAmount(booking.getFinalAmount());
-        response.setBookingStatus(booking.getBookingStatus());
-        response.setPaymentMethod(booking.getPaymentMethod());
-        response.setPaymentDate(booking.getPaymentDate());
-        response.setPaymentReference(booking.getPaymentReference());
-        response.setSeatCount(booking.getSeatCount());
-        response.setNotes(booking.getNotes());
-        response.setCancellationDate(booking.getCancellationDate());
-        response.setCancellationReason(booking.getCancellationReason());
-        response.setRefundAmount(booking.getRefundAmount());
-        response.setQrCode(booking.getQrCode());
-        response.setIsCheckedIn(booking.getIsCheckedIn());
-        response.setCheckInTime(booking.getCheckInTime());
-        response.setIsActive(booking.getIsActive());
-        response.setCreatedAt(booking.getCreatedAt());
-        response.setUpdatedAt(booking.getUpdatedAt());
-
-        // Customer information
-        response.setCustomerName(booking.getCustomerDisplayName());
-        response.setCustomerEmail(booking.getCustomerDisplayEmail());
-        response.setCustomerPhone(booking.getCustomerDisplayPhone());
-        response.setIsGuestBooking(booking.isGuestBooking());
-
-        // Account information
-        if (booking.getAccount() != null) {
-            response.setAccountId(booking.getAccount().getAccountId());
-            response.setAccountFullName(booking.getAccount().getFullName());
-            response.setAccountEmail(booking.getAccount().getEmail());
-            response.setAccountPhone(booking.getAccount().getPhoneNumber());
-        }
+        BookingResponse.BookingResponseBuilder builder = BookingResponse.builder()
+                .bookingId(booking.getBookingId())
+                .bookingCode(booking.getBookingCode())
+                .bookingDate(booking.getBookingDate())
+                .bookingStatus(booking.getBookingStatus())
+                .totalAmount(booking.getTotalAmount())
+                .discountAmount(booking.getDiscountAmount())
+                .finalAmount(booking.getFinalAmount())
+                .refundAmount(booking.getRefundAmount())
+                .customerName(booking.getCustomerDisplayName())
+                .customerEmail(booking.getCustomerDisplayEmail())
+                .customerPhone(booking.getCustomerDisplayPhone())
+                .isGuestBooking(booking.isGuestBooking())
+                .paymentMethod(booking.getPaymentMethod())
+                .paymentDate(booking.getPaymentDate())
+                .paymentReference(booking.getPaymentReference())
+                .notes(booking.getNotes())
+                .qrCode(booking.getQrCode())
+                .isCheckedIn(booking.getIsCheckedIn())
+                .checkInTime(booking.getCheckInTime())
+                .cancellationDate(booking.getCancellationDate())
+                .cancellationReason(booking.getCancellationReason())
+                .createdAt(booking.getCreatedAt())
+                .updatedAt(booking.getUpdatedAt());
 
         // Schedule information
         if (booking.getSchedule() != null) {
-            response.setScheduleId(booking.getSchedule().getScheduleId());
-            response.setShowDate(booking.getSchedule().getShowDate());
-            response.setStartTime(booking.getSchedule().getStartTime());
-            response.setEndTime(booking.getSchedule().getEndTime());
-            response.setSchedulePrice(booking.getSchedule().getPrice());
-            response.setScheduleStatus(booking.getSchedule().getStatus());
-            response.setIs3D(booking.getSchedule().getIs3D());
-            response.setIsIMAX(booking.getSchedule().getIsIMAX());
-            response.setIs4DX(booking.getSchedule().getIs4DX());
+            Schedule schedule = booking.getSchedule();
+            builder.schedule(BookingResponse.ScheduleInfo.builder()
+                    .scheduleId(schedule.getScheduleId())
+                    .showDateTime(schedule.getShowDateTime())
+                    .formattedShowDateTime(schedule.getShowDateTime().format(DATE_TIME_FORMATTER))
+                                         .language("Vietnamese") // Default language
+                     .isSubtitled(false) // Default subtitle
+                    .build());
 
             // Movie information
-            if (booking.getSchedule().getMovie() != null) {
-                response.setMovieId(booking.getSchedule().getMovie().getMovieId());
-                response.setMovieName(booking.getSchedule().getMovie().getMovieName());
-                response.setMoviePoster(booking.getSchedule().getMovie().getPoster());
-                response.setMovieDuration(booking.getSchedule().getMovie().getDuration());
-                response.setMovieRating(booking.getSchedule().getMovie().getRating());
-                response.setMovieGenre(booking.getSchedule().getMovie().getGenre());
+            if (schedule.getMovie() != null) {
+                Movie movie = schedule.getMovie();
+                builder.movie(BookingResponse.MovieInfo.builder()
+                        .movieId(movie.getMovieId())
+                        .title(movie.getTitle())
+                        .originalTitle(movie.getOriginalTitle())
+                        .duration(movie.getDuration())
+                        .rating(movie.getRating())
+                        .genres(movie.getGenres())
+                        .director(movie.getDirector())
+                        .posterUrl(movie.getPosterUrl())
+                        .formattedDuration(formatDuration(movie.getDuration()))
+                        .build());
             }
 
-            // Cinema room information
-            if (booking.getSchedule().getCinemaRoom() != null) {
-                response.setCinemaRoomId(booking.getSchedule().getCinemaRoom().getCinemaRoomId());
-                response.setCinemaRoomName(booking.getSchedule().getCinemaRoom().getCinemaRoomName());
-                response.setRoomType(booking.getSchedule().getCinemaRoom().getRoomType());
-                response.setTotalSeats(booking.getSchedule().getCinemaRoom().getSeatQuantity());
+            // Cinema information
+            if (schedule.getCinemaRoom() != null) {
+                CinemaRoom room = schedule.getCinemaRoom();
+                builder.cinema(BookingResponse.CinemaInfo.builder()
+                        .cinemaRoomId(room.getCinemaRoomId())
+                        .cinemaRoomName(room.getCinemaRoomName())
+                                                 .cinemaLocation("CGV Cinemas") // Default location
+                         .address("Địa chỉ rạp phim") // Default address
+                        .build());
             }
         }
 
         // Promotion information
         if (booking.getPromotion() != null) {
-            response.setPromotionId(booking.getPromotion().getPromotionId());
-            response.setPromotionName(booking.getPromotion().getPromotionName());
-            response.setPromotionCode(booking.getPromotion().getPromotionCode());
-            response.setPromotionDiscount(booking.getPromotion().getDiscountAmount());
+            Promotion promotion = booking.getPromotion();
+            builder.promotion(BookingResponse.PromotionInfo.builder()
+                    .promotionId(promotion.getPromotionId())
+                    .promotionCode(promotion.getPromotionCode())
+                    .promotionName(promotion.getPromotionName())
+                    .discountType(promotion.getDiscountType())
+                    .discountValue(promotion.getDiscountValue())
+                    .appliedDiscount(booking.getDiscountAmount())
+                    .build());
         }
 
         // Booked seats information
-        if (booking.getBookingSeats() != null) {
-            List<BookingResponse.BookedSeatInfo> bookedSeats = booking.getBookingSeats().stream()
-                    .map(this::toBookedSeatInfo)
+        if (booking.getBookingSeats() != null && !booking.getBookingSeats().isEmpty()) {
+            List<BookingResponse.SeatInfo> seats = booking.getBookingSeats().stream()
+                    .map(this::toSeatInfo)
                     .collect(Collectors.toList());
-            response.setBookedSeats(bookedSeats);
+            builder.seats(seats)
+                    .seatCount(seats.size());
         }
 
-        // Set computed fields
+        // Computed fields
+        BookingResponse response = builder.build();
         setComputedFields(response, booking);
-
+        
         return response;
     }
 
-
-
     /**
-     * Convert BookingSeat to BookedSeatInfo
+     * Convert BookingSeat to SeatInfo
      */
-    private BookingResponse.BookedSeatInfo toBookedSeatInfo(BookingSeat bookingSeat) {
+    private BookingResponse.SeatInfo toSeatInfo(BookingSeat bookingSeat) {
         if (bookingSeat == null || bookingSeat.getSeat() == null) {
             return null;
         }
 
-        BookingResponse.BookedSeatInfo seatInfo = new BookingResponse.BookedSeatInfo();
-        seatInfo.setSeatId(bookingSeat.getSeat().getSeatId());
-        seatInfo.setSeatNumber(bookingSeat.getSeatNumber());
-        seatInfo.setSeatType(bookingSeat.getSeatType());
-        seatInfo.setSeatPrice(bookingSeat.getSeatPrice());
-        seatInfo.setSeatPriceDisplay(CURRENCY_FORMATTER.format(bookingSeat.getSeatPrice()));
-        seatInfo.setRowName(bookingSeat.getSeat().getRowName());
-        seatInfo.setColumnNumber(bookingSeat.getSeat().getColumnNumber());
-        seatInfo.setIsVIP(bookingSeat.isVIPSeat());
-        seatInfo.setIsCouple(bookingSeat.isCoupleSeat());
+        Seat seat = bookingSeat.getSeat();
+        return BookingResponse.SeatInfo.builder()
+                .seatId(seat.getSeatId())
+                .seatNumber(seat.getSeatNumber())
+                .seatRow(seat.getRowName())
+                .seatColumn(seat.getColumnNumber())
+                .seatType(seat.getSeatType())
+                .seatPrice(bookingSeat.getSeatPrice())
+                .isVIP(seat.isVIP())
+                .isCouple(seat.isCouple())
+                .build();
+    }
 
-        return seatInfo;
+    /**
+     * Create BookingSeat entity
+     */
+    public BookingSeat createBookingSeat(Booking booking, Seat seat) {
+        BookingSeat bookingSeat = new BookingSeat();
+        bookingSeat.setBooking(booking);
+        bookingSeat.setSeat(seat);
+        bookingSeat.setSeatId(seat.getSeatId()); // Reference for direct access
+        bookingSeat.setSeatNumber(seat.getSeatNumber());
+        bookingSeat.setSeatType(seat.getSeatType());
+        bookingSeat.setSeatPrice(seat.getSeatPrice() != null ? seat.getSeatPrice() : 0.0);
+        bookingSeat.setStatus("BOOKED");
+        bookingSeat.setActive(true);
+        bookingSeat.setCreatedAt(LocalDateTime.now());
+        bookingSeat.setUpdatedAt(LocalDateTime.now());
+        
+        return bookingSeat;
     }
 
     /**
      * Set computed fields for BookingResponse
      */
     private void setComputedFields(BookingResponse response, Booking booking) {
-        // Show date time
-        if (booking.getSchedule() != null) {
-            response.setShowDateTime(booking.getSchedule().getShowDateTime());
+        // Format dates
+        if (response.getBookingDate() != null) {
+            response.setFormattedBookingDate(response.getBookingDate().format(DATE_TIME_FORMATTER));
         }
 
-        // Display formats
-        response.setDisplayBookingDate(booking.getBookingDate().format(DATE_TIME_FORMATTER));
-        if (booking.getSchedule() != null) {
-            response.setDisplayShowDate(booking.getSchedule().getShowDate().format(DATE_FORMATTER));
-            response.setDisplayShowTime(booking.getSchedule().getStartTime().format(TIME_FORMATTER));
+        if (response.getSchedule() != null && response.getSchedule().getShowDateTime() != null) {
+            response.setFormattedShowDateTime(response.getSchedule().getFormattedShowDateTime());
         }
 
-        // Status displays
-        response.setStatusDisplay(getStatusDisplay(booking.getBookingStatus()));
-        response.setPaymentMethodDisplay(getPaymentMethodDisplay(booking.getPaymentMethod()));
+        // Status display
+        response.setStatusDisplayName(getStatusDisplay(response.getBookingStatus()));
 
-        // Business logic fields
+        // Business logic flags
         response.setCanBeCancelled(booking.canBeCancelled());
         response.setCanBeCheckedIn(booking.canBeCheckedIn());
-        response.setIsPaid(booking.isPaid());
-        response.setIsCompleted(booking.isCompleted());
-        response.setIsCancelled(booking.isCancelled());
+                 // Check if booking is expired (show time passed)
+         if (booking.getSchedule() != null && booking.getSchedule().getShowDateTime() != null) {
+             response.setIsExpired(booking.getSchedule().getShowDateTime().isBefore(LocalDateTime.now()));
+         } else {
+             response.setIsExpired(false);
+         }
 
-        // Amount displays
-        response.setTotalAmountDisplay(CURRENCY_FORMATTER.format(booking.getTotalAmount()));
-        response.setFinalAmountDisplay(CURRENCY_FORMATTER.format(booking.getFinalAmount()));
-        response.setDiscountPercentage(String.format("%.1f%%", booking.getDiscountPercentage()));
-
-        // Movie duration
-        if (booking.getSchedule() != null && booking.getSchedule().getMovie() != null) {
-            response.setMovieDurationDisplay(formatDuration(booking.getSchedule().getMovie().getDuration()));
-        }
-
-        // Special features
-        if (booking.getSchedule() != null) {
-            response.setSpecialFeatures(booking.getSchedule().getSpecialFeaturesText());
-        }
-
-        // Time calculations
-        if (booking.getSchedule() != null) {
-            LocalDateTime showDateTime = booking.getSchedule().getShowDateTime();
-            LocalDateTime now = LocalDateTime.now();
-            
-            response.setHoursUntilShow((int) Duration.between(now, showDateTime).toHours());
-            response.setIsUpcoming(showDateTime.isAfter(now));
-            response.setIsPast(showDateTime.isBefore(now));
-        }
+        // Refund policy
+        response.setRefundPolicy(getRefundPolicy(booking));
     }
-
-
 
     /**
      * Get status display text in Vietnamese
@@ -297,7 +252,7 @@ public class BookingMapper {
         
         switch (status) {
             case PENDING:
-                return "Chờ xử lý";
+                return "Chờ thanh toán";
             case CONFIRMED:
                 return "Đã xác nhận";
             case PAID:
@@ -312,26 +267,6 @@ public class BookingMapper {
     }
 
     /**
-     * Get payment method display text in Vietnamese
-     */
-    private String getPaymentMethodDisplay(String paymentMethod) {
-        if (paymentMethod == null) return "";
-        
-        switch (paymentMethod) {
-            case "CASH":
-                return "Tiền mặt";
-            case "CARD":
-                return "Thẻ tín dụng";
-            case "ONLINE":
-                return "Thanh toán online";
-            case "WALLET":
-                return "Ví điện tử";
-            default:
-                return paymentMethod;
-        }
-    }
-
-    /**
      * Format duration in minutes to hours and minutes
      */
     private String formatDuration(Integer durationMinutes) {
@@ -340,17 +275,32 @@ public class BookingMapper {
         int hours = durationMinutes / 60;
         int minutes = durationMinutes % 60;
         
-        if (hours > 0) {
+        if (hours > 0 && minutes > 0) {
             return String.format("%d giờ %d phút", hours, minutes);
+        } else if (hours > 0) {
+            return String.format("%d giờ", hours);
         } else {
             return String.format("%d phút", minutes);
         }
     }
 
     /**
-     * Generate unique booking code
+     * Get refund policy text
      */
-    private String generateBookingCode() {
-        return "BK" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+    private String getRefundPolicy(Booking booking) {
+        if (booking.getSchedule() == null) return "";
+        
+        LocalDateTime showTime = booking.getSchedule().getShowDateTime();
+        LocalDateTime now = LocalDateTime.now();
+        
+        long hoursUntilShow = Duration.between(now, showTime).toHours();
+        
+        if (hoursUntilShow >= 24) {
+            return "Có thể hủy vé và được hoàn tiền 100%";
+        } else if (hoursUntilShow >= 2) {
+            return "Có thể hủy vé và được hoàn tiền 50%";
+        } else {
+            return "Không thể hủy vé";
+        }
     }
 } 

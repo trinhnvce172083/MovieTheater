@@ -1,0 +1,64 @@
+services:
+  # 🗄️ MySQL Database Service - Chỉ dành cho Database
+  mysql:
+    image: mysql:8.0
+    container_name: movie-theater-mysql-local
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345Aa
+      MYSQL_DATABASE: cinema_db
+      MYSQL_USER: cinema_user
+      MYSQL_PASSWORD: cinema_password
+      # Cấu hình để tương thích với local development
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
+      MYSQL_RANDOM_ROOT_PASSWORD: 'no'
+    ports:
+      - "3306:3306"  # Expose port để Spring Boot local connect được
+    volumes:
+      # Persistent data storage
+      - mysql-local-data:/var/lib/mysql
+      # Initialize database với sample data
+      - ./configs/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # MySQL configuration để tối ưu cho development
+      - ./configs/mysql-local.cnf:/etc/mysql/conf.d/mysql.cnf:ro
+    networks:
+      - movie-theater-local-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p12345Aa"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    # Cấu hình tối ưu cho Windows/Docker Desktop
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --innodb-use-native-aio=0
+      --bind-address=0.0.0.0
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --sql_mode=STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO
+
+  # 📊 Adminer - Database Management Tool (Optional)
+  adminer:
+    image: adminer:4.8.1
+    container_name: movie-theater-adminer-local
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    ports:
+      - "8081:8080"  # Access via http://localhost:8081
+    networks:
+      - movie-theater-local-network
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+      ADMINER_DESIGN: 'nette'
+
+# 🌐 Networks
+networks:
+  movie-theater-local-network:
+    driver: bridge
+
+# 💾 Volumes
+volumes:
+  mysql-local-data:
+    name: movie-theater-mysql-local-data 

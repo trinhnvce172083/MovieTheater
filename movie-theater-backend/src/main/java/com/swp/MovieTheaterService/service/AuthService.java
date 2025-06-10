@@ -1,8 +1,10 @@
 package com.swp.MovieTheaterService.service;
 
+import com.swp.MovieTheaterService.dto.request.ForgotPasswordRequest;
 import com.swp.MovieTheaterService.dto.request.LoginRequest;
 import com.swp.MovieTheaterService.dto.request.RefreshTokenRequest;
 import com.swp.MovieTheaterService.dto.request.RegisterRequest;
+import com.swp.MovieTheaterService.dto.request.ResetPasswordRequest;
 import com.swp.MovieTheaterService.dto.response.AuthResponse;
 
 /**
@@ -61,6 +63,20 @@ public interface AuthService {
      * @return success message
      */
     void resendVerificationEmail(String email);
+
+    /**
+     * Send forgot password email
+     * 
+     * @param forgotPasswordRequest forgot password request
+     */
+    void forgotPassword(ForgotPasswordRequest forgotPasswordRequest);
+
+    /**
+     * Reset password with token
+     * 
+     * @param resetPasswordRequest reset password request
+     */
+    void resetPassword(ResetPasswordRequest resetPasswordRequest);
 
     /**
      * Check if username is available

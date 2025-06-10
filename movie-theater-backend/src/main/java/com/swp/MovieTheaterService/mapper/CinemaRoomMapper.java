@@ -56,7 +56,7 @@ public class CinemaRoomMapper {
             cinemaRoom.setCinemaRoomName(request.getCinemaRoomName());
         }
         if (request.getRoomType() != null) {
-            cinemaRoom.setRoomType(request.getRoomType());
+            cinemaRoom.setRoomType(request.getRoomType().name());
         }
         if (request.getDescription() != null) {
             cinemaRoom.setDescription(request.getDescription());

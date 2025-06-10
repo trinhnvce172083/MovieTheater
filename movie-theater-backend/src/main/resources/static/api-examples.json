@@ -1,0 +1,100 @@
+{
+  "RegisterRequest": {
+    "summary": "Đăng ký tài khoản mới",
+    "value": {
+      "username": "nguyenvannam2025",
+      "fullName": "Nguyễn Văn Nam",
+      "email": "nguyenvannam@example.com",
+      "password": "SecurePassword123!",
+      "confirmPassword": "SecurePassword123!",
+      "phoneNumber": "0901234567",
+      "dateOfBirth": "1995-05-15",
+      "address": "123 Đường Lê Lợi, Quận 1, TP.HCM",
+      "agreeToTerms": true,
+      "acceptMarketing": false
+    }
+  },
+  "LoginRequest": {
+    "summary": "Đăng nhập hệ thống",
+    "value": {
+      "email": "nguyenvannam@example.com",
+      "password": "SecurePassword123!"
+    }
+  },
+  "BookingCreateRequest": {
+    "summary": "Tạo booking mới",
+    "value": {
+      "scheduleId": 1,
+      "seatIds": [15, 16],
+      "customerName": "Trần Thị Mai",
+      "customerEmail": "tranthimai@example.com",
+      "customerPhone": "0987654321",
+      "promotionId": null,
+      "notes": "Đặt vé cho 2 người, ghế đôi"
+    }
+  },
+  "MovieCreateRequest": {
+    "summary": "Thêm phim mới",
+    "value": {
+      "title": "Spider-Man: No Way Home",
+      "originalTitle": "Spider-Man: No Way Home",
+      "description": "Peter Parker's secret identity is revealed to the entire world. Desperately devoted to his loved ones, Peter asks Doctor Strange for help and unintentionally opens up the multiverse, allowing dangerous foes from other Spider-Man dimensions to enter their world.",
+      "duration": 148,
+      "releaseDate": "2021-12-15",
+      "endDate": "2022-03-15",
+      "language": "English",
+      "subtitle": "Vietnamese",
+      "country": "United States",
+      "director": "Jon Watts",
+      "cast": "Tom Holland, Zendaya, Benedict Cumberbatch, Jacob Batalon, Jon Favreau",
+      "genres": "Action, Adventure, Sci-Fi",
+      "rating": "T13",
+      "trailerUrl": "https://youtube.com/watch?v=JfVOs4VSpmA",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg",
+      "bannerUrl": "https://image.tmdb.org/t/p/original/14QbnygCuTO0vl7CAFmPf1fgZfV.jpg",
+      "status": "NOW_SHOWING",
+      "ticketPrice": 120000.0
+    }
+  },
+  "EmployeeCreateRequest": {
+    "summary": "Tạo nhân viên mới",
+    "value": {
+      "fullName": "Lê Thị Hương",
+      "email": "lethihuong@movietheater.com",
+      "password": "Employee123!",
+      "phoneNumber": "0912345678",
+      "dateOfBirth": "1990-08-20",
+      "address": "789 Đường Pasteur, Quận 3, TP.HCM",
+      "position": "EMPLOYEE",
+      "department": "Customer Service",
+      "salary": 8000000.0,
+      "hireDate": "2025-06-01"
+    }
+  },
+  "ScheduleCreateRequest": {
+    "summary": "Tạo lịch chiếu mới",
+    "value": {
+      "movieId": 1,
+      "cinemaRoomId": 2,
+      "showDate": "2025-06-10",
+      "startTime": "19:30:00",
+      "endTime": "22:00:00",
+      "ticketPrice": 120000.0,
+      "specialPrice": 150000.0,
+      "vipPrice": 200000.0
+    }
+  },
+  "PaymentRequest": {
+    "summary": "Thanh toán booking",
+    "value": {
+      "bookingId": 12345,
+      "paymentMethod": "CARD",
+      "amount": 240000.0,
+      "cardNumber": "4111111111111111",
+      "cardHolderName": "TRAN THI MAI",
+      "expiryDate": "12/25",
+      "cvv": "123",
+      "paymentReference": "PAY_20250606_001"
+    }
+  }
+} 

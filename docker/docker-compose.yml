@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # 🗄️ MySQL Database Service
   mysql:
@@ -17,7 +15,7 @@ services:
       # Persistent data storage
       - mysql-data:/var/lib/mysql
       # Initialize database với sample data
-      - ../movie-theater-backend/docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./configs/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       # MySQL configuration
       - ./configs/mysql.cnf:/etc/mysql/conf.d/mysql.cnf:ro
     networks:
@@ -55,11 +53,11 @@ services:
       # Email configuration
       MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
       MAIL_PORT: ${MAIL_PORT:-587}
-      MAIL_USERNAME: ${MAIL_USERNAME:-your-email@gmail.com}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:-your-app-password}
-      EMAIL_FROM: ${EMAIL_FROM:-noreply@movietheater.com}
-      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Movie Theater System}
-      EMAIL_VERIFICATION_BASE_URL: ${EMAIL_VERIFICATION_BASE_URL:-http://localhost:3000}
+      MAIL_USERNAME: ${MAIL_USERNAME:-lumierecinema25@gmail.com}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-jstdgruqurruswtc}
+      EMAIL_FROM: ${EMAIL_FROM:-lumierecinema25@gmail.com}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Lumiere Cinema}
+      EMAIL_VERIFICATION_BASE_URL: ${EMAIL_VERIFICATION_BASE_URL:-https://lumierecinema.vn}
 
       # Google OAuth
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-your-google-client-id}

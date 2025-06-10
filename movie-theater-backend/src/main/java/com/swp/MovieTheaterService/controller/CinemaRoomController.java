@@ -43,7 +43,7 @@ public class CinemaRoomController {
     @Operation(summary = "Create cinema room", description = "Create a new cinema room (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<CinemaRoomResponse> createCinemaRoom(@RequestBody CinemaRoomCreateRequest request) {
-        log.info("Creating new cinema room: {}", request.getRoomName());
+        log.info("Creating new cinema room: {}", request.getCinemaRoomName());
         
         CinemaRoomResponse response = cinemaRoomService.createCinemaRoom(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

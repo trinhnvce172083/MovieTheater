@@ -3,6 +3,7 @@ package com.swp.MovieTheaterService.service;
 import com.swp.MovieTheaterService.entity.Account;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Map;
 
@@ -64,6 +65,14 @@ public interface JwtService {
      * @return expiration date
      */
     Date extractExpiration(String token);
+
+    /**
+     * Extract token expiry time as LocalDateTime
+     * 
+     * @param token JWT token
+     * @return expiry time as LocalDateTime
+     */
+    LocalDateTime getTokenExpiryTime(String token);
 
     /**
      * Check if token is valid

@@ -1,7 +1,8 @@
 package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.entity.Account;
-import com.swp.MovieTheaterService.exception.UnauthorizedException;
+import com.swp.MovieTheaterService.exception.AppException;
+import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.service.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -13,7 +14,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,10 +26,10 @@ import java.util.function.Function;
 @Service
 public class JwtServiceImpl implements JwtService {
 
-    @Value("${jwt.secret}")
+    @Value("${jwt.secret:bXlTZWNyZXRLZXlGb3JKV1RUb2tlbkdlbmVyYXRpb25BbmRWYWxpZGF0aW9u}")
     private String secretKey;
 
-    @Value("${jwt.expiration}")
+    @Value("${jwt.expiration:86400000}")
     private Long jwtExpiration;
 
     @Override
@@ -56,7 +59,15 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public Long extractAccountId(String token) {
-        return extractClaim(token, claims -> claims.get("accountId", Long.class));
+        return extractClaim(token, claims -> {
+            Object accountId = claims.get("accountId");
+            if (accountId instanceof Integer) {
+                return ((Integer) accountId).longValue();
+            } else if (accountId instanceof Long) {
+                return (Long) accountId;
+            }
+            return null;
+        });
     }
 
     @Override
@@ -64,8 +75,22 @@ public class JwtServiceImpl implements JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
+    @Override
+    public LocalDateTime getTokenExpiryTime(String token) {
+        try {
+            Date expirationDate = extractExpiration(token);
+            return expirationDate.toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDateTime();
+        } catch (Exception e) {
+            log.error("Error extracting token expiry time: {}", e.getMessage());
+            // Fallback: return current time + 24 hours
+            return LocalDateTime.now().plusHours(24);
+        }
+    }
+
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
+        final Claims claims = extractAllClaimsInternal(token);
         return claimsResolver.apply(claims);
     }
 
@@ -90,10 +115,10 @@ public class JwtServiceImpl implements JwtService {
     ) {
         return Jwts
                 .builder()
-                .setClaims(extraClaims)
-                .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .claims(extraClaims)
+                .subject(userDetails.getUsername())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -119,20 +144,32 @@ public class JwtServiceImpl implements JwtService {
         }
     }
 
-    private Claims extractAllClaims(String token) {
+    @Override
+    public Map<String, Object> extractAllClaims(String token) {
         try {
-            return Jwts
-                    .parser()
-                    .setSigningKey(getSignInKey())
-                    .parseClaimsJws(token)
-                    .getBody();
+            Claims claims = extractAllClaimsInternal(token);
+            return new HashMap<>(claims);
         } catch (Exception e) {
             log.error("Lỗi giải mã token: {}", e.getMessage());
-            throw new UnauthorizedException("Token không hợp lệ hoặc đã hết hạn");
+            throw new AppException(ErrorCode.TOKEN_INVALID);
         }
     }
 
-    private Key getSignInKey() {
+    private Claims extractAllClaimsInternal(String token) {
+        try {
+            return Jwts
+                    .parser()
+                    .verifyWith(getSignInKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (Exception e) {
+            log.error("Lỗi giải mã token: {}", e.getMessage());
+            throw new AppException(ErrorCode.TOKEN_INVALID);
+        }
+    }
+
+    private SecretKey getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }

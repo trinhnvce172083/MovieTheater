@@ -237,6 +237,15 @@ public class Promotion extends BaseEntity {
         return "DISCOUNT";
     }
 
+    // Compatibility methods for method calls
+    public String getPromotionName() {
+        return promotionName;
+    }
+    
+    public String getPromotionCode() {
+        return promotionCode;
+    }
+
     // Points-related methods
     public boolean canBeRedeemedWithPoints() {
         return isPointsPromotion && pointsRequired != null && pointsRequired > 0;

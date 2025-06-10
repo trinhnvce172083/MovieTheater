@@ -1,6 +1,8 @@
 package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.movie.MovieCreateRequest;
+import com.swp.MovieTheaterService.dto.movie.MovieFilterRequest;
+import com.swp.MovieTheaterService.dto.movie.MovieListResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieSummaryResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieUpdateRequest;
@@ -9,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -99,6 +102,17 @@ public class MovieController {
         
         Page<MovieSummaryResponse> movies = movieService.getAllMovies(pageable);
         return ResponseEntity.ok(movies);
+    }
+
+    @PostMapping("/filter")
+    @Operation(summary = "Filter movies with advanced criteria", 
+               description = "Filter movies with multiple criteria including genre, rating, price range, etc.")
+    public ResponseEntity<MovieListResponse> filterMovies(@Valid @RequestBody MovieFilterRequest filterRequest) {
+        log.info("Filtering movies with criteria: keyword={}, genres={}, status={}", 
+                filterRequest.getKeyword(), filterRequest.getGenres(), filterRequest.getStatus());
+        
+        MovieListResponse response = movieService.getMoviesWithFilter(filterRequest);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/search")

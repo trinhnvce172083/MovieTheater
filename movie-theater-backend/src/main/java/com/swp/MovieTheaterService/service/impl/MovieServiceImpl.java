@@ -1,12 +1,14 @@
 package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.dto.movie.MovieCreateRequest;
+import com.swp.MovieTheaterService.dto.movie.MovieFilterRequest;
+import com.swp.MovieTheaterService.dto.movie.MovieListResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieSummaryResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieUpdateRequest;
 import com.swp.MovieTheaterService.entity.Movie;
-import com.swp.MovieTheaterService.exception.ConflictException;
-import com.swp.MovieTheaterService.exception.NotFoundException;
+import com.swp.MovieTheaterService.exception.AppException;
+import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.mapper.MovieMapper;
 import com.swp.MovieTheaterService.repository.MovieRepository;
 import com.swp.MovieTheaterService.service.MovieService;
@@ -15,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +47,7 @@ public class MovieServiceImpl implements MovieService {
 
         // Check if movie title already exists
         if (movieRepository.existsByTitleIgnoreCaseAndIsActiveTrue(request.getTitle())) {
-            throw new ConflictException("Phim với tiêu đề '" + request.getTitle() + "' đã tồn tại");
+            throw new AppException(ErrorCode.MOVIE_ALREADY_EXISTS);
         }
 
         // Convert DTO to entity
@@ -66,7 +69,7 @@ public class MovieServiceImpl implements MovieService {
         // Check if title is being changed and already exists
         if (request.getTitle() != null && !request.getTitle().equalsIgnoreCase(movie.getTitle())) {
             if (movieRepository.existsByTitleIgnoreCaseAndIsActiveTrue(request.getTitle())) {
-                throw new ConflictException("Phim với tiêu đề '" + request.getTitle() + "' đã tồn tại");
+                throw new AppException(ErrorCode.MOVIE_ALREADY_EXISTS);
             }
         }
 
@@ -127,7 +130,7 @@ public class MovieServiceImpl implements MovieService {
     @Transactional(readOnly = true)
     public List<MovieSummaryResponse> getMoviesByGenre(String genre) {
         log.info("Getting movies by genre: {}", genre);
-        List<Movie> movies = movieRepository.findByGenreContainingIgnoreCaseAndIsActiveTrue(genre);
+        List<Movie> movies = movieRepository.findByGenresContainingIgnoreCaseAndIsActiveTrue(genre);
         return movies.stream()
                 .map(movieMapper::toSummaryResponse)
                 .collect(Collectors.toList());
@@ -138,7 +141,7 @@ public class MovieServiceImpl implements MovieService {
     public Page<MovieSummaryResponse> getMoviesByGenre(String genre, Pageable pageable) {
         log.info("Getting movies by genre with pagination: genre={}, page={}, size={}", 
                 genre, pageable.getPageNumber(), pageable.getPageSize());
-        Page<Movie> movies = movieRepository.findByGenreContainingIgnoreCaseAndIsActiveTrue(genre, pageable);
+        Page<Movie> movies = movieRepository.findByGenresContainingIgnoreCaseAndIsActiveTrue(genre, pageable);
         return movies.map(movieMapper::toSummaryResponse);
     }
 
@@ -226,7 +229,7 @@ public class MovieServiceImpl implements MovieService {
     public MovieResponse restoreMovie(Long movieId) {
         log.info("Restoring movie with ID: {}", movieId);
         Movie movie = movieRepository.findById(movieId)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy phim với ID: " + movieId));
+                .orElseThrow(() -> new AppException(ErrorCode.MOVIE_NOT_FOUND));
         movie.setIsActive(true);
         Movie restoredMovie = movieRepository.save(movie);
         log.info("Movie restored successfully with ID: {}", movieId);
@@ -290,12 +293,110 @@ public class MovieServiceImpl implements MovieService {
                                  endedCount, featuredCount, averageRating, averagePrice);
     }
 
+    @Override
+    public MovieListResponse getMoviesWithFilter(MovieFilterRequest filterRequest) {
+        log.info("Getting movies with filter: {}", filterRequest);
+        
+        try {
+            // Create pageable
+            Pageable pageable = PageRequest.of(
+                filterRequest.getPage(), 
+                filterRequest.getSize(),
+                Sort.by(Sort.Direction.fromString(filterRequest.getSortDirection()), filterRequest.getSortBy())
+            );
+            
+            // Get movies with filter (simplified implementation)
+            Page<Movie> movies = movieRepository.findAll(pageable);
+            
+            // Convert to MovieSummaryDTO
+            List<MovieListResponse.MovieSummaryDTO> movieSummaries = movies.getContent().stream()
+                    .map(this::convertToMovieSummaryDTO)
+                    .collect(Collectors.toList());
+            
+            // Create pagination info
+            MovieListResponse.PaginationInfo paginationInfo = MovieListResponse.PaginationInfo.builder()
+                    .currentPage(movies.getNumber())
+                    .totalPages(movies.getTotalPages())
+                    .totalElements(movies.getTotalElements())
+                    .pageSize(movies.getSize())
+                    .hasNext(movies.hasNext())
+                    .hasPrevious(movies.hasPrevious())
+                    .isFirst(movies.isFirst())
+                    .isLast(movies.isLast())
+                    .build();
+            
+            return MovieListResponse.builder()
+                    .movies(movieSummaries)
+                    .pagination(paginationInfo)
+                    .build();
+                    
+        } catch (Exception e) {
+            log.error("Error getting movies with filter: {}", e.getMessage(), e);
+            throw new RuntimeException("Không thể lấy danh sách phim", e);
+        }
+    }
+
+    /**
+     * Convert Movie entity to MovieSummaryDTO
+     */
+    private MovieListResponse.MovieSummaryDTO convertToMovieSummaryDTO(Movie movie) {
+        return MovieListResponse.MovieSummaryDTO.builder()
+                .movieId(movie.getMovieId())
+                .title(movie.getTitle())
+                .originalTitle(movie.getOriginalTitle())
+                .description(movie.getDescription())
+                .duration(movie.getDuration())
+                .genres(movie.getGenres())
+                .director(movie.getDirector())
+                .language(movie.getLanguage())
+                .country(movie.getCountry())
+                .releaseDate(movie.getReleaseDate() != null ? movie.getReleaseDate().toString() : null)
+                .endDate(movie.getEndDate() != null ? movie.getEndDate().toString() : null)
+                .rating(movie.getRating())
+                .posterUrl(movie.getPosterUrl())
+                .backdropUrl(movie.getBackdropUrl())
+                .trailerUrl(movie.getTrailerUrl())
+                .isActive(movie.getIsActive())
+                .isFeatured(movie.getIsFeatured())
+                .price(movie.getPrice())
+                .status(movie.getStatus())
+                .imdbRating(movie.getImdbRating())
+                .formattedDuration(formatDuration(movie.getDuration()))
+                .isAdultContent(movie.isAdultContent())
+                .availableToday(isAvailableToday(movie))
+                .build();
+    }
+
+    /**
+     * Format duration to readable string
+     */
+    private String formatDuration(Integer duration) {
+        if (duration == null) return "";
+        int hours = duration / 60;
+        int minutes = duration % 60;
+        return hours > 0 ? String.format("%dh %dm", hours, minutes) : String.format("%dm", minutes);
+    }
+
+    /**
+     * Check if movie is available today
+     */
+    private boolean isAvailableToday(Movie movie) {
+        if (movie.getReleaseDate() == null) return false;
+        LocalDate today = LocalDate.now();
+        LocalDate releaseDate = movie.getReleaseDate();
+        LocalDate endDate = movie.getEndDate();
+        
+        return !releaseDate.isAfter(today) && 
+               (endDate == null || !endDate.isBefore(today)) &&
+               movie.getIsActive();
+    }
+
     /**
      * Helper method to find movie by ID
      */
     private Movie findMovieById(Long movieId) {
         return movieRepository.findById(movieId)
                 .filter(Movie::getIsActive)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy phim với ID: " + movieId));
+                .orElseThrow(() -> new AppException(ErrorCode.MOVIE_NOT_FOUND));
     }
 } 

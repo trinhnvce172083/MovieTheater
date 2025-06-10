@@ -96,7 +96,7 @@ public class ScheduleController {
         Sort sort = Sort.by(sortDirection.equals("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
         
-        Page<ScheduleSummaryResponse> schedules = scheduleService.getAllSchedules(pageable);
+        Page<ScheduleSummaryResponse> schedules = scheduleService.getAllSchedulesSummary(pageable);
         return ResponseEntity.ok(schedules);
     }
 
@@ -133,7 +133,7 @@ public class ScheduleController {
         
         log.info("Fetching schedules for date: {}", date);
         
-        List<ScheduleSummaryResponse> schedules = scheduleService.getSchedulesByDate(date);
+        List<ScheduleSummaryResponse> schedules = scheduleService.getSchedulesByDateSummary(date);
         return ResponseEntity.ok(schedules);
     }
 
@@ -148,7 +148,7 @@ public class ScheduleController {
         log.info("Fetching schedules from {} to {}", fromDate, toDate);
         
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "showDate", "showTime"));
-        Page<ScheduleSummaryResponse> schedules = scheduleService.getSchedulesByDateRange(fromDate, toDate, pageable);
+        Page<ScheduleSummaryResponse> schedules = scheduleService.getSchedulesByDateRangeSummary(fromDate, toDate, pageable);
         return ResponseEntity.ok(schedules);
     }
 

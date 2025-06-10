@@ -66,15 +66,18 @@ public class Account extends BaseEntity implements UserDetails {
     private Role role;
 
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private Boolean isActive = true;
 
     @Column(name = "is_verified", nullable = false)
+    @Builder.Default
     private Boolean isVerified = false;
 
     @Column(name = "verification_token")
     private String verificationToken;
 
     @Column(name = "email_verified", nullable = false)
+    @Builder.Default
     private Boolean emailVerified = false;
 
     @Column(name = "email_verification_token")
@@ -92,6 +95,17 @@ public class Account extends BaseEntity implements UserDetails {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
+    // Account lockout fields
+    @Column(name = "failed_login_attempts")
+    @Builder.Default
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "account_locked_until")
+    private LocalDateTime accountLockedUntil;
+
+    @Column(name = "last_failed_login")
+    private LocalDateTime lastFailedLogin;
+
     // OAuth2 fields
     @Column(name = "provider")
     private String provider; // google, facebook, etc.
@@ -101,10 +115,17 @@ public class Account extends BaseEntity implements UserDetails {
 
     // Member specific fields
     @Column(name = "membership_points")
+    @Builder.Default
     private Integer membershipPoints = 0;
 
     @Column(name = "membership_level", length = 20)
+    @Builder.Default
     private String membershipLevel = "BRONZE"; // BRONZE, SILVER, GOLD, PLATINUM
+
+    // Marketing preferences
+    @Column(name = "accept_marketing", nullable = false)
+    @Builder.Default
+    private Boolean acceptMarketing = false;
 
     // Employee specific fields
     @Column(name = "employee_code", unique = true, length = 20)
@@ -136,7 +157,7 @@ public class Account extends BaseEntity implements UserDetails {
 
     @Override
     public String getUsername() {
-        return email;
+        return username;
     }
 
     @Override
@@ -232,5 +253,33 @@ public class Account extends BaseEntity implements UserDetails {
     
     public void setId(Long id) {
         this.accountId = id;
+    }
+
+    // Account lockout business methods
+    public boolean isAccountLocked() {
+        return accountLockedUntil != null && accountLockedUntil.isAfter(LocalDateTime.now());
+    }
+
+    public void incrementFailedLoginAttempts() {
+        this.failedLoginAttempts = (this.failedLoginAttempts == null) ? 1 : this.failedLoginAttempts + 1;
+        this.lastFailedLogin = LocalDateTime.now();
+        
+        // Lock account after 5 failed attempts for 30 minutes
+        if (this.failedLoginAttempts >= 5) {
+            this.accountLockedUntil = LocalDateTime.now().plusMinutes(30);
+        }
+    }
+
+    public void resetFailedLoginAttempts() {
+        this.failedLoginAttempts = 0;
+        this.lastFailedLogin = null;
+        this.accountLockedUntil = null;
+        this.lastLogin = LocalDateTime.now();
+    }
+
+    public void unlockAccount() {
+        this.failedLoginAttempts = 0;
+        this.accountLockedUntil = null;
+        this.lastFailedLogin = null;
     }
 } 

@@ -4,9 +4,8 @@ import com.swp.MovieTheaterService.dto.schedule.*;
 import com.swp.MovieTheaterService.entity.CinemaRoom;
 import com.swp.MovieTheaterService.entity.Movie;
 import com.swp.MovieTheaterService.entity.Schedule;
-import com.swp.MovieTheaterService.exception.BadRequestException;
-import com.swp.MovieTheaterService.exception.ConflictException;
-import com.swp.MovieTheaterService.exception.NotFoundException;
+import com.swp.MovieTheaterService.exception.AppException;
+import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.mapper.ScheduleMapper;
 import com.swp.MovieTheaterService.repository.CinemaRoomRepository;
 import com.swp.MovieTheaterService.repository.MovieRepository;
@@ -23,6 +22,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -50,12 +50,12 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         // Validate time
         if (!request.isTimeValid()) {
-            throw new BadRequestException("Giờ kết thúc phải sau giờ bắt đầu");
+            throw new AppException(ErrorCode.SCHEDULE_TIME_INVALID);
         }
 
         // Validate date
         if (!request.isValidScheduleDate()) {
-            throw new BadRequestException("Ngày chiếu phải là hôm nay hoặc trong tương lai");
+            throw new AppException(ErrorCode.SCHEDULE_PAST_DATE);
         }
 
         // Get movie and cinema room
@@ -65,7 +65,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         // Check for schedule conflicts
         if (hasScheduleConflict(request.getCinemaRoomId(), request.getShowDate(), 
                                request.getStartTime(), request.getEndTime())) {
-            throw new ConflictException("Phòng chiếu đã có lịch chiếu trong khoảng thời gian này");
+            throw new AppException(ErrorCode.SCHEDULE_ROOM_OCCUPIED);
         }
 
         // Convert DTO to entity
@@ -90,17 +90,17 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         // Check if schedule can be updated
         if (!schedule.isScheduled()) {
-            throw new BadRequestException("Chỉ có thể cập nhật lịch chiếu ở trạng thái 'Đã lên lịch'");
+            throw new AppException(ErrorCode.SCHEDULE_NOT_BOOKABLE);
         }
 
         // Validate time if provided
         if (!request.isTimeValid()) {
-            throw new BadRequestException("Giờ kết thúc phải sau giờ bắt đầu");
+            throw new AppException(ErrorCode.SCHEDULE_TIME_INVALID);
         }
 
         // Validate date if provided
         if (!request.isValidScheduleDate()) {
-            throw new BadRequestException("Ngày chiếu phải là hôm nay hoặc trong tương lai");
+            throw new AppException(ErrorCode.SCHEDULE_PAST_DATE);
         }
 
         // Check for conflicts if time/date is being changed
@@ -111,7 +111,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
             if (hasScheduleConflict(schedule.getCinemaRoom().getCinemaRoomId(), newDate, 
                                    newStartTime, newEndTime, scheduleId)) {
-                throw new ConflictException("Phòng chiếu đã có lịch chiếu trong khoảng thời gian này");
+                throw new AppException(ErrorCode.SCHEDULE_ROOM_OCCUPIED);
             }
         }
 
@@ -178,11 +178,11 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ScheduleResponse> getSchedulesByDate(LocalDate showDate) {
-        log.info("Getting schedules by date: {}", showDate);
+    public List<ScheduleSummaryResponse> getSchedulesByDateSummary(LocalDate showDate) {
+        log.info("Getting schedules summary by date: {}", showDate);
         List<Schedule> schedules = scheduleRepository.findByShowDateAndIsActiveTrue(showDate);
         return schedules.stream()
-                .map(scheduleMapper::toResponse)
+                .map(this::convertToSummaryResponse)
                 .collect(Collectors.toList());
     }
 
@@ -432,11 +432,11 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule schedule = findScheduleById(scheduleId);
 
         if (!schedule.isScheduled()) {
-            throw new BadRequestException("Chỉ có thể hủy lịch chiếu ở trạng thái 'Đã lên lịch'");
+            throw new AppException(ErrorCode.SCHEDULE_NOT_BOOKABLE);
         }
 
         if (schedule.getBookedSeats() > 0) {
-            throw new BadRequestException("Không thể hủy lịch chiếu đã có khách đặt vé");
+            throw new AppException(ErrorCode.SCHEDULE_NOT_BOOKABLE);
         }
 
         schedule.setStatus("CANCELLED");
@@ -452,7 +452,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule schedule = findScheduleById(scheduleId);
 
         if (!schedule.isOngoing()) {
-            throw new BadRequestException("Chỉ có thể hoàn thành lịch chiếu ở trạng thái 'Đang chiếu'");
+            throw new AppException(ErrorCode.SCHEDULE_NOT_BOOKABLE);
         }
 
         schedule.setStatus("COMPLETED");
@@ -468,7 +468,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule schedule = findScheduleById(scheduleId);
 
         if (!schedule.isScheduled()) {
-            throw new BadRequestException("Chỉ có thể bắt đầu lịch chiếu ở trạng thái 'Đã lên lịch'");
+            throw new AppException(ErrorCode.SCHEDULE_NOT_BOOKABLE);
         }
 
         schedule.setStatus("ONGOING");
@@ -484,7 +484,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule schedule = findScheduleById(scheduleId);
 
         if (schedule.getBookedSeats() > 0) {
-            throw new BadRequestException("Không thể xóa lịch chiếu đã có khách đặt vé");
+            throw new AppException(ErrorCode.SCHEDULE_NOT_BOOKABLE);
         }
 
         schedule.setIsActive(false);
@@ -496,7 +496,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     public ScheduleResponse restoreSchedule(Long scheduleId) {
         log.info("Restoring schedule with ID: {}", scheduleId);
         Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy lịch chiếu với ID: " + scheduleId));
+                .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
 
         schedule.setIsActive(true);
         Schedule restoredSchedule = scheduleRepository.save(schedule);
@@ -531,11 +531,11 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule schedule = findScheduleById(scheduleId);
 
         if (!schedule.isBookable()) {
-            throw new BadRequestException("Lịch chiếu này không thể đặt vé");
+            throw new AppException(ErrorCode.SCHEDULE_NOT_BOOKABLE);
         }
 
         if (schedule.getAvailableSeats() < seatCount) {
-            throw new BadRequestException("Không đủ ghế trống");
+            throw new AppException(ErrorCode.SEAT_NOT_AVAILABLE);
         }
 
         schedule.bookSeats(seatCount);
@@ -551,7 +551,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule schedule = findScheduleById(scheduleId);
 
         if (schedule.getBookedSeats() < seatCount) {
-            throw new BadRequestException("Số ghế hủy vượt quá số ghế đã đặt");
+            throw new AppException(ErrorCode.BOOKING_SEAT_LIMIT_EXCEEDED);
         }
 
         schedule.cancelSeats(seatCount);
@@ -625,23 +625,192 @@ public class ScheduleServiceImpl implements ScheduleService {
         return createdSchedules;
     }
 
+    // New methods to match controller expectations
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ScheduleSummaryResponse> getAvailableSchedulesSummary(Pageable pageable) {
+        log.info("Getting available schedules summary with pagination");
+        List<Schedule> schedules = scheduleRepository.findAvailableSchedules(LocalDate.now());
+        
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), schedules.size());
+        List<ScheduleSummaryResponse> pageContent = schedules.subList(start, end)
+                .stream()
+                .map(this::convertToSummaryResponse)
+                .collect(Collectors.toList());
+        
+        return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, schedules.size());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ScheduleSummaryResponse> getSchedulesByMovieId(Long movieId, LocalDate startDate, LocalDate endDate) {
+        log.info("Getting schedules summary by movie ID: {} from {} to {}", movieId, startDate, endDate);
+        List<Schedule> schedules;
+        
+        if (startDate != null && endDate != null) {
+            schedules = scheduleRepository.findByMovieMovieIdAndShowDateBetweenAndIsActiveTrue(movieId, startDate, endDate);
+        } else {
+            schedules = scheduleRepository.findByMovieMovieIdAndIsActiveTrue(movieId);
+        }
+        
+        return schedules.stream()
+                .map(this::convertToSummaryResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ScheduleSummaryResponse> getSchedulesByRoomId(Long roomId, LocalDate startDate, LocalDate endDate) {
+        log.info("Getting schedules summary by room ID: {} from {} to {}", roomId, startDate, endDate);
+        List<Schedule> schedules;
+        
+        if (startDate != null && endDate != null) {
+            schedules = scheduleRepository.findByCinemaRoomCinemaRoomIdAndShowDateBetweenAndIsActiveTrue(roomId, startDate, endDate);
+        } else {
+            schedules = scheduleRepository.findByCinemaRoomCinemaRoomIdAndIsActiveTrue(roomId);
+        }
+        
+        return schedules.stream()
+                .map(this::convertToSummaryResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ScheduleSummaryResponse> getTodaySchedulesSummary() {
+        log.info("Getting today's schedules summary");
+        List<Schedule> schedules = scheduleRepository.findTodaySchedules(LocalDate.now());
+        return schedules.stream()
+                .map(this::convertToSummaryResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ScheduleSummaryResponse> searchSchedulesSummary(String keyword, Pageable pageable) {
+        log.info("Searching schedules summary with keyword: {}", keyword);
+        Page<Schedule> schedules = scheduleRepository.searchSchedules(keyword, pageable);
+        return schedules.map(this::convertToSummaryResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SeatAvailabilityResponse getAvailableSeats(Long scheduleId) {
+        log.info("Getting available seats for schedule ID: {}", scheduleId);
+        Schedule schedule = findScheduleById(scheduleId);
+        
+        // For now, return basic info - you can enhance this with actual seat layout
+        SeatAvailabilityResponse response = new SeatAvailabilityResponse();
+        response.setScheduleId(scheduleId);
+        response.setTotalSeats(schedule.getAvailableSeats() + schedule.getBookedSeats());
+        response.setBookedSeats(schedule.getBookedSeats());
+        response.setAvailableSeats(schedule.getAvailableSeats());
+        
+        // Set empty seat details as seat layout will be handled by dedicated seat service
+        response.setAvailableSeatNumbers(new ArrayList<>());
+        response.setBookedSeatNumbers(new ArrayList<>());
+        response.setSeatLayout(new ArrayList<>());
+        
+        return response;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ScheduleSummaryResponse> getUpcomingSchedules(int days, int limit) {
+        log.info("Getting upcoming schedules for next {} days, limit: {}", days, limit);
+        LocalDate endDate = LocalDate.now().plusDays(days);
+        List<Schedule> schedules = scheduleRepository.findByShowDateBetweenAndIsActiveTrue(LocalDate.now(), endDate);
+        
+        return schedules.stream()
+                .limit(limit)
+                .map(this::convertToSummaryResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PopularShowtimeResponse> getPopularShowtimes() {
+        log.info("Getting popular showtimes");
+        
+        // Group schedules by start time and calculate statistics
+        List<Schedule> allSchedules = scheduleRepository.findAll();
+        
+        Map<LocalTime, List<Schedule>> groupedByTime = allSchedules.stream()
+                .filter(Schedule::getIsActive)
+                .collect(Collectors.groupingBy(Schedule::getStartTime));
+        
+        return groupedByTime.entrySet().stream()
+                .map(entry -> {
+                    LocalTime time = entry.getKey();
+                    List<Schedule> timeSchedules = entry.getValue();
+                    
+                    long totalBookings = timeSchedules.stream()
+                            .mapToLong(Schedule::getBookedSeats)
+                            .sum();
+                    
+                    double totalRevenue = timeSchedules.stream()
+                            .mapToDouble(s -> s.getPrice() * s.getBookedSeats())
+                            .sum();
+                    
+                    double avgOccupancy = timeSchedules.stream()
+                            .mapToDouble(Schedule::getOccupancyRate)
+                            .average()
+                            .orElse(0.0);
+                    
+                    String timeCategory = getTimeCategory(time);
+                    double popularityScore = totalBookings * 0.6 + avgOccupancy * 0.4;
+                    
+                    PopularShowtimeResponse response = new PopularShowtimeResponse();
+                    response.setShowtime(time);
+                    response.setTotalBookings(totalBookings);
+                    response.setTotalRevenue((long) totalRevenue);
+                    response.setAverageOccupancyRate(avgOccupancy);
+                    response.setTimeCategory(timeCategory);
+                    response.setTotalSchedules(timeSchedules.size());
+                    response.setDisplayTime(time.toString());
+                    response.setPopularityScore(popularityScore);
+                    
+                    return response;
+                })
+                .sorted((a, b) -> Double.compare(b.getPopularityScore(), a.getPopularityScore()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ScheduleSummaryResponse> getAllSchedulesSummary(Pageable pageable) {
+        log.info("Getting all schedules summary with pagination: page={}, size={}", 
+                pageable.getPageNumber(), pageable.getPageSize());
+        Page<Schedule> schedules = scheduleRepository.findAll(pageable);
+        return schedules.map(this::convertToSummaryResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ScheduleSummaryResponse> getSchedulesByDateRangeSummary(LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        log.info("Getting schedules summary by date range: {} to {} with pagination", startDate, endDate);
+        Page<Schedule> schedules = scheduleRepository.findByShowDateBetweenAndIsActiveTrue(startDate, endDate, pageable);
+        return schedules.map(this::convertToSummaryResponse);
+    }
+
     // Helper methods
     private Schedule findScheduleById(Long scheduleId) {
         return scheduleRepository.findById(scheduleId)
                 .filter(Schedule::getIsActive)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy lịch chiếu với ID: " + scheduleId));
+                .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
     }
 
     private Movie findMovieById(Long movieId) {
         return movieRepository.findById(movieId)
                 .filter(Movie::getIsActive)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy phim với ID: " + movieId));
+                .orElseThrow(() -> new AppException(ErrorCode.MOVIE_NOT_FOUND));
     }
 
     private CinemaRoom findCinemaRoomById(Long cinemaRoomId) {
         return cinemaRoomRepository.findById(cinemaRoomId)
                 .filter(CinemaRoom::getIsActive)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy phòng chiếu với ID: " + cinemaRoomId));
+                .orElseThrow(() -> new AppException(ErrorCode.CINEMA_ROOM_NOT_FOUND));
     }
 
     private ScheduleStatistics calculateStatistics(LocalDate startDate, LocalDate endDate) {
@@ -685,5 +854,55 @@ public class ScheduleServiceImpl implements ScheduleService {
         return new ScheduleStatistics(totalSchedules, scheduledCount, ongoingCount, completedCount, 
                                     cancelledCount, totalBookedSeats, totalAvailableSeats, averageOccupancyRate,
                                     totalRevenue, schedules3D, schedulesIMAX, schedules4DX, averagePrice);
+    }
+
+    private ScheduleSummaryResponse convertToSummaryResponse(Schedule schedule) {
+        ScheduleSummaryResponse response = new ScheduleSummaryResponse();
+        
+        response.setScheduleId(schedule.getScheduleId());
+        response.setShowDate(schedule.getShowDate());
+        response.setStartTime(schedule.getStartTime());
+        response.setEndTime(schedule.getEndTime());
+        response.setPrice(schedule.getPrice());
+        response.setStatus(schedule.getStatus());
+        response.setIs3D(schedule.getIs3D());
+        response.setIsIMAX(schedule.getIsIMAX());
+        response.setIs4DX(schedule.getIs4DX());
+        response.setAvailableSeats(schedule.getAvailableSeats());
+        response.setBookedSeats(schedule.getBookedSeats());
+        
+        // Movie info
+        if (schedule.getMovie() != null) {
+            response.setMovieId(schedule.getMovie().getMovieId());
+            response.setMovieName(schedule.getMovie().getTitle());
+            response.setMoviePoster(schedule.getMovie().getPosterUrl());
+            response.setMovieDuration(schedule.getMovie().getDuration());
+            response.setMovieRating(schedule.getMovie().getRating());
+        }
+        
+        // Cinema room info
+        if (schedule.getCinemaRoom() != null) {
+            response.setCinemaRoomId(schedule.getCinemaRoom().getCinemaRoomId());
+            response.setCinemaRoomName(schedule.getCinemaRoom().getCinemaRoomName());
+            response.setRoomType(schedule.getCinemaRoom().getRoomType());
+        }
+        
+        // Computed fields
+        response.setDisplayTime(schedule.getDisplayTime());
+        response.setDisplayDate(schedule.getShowDate().toString());
+        response.setIsBookable(schedule.isBookable());
+        response.setOccupancyRate(schedule.getOccupancyRate());
+        response.setSpecialFeatures(schedule.getSpecialFeaturesText());
+        response.setPriceDisplay(String.format("%.0f.000₫", schedule.getPrice()));
+        
+        return response;
+    }
+
+    private String getTimeCategory(LocalTime time) {
+        int hour = time.getHour();
+        if (hour >= 6 && hour < 12) return "MORNING";
+        if (hour >= 12 && hour < 18) return "AFTERNOON";
+        if (hour >= 18 && hour < 22) return "EVENING";
+        return "NIGHT";
     }
 } 

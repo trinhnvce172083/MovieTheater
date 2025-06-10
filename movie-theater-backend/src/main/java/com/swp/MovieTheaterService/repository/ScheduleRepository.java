@@ -27,10 +27,12 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     // Find schedules by movie
     List<Schedule> findByMovieMovieIdAndIsActiveTrue(Long movieId);
     Page<Schedule> findByMovieMovieIdAndIsActiveTrue(Long movieId, Pageable pageable);
+    List<Schedule> findByMovieMovieIdAndShowDateBetweenAndIsActiveTrue(Long movieId, LocalDate startDate, LocalDate endDate);
     
     // Find schedules by cinema room
     List<Schedule> findByCinemaRoomCinemaRoomIdAndIsActiveTrue(Long cinemaRoomId);
     Page<Schedule> findByCinemaRoomCinemaRoomIdAndIsActiveTrue(Long cinemaRoomId, Pageable pageable);
+    List<Schedule> findByCinemaRoomCinemaRoomIdAndShowDateBetweenAndIsActiveTrue(Long roomId, LocalDate startDate, LocalDate endDate);
     
     // Find schedules by date
     List<Schedule> findByShowDateAndIsActiveTrue(LocalDate showDate);
@@ -115,7 +117,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     
     // Search schedules
     @Query("SELECT s FROM Schedule s WHERE s.isActive = true AND " +
-           "(LOWER(s.movie.movieName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "(LOWER(s.movie.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(s.cinemaRoom.cinemaRoomName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(s.status) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            "ORDER BY s.showDate, s.startTime")

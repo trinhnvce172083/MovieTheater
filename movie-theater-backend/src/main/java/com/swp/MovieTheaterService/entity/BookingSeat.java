@@ -41,6 +41,12 @@ public class BookingSeat extends BaseEntity {
     @Column(name = "seat_number", length = 10)
     private String seatNumber; // Copy from seat for historical record
 
+    @Column(name = "status", length = 20)
+    private String status = "BOOKED"; // BOOKED, RESERVED, CANCELLED
+
+    @Column(name = "seat_id_reference") 
+    private Long seatId; // Reference to seat ID for direct access
+
     @Column(name = "price", precision = 10, scale = 2)
     private BigDecimal price;
 

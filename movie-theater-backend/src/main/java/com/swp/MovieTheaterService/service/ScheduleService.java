@@ -38,6 +38,11 @@ public interface ScheduleService {
     Page<ScheduleResponse> getAllSchedules(Pageable pageable);
 
     /**
+     * Get all schedules summary with pagination
+     */
+    Page<ScheduleSummaryResponse> getAllSchedulesSummary(Pageable pageable);
+
+    /**
      * Get schedules by movie
      */
     List<ScheduleResponse> getSchedulesByMovie(Long movieId);
@@ -50,9 +55,8 @@ public interface ScheduleService {
     Page<ScheduleResponse> getSchedulesByCinemaRoom(Long cinemaRoomId, Pageable pageable);
 
     /**
-     * Get schedules by date
+     * Get schedules by date (for internal use with ScheduleResponse)
      */
-    List<ScheduleResponse> getSchedulesByDate(LocalDate showDate);
     Page<ScheduleResponse> getSchedulesByDate(LocalDate showDate, Pageable pageable);
 
     /**
@@ -60,6 +64,11 @@ public interface ScheduleService {
      */
     List<ScheduleResponse> getSchedulesByDateRange(LocalDate startDate, LocalDate endDate);
     Page<ScheduleResponse> getSchedulesByDateRange(LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    /**
+     * Get schedules by date range summary
+     */
+    Page<ScheduleSummaryResponse> getSchedulesByDateRangeSummary(LocalDate startDate, LocalDate endDate, Pageable pageable);
 
     /**
      * Get schedules by status
@@ -198,6 +207,51 @@ public interface ScheduleService {
      * Bulk create schedules for a movie
      */
     List<ScheduleResponse> bulkCreateSchedules(BulkScheduleCreateRequest request);
+
+    /**
+     * Get available schedules summary
+     */
+    Page<ScheduleSummaryResponse> getAvailableSchedulesSummary(Pageable pageable);
+
+    /**
+     * Get schedules by movie with date range
+     */
+    List<ScheduleSummaryResponse> getSchedulesByMovieId(Long movieId, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * Get schedules by room with date range
+     */
+    List<ScheduleSummaryResponse> getSchedulesByRoomId(Long roomId, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * Get today's schedules summary
+     */
+    List<ScheduleSummaryResponse> getTodaySchedulesSummary();
+
+    /**
+     * Search schedules summary
+     */
+    Page<ScheduleSummaryResponse> searchSchedulesSummary(String keyword, Pageable pageable);
+
+    /**
+     * Get available seats for schedule
+     */
+    SeatAvailabilityResponse getAvailableSeats(Long scheduleId);
+
+    /**
+     * Get upcoming schedules with limits
+     */
+    List<ScheduleSummaryResponse> getUpcomingSchedules(int page, int size);
+
+    /**
+     * Get popular showtimes
+     */
+    List<PopularShowtimeResponse> getPopularShowtimes();
+
+    /**
+     * Get schedules by date summary (for API responses with ScheduleSummaryResponse)  
+     */
+    List<ScheduleSummaryResponse> getSchedulesByDateSummary(LocalDate showDate);
 
     /**
      * Inner class for schedule statistics

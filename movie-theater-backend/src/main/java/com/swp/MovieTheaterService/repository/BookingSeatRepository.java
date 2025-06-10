@@ -21,12 +21,12 @@ public interface BookingSeatRepository extends JpaRepository<BookingSeat, Long> 
     /**
      * Find booking seats by booking ID
      */
-    List<BookingSeat> findByBookingId(Long bookingId);
+    List<BookingSeat> findByBookingBookingId(Long bookingId);
     
     /**
      * Find booking seats by seat ID
      */
-    List<BookingSeat> findBySeatId(Long seatId);
+    List<BookingSeat> findBySeatSeatId(Long seatId);
     
     /**
      * Find booking seats by schedule ID
@@ -41,7 +41,7 @@ public interface BookingSeatRepository extends JpaRepository<BookingSeat, Long> 
      */
     @Query("SELECT bs FROM BookingSeat bs " +
            "JOIN bs.booking b " +
-           "WHERE b.schedule.id = :scheduleId AND b.status = :status")
+           "WHERE b.schedule.id = :scheduleId AND b.bookingStatus = :status")
     List<BookingSeat> findByScheduleIdAndBookingStatus(@Param("scheduleId") Long scheduleId, 
                                                        @Param("status") BookingStatus status);
     
@@ -51,7 +51,7 @@ public interface BookingSeatRepository extends JpaRepository<BookingSeat, Long> 
     @Query("SELECT bs FROM BookingSeat bs " +
            "JOIN bs.booking b " +
            "WHERE b.schedule.id = :scheduleId AND " +
-           "b.status IN ('CONFIRMED', 'PAID')")
+           "b.bookingStatus IN ('CONFIRMED', 'PAID')")
     List<BookingSeat> findOccupiedSeatsBySchedule(@Param("scheduleId") Long scheduleId);
     
     /**
@@ -60,7 +60,7 @@ public interface BookingSeatRepository extends JpaRepository<BookingSeat, Long> 
     @Query("SELECT COUNT(bs) > 0 FROM BookingSeat bs " +
            "JOIN bs.booking b " +
            "WHERE b.schedule.id = :scheduleId AND bs.seat.id = :seatId AND " +
-           "b.status IN ('CONFIRMED', 'PAID')")
+           "b.bookingStatus IN ('CONFIRMED', 'PAID')")
     boolean isSeatOccupied(@Param("scheduleId") Long scheduleId, @Param("seatId") Long seatId);
     
     /**
@@ -69,21 +69,21 @@ public interface BookingSeatRepository extends JpaRepository<BookingSeat, Long> 
     @Query("SELECT COUNT(bs) FROM BookingSeat bs " +
            "JOIN bs.booking b " +
            "WHERE b.schedule.id = :scheduleId AND " +
-           "b.status IN ('CONFIRMED', 'PAID')")
+           "b.bookingStatus IN ('CONFIRMED', 'PAID')")
     long countOccupiedSeatsBySchedule(@Param("scheduleId") Long scheduleId);
     
     /**
      * Delete booking seats by booking ID
      */
-    void deleteByBookingId(Long bookingId);
+    void deleteByBookingBookingId(Long bookingId);
 
-    List<BookingSeat> findByBookingBookingIdAndIsActiveTrue(Long bookingId);
+    List<BookingSeat> findByBookingBookingIdAndActiveTrue(Long bookingId);
     
     @Query("SELECT bs.seat.seatId FROM BookingSeat bs " +
            "JOIN bs.booking b " +
            "JOIN b.schedule s " +
            "WHERE s.scheduleId = :scheduleId " +
-           "AND b.active = true " +
+           "AND b.isActive = true " +
            "AND bs.active = true")
     List<Long> getBookedSeatIdsForSchedule(@Param("scheduleId") Long scheduleId);
 } 

@@ -32,7 +32,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     List<Movie> findByIsFeaturedTrueAndIsActiveTrue();
     
     // Find movies by genre
-    List<Movie> findByGenreContainingIgnoreCaseAndIsActiveTrue(String genre);
+    List<Movie> findByGenresContainingIgnoreCaseAndIsActiveTrue(String genres);
     
     // Find movies by title (search)
     @Query("SELECT m FROM Movie m WHERE m.isActive = true AND " +
@@ -59,7 +59,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     Page<Movie> findByStatusAndIsActiveTrue(String status, Pageable pageable);
     
     // Find movies by genre with pagination
-    Page<Movie> findByGenreContainingIgnoreCaseAndIsActiveTrue(String genre, Pageable pageable);
+    Page<Movie> findByGenresContainingIgnoreCaseAndIsActiveTrue(String genres, Pageable pageable);
     
     // Check if movie title exists
     boolean existsByTitleIgnoreCaseAndIsActiveTrue(String title);

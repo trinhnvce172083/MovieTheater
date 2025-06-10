@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalTime;
+
 /**
  * Popular Showtime Response DTO
  * Data transfer object for popular showtime statistics
@@ -16,7 +18,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PopularShowtimeResponse {
 
-    private String time;
-    private Integer bookingCount;
-    private Double percentage;
+    private LocalTime showtime;
+    private Long totalBookings;
+    private Long totalRevenue;
+    private Double averageOccupancyRate;
+    private String timeCategory; // MORNING, AFTERNOON, EVENING, NIGHT
+    private Integer totalSchedules;
+    private String displayTime;
+    private Double popularityScore;
 } 

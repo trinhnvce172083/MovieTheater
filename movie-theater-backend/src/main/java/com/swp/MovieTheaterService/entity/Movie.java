@@ -139,4 +139,14 @@ public class Movie extends BaseEntity {
     public String getPoster() {
         return posterUrl;
     }
+
+    // Compatibility method for getGenre() calls
+    public String getGenre() {
+        return genres;
+    }
+
+    // Compatibility method for setGenre() calls
+    public void setGenre(String genre) {
+        this.genres = genre;
+    }
 } 

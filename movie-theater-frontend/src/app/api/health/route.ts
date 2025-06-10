@@ -1,25 +1,29 @@
 import { NextResponse } from 'next/server';
 
+/**
+ * Health check endpoint cho Docker
+ * GET /api/health
+ */
 export async function GET() {
     try {
-        // Kiểm tra trạng thái ứng dụng
-        const healthCheck = {
-            status: 'ok',
+        const healthData = {
+            status: 'healthy',
             timestamp: new Date().toISOString(),
-            uptime: process.uptime(),
             service: 'movie-theater-frontend',
-            version: process.env.npm_package_version || '1.0.0',
+            version: '1.0.0',
+            environment: process.env.NODE_ENV || 'development',
+            uptime: process.uptime(),
         };
 
-        return NextResponse.json(healthCheck, { status: 200 });
+        return NextResponse.json(healthData, { status: 200 });
     } catch (error) {
-        return NextResponse.json(
-            {
-                status: 'error',
-                message: 'Health check failed',
-                timestamp: new Date().toISOString()
-            },
-            { status: 503 }
-        );
+        const errorData = {
+            status: 'unhealthy',
+            timestamp: new Date().toISOString(),
+            service: 'movie-theater-frontend',
+            error: error instanceof Error ? error.message : 'Unknown error',
+        };
+
+        return NextResponse.json(errorData, { status: 503 });
     }
 } 

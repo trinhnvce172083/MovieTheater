@@ -129,4 +129,11 @@ public class Seat extends BaseEntity {
     public Integer getColumnNumber() {
         return seatColumn;
     }
+
+    // Get seat price based on default pricing and seat multiplier
+    public Double getSeatPrice() {
+        // Default base price for standard seat
+        double basePrice = 100000.0; // 100,000 VND base price
+        return basePrice * priceMultiplier;
+    }
 } 

@@ -1,6 +1,8 @@
 package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.movie.MovieCreateRequest;
+import com.swp.MovieTheaterService.dto.movie.MovieFilterRequest;
+import com.swp.MovieTheaterService.dto.movie.MovieListResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieSummaryResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieUpdateRequest;
@@ -38,6 +40,11 @@ public interface MovieService {
      * Get all active movies with pagination
      */
     Page<MovieSummaryResponse> getAllMovies(Pageable pageable);
+
+    /**
+     * Get movies with advanced filtering and pagination
+     */
+    MovieListResponse getMoviesWithFilter(MovieFilterRequest filterRequest);
 
     /**
      * Get movies by status

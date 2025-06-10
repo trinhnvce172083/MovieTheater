@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Enable standalone output for Docker
+  // Enable standalone output cho Docker tối ưu
   output: 'standalone',
 
   // Environment variables cho Docker
@@ -10,10 +10,10 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   },
 
-  // Optimizations cho production
-  experimental: {
-    optimizeCss: true,
-  },
+  // Tắt experimental features để tránh build error
+  // experimental: {
+  //   optimizeCss: true,
+  // },
 
   // Image domains nếu cần thiết
   images: {

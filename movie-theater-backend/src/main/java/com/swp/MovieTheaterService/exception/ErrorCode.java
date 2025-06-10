@@ -1,0 +1,154 @@
+package com.swp.MovieTheaterService.exception;
+
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+
+/**
+ * Error Code Enumeration for Movie Theater Management System
+ * Professional error handling with specific codes and HTTP status
+ * 
+ * @author Dũng_Solo
+ * @version 1.0.0
+ */
+@AllArgsConstructor
+@NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@Getter
+public enum ErrorCode {
+    
+    // ==================== GENERAL ERRORS (1000-1099) ====================
+    UNCATEGORIZED_EXCEPTION(1000, "Lỗi hệ thống không xác định", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_KEY(1001, "Khóa thông báo không hợp lệ", HttpStatus.BAD_REQUEST),
+    VALIDATION_ERROR(1002, "Dữ liệu không hợp lệ", HttpStatus.BAD_REQUEST),
+    RESOURCE_NOT_FOUND(1003, "Tài nguyên không tìm thấy", HttpStatus.NOT_FOUND),
+    ACCESS_DENIED(1004, "Truy cập bị từ chối", HttpStatus.FORBIDDEN),
+    
+    // ==================== AUTHENTICATION & AUTHORIZATION (1100-1199) ====================
+    UNAUTHENTICATED(1100, "Chưa xác thực", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED(1101, "Không có quyền truy cập", HttpStatus.FORBIDDEN),
+    INVALID_CREDENTIALS(1102, "Thông tin đăng nhập không đúng", HttpStatus.UNAUTHORIZED),
+    TOKEN_EXPIRED(1103, "Token đã hết hạn", HttpStatus.UNAUTHORIZED),
+    TOKEN_INVALID(1104, "Token không hợp lệ", HttpStatus.UNAUTHORIZED),
+    ACCOUNT_LOCKED(1105, "Tài khoản đã bị khóa", HttpStatus.FORBIDDEN),
+    ACCOUNT_DISABLED(1106, "Tài khoản đã bị vô hiệu hóa", HttpStatus.FORBIDDEN),
+    EMAIL_NOT_VERIFIED(1107, "Email chưa được xác thực", HttpStatus.FORBIDDEN),
+    
+    // ==================== USER MANAGEMENT (1200-1299) ====================
+    USER_NOT_FOUND(1200, "Người dùng không tồn tại", HttpStatus.NOT_FOUND),
+    USER_ALREADY_EXISTS(1201, "Người dùng đã tồn tại", HttpStatus.CONFLICT),
+    USERNAME_INVALID(1202, "Username phải có ít nhất {min} ký tự", HttpStatus.BAD_REQUEST),
+    USERNAME_ALREADY_EXISTS(1203, "Username đã được sử dụng", HttpStatus.CONFLICT),
+    EMAIL_INVALID(1204, "Email không đúng định dạng", HttpStatus.BAD_REQUEST),
+    EMAIL_ALREADY_EXISTS(1205, "Email đã được sử dụng", HttpStatus.CONFLICT),
+    PASSWORD_INVALID(1206, "Mật khẩu phải có ít nhất {min} ký tự", HttpStatus.BAD_REQUEST),
+    PASSWORD_NOT_MATCH(1207, "Mật khẩu xác nhận không khớp", HttpStatus.BAD_REQUEST),
+    PHONE_INVALID(1208, "Số điện thoại không hợp lệ", HttpStatus.BAD_REQUEST),
+    PHONE_ALREADY_EXISTS(1209, "Số điện thoại đã được sử dụng", HttpStatus.CONFLICT),
+    AGE_INVALID(1210, "Tuổi phải từ {min} đến {max}", HttpStatus.BAD_REQUEST),
+    FULLNAME_INVALID(1211, "Tên đầy đủ phải từ {min} đến {max} ký tự", HttpStatus.BAD_REQUEST),
+    TERMS_NOT_AGREED(1212, "Bạn phải đồng ý với điều khoản sử dụng", HttpStatus.BAD_REQUEST),
+    
+    // ==================== MOVIE MANAGEMENT (1300-1399) ====================
+    MOVIE_NOT_FOUND(1300, "Phim không tồn tại", HttpStatus.NOT_FOUND),
+    MOVIE_ALREADY_EXISTS(1301, "Phim đã tồn tại", HttpStatus.CONFLICT),
+    MOVIE_TITLE_INVALID(1302, "Tên phim không hợp lệ", HttpStatus.BAD_REQUEST),
+    MOVIE_DURATION_INVALID(1303, "Thời lượng phim không hợp lệ", HttpStatus.BAD_REQUEST),
+    MOVIE_RATING_INVALID(1304, "Đánh giá phim không hợp lệ", HttpStatus.BAD_REQUEST),
+    MOVIE_STATUS_INVALID(1305, "Trạng thái phim không hợp lệ", HttpStatus.BAD_REQUEST),
+    MOVIE_RELEASE_DATE_INVALID(1306, "Ngày phát hành không hợp lệ", HttpStatus.BAD_REQUEST),
+    
+    // ==================== CINEMA & ROOM MANAGEMENT (1400-1499) ====================
+    CINEMA_ROOM_NOT_FOUND(1400, "Phòng chiếu không tồn tại", HttpStatus.NOT_FOUND),
+    CINEMA_ROOM_ALREADY_EXISTS(1401, "Phòng chiếu đã tồn tại", HttpStatus.CONFLICT),
+    CINEMA_ROOM_CAPACITY_INVALID(1402, "Sức chứa phòng chiếu không hợp lệ", HttpStatus.BAD_REQUEST),
+    CINEMA_ROOM_IN_USE(1403, "Phòng chiếu đang được sử dụng", HttpStatus.CONFLICT),
+    SEAT_NOT_FOUND(1404, "Ghế không tồn tại", HttpStatus.NOT_FOUND),
+    SEAT_ALREADY_BOOKED(1405, "Ghế đã được đặt", HttpStatus.CONFLICT),
+    SEAT_NOT_AVAILABLE(1406, "Ghế không khả dụng", HttpStatus.CONFLICT),
+    
+    // ==================== SCHEDULE MANAGEMENT (1500-1599) ====================
+    SCHEDULE_NOT_FOUND(1500, "Lịch chiếu không tồn tại", HttpStatus.NOT_FOUND),
+    SCHEDULE_ALREADY_EXISTS(1501, "Lịch chiếu đã tồn tại", HttpStatus.CONFLICT),
+    SCHEDULE_TIME_INVALID(1502, "Thời gian lịch chiếu không hợp lệ", HttpStatus.BAD_REQUEST),
+    SCHEDULE_ROOM_OCCUPIED(1503, "Phòng chiếu đã có lịch vào thời gian này", HttpStatus.CONFLICT),
+    SCHEDULE_PAST_DATE(1504, "Không thể tạo lịch chiếu trong quá khứ", HttpStatus.BAD_REQUEST),
+    SCHEDULE_NOT_BOOKABLE(1505, "Lịch chiếu này không thể đặt vé", HttpStatus.BAD_REQUEST),
+    
+    // ==================== BOOKING MANAGEMENT (1600-1699) ====================
+    BOOKING_NOT_FOUND(1600, "Đặt vé không tồn tại", HttpStatus.NOT_FOUND),
+    BOOKING_ALREADY_EXISTS(1601, "Đặt vé đã tồn tại", HttpStatus.CONFLICT),
+    BOOKING_SEAT_LIMIT_EXCEEDED(1602, "Số lượng ghế vượt quá giới hạn cho phép", HttpStatus.BAD_REQUEST),
+    BOOKING_INVALID_CUSTOMER_INFO(1603, "Thông tin khách hàng không hợp lệ", HttpStatus.BAD_REQUEST),
+    BOOKING_PAYMENT_REQUIRED(1604, "Yêu cầu thanh toán để hoàn tất đặt vé", HttpStatus.BAD_REQUEST),
+    BOOKING_CANCELLED(1605, "Đặt vé đã bị hủy", HttpStatus.CONFLICT),
+    BOOKING_EXPIRED(1606, "Đặt vé đã hết hạn", HttpStatus.CONFLICT),
+    BOOKING_SESSION_EXPIRED(1607, "Phiên đặt vé đã hết hạn", HttpStatus.CONFLICT),
+    
+    // ==================== PAYMENT MANAGEMENT (1700-1799) ====================
+    PAYMENT_NOT_FOUND(1700, "Thanh toán không tồn tại", HttpStatus.NOT_FOUND),
+    PAYMENT_FAILED(1701, "Thanh toán thất bại", HttpStatus.BAD_REQUEST),
+    PAYMENT_AMOUNT_INVALID(1702, "Số tiền thanh toán không hợp lệ", HttpStatus.BAD_REQUEST),
+    PAYMENT_METHOD_INVALID(1703, "Phương thức thanh toán không hợp lệ", HttpStatus.BAD_REQUEST),
+    PAYMENT_ALREADY_PROCESSED(1704, "Thanh toán đã được xử lý", HttpStatus.CONFLICT),
+    PAYMENT_REFUND_FAILED(1705, "Hoàn tiền thất bại", HttpStatus.BAD_REQUEST),
+    PAYMENT_INSUFFICIENT_BALANCE(1706, "Số dư không đủ", HttpStatus.BAD_REQUEST),
+    
+    // ==================== PROMOTION MANAGEMENT (1800-1899) ====================
+    PROMOTION_NOT_FOUND(1800, "Khuyến mãi không tồn tại", HttpStatus.NOT_FOUND),
+    PROMOTION_EXPIRED(1801, "Khuyến mãi đã hết hạn", HttpStatus.BAD_REQUEST),
+    PROMOTION_NOT_APPLICABLE(1802, "Khuyến mãi không áp dụng được", HttpStatus.BAD_REQUEST),
+    PROMOTION_USAGE_LIMIT_EXCEEDED(1803, "Đã vượt quá giới hạn sử dụng khuyến mãi", HttpStatus.BAD_REQUEST),
+    PROMOTION_MINIMUM_AMOUNT_NOT_MET(1804, "Chưa đạt số tiền tối thiểu để sử dụng khuyến mãi", HttpStatus.BAD_REQUEST),
+    
+    // ==================== RATE LIMITING (1900-1999) ====================
+    RATE_LIMIT_EXCEEDED(1900, "Quá nhiều yêu cầu, vui lòng thử lại sau", HttpStatus.TOO_MANY_REQUESTS),
+    REGISTRATION_RATE_LIMIT(1901, "Quá nhiều yêu cầu đăng ký từ IP này", HttpStatus.TOO_MANY_REQUESTS),
+    LOGIN_RATE_LIMIT(1902, "Quá nhiều yêu cầu đăng nhập từ IP này", HttpStatus.TOO_MANY_REQUESTS),
+    EMAIL_RATE_LIMIT(1903, "Quá nhiều yêu cầu gửi email từ địa chỉ này", HttpStatus.TOO_MANY_REQUESTS),
+    
+    // ==================== EMPLOYEE MANAGEMENT (2000-2099) ====================
+    EMPLOYEE_NOT_FOUND(2000, "Nhân viên không tồn tại", HttpStatus.NOT_FOUND),
+    EMPLOYEE_ALREADY_EXISTS(2001, "Nhân viên đã tồn tại", HttpStatus.CONFLICT),
+    EMPLOYEE_CODE_INVALID(2002, "Mã nhân viên không hợp lệ", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_ROLE_INVALID(2003, "Vai trò nhân viên không hợp lệ", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_DEPARTMENT_INVALID(2004, "Phòng ban nhân viên không hợp lệ", HttpStatus.BAD_REQUEST),
+    
+    // ==================== FILE & MEDIA (2100-2199) ====================
+    FILE_UPLOAD_FAILED(2100, "Tải tệp lên thất bại", HttpStatus.BAD_REQUEST),
+    FILE_TYPE_NOT_SUPPORTED(2101, "Loại tệp không được hỗ trợ", HttpStatus.BAD_REQUEST),
+    FILE_SIZE_EXCEEDED(2102, "Kích thước tệp vượt quá giới hạn", HttpStatus.BAD_REQUEST),
+    IMAGE_PROCESSING_FAILED(2103, "Xử lý hình ảnh thất bại", HttpStatus.BAD_REQUEST),
+    
+    // ==================== VALIDATION ERRORS (2200-2299) ====================
+    FIELD_REQUIRED(2200, "Trường này không được để trống", HttpStatus.BAD_REQUEST),
+    FIELD_TOO_SHORT(2201, "Trường này quá ngắn (tối thiểu {min} ký tự)", HttpStatus.BAD_REQUEST),
+    FIELD_TOO_LONG(2202, "Trường này quá dài (tối đa {max} ký tự)", HttpStatus.BAD_REQUEST),
+    FIELD_INVALID_FORMAT(2203, "Định dạng trường không hợp lệ", HttpStatus.BAD_REQUEST),
+    DATE_INVALID(2204, "Ngày tháng không hợp lệ", HttpStatus.BAD_REQUEST),
+    DATE_IN_PAST(2205, "Ngày tháng phải trong tương lai", HttpStatus.BAD_REQUEST),
+    NUMBER_OUT_OF_RANGE(2206, "Số nằm ngoài phạm vi cho phép", HttpStatus.BAD_REQUEST);
+
+    int code;
+    String message;
+    HttpStatusCode httpStatusCode;
+    
+    /**
+     * Format error message with parameters
+     */
+    public String formatMessage(Object... params) {
+        String formattedMessage = this.message;
+        for (int i = 0; i < params.length; i++) {
+            formattedMessage = formattedMessage.replace("{" + i + "}", params[i].toString());
+        }
+        // Handle named parameters
+        formattedMessage = formattedMessage.replace("{min}", params.length > 0 ? params[0].toString() : "")
+                                         .replace("{max}", params.length > 1 ? params[1].toString() : "")
+                                         .replace("{value}", params.length > 0 ? params[0].toString() : "");
+        return formattedMessage;
+    }
+} 

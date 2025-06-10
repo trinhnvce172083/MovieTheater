@@ -115,8 +115,11 @@ public class Booking extends BaseEntity {
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<BookingSeat> bookingSeats;
 
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<BookingConcession> bookingConcessions;
+
     @Column(name = "is_active")
-    private boolean active = true;
+    private boolean isActive = true;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -245,10 +248,18 @@ public class Booking extends BaseEntity {
     }
 
     public boolean getIsActive() {
-        return active;
+        return isActive;
+    }
+
+    public boolean getActive() {
+        return isActive;
     }
 
     public void setIsActive(boolean isActive) {
-        this.active = isActive;
+        this.isActive = isActive;
+    }
+
+    public void setActive(boolean active) {
+        this.isActive = active;
     }
 } 

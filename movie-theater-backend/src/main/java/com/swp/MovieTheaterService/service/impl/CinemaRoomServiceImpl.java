@@ -3,10 +3,10 @@ package com.swp.MovieTheaterService.service.impl;
 import com.swp.MovieTheaterService.dto.cinema.*;
 import com.swp.MovieTheaterService.entity.CinemaRoom;
 import com.swp.MovieTheaterService.entity.Seat;
+import com.swp.MovieTheaterService.enums.RoomType;
 import com.swp.MovieTheaterService.enums.SeatStatus;
-import com.swp.MovieTheaterService.exception.BadRequestException;
-import com.swp.MovieTheaterService.exception.ConflictException;
-import com.swp.MovieTheaterService.exception.NotFoundException;
+import com.swp.MovieTheaterService.exception.AppException;
+import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.mapper.CinemaRoomMapper;
 import com.swp.MovieTheaterService.mapper.SeatMapper;
 import com.swp.MovieTheaterService.repository.CinemaRoomRepository;
@@ -50,12 +50,12 @@ public class CinemaRoomServiceImpl implements CinemaRoomService {
 
         // Validate seat quantity
         if (!request.isSeatQuantityValid()) {
-            throw new BadRequestException("Số lượng ghế không khớp với kích thước phòng (hàng x cột)");
+            throw new AppException(ErrorCode.CINEMA_ROOM_CAPACITY_INVALID);
         }
 
         // Check if cinema room name already exists
         if (cinemaRoomRepository.existsByCinemaRoomNameIgnoreCaseAndIsActiveTrue(request.getCinemaRoomName())) {
-            throw new ConflictException("Phòng chiếu với tên '" + request.getCinemaRoomName() + "' đã tồn tại");
+            throw new AppException(ErrorCode.CINEMA_ROOM_ALREADY_EXISTS);
         }
 
         // Convert DTO to entity
@@ -81,7 +81,7 @@ public class CinemaRoomServiceImpl implements CinemaRoomService {
         if (request.getCinemaRoomName() != null && 
             !request.getCinemaRoomName().equalsIgnoreCase(cinemaRoom.getCinemaRoomName())) {
             if (cinemaRoomRepository.existsByCinemaRoomNameIgnoreCaseAndIsActiveTrue(request.getCinemaRoomName())) {
-                throw new ConflictException("Phòng chiếu với tên '" + request.getCinemaRoomName() + "' đã tồn tại");
+                throw new AppException(ErrorCode.CINEMA_ROOM_ALREADY_EXISTS);
             }
         }
 
@@ -123,7 +123,8 @@ public class CinemaRoomServiceImpl implements CinemaRoomService {
     @Transactional(readOnly = true)
     public List<CinemaRoomResponse> getCinemaRoomsByType(String roomType) {
         log.info("Getting cinema rooms by type: {}", roomType);
-        List<CinemaRoom> cinemaRooms = cinemaRoomRepository.findByRoomTypeAndIsActiveTrue(roomType);
+        RoomType roomTypeEnum = RoomType.valueOf(roomType.toUpperCase());
+        List<CinemaRoom> cinemaRooms = cinemaRoomRepository.findByRoomTypeAndIsActiveTrue(roomTypeEnum);
         return cinemaRooms.stream()
                 .map(room -> {
                     CinemaRoomResponse response = cinemaRoomMapper.toResponse(room);
@@ -138,7 +139,8 @@ public class CinemaRoomServiceImpl implements CinemaRoomService {
     public Page<CinemaRoomResponse> getCinemaRoomsByType(String roomType, Pageable pageable) {
         log.info("Getting cinema rooms by type with pagination: type={}, page={}, size={}", 
                 roomType, pageable.getPageNumber(), pageable.getPageSize());
-        Page<CinemaRoom> cinemaRooms = cinemaRoomRepository.findByRoomTypeAndIsActiveTrue(roomType, pageable);
+        RoomType roomTypeEnum = RoomType.valueOf(roomType.toUpperCase());
+        Page<CinemaRoom> cinemaRooms = cinemaRoomRepository.findByRoomTypeAndIsActiveTrue(roomTypeEnum, pageable);
         return cinemaRooms.map(room -> {
             CinemaRoomResponse response = cinemaRoomMapper.toResponse(room);
             setSeatCounts(response, room.getCinemaRoomId());
@@ -230,7 +232,7 @@ public class CinemaRoomServiceImpl implements CinemaRoomService {
     public CinemaRoomResponse restoreCinemaRoom(Long cinemaRoomId) {
         log.info("Restoring cinema room with ID: {}", cinemaRoomId);
         CinemaRoom cinemaRoom = cinemaRoomRepository.findById(cinemaRoomId)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy phòng chiếu với ID: " + cinemaRoomId));
+                .orElseThrow(() -> new AppException(ErrorCode.CINEMA_ROOM_NOT_FOUND));
         cinemaRoom.setIsActive(true);
         CinemaRoom restoredCinemaRoom = cinemaRoomRepository.save(cinemaRoom);
         log.info("Cinema room restored successfully with ID: {}", cinemaRoomId);
@@ -254,7 +256,8 @@ public class CinemaRoomServiceImpl implements CinemaRoomService {
         Long imaxRooms = cinemaRoomRepository.countByRoomType("IMAX");
         Long fourDXRooms = cinemaRoomRepository.countByRoomType("4DX");
         
-        Long totalSeats = cinemaRoomRepository.getTotalSeatCapacity();
+        Long totalSeats = cinemaRoomRepository.getTotalSeatCapacity() != null ? 
+                cinemaRoomRepository.getTotalSeatCapacity().longValue() : 0L;
         Double averageSeats = cinemaRoomRepository.getAverageSeatCapacity();
         
         List<CinemaRoom> rooms3D = cinemaRoomRepository.findByHas3DTrueAndIsActiveTrue();
@@ -268,7 +271,7 @@ public class CinemaRoomServiceImpl implements CinemaRoomService {
                 .orElse(0.0);
 
         return new CinemaRoomStatistics(totalRooms, standardRooms, vipRooms, imaxRooms, fourDXRooms,
-                totalSeats != null ? totalSeats : 0L, averageSeats != null ? averageSeats : 0.0,
+                totalSeats, averageSeats != null ? averageSeats : 0.0,
                 (long) rooms3D.size(), (long) roomsDolbyAtmos.size(), (long) roomsRecliner.size(),
                 averagePriceMultiplier);
     }
@@ -327,7 +330,7 @@ public class CinemaRoomServiceImpl implements CinemaRoomService {
             // Check if seat position is valid
             if (seatRequest.getSeatRow() > cinemaRoom.getRows() || 
                 seatRequest.getSeatColumn() > cinemaRoom.getColumns()) {
-                throw new BadRequestException("Vị trí ghế vượt quá kích thước phòng chiếu");
+                throw new AppException(ErrorCode.CINEMA_ROOM_CAPACITY_INVALID);
             }
             
             Seat seat = new Seat();
@@ -383,7 +386,7 @@ public class CinemaRoomServiceImpl implements CinemaRoomService {
     private CinemaRoom findCinemaRoomById(Long cinemaRoomId) {
         return cinemaRoomRepository.findById(cinemaRoomId)
                 .filter(CinemaRoom::getIsActive)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy phòng chiếu với ID: " + cinemaRoomId));
+                .orElseThrow(() -> new AppException(ErrorCode.CINEMA_ROOM_NOT_FOUND));
     }
 
     private List<CinemaRoomResponse> mapToResponseList(List<CinemaRoom> cinemaRooms) {

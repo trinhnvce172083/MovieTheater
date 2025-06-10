@@ -4,45 +4,36 @@ import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.Collections;
-
-@Slf4j
+/**
+ * UserDetailsService Implementation - User Authentication
+ * Loads user details for Spring Security authentication
+ * 
+ * @author Dũng_Solo
+ * @version 1.0.0
+ */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final AccountRepository accountRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        log.debug("Loading user by email: {}", email);
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.debug("Loading user details for username: {}", username);
         
-        Account account = accountRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng với email: " + email));
+        Account account = accountRepository.findByUsername(username)
+                .orElseThrow(() -> {
+                    log.warn("User not found with username: {}", username);
+                    return new UsernameNotFoundException("Không tìm thấy người dùng với username: " + username);
+                });
 
-        return User.builder()
-                .username(account.getEmail())
-                .password(account.getPassword())
-                .authorities(getAuthorities(account))
-                .accountExpired(false)
-                .accountLocked(false)
-                .credentialsExpired(false)
-                .disabled(!account.isEmailVerified())
-                .build();
-    }
-
-    private Collection<? extends GrantedAuthority> getAuthorities(Account account) {
-        return Collections.singletonList(
-                new SimpleGrantedAuthority("ROLE_" + account.getRole().name())
-        );
+        log.debug("Successfully loaded user details for: {}", username);
+        return account;
     }
 } 

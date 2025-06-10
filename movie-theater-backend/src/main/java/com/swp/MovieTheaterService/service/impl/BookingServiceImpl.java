@@ -3,9 +3,8 @@ package com.swp.MovieTheaterService.service.impl;
 import com.swp.MovieTheaterService.dto.booking.*;
 import com.swp.MovieTheaterService.entity.*;
 import com.swp.MovieTheaterService.enums.BookingStatus;
-import com.swp.MovieTheaterService.exception.BadRequestException;
-import com.swp.MovieTheaterService.exception.ConflictException;
-import com.swp.MovieTheaterService.exception.NotFoundException;
+import com.swp.MovieTheaterService.exception.AppException;
+import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.mapper.BookingMapper;
 import com.swp.MovieTheaterService.repository.*;
 import com.swp.MovieTheaterService.service.BookingService;
@@ -65,9 +64,32 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse createGuestBooking(BookingCreateRequest request) {
         log.info("Creating guest booking for schedule ID: {}", request.getScheduleId());
 
-        // Validate guest customer information
-        if (!request.hasValidCustomerInfo()) {
-            throw new BadRequestException("Thông tin khách hàng không đầy đủ cho booking khách vãng lai");
+        // Validate guest booking information
+        if (!request.isValidGuestBooking()) {
+            log.warn("Invalid guest booking information");
+            throw new IllegalArgumentException("Thông tin khách hàng không hợp lệ cho đặt vé khách");
+        }
+
+        // Validate selected seats
+        if (request.getSeatIds() == null || request.getSeatIds().isEmpty()) {
+            log.warn("No seats selected for booking");
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất một ghế");
+        }
+
+        // Check seat availability
+        List<Long> selectedSeatIds = request.getSeatIds();
+        
+        // Validate seat count
+        if (selectedSeatIds.size() > 10) {
+            log.warn("Too many seats selected: {}", selectedSeatIds.size());
+            throw new IllegalArgumentException("Không thể đặt quá 10 ghế trong một lần");
+        }
+
+        // Check if any seat is already booked for this schedule
+        for (Long seatId : selectedSeatIds) {
+            if (!areSeatsAvailable(request.getScheduleId(), List.of(seatId))) {
+                throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED);
+            }
         }
 
         // Create booking without account
@@ -85,30 +107,39 @@ public class BookingServiceImpl implements BookingService {
         validateScheduleForBooking(schedule);
 
         // Validate seats availability
-        List<Long> seatIds = request.getSelectedSeats().stream()
-                .map(BookingCreateRequest.SeatSelectionRequest::getSeatId)
+        List<Long> seatIds = request.getSeatIds().stream()
                 .collect(Collectors.toList());
         
         if (!areSeatsAvailable(request.getScheduleId(), seatIds)) {
-            throw new ConflictException("Một hoặc nhiều ghế đã được đặt");
+            throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED);
         }
 
+        // Calculate booking amount
+        Double totalAmount = calculateBookingAmount(request.getScheduleId(), seatIds, request.getPromotionId());
+        
         // Create booking entity
         Booking booking = bookingMapper.toEntity(request);
-        booking.setSchedule(schedule);
-        booking.setAccount(account);
-
-        // Generate QR code
-        booking.setQrCode(generateQRCodeInternal());
-
+        booking.setBookingCode(generateBookingCode());
+        booking.setTotalAmount(totalAmount);
+        booking.setFinalAmount(totalAmount); // Will be adjusted if promotion applied
+        booking.setBookingStatus(BookingStatus.PENDING);
+        booking.setCreatedAt(LocalDateTime.now());
+        booking.setUpdatedAt(LocalDateTime.now());
+        
+        // Set customer information for guest booking
+        booking.setCustomerName(request.getCustomerName());
+        booking.setCustomerEmail(request.getCustomerEmail());
+        booking.setCustomerPhone(request.getCustomerPhone());
+        
         // Save booking
         Booking savedBooking = bookingRepository.save(booking);
-
+        log.info("Created booking with ID: {} and code: {}", savedBooking.getBookingId(), savedBooking.getBookingCode());
+        
         // Create booking seats
-        createBookingSeats(savedBooking, request.getSelectedSeats());
-
+        createBookingSeats(savedBooking, request.getSeatIds());
+        
         // Update schedule seat counts
-        updateScheduleSeatCounts(schedule, request.getSelectedSeats().size(), 0);
+        updateScheduleSeatCounts(schedule, request.getSeatIds().size(), 0);
 
         return bookingMapper.toResponse(savedBooking);
     }
@@ -121,7 +152,7 @@ public class BookingServiceImpl implements BookingService {
 
         // Check if booking can be updated
         if (booking.isPaid() || booking.isCompleted()) {
-            throw new BadRequestException("Không thể cập nhật booking đã thanh toán hoặc hoàn thành");
+            throw new AppException(ErrorCode.BOOKING_PAYMENT_REQUIRED);
         }
 
         // Update booking
@@ -144,8 +175,10 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public BookingResponse getBookingByCode(String bookingCode) {
         log.info("Getting booking by code: {}", bookingCode);
+        
         Booking booking = bookingRepository.findByBookingCodeAndIsActiveTrue(bookingCode)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy booking với mã: " + bookingCode));
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
+        
         return bookingMapper.toResponse(booking);
     }
 
@@ -324,7 +357,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = findBookingById(bookingId);
 
         if (!booking.isPending()) {
-            throw new BadRequestException("Chỉ có thể xác nhận booking ở trạng thái 'Chờ xử lý'");
+            throw new AppException(ErrorCode.BOOKING_PAYMENT_REQUIRED);
         }
 
         booking.setBookingStatus(BookingStatus.CONFIRMED);
@@ -343,16 +376,16 @@ public class BookingServiceImpl implements BookingService {
 
         // Find booking
         Booking booking = bookingRepository.findByBookingCodeAndIsActiveTrue(paymentRequest.getBookingCode())
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy booking với mã: " + paymentRequest.getBookingCode()));
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
 
         // Check if booking can be paid
         if (!booking.isPending() && !booking.isConfirmed()) {
-            throw new BadRequestException("Chỉ có thể thanh toán booking ở trạng thái 'Chờ xử lý' hoặc 'Đã xác nhận'");
+            throw new AppException(ErrorCode.BOOKING_PAYMENT_REQUIRED);
         }
 
         // Validate payment amount
         if (!paymentRequest.getPaidAmount().equals(booking.getFinalAmount())) {
-            throw new BadRequestException("Số tiền thanh toán không khớp với số tiền cần thanh toán");
+            throw new AppException(ErrorCode.PAYMENT_AMOUNT_INVALID);
         }
 
         // Process payment
@@ -369,14 +402,14 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = findBookingById(bookingId);
 
         if (!booking.canBeCancelled()) {
-            throw new BadRequestException("Không thể hủy booking này");
+            throw new AppException(ErrorCode.BOOKING_CANCELLED);
         }
 
         // Cancel booking
         booking.cancel(cancellationReason);
         
         // Release seats
-        List<BookingSeat> bookingSeats = bookingSeatRepository.findByBookingBookingIdAndIsActiveTrue(bookingId);
+        List<BookingSeat> bookingSeats = bookingSeatRepository.findByBookingBookingIdAndActiveTrue(bookingId);
         updateScheduleSeatCounts(booking.getSchedule(), 0, bookingSeats.size());
 
         Booking updatedBooking = bookingRepository.save(booking);
@@ -397,14 +430,14 @@ public class BookingServiceImpl implements BookingService {
         Booking booking;
         if (useQrCode) {
             booking = bookingRepository.findByQrCodeAndIsActiveTrue(qrCode)
-                    .orElseThrow(() -> new NotFoundException("Không tìm thấy booking với QR code"));
+                    .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
         } else {
             booking = bookingRepository.findByBookingCodeAndIsActiveTrue(qrCode)
-                    .orElseThrow(() -> new NotFoundException("Không tìm thấy booking với mã: " + qrCode));
+                    .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
         }
 
         if (!booking.canBeCheckedIn()) {
-            throw new BadRequestException("Không thể check-in booking này");
+            throw new AppException(ErrorCode.BOOKING_EXPIRED);
         }
 
         // Check-in booking
@@ -421,7 +454,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = findBookingById(bookingId);
 
         if (!booking.isPending() && !booking.isConfirmed()) {
-            throw new BadRequestException("Chỉ có thể áp dụng khuyến mãi cho booking chưa thanh toán");
+            throw new AppException(ErrorCode.PROMOTION_NOT_APPLICABLE);
         }
 
         // TODO: Implement promotion logic when Promotion service is available
@@ -436,7 +469,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = findBookingById(bookingId);
 
         if (!booking.isPending() && !booking.isConfirmed()) {
-            throw new BadRequestException("Chỉ có thể xóa khuyến mãi cho booking chưa thanh toán");
+            throw new AppException(ErrorCode.PROMOTION_NOT_APPLICABLE);
         }
 
         // Remove promotion
@@ -502,7 +535,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse validateQRCode(String qrCode) {
         log.info("Validating QR code: {}", qrCode);
         Booking booking = bookingRepository.findByQrCodeAndIsActiveTrue(qrCode)
-                .orElseThrow(() -> new NotFoundException("QR code không hợp lệ"));
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
         return bookingMapper.toResponse(booking);
     }
 
@@ -512,12 +545,12 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = findBookingById(bookingId);
 
         if (booking.isPaid() || booking.isCompleted()) {
-            throw new BadRequestException("Không thể xóa booking đã thanh toán hoặc hoàn thành");
+            throw new AppException(ErrorCode.BOOKING_PAYMENT_REQUIRED);
         }
 
         // Release seats if booking is confirmed
         if (booking.isConfirmed()) {
-            List<BookingSeat> bookingSeats = bookingSeatRepository.findByBookingBookingIdAndIsActiveTrue(bookingId);
+            List<BookingSeat> bookingSeats = bookingSeatRepository.findByBookingBookingIdAndActiveTrue(bookingId);
             updateScheduleSeatCounts(booking.getSchedule(), 0, bookingSeats.size());
         }
 
@@ -531,7 +564,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse restoreBooking(Long bookingId) {
         log.info("Restoring booking with ID: {}", bookingId);
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy booking với ID: " + bookingId));
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
 
         booking.setIsActive(true);
         Booking restoredBooking = bookingRepository.save(booking);
@@ -614,11 +647,11 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = findBookingById(bookingId);
 
         if (!booking.isCancelled()) {
-            throw new BadRequestException("Chỉ có thể hoàn tiền cho booking đã hủy");
+            throw new AppException(ErrorCode.PAYMENT_REFUND_FAILED);
         }
 
         if (refundAmount > booking.getFinalAmount()) {
-            throw new BadRequestException("Số tiền hoàn không được vượt quá số tiền đã thanh toán");
+            throw new AppException(ErrorCode.PAYMENT_AMOUNT_INVALID);
         }
 
         booking.setRefundAmount(refundAmount);
@@ -632,59 +665,59 @@ public class BookingServiceImpl implements BookingService {
     private Booking findBookingById(Long bookingId) {
         return bookingRepository.findById(bookingId)
                 .filter(Booking::getIsActive)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy booking với ID: " + bookingId));
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
     }
 
     private Schedule findScheduleById(Long scheduleId) {
         return scheduleRepository.findById(scheduleId)
                 .filter(Schedule::getIsActive)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy lịch chiếu với ID: " + scheduleId));
+                .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
     }
 
     private Account findAccountById(Long accountId) {
         return accountRepository.findById(accountId)
                 .filter(Account::getIsActive)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản với ID: " + accountId));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
 
     private void validateScheduleForBooking(Schedule schedule) {
         if (!schedule.isBookable()) {
-            throw new BadRequestException("Lịch chiếu này không thể đặt vé");
+            throw new AppException(ErrorCode.SCHEDULE_NOT_BOOKABLE);
         }
 
         if (schedule.getAvailableSeats() <= 0) {
-            throw new BadRequestException("Lịch chiếu đã hết ghế trống");
+            throw new AppException(ErrorCode.SEAT_NOT_AVAILABLE);
         }
     }
 
     private void validatePaymentRequest(PaymentRequest request) {
         if (request.isCardPayment() && !request.hasValidCardDetails()) {
-            throw new BadRequestException("Thông tin thẻ tín dụng không đầy đủ");
+                            throw new AppException(ErrorCode.PAYMENT_METHOD_INVALID);
         }
         
         if (request.isOnlinePayment() && !request.hasValidOnlineDetails()) {
-            throw new BadRequestException("Thông tin thanh toán online không đầy đủ");
+                            throw new AppException(ErrorCode.PAYMENT_METHOD_INVALID);
         }
         
         if (request.isWalletPayment() && !request.hasValidWalletDetails()) {
-            throw new BadRequestException("Thông tin ví điện tử không đầy đủ");
+                            throw new AppException(ErrorCode.PAYMENT_METHOD_INVALID);
         }
     }
 
-    private void createBookingSeats(Booking booking, List<BookingCreateRequest.SeatSelectionRequest> selectedSeats) {
+    private void createBookingSeats(Booking booking, List<Long> seatIds) {
         List<BookingSeat> bookingSeats = new ArrayList<>();
         
-        for (BookingCreateRequest.SeatSelectionRequest seatRequest : selectedSeats) {
-            Seat seat = seatRepository.findById(seatRequest.getSeatId())
-                    .orElseThrow(() -> new NotFoundException("Không tìm thấy ghế với ID: " + seatRequest.getSeatId()));
+        for (Long seatId : seatIds) {
+            Seat seat = seatRepository.findById(seatId)
+                    .orElseThrow(() -> new AppException(ErrorCode.SEAT_NOT_FOUND));
             
             BookingSeat bookingSeat = new BookingSeat();
             bookingSeat.setBooking(booking);
             bookingSeat.setSeat(seat);
-            bookingSeat.setSeatPrice(seatRequest.getSeatPrice());
-            bookingSeat.setSeatType(seatRequest.getSeatType() != null ? seatRequest.getSeatType() : seat.getSeatType());
+            bookingSeat.setSeatPrice(seat.getSeatPrice());
+            bookingSeat.setSeatType(seat.getSeatType());
             bookingSeat.setSeatNumber(seat.getSeatNumber());
-            bookingSeat.setIsActive(true);
+            bookingSeat.setActive(true);
             bookingSeat.setCreatedAt(LocalDateTime.now());
             bookingSeat.setUpdatedAt(LocalDateTime.now());
             
@@ -702,6 +735,34 @@ public class BookingServiceImpl implements BookingService {
 
     private String generateQRCodeInternal() {
         return "QR" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private String generateBookingCode() {
+        return "BK" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private Double calculateBookingAmount(Long scheduleId, List<Long> seatIds, Long promotionId) {
+        try {
+            Double totalAmount = 0.0;
+            
+            // Calculate total seat prices
+            for (Long seatId : seatIds) {
+                            Seat seat = seatRepository.findById(seatId)
+                    .orElseThrow(() -> new AppException(ErrorCode.SEAT_NOT_FOUND));
+                totalAmount += seat.getSeatPrice();
+            }
+            
+            // Apply promotion discount if available
+            if (promotionId != null) {
+                // TODO: Implement promotion discount logic
+                log.info("Promotion ID {} will be applied later", promotionId);
+            }
+            
+            return totalAmount;
+        } catch (Exception e) {
+            log.error("Error calculating booking amount: {}", e.getMessage());
+            return 0.0;
+        }
     }
 
     private BookingStatistics calculateStatistics(LocalDateTime startDate, LocalDateTime endDate) {

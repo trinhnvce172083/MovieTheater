@@ -39,4 +39,25 @@ public class CinemaRoomUpdateRequest {
     
     private String description;
     private Boolean isActive;
+    
+    // Compatibility methods for mapper and service calls
+    public String getCinemaRoomName() {
+        return roomName;
+    }
+    
+    public Boolean getHas3D() {
+        return false; // Default value since field not in this DTO
+    }
+    
+    public Boolean getHasDolbyAtmos() {
+        return false; // Default value since field not in this DTO
+    }
+    
+    public Boolean getHasReclinerSeats() {
+        return false; // Default value since field not in this DTO
+    }
+    
+    public Double getPriceMultiplier() {
+        return 1.0; // Default value since field not in this DTO
+    }
 } 

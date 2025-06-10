@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -126,4 +127,9 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
            "p.isActive = true AND p.promotionId != :promotionId")
     Long countByPromotionCodeAndNotId(@Param("promotionCode") String promotionCode, 
                                      @Param("promotionId") Long promotionId);
+                                     
+    // Additional methods needed by service
+    Page<Promotion> findByIsActive(Boolean isActive, Pageable pageable);
+    
+    List<Promotion> findByEndDateBefore(LocalDateTime dateTime);
 } 

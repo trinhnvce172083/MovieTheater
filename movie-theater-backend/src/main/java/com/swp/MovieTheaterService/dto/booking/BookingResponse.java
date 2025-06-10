@@ -2,127 +2,281 @@ package com.swp.MovieTheaterService.dto.booking;
 
 import com.swp.MovieTheaterService.enums.BookingStatus;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
  * Booking Response DTO
- * Data transfer object for booking responses
+ * Data Transfer Object for booking information
  * 
  * @author Dũng_Solo
  * @version 1.0.0
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookingResponse {
-
+    
     private Long bookingId;
     private String bookingCode;
     private LocalDateTime bookingDate;
+    private BookingStatus bookingStatus;
+    
+    // Amounts
     private Double totalAmount;
     private Double discountAmount;
     private Double finalAmount;
-    private BookingStatus bookingStatus;
-    private String paymentMethod;
-    private LocalDateTime paymentDate;
-    private String paymentReference;
-    private Integer seatCount;
-    private String notes;
-    private LocalDateTime cancellationDate;
-    private String cancellationReason;
     private Double refundAmount;
-    private String qrCode;
-    private Boolean isCheckedIn;
-    private LocalDateTime checkInTime;
-    private Boolean isActive;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-
+    
     // Customer information
     private String customerName;
     private String customerEmail;
     private String customerPhone;
     private Boolean isGuestBooking;
-
-    // Account information (for member bookings)
-    private Long accountId;
-    private String accountFullName;
-    private String accountEmail;
-    private String accountPhone;
-
-    // Schedule information
-    private Long scheduleId;
-    private LocalDate showDate;
-    private LocalTime startTime;
-    private LocalTime endTime;
-    private Double schedulePrice;
-    private String scheduleStatus;
-    private Boolean is3D;
-    private Boolean isIMAX;
-    private Boolean is4DX;
-
-    // Movie information
-    private Long movieId;
-    private String movieName;
-    private String moviePoster;
-    private Integer movieDuration;
-    private String movieRating;
-    private String movieGenre;
-
-    // Cinema room information
-    private Long cinemaRoomId;
-    private String cinemaRoomName;
-    private String roomType;
-    private Integer totalSeats;
-
+    
+    // Schedule and movie information
+    private ScheduleInfo schedule;
+    private MovieInfo movie;
+    private CinemaInfo cinema;
+    
+    // Seat information
+    private List<SeatInfo> seats;
+    private Integer seatCount;
+    
+    // Payment information
+    private String paymentMethod;
+    private LocalDateTime paymentDate;
+    private String paymentReference;
+    
     // Promotion information
-    private Long promotionId;
-    private String promotionName;
-    private String promotionCode;
-    private Double promotionDiscount;
-
-    // Booked seats information
-    private List<BookedSeatInfo> bookedSeats;
-
-    // Computed fields
-    private LocalDateTime showDateTime;
-    private String displayBookingDate;
-    private String displayShowDate;
-    private String displayShowTime;
-    private String statusDisplay;
-    private String paymentMethodDisplay;
+    private PromotionInfo promotion;
+    
+    // Additional information
+    private String notes;
+    private String qrCode;
+    private Boolean isCheckedIn;
+    private LocalDateTime checkInTime;
+    
+    // Cancellation information
+    private LocalDateTime cancellationDate;
+    private String cancellationReason;
+    
+    // Status flags
     private Boolean canBeCancelled;
     private Boolean canBeCheckedIn;
-    private Boolean isPaid;
-    private Boolean isCompleted;
-    private Boolean isCancelled;
-    private String totalAmountDisplay;
-    private String finalAmountDisplay;
-    private String discountPercentage;
-    private String movieDurationDisplay;
-    private String specialFeatures;
-    private Integer hoursUntilShow;
-    private Boolean isUpcoming;
-    private Boolean isPast;
-
+    private Boolean isExpired;
+    
+    // Timestamps
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    
+    // Formatted values for display
+    private String formattedBookingDate;
+    private String formattedShowDateTime;
+    private String statusDisplayName;
+    private String refundPolicy;
+    
     @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ScheduleInfo {
+        private Long scheduleId;
+        private LocalDateTime showDateTime;
+        private String formattedShowDateTime;
+        private String language;
+        private Boolean isSubtitled;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MovieInfo {
+        private Long movieId;
+        private String title;
+        private String originalTitle;
+        private Integer duration;
+        private String rating;
+        private String genres;
+        private String director;
+        private String posterUrl;
+        private String formattedDuration;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CinemaInfo {
+        private Long cinemaRoomId;
+        private String cinemaRoomName;
+        private String cinemaLocation;
+        private String address;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SeatInfo {
+        private Long seatId;
+        private String seatNumber;
+        private String seatRow;
+        private Integer seatColumn;
+        private String seatType;
+        private Double seatPrice;
+        private Boolean isVIP;
+        private Boolean isCouple;
+    }
+    
+    @Data
+    @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class BookedSeatInfo {
         private Long seatId;
         private String seatNumber;
+        private String seatRow;
+        private Integer seatColumn;
         private String seatType;
         private Double seatPrice;
-        private String seatPriceDisplay;
-        private String rowName;
-        private Integer columnNumber;
         private Boolean isVIP;
         private Boolean isCouple;
+        private String status; // BOOKED, RESERVED, AVAILABLE
+        
+        // Booking-specific information
+        private Long bookingSeatId;
+        private LocalDateTime bookedAt;
+        private String seatLabel; // Combined row + number (e.g., "A12")
+        
+        // Helper methods
+        public String getSeatLabel() {
+            if (seatRow != null && seatNumber != null) {
+                return seatRow + seatNumber;
+            }
+            return seatNumber != null ? seatNumber : "";
+        }
+        
+        public String getFormattedPrice() {
+            if (seatPrice != null) {
+                return String.format("%,.0f VND", seatPrice);
+            }
+            return "";
+        }
+        
+        public String getSeatTypeDisplay() {
+            if (seatType == null) return "Thường";
+            
+            switch (seatType.toUpperCase()) {
+                case "VIP": return "VIP";
+                case "COUPLE": return "Đôi";
+                case "PREMIUM": return "Cao cấp";
+                default: return "Thường";
+            }
+        }
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PromotionInfo {
+        private Long promotionId;
+        private String promotionCode;
+        private String promotionName;
+        private String discountType;
+        private Double discountValue;
+        private Double appliedDiscount;
+    }
+    
+    // Helper methods
+    public String getFormattedBookingDate() {
+        if (bookingDate != null) {
+            return bookingDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        }
+        return "";
+    }
+    
+    public String getFormattedShowDateTime() {
+        if (schedule != null && schedule.getShowDateTime() != null) {
+            return schedule.getShowDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        }
+        return "";
+    }
+    
+    public String getStatusDisplayName() {
+        if (bookingStatus == null) return "";
+        
+        switch (bookingStatus) {
+            case PENDING: return "Chờ thanh toán";
+            case CONFIRMED: return "Đã xác nhận";
+            case PAID: return "Đã thanh toán";
+            case COMPLETED: return "Hoàn thành";
+            case CANCELLED: return "Đã hủy";
+            default: return bookingStatus.name();
+        }
+    }
+    
+    public Double getDiscountPercentage() {
+        if (totalAmount == null || totalAmount == 0 || discountAmount == null) {
+            return 0.0;
+        }
+        return (discountAmount / totalAmount) * 100;
+    }
+    
+    public String getRefundPolicy() {
+        if (schedule == null || schedule.getShowDateTime() == null) {
+            return "Không có thông tin";
+        }
+        
+        LocalDateTime showTime = schedule.getShowDateTime();
+        LocalDateTime now = LocalDateTime.now();
+        long hoursUntilShow = java.time.Duration.between(now, showTime).toHours();
+        
+        if (hoursUntilShow >= 24) {
+            return "Hoàn tiền 100% nếu hủy trước 24h";
+        } else if (hoursUntilShow >= 2) {
+            return "Hoàn tiền 50% nếu hủy trước 2h";
+        } else {
+            return "Không hoàn tiền nếu hủy trong 2h tới";
+        }
+    }
+    
+    public Boolean getCanBeCancelled() {
+        if (bookingStatus == null || schedule == null || schedule.getShowDateTime() == null) {
+            return false;
+        }
+        
+        return (bookingStatus == BookingStatus.PENDING || 
+                bookingStatus == BookingStatus.CONFIRMED || 
+                bookingStatus == BookingStatus.PAID) && 
+               schedule.getShowDateTime().isAfter(LocalDateTime.now().plusHours(2));
+    }
+    
+    public Boolean getCanBeCheckedIn() {
+        if (bookingStatus == null || schedule == null || schedule.getShowDateTime() == null) {
+            return false;
+        }
+        
+        return bookingStatus == BookingStatus.PAID && 
+               (isCheckedIn == null || !isCheckedIn) &&
+               schedule.getShowDateTime().isAfter(LocalDateTime.now()) &&
+               schedule.getShowDateTime().isBefore(LocalDateTime.now().plusMinutes(30));
+    }
+    
+    public Boolean getIsExpired() {
+        if (schedule == null || schedule.getShowDateTime() == null) {
+            return false;
+        }
+        
+        return schedule.getShowDateTime().isBefore(LocalDateTime.now()) && 
+               (bookingStatus == BookingStatus.PENDING || bookingStatus == BookingStatus.CONFIRMED);
     }
 } 

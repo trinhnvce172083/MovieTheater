@@ -34,11 +34,11 @@ public class PromotionService {
 
     // Create promotion
     public PromotionResponse createPromotion(PromotionCreateRequest request) {
-        log.info("Creating promotion with code: {}", request.getPromotionCode());
+        log.info("Creating promotion with code: {}", request.getCode());
         
         // Validate promotion code uniqueness
-        if (promotionRepository.existsByPromotionCodeAndIsActiveTrue(request.getPromotionCode())) {
-            throw new RuntimeException("Mã khuyến mãi đã tồn tại: " + request.getPromotionCode());
+        if (promotionRepository.existsByPromotionCodeAndIsActiveTrue(request.getCode())) {
+            throw new RuntimeException("Mã khuyến mãi đã tồn tại: " + request.getCode());
         }
 
         Promotion promotion = mapToEntity(request);
@@ -206,8 +206,8 @@ public class PromotionService {
 
     private Promotion mapToEntity(PromotionCreateRequest request) {
         Promotion promotion = new Promotion();
-        promotion.setPromotionCode(request.getPromotionCode());
-        promotion.setPromotionName(request.getPromotionName());
+        promotion.setPromotionCode(request.getCode());
+        promotion.setPromotionName(request.getName());
         promotion.setDescription(request.getDescription());
         promotion.setDiscountType(request.getDiscountType());
         promotion.setDiscountValue(request.getDiscountValue());
@@ -356,8 +356,8 @@ public class PromotionService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi với ID: " + id));
         
         return new Object() {
-            public Long usageCount = promotion.getCurrentUsageCount();
-            public Long maxUsage = promotion.getMaxUsageCount();
+            public Integer usageCount = promotion.getCurrentUsageCount();
+            public Integer maxUsage = promotion.getMaxUsageCount();
         };
     }
 

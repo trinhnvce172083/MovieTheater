@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎬 Movie Theater Frontend - Skeleton Structure
 
-## Getting Started
+## 📁 Cấu trúc thư mục sẵn sàng để phát triển
 
-First, run the development server:
+Thư mục này chứa cấu trúc skeleton hoàn chỉnh cho Next.js frontend, sẵn sàng để bắt đầu phát triển từ đầu.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### 📋 Cấu trúc thư mục:
+
+#### Root Configuration Files:
+- `package.json` - Dependencies và scripts
+- `package-lock.json` - Lock file cho dependencies  
+- `next.config.ts` - Next.js configuration
+- `tsconfig.json` - TypeScript configuration
+- `tailwind.config.ts` - Tailwind CSS configuration
+- `postcss.config.mjs` - PostCSS configuration
+- `eslint.config.mjs` - ESLint configuration
+- `components.json` - ShadCN/UI components configuration
+- `next-env.d.ts` - Next.js TypeScript declarations
+- `.gitignore` - Git ignore rules
+- `.dockerignore` - Docker ignore rules
+- `Dockerfile` - Docker container configuration
+
+#### Source Code Structure:
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── layout.tsx         # Root layout
+│   ├── page.tsx           # Home page
+│   └── globals.css        # Global styles
+├── components/             # React components
+│   └── index.ts           # Components export
+├── hooks/                  # Custom React hooks
+│   └── index.ts           # Hooks export
+├── contexts/              # React Context providers
+│   └── index.ts           # Contexts export
+├── services/              # API calls & business logic
+│   └── index.ts           # Services export
+├── store/                 # Global state management
+│   └── index.ts           # Store export
+├── types/                 # TypeScript type definitions
+│   └── index.ts           # Types export
+├── utils/                 # Utility functions
+│   └── index.ts           # Utils export
+├── config/                # Configuration files
+│   └── environment.ts     # Environment variables
+└── lib/                   # Third-party libraries setup
+    └── utils.ts           # Utility helpers (cn, etc.)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+#### Public Directory:
+```
+public/
+└── .gitkeep              # Placeholder for static assets
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 🚀 Bắt đầu phát triển:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Cài đặt dependencies
+npm install
 
-## Learn More
+# Chạy development server
+npm run dev
 
-To learn more about Next.js, take a look at the following resources:
+# Mở http://localhost:3000
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 📝 Cách sử dụng:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Components**: Tạo React components trong `src/components/`
+2. **Pages**: Sử dụng App Router trong `src/app/`
+3. **API Integration**: Thêm API calls vào `src/services/`
+4. **State Management**: Setup Redux/Zustand trong `src/store/`
+5. **Custom Hooks**: Tạo reusable hooks trong `src/hooks/`
+6. **Type Definitions**: Định nghĩa types trong `src/types/`
+7. **Utilities**: Thêm helper functions vào `src/utils/`
 
-## Deploy on Vercel
+### 📦 Dependencies đã cài sẵn:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Next.js 15** - React framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Utility-first CSS
+- **ShadCN/UI** - Component library
+- **ESLint** - Code linting
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 🎯 Tính năng sẵn sàng:
+
+- ✅ Next.js App Router setup
+- ✅ TypeScript configuration
+- ✅ Tailwind CSS styling
+- ✅ ShadCN/UI components
+- ✅ Environment configuration
+- ✅ Folder structure organized
+- ✅ Import/export patterns
+- ✅ Basic page template
+
+### 🔧 Customization:
+
+- Thay đổi theme trong `tailwind.config.ts`
+- Cập nhật environment trong `src/config/environment.ts`
+- Thêm metadata trong `src/app/layout.tsx`
+- Customize components trong `components.json`
+
+**Ready to code! 🚀**
