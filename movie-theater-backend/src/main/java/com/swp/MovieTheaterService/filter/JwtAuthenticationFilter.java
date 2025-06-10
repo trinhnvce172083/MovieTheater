@@ -44,119 +44,126 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
-    
+
     /**
      * Public paths that don't require authentication
      * Essential for guest booking and public movie browsing
      */
     private static final List<String> PUBLIC_PATHS = Arrays.asList(
-        // Authentication endpoints
-        "/api/auth/**",
-        "/auth/**",
-        
-        // Test endpoints
-        "/test/**",
-        "/api/test/**",
-        
-        // Movie endpoints (public read access)
-        "/api/movies",
-        "/api/movies/public/**",
-        "/api/movies/now-showing",
-        "/api/movies/coming-soon",
-        "/api/movies/search",
-        "/api/movies/*", // for /api/movies/{movieId}
-        "/api/movies/popular",
-        "/api/movies/by-genre",
-        "/api/movies/filter",
-        
-        // Schedule endpoints (public read access)
-        "/api/schedules",
-        "/api/schedules/public/**",
-        "/api/schedules/*", // for /api/schedules/{scheduleId}
-        "/api/schedules/by-movie/**",
-        "/api/schedules/by-cinema-room/**",
-        "/api/schedules/by-date",
-        "/api/schedules/available-dates",
-        "/api/schedules/available-times",
-        "/api/schedules/filter",
-        
-        // Cinema Room endpoints (public read access)
-        "/api/cinema-rooms",
-        "/api/cinema-rooms/public/**",
-        "/api/cinema-rooms/*", // for /api/cinema-rooms/{cinemaRoomId}
-        "/api/cinema-rooms/*/seats", // for /api/cinema-rooms/{cinemaRoomId}/seats
-        "/api/cinema-rooms/layout/**",
-        
-        // Booking endpoints (guest booking support)
-        "/api/bookings/guest",
-        "/api/bookings/guest/**",
-        "/api/bookings/check-booking",
-        "/api/bookings/schedule/*/check-seats", // for /api/bookings/schedule/{scheduleId}/check-seats
-        "/api/bookings/*/generate-qr",
-        "/api/bookings/validate-qr",
-        "/api/bookings/payment/guest",
-        "/api/bookings/guest-search",
-        
-        // Seat reservation endpoints (guest access)
-        "/api/seats/reserve-temporarily",
-        "/api/seats/release-reservation",
-        "/api/seats/status/*",
-        
-        // Promotion endpoints (public access)
-        "/api/promotions",
-        "/api/promotions/active",
-        "/api/promotions/*", // for /api/promotions/{promotionId}
-        "/api/promotions/validate",
-        "/api/promotions/public/**",
-        
-        // Loyalty endpoints (public info)
-        "/api/loyalty/info",
-        
-        // Payment endpoints (guest payment)
-        "/api/payments/create",
-        "/api/payments/methods",
-        "/api/payments/vnpay/callback",
-        "/api/payments/vnpay/return",
-        "/api/payments/calculate-fee",
-        
-        // Documentation & API
-        "/v3/api-docs/**",
-        "/api-docs/**",
-        "/swagger-ui/**",
-        "/swagger-ui.html",
-        "/docs",
-        "/swagger-resources/**",
-        "/webjars/**",
-        
-        // Static resources
-        "/static/**",
-        "/css/**",
-        "/js/**",
-        "/images/**",
-        "/favicon.ico",
-        
-        // Health & Monitoring
-        "/actuator/**",
-        
-        // Root endpoints
-        "/",
-        "/index",
-        "/home"
-    );
+            // Authentication endpoints (PUBLIC)
+            "/api/auth/login",
+            "/api/auth/register",
+            "/api/auth/refresh-token",
+            "/api/auth/forgot-password",
+            "/api/auth/reset-password",
+            "/api/auth/verify-email",
+            "/api/auth/resend-verification",
+            "/api/auth/check-email",
+            "/api/auth/check-username",
+            "/api/auth/test-registration",
+            "/auth/**",
+
+            // Test endpoints
+            "/test/**",
+            "/api/test/**",
+
+            // Movie endpoints (public read access)
+            "/api/movies",
+            "/api/movies/public/**",
+            "/api/movies/now-showing",
+            "/api/movies/coming-soon",
+            "/api/movies/search",
+            "/api/movies/*", // for /api/movies/{movieId}
+            "/api/movies/popular",
+            "/api/movies/by-genre",
+            "/api/movies/filter",
+
+            // Schedule endpoints (public read access)
+            "/api/schedules",
+            "/api/schedules/public/**",
+            "/api/schedules/*", // for /api/schedules/{scheduleId}
+            "/api/schedules/by-movie/**",
+            "/api/schedules/by-cinema-room/**",
+            "/api/schedules/by-date",
+            "/api/schedules/available-dates",
+            "/api/schedules/available-times",
+            "/api/schedules/filter",
+
+            // Cinema Room endpoints (public read access)
+            "/api/cinema-rooms",
+            "/api/cinema-rooms/public/**",
+            "/api/cinema-rooms/*", // for /api/cinema-rooms/{cinemaRoomId}
+            "/api/cinema-rooms/*/seats", // for /api/cinema-rooms/{cinemaRoomId}/seats
+            "/api/cinema-rooms/layout/**",
+
+            // Booking endpoints (guest booking support)
+            "/api/bookings/guest",
+            "/api/bookings/guest/**",
+            "/api/bookings/check-booking",
+            "/api/bookings/schedule/*/check-seats", // for /api/bookings/schedule/{scheduleId}/check-seats
+            "/api/bookings/*/generate-qr",
+            "/api/bookings/validate-qr",
+            "/api/bookings/payment/guest",
+            "/api/bookings/guest-search",
+
+            // Seat reservation endpoints (guest access)
+            "/api/seats/reserve-temporarily",
+            "/api/seats/release-reservation",
+            "/api/seats/status/*",
+
+            // Promotion endpoints (public access)
+            "/api/promotions",
+            "/api/promotions/active",
+            "/api/promotions/*", // for /api/promotions/{promotionId}
+            "/api/promotions/validate",
+            "/api/promotions/public/**",
+
+            // Loyalty endpoints (public info)
+            "/api/loyalty/info",
+
+            // Payment endpoints (guest payment)
+            "/api/payments/create",
+            "/api/payments/methods",
+            "/api/payments/vnpay/callback",
+            "/api/payments/vnpay/return",
+            "/api/payments/calculate-fee",
+
+            // Documentation & API
+            "/v3/api-docs/**",
+            "/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/docs",
+            "/swagger-resources/**",
+            "/webjars/**",
+
+            // Static resources
+            "/static/**",
+            "/css/**",
+            "/js/**",
+            "/images/**",
+            "/favicon.ico",
+
+            // Health & Monitoring
+            "/actuator/**",
+
+            // Root endpoints
+            "/",
+            "/index",
+            "/home");
 
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain
-    ) throws ServletException, IOException {
+            @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         String requestPath = request.getServletPath();
         String requestURI = request.getRequestURI();
         String method = request.getMethod();
-        
+
         log.debug("Processing request: {} {} - Path: {}", method, requestURI, requestPath);
-        
+
         // Check if path is public (no authentication required)
         if (isPublicPath(requestPath)) {
             log.debug("Public path detected, skipping authentication: {}", requestPath);
@@ -197,11 +204,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
-                            userDetails.getAuthorities()
-                    );
+                            userDetails.getAuthorities());
                     authToken.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request)
-                    );
+                            new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                     log.debug("User authenticated successfully: {}", username);
                 } else {
@@ -214,7 +219,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
-    
+
     /**
      * Check if request path is public (doesn't require authentication)
      */
@@ -222,7 +227,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return PUBLIC_PATHS.stream()
                 .anyMatch(pattern -> pathMatcher.match(pattern, requestPath));
     }
-    
+
     /**
      * Get client IP address for logging and security
      */
@@ -231,12 +236,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
             return xForwardedFor.split(",")[0].trim();
         }
-        
+
         String xRealIp = request.getHeader("X-Real-IP");
         if (xRealIp != null && !xRealIp.isEmpty()) {
             return xRealIp;
         }
-        
+
         return request.getRemoteAddr();
     }
-} 
+}

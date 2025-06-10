@@ -278,14 +278,26 @@ public class AuthServiceImpl implements AuthService {
         // 8. Send verification email (optional, don't fail registration)
         try {
             if (emailService != null) {
-                emailService.sendVerificationEmail(account.getFullName(), account.getEmail(),
+                log.info("🔄 Attempting to send verification email to: {}", account.getEmail());
+                log.info("📧 Verification token: {}", account.getEmailVerificationToken());
+                log.info("⏰ Token expiry: {}", account.getEmailVerificationExpiry());
+
+                boolean emailSent = emailService.sendVerificationEmail(
+                        account.getFullName(),
+                        account.getEmail(),
                         account.getEmailVerificationToken());
-                log.info("✅ Verification email sent to: {}", account.getEmail());
+
+                if (emailSent) {
+                    log.info("✅ Verification email sent successfully to: {}", account.getEmail());
+                } else {
+                    log.error("❌ EmailService returned false for email: {}", account.getEmail());
+                }
             } else {
-                log.warn("EmailService is null, skipping email sending");
+                log.error("❌ EmailService is null! Check Spring configuration!");
             }
         } catch (Exception e) {
-            log.warn("Failed to send verification email to: {} - {}", account.getEmail(), e.getMessage());
+            log.error("❌ Exception while sending verification email to: {} - Error: {}",
+                    account.getEmail(), e.getMessage(), e);
             // Don't fail registration if email sending fails
         }
 

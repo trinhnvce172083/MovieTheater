@@ -185,7 +185,8 @@ public class SecurityConfig {
                                                 .requestMatchers(
                                                                 "/api/user/**", // General user operations
                                                                 "/api/auth/profile/**", // Auth profile
-                                                                "/api/auth/change-password/**" // Password change
+                                                                "/api/auth/change-password/**", // Password change
+                                                                "/api/auth/logout" // Logout endpoint
                                                 ).authenticated()
 
                                                 // =================== DEFAULT ===================

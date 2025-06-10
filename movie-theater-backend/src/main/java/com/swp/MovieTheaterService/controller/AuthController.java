@@ -20,6 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Authentication Controller - Simplified Version
  * ✅ JSON parsing working với Spring's @RequestBody
@@ -178,6 +181,55 @@ public class AuthController {
 
         authService.resendVerificationEmail(email);
         return ResponseEntity.ok(ApiResponse.success("Email xác thực đã được gửi lại", null));
+    }
+
+    @PostMapping("/test-registration")
+    @Operation(summary = "Test registration with debug info", description = "Test registration và debug email sending")
+    public ResponseEntity<Map<String, Object>> testRegistration(
+            @RequestBody RegisterRequest request,
+            HttpServletRequest httpRequest) {
+
+        String clientIp = IpUtils.getClientIpAddress(httpRequest);
+        log.info("=== TEST REGISTRATION DEBUG START ===");
+        log.info("Test registration request from IP: {}", clientIp);
+        log.info("Request email: {}", request.getEmail());
+        log.info("Request username: {}", request.getUsername());
+
+        try {
+            // Attempt registration
+            log.info("🔄 Attempting registration...");
+            AuthResponse response = authService.register(request);
+
+            log.info("✅ Registration successful!");
+            log.info("User ID: {}", response.getUser().getId());
+            log.info("Email: {}", response.getUser().getEmail());
+            log.info("Email Verified: {}", response.getUser().isEmailVerified());
+
+            Map<String, Object> debugResponse = new HashMap<>();
+            debugResponse.put("registrationSuccessful", true);
+            debugResponse.put("userId", response.getUser().getId());
+            debugResponse.put("email", response.getUser().getEmail());
+            debugResponse.put("emailVerified", response.getUser().isEmailVerified());
+            debugResponse.put("accessToken", response.getAccessToken());
+            debugResponse.put("refreshToken", response.getRefreshToken());
+            debugResponse.put("message", "Registration thành công! Kiểm tra log để xem email verification status");
+            debugResponse.put("timestamp", java.time.LocalDateTime.now().toString());
+
+            log.info("=== TEST REGISTRATION DEBUG END ===");
+            return ResponseEntity.ok(debugResponse);
+
+        } catch (Exception e) {
+            log.error("❌ Registration failed: {}", e.getMessage(), e);
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("registrationSuccessful", false);
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("errorType", e.getClass().getSimpleName());
+            errorResponse.put("timestamp", java.time.LocalDateTime.now().toString());
+
+            log.info("=== TEST REGISTRATION DEBUG END (WITH ERROR) ===");
+            return ResponseEntity.status(400).body(errorResponse);
+        }
     }
 
 }

@@ -1,0 +1,83 @@
+{
+    "testType": "SMTP Configuration Test",
+    "description": "Test file để kiểm tra SMTP configuration và email verification",
+    "steps": [
+        {
+            "step": 1,
+            "description": "Test SMTP Connection",
+            "endpoint": "POST /cinema/api/emails/test/smtp",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer {admin-token}"
+            },
+            "body": {
+                "email": "gundn.contact@gmail.com"
+            },
+            "expected": "SMTP status SUCCESS và email được gửi"
+        },
+        {
+            "step": 2,
+            "description": "Test Verification Email Template",
+            "endpoint": "POST /cinema/api/emails/test/verification",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer {admin-token}"
+            },
+            "body": {
+                "to": "gundn.contact@gmail.com",
+                "customerName": "Test User",
+                "token": "test-token-123"
+            },
+            "expected": "Verification email được gửi thành công"
+        },
+        {
+            "step": 3,
+            "description": "Test Registration với Debug",
+            "endpoint": "POST /cinema/api/auth/test-registration",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "body": {
+                "username": "testemail12345",
+                "email": "testemail12345@gmail.com",
+                "password": "12345Aa!",
+                "confirmPassword": "12345Aa!",
+                "fullName": "Test Email User",
+                "phoneNumber": "0987654321",
+                "dateOfBirth": "1995-01-01",
+                "address": "123 Test Street",
+                "agreeToTerms": true,
+                "acceptMarketing": false
+            },
+            "expected": "Registration thành công và verification email được gửi"
+        }
+    ],
+    "troubleshooting": {
+        "emailNotSent": [
+            "Kiểm tra SMTP password trong application.yml",
+            "Kiểm tra Google App Password có hoạt động không",
+            "Kiểm tra firewall và network connection",
+            "Kiểm tra logs trong console để xem lỗi cụ thể"
+        ],
+        "templateError": [
+            "Kiểm tra file verification.html trong templates/email/",
+            "Kiểm tra Thymeleaf configuration",
+            "Kiểm tra variables được truyền vào template"
+        ],
+        "smtpAuth": [
+            "Kiểm tra Gmail đã bật 2-factor authentication",
+            "Tạo App Password mới cho ứng dụng",
+            "Cập nhật MAIL_PASSWORD trong environment variables"
+        ]
+    },
+    "checkpoints": {
+        "1": "Kiểm tra logs xem EmailService có null không",
+        "2": "Kiểm tra SMTP connection timeout",
+        "3": "Kiểm tra verification token có được tạo không",
+        "4": "Kiểm tra template processing có lỗi không",
+        "5": "Kiểm tra JavaMailSender có được inject không"
+    }
+}

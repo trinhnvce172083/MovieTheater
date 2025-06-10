@@ -41,7 +41,7 @@ public class EmailServiceImpl implements EmailService {
     @Value("${app.email.support-email:lumierecinema25@gmail.com}")
     private String supportEmail;
 
-    @Value("${app.email.website-url:https://lumierecinema.vn}")
+    @Value("${app.email.website-url:http://localhost:8080}")
     private String websiteUrl;
 
     @Override
@@ -57,15 +57,14 @@ public class EmailServiceImpl implements EmailService {
             variables.put("showDateTime", formatDateTime(booking.getFormattedShowDateTime()));
             variables.put("qrCodeUrl", generateQRCodeUrl(booking.getBookingCode()));
 
-            String subject = String.format("[%s] Xác nhận đặt vé thành công - %s", 
+            String subject = String.format("[%s] Xác nhận đặt vé thành công - %s",
                     companyName, booking.getBookingCode());
 
             return sendTemplateEmail(
                     booking.getCustomerEmail(),
                     subject,
                     EmailTemplate.BOOKING_CONFIRMATION.getTemplateName(),
-                    variables
-            );
+                    variables);
 
         } catch (Exception e) {
             log.error("Error sending booking confirmation email: {}", e.getMessage(), e);
@@ -85,15 +84,14 @@ public class EmailServiceImpl implements EmailService {
             variables.put("supportEmail", supportEmail);
             variables.put("refundPolicy", booking.getRefundPolicy());
 
-            String subject = String.format("[%s] Thông báo hủy vé - %s", 
+            String subject = String.format("[%s] Thông báo hủy vé - %s",
                     companyName, booking.getBookingCode());
 
             return sendTemplateEmail(
                     booking.getCustomerEmail(),
                     subject,
                     EmailTemplate.BOOKING_CANCELLATION.getTemplateName(),
-                    variables
-            );
+                    variables);
 
         } catch (Exception e) {
             log.error("Error sending booking cancellation email: {}", e.getMessage(), e);
@@ -114,15 +112,14 @@ public class EmailServiceImpl implements EmailService {
             variables.put("transactionId", paymentDetails.get("transactionId"));
             variables.put("paymentMethod", paymentDetails.get("paymentMethod"));
 
-            String subject = String.format("[%s] Xác nhận thanh toán thành công - %s", 
+            String subject = String.format("[%s] Xác nhận thanh toán thành công - %s",
                     companyName, booking.getBookingCode());
 
             return sendTemplateEmail(
                     booking.getCustomerEmail(),
                     subject,
                     EmailTemplate.PAYMENT_CONFIRMATION.getTemplateName(),
-                    variables
-            );
+                    variables);
 
         } catch (Exception e) {
             log.error("Error sending payment confirmation email: {}", e.getMessage(), e);
@@ -142,15 +139,14 @@ public class EmailServiceImpl implements EmailService {
             variables.put("companyName", companyName);
             variables.put("supportEmail", supportEmail);
 
-            String subject = String.format("[%s] Thông báo hoàn tiền - %s", 
+            String subject = String.format("[%s] Thông báo hoàn tiền - %s",
                     companyName, booking.getBookingCode());
 
             return sendTemplateEmail(
                     booking.getCustomerEmail(),
                     subject,
                     EmailTemplate.REFUND_NOTIFICATION.getTemplateName(),
-                    variables
-            );
+                    variables);
 
         } catch (Exception e) {
             log.error("Error sending refund notification email: {}", e.getMessage(), e);
@@ -170,15 +166,14 @@ public class EmailServiceImpl implements EmailService {
             variables.put("qrCodeUrl", generateQRCodeUrl(booking.getBookingCode()));
             variables.put("checkinInstructions", "Vui lòng đến rạp trước 15 phút để check-in");
 
-            String subject = String.format("[%s] Nhắc nhở: Phim sắp bắt đầu - %s", 
+            String subject = String.format("[%s] Nhắc nhở: Phim sắp bắt đầu - %s",
                     companyName, booking.getBookingCode());
 
             return sendTemplateEmail(
                     booking.getCustomerEmail(),
                     subject,
                     EmailTemplate.SHOW_REMINDER.getTemplateName(),
-                    variables
-            );
+                    variables);
 
         } catch (Exception e) {
             log.error("Error sending show reminder email: {}", e.getMessage(), e);
@@ -194,18 +189,19 @@ public class EmailServiceImpl implements EmailService {
             Map<String, Object> variables = new HashMap<>();
             variables.put("booking", booking);
             variables.put("companyName", companyName);
-            variables.put("checkInTime", formatDateTime(booking.getCheckInTime() != null ? 
-                    booking.getCheckInTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : ""));
+            variables.put("checkInTime",
+                    formatDateTime(booking.getCheckInTime() != null
+                            ? booking.getCheckInTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                            : ""));
 
-            String subject = String.format("[%s] Xác nhận check-in thành công - %s", 
+            String subject = String.format("[%s] Xác nhận check-in thành công - %s",
                     companyName, booking.getBookingCode());
 
             return sendTemplateEmail(
                     booking.getCustomerEmail(),
                     subject,
                     EmailTemplate.CHECK_IN_CONFIRMATION.getTemplateName(),
-                    variables
-            );
+                    variables);
 
         } catch (Exception e) {
             log.error("Error sending check-in confirmation email: {}", e.getMessage(), e);
@@ -230,8 +226,7 @@ public class EmailServiceImpl implements EmailService {
                     customerEmail,
                     subject,
                     EmailTemplate.WELCOME.getTemplateName(),
-                    variables
-            );
+                    variables);
 
         } catch (Exception e) {
             log.error("Error sending welcome email: {}", e.getMessage(), e);
@@ -242,27 +237,50 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public boolean sendVerificationEmail(String customerName, String customerEmail, String verificationToken) {
         try {
-            log.info("Sending verification email to: {}", customerEmail);
+            log.info("🔄 Starting sendVerificationEmail process...");
+            log.info("📧 Customer Email: {}", customerEmail);
+            log.info("👤 Customer Name: {}", customerName);
+            log.info("🔑 Verification Token: {}", verificationToken);
+            log.info("🌐 Website URL: {}", websiteUrl);
+            log.info("📨 From Email: {}", fromEmail);
+            log.info("🏢 Company Name: {}", companyName);
+
+            // Validate inputs
+            if (customerEmail == null || customerEmail.trim().isEmpty()) {
+                log.error("❌ Customer email is null or empty");
+                return false;
+            }
+
+            if (verificationToken == null || verificationToken.trim().isEmpty()) {
+                log.error("❌ Verification token is null or empty");
+                return false;
+            }
 
             Map<String, Object> variables = new HashMap<>();
             variables.put("fullName", customerName);
-            variables.put("verificationLink", websiteUrl + "/cinema/auth/verify-email?token=" + verificationToken);
+            variables.put("verificationLink", websiteUrl + "/cinema/api/auth/verify-email?token=" + verificationToken);
             variables.put("expirationHours", 24);
             variables.put("supportEmail", supportEmail);
             variables.put("appName", companyName);
             variables.put("companyName", companyName);
 
-            String subject = String.format("[%s] Xác thực tài khoản của bạn", companyName);
+            log.info("🌐 Current websiteUrl: {}", websiteUrl);
+            log.info("🔗 Verification Link: {}", variables.get("verificationLink"));
 
-            return sendTemplateEmail(
+            String subject = String.format("[%s] Xác thực tài khoản của bạn", companyName);
+            log.info("📝 Email Subject: {}", subject);
+
+            boolean result = sendTemplateEmail(
                     customerEmail,
                     subject,
                     EmailTemplate.VERIFICATION.getTemplateName(),
-                    variables
-            );
+                    variables);
+
+            log.info("📬 Template email send result: {}", result);
+            return result;
 
         } catch (Exception e) {
-            log.error("Error sending verification email: {}", e.getMessage(), e);
+            log.error("❌ Exception in sendVerificationEmail: {}", e.getMessage(), e);
             return false;
         }
     }
@@ -284,8 +302,7 @@ public class EmailServiceImpl implements EmailService {
                     email,
                     subject,
                     EmailTemplate.PASSWORD_RESET.getTemplateName(),
-                    variables
-            );
+                    variables);
 
         } catch (Exception e) {
             log.error("Error sending password reset email: {}", e.getMessage(), e);
@@ -294,7 +311,8 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public boolean sendPromotionalEmail(String email, String customerName, String promotionTitle, String promotionContent) {
+    public boolean sendPromotionalEmail(String email, String customerName, String promotionTitle,
+            String promotionContent) {
         try {
             log.info("Sending promotional email to: {}", email);
 
@@ -311,8 +329,7 @@ public class EmailServiceImpl implements EmailService {
                     email,
                     subject,
                     EmailTemplate.PROMOTIONAL.getTemplateName(),
-                    variables
-            );
+                    variables);
 
         } catch (Exception e) {
             log.error("Error sending promotional email: {}", e.getMessage(), e);
@@ -323,14 +340,34 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public boolean sendTemplateEmail(String to, String subject, String templateName, Map<String, Object> variables) {
         try {
+            log.info("🔄 Starting sendTemplateEmail process...");
+            log.info("📧 To: {}", to);
+            log.info("📝 Subject: {}", subject);
+            log.info("📄 Template Name: {}", templateName);
+            log.info("🔧 Variables: {}", variables);
+
             Context context = new Context();
             context.setVariables(variables);
 
+            log.info("🎨 Processing template with Thymeleaf...");
             String htmlContent = templateEngine.process(templateName, context);
-            return sendHtmlEmail(to, subject, htmlContent);
+
+            if (htmlContent == null || htmlContent.trim().isEmpty()) {
+                log.error("❌ Template processing returned null or empty content");
+                return false;
+            }
+
+            log.info("✅ Template processed successfully, content length: {}", htmlContent.length());
+            log.debug("📄 Generated HTML content preview: {}",
+                    htmlContent.substring(0, Math.min(200, htmlContent.length())));
+
+            boolean result = sendHtmlEmail(to, subject, htmlContent);
+            log.info("📬 sendHtmlEmail result: {}", result);
+            return result;
 
         } catch (Exception e) {
-            log.error("Error sending template email: {}", e.getMessage(), e);
+            log.error("❌ Exception in sendTemplateEmail: {}", e.getMessage(), e);
+            e.printStackTrace();
             return false;
         }
     }
@@ -357,20 +394,44 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public boolean sendHtmlEmail(String to, String subject, String htmlContent) {
         try {
+            log.info("🔄 Starting sendHtmlEmail process...");
+            log.info("📧 To: {}", to);
+            log.info("📝 Subject: {}", subject);
+            log.info("📨 From Email: {}", fromEmail);
+            log.info("📄 HTML Content Length: {}", htmlContent != null ? htmlContent.length() : "NULL");
+
+            // Validate JavaMailSender
+            if (mailSender == null) {
+                log.error("❌ JavaMailSender is null! Check email configuration!");
+                return false;
+            }
+
+            log.info("📬 Creating MimeMessage...");
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
+            log.info("⚙️ Setting email properties...");
             helper.setFrom(fromEmail);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
 
+            log.info("📤 Attempting to send email...");
             mailSender.send(mimeMessage);
-            log.info("HTML email sent successfully to: {}", to);
+
+            log.info("✅ HTML email sent successfully to: {}", to);
             return true;
 
+        } catch (org.springframework.mail.MailAuthenticationException e) {
+            log.error("❌ Email Authentication Error: {}", e.getMessage());
+            log.error("💡 Check SMTP username/password and app password settings");
+            return false;
+        } catch (org.springframework.mail.MailSendException e) {
+            log.error("❌ Email Send Error: {}", e.getMessage());
+            log.error("💡 Check SMTP server settings and recipient email");
+            return false;
         } catch (Exception e) {
-            log.error("Error sending HTML email to {}: {}", to, e.getMessage(), e);
+            log.error("❌ Unexpected error sending HTML email to {}: {}", to, e.getMessage(), e);
             return false;
         }
     }
@@ -388,4 +449,4 @@ public class EmailServiceImpl implements EmailService {
         // Generate QR code URL - in production, this would be a real QR code service
         return websiteUrl + "/qr/" + bookingCode;
     }
-} 
+}

@@ -1,0 +1,18 @@
+{
+    "note": "Test logout với access token từ login response",
+    "instructions": [
+        "1. Login trước để lấy access token",
+        "2. Dùng access token đó để test logout",
+        "3. Logout phải có Authorization header"
+    ],
+    "example_request": {
+        "url": "http://localhost:8080/cinema/api/auth/logout",
+        "method": "POST",
+        "headers": {
+            "Authorization": "Bearer YOUR_ACCESS_TOKEN_HERE",
+            "Content-Type": "application/json"
+        },
+        "body": {}
+    },
+    "access_token_from_previous_login": "eyJhbGciOiJIUzI1NiJ9.eyJhY2NvdW50SWQiOjExLCJyb2xlIjoiQ1VTVE9NRVIiLCJzdWIiOiJndW5kbmVpdCIsImlhdCI6MTc0OTU3MzgxNywiZXhwIjoxNzQ5NTc0NzE3fQ.2-wX_zjI1euhOX6R-YDwmc6nPsM-auKuZeyMyRpur7o"
+}
