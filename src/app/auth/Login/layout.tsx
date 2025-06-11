@@ -1,31 +1,28 @@
 import React, { ReactNode } from "react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 interface LoginLayoutProps {
   children: ReactNode;
 }
 
-const LoginLayout: React.FC<LoginLayoutProps> = ({ children }) => {
+export default function LoginLayout({ children }: LoginLayoutProps) {
   return (
     <div className="login-layout relative min-h-screen w-full overflow-hidden">
-      {/* Background video container - positioned absolutely to cover entire viewport */}
-      <div className="background-video absolute inset-0 z-0">
-        <video 
-          autoPlay 
-          loop 
-          muted 
-          className="object-cover w-full h-full"
-          playsInline
-        >
-          <source src="/Login_background.mp4" type="video/mp4" />
-        </video>
-      </div>
-      
-      {/* Content container */}
-      <div className="relative z-20 min-h-screen w-full">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-50">
+        <Header />
+      </header>
+
+      {/* Main content */}
+      <main className="min-h-screen pt-24 flex items-center justify-center">
         {children}
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer>
+        <Footer />
+      </footer>
     </div>
   );
-};
-
-export default LoginLayout;
+}

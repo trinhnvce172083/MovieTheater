@@ -1,4 +1,6 @@
 import React, { ReactNode } from "react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 interface HomepageLayoutProps {
   children: ReactNode;
@@ -7,7 +9,15 @@ interface HomepageLayoutProps {
 const HomepageLayout: React.FC<HomepageLayoutProps> = ({ children }) => {
   return (
     <div className="homepage-layout">
-      <main>{children}</main>
+      <body>
+        <header className="fixed top-0 left-0 right-0 z-50">
+          <Header />
+        </header>
+        <main>{children}</main>
+        <footer>
+          <Footer />
+        </footer>
+      </body>
     </div>
   );
 };

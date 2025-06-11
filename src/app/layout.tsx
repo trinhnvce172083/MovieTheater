@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ROUTES from "@/constants/routes";
 // import ScrollToTopButton from "@/components/ScrollToTopButton";
 import BackTop from "antd/es/float-button/BackTop";
 
@@ -32,13 +33,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <header className="fixed top-0 left-0 right-0 z-50">
-          <Header />
-        </header>
         <main className="min-h-screen pt-24">{children}</main>
-        <footer>
-          <Footer />
-        </footer>
         <BackTop duration={200} visibilityHeight={50} />
       </body>
     </html>
