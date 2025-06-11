@@ -36,7 +36,7 @@ export default function RootLayout({
           <Header />
         </header>
         <main className="min-h-screen pt-24">{children}</main>
-        <footer className="mt-8">
+        <footer>
           <Footer />
         </footer>
         <BackTop duration={200} visibilityHeight={50} />
