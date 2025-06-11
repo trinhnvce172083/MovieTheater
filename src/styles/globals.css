@@ -1,0 +1,16 @@
+.admin-sidebar-menu .ant-menu-item,
+.admin-sidebar-menu .ant-menu-title-content {
+  color: #fff !important;
+  font-size: 50px !important;
+}
+.admin-sidebar-menu .ant-menu-item-selected {
+  background: #3a86ff !important;
+  color: #fff !important;
+}
+.admin-sidebar-menu .ant-menu-item:hover {
+  background: rgba(58, 134, 255, 0.15) !important;
+  color: #fff !important;
+}
+.admin-sidebar-menu .ant-menu-item .ant-menu-item-icon {
+  color: #fff !important;
+} 

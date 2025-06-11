@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+// import Header from "@/components/Header";
+// import Footer from "@/components/Footer";
 // import ScrollToTopButton from "@/components/ScrollToTopButton";
 import BackTop from "antd/es/float-button/BackTop";
 
@@ -28,18 +28,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <header className="fixed top-0 left-0 right-0 z-50">
-          <Header />
-        </header>
-        <main className="min-h-screen pt-24">{children}</main>
-        <footer className="mt-8">
-          <Footer />
-        </footer>
-        <BackTop duration={200} visibilityHeight={50} />
+          {/* <header className="fixed top-0 left-0 right-0 z-50">
+            <Header />
+          </header> */}
+          <main className="min-h-screen pt-24">{children}</main>
+          {/* <footer className="mt-8">
+            <Footer />
+          </footer> */}
+          <BackTop duration={200} visibilityHeight={50} />
       </body>
     </html>
   );
