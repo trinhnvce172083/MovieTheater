@@ -1,31 +1,66 @@
 "use client";
-
 import React, { useState } from "react";
 import { Button, Form, Input, Typography, message } from "antd";
-import { Card } from "@/components/ui/card"; // shadcn/ui Card
-import { cn } from "@/lib/utils"; // shadcn/ui utility (optional)
-import "antd/dist/reset.css";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import ROUTES from "@/constants/routes";
+import Link from "next/link";
 
 export const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm();
+  const router = useRouter();
 
-  const onFinish = (values: any) => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      if (values.username === "user" && values.password === "password") {
-        message.success("Login successful!");
-        // Navigate to booking page or dashboard
+  const onFinish = async (values: any) => {
+    try {
+      setLoading(true);
+      const { username, password } = values;
+
+      const response = await fetch(
+        "https://60f9a8f9-7d5e-4e39-9668-2ee29759c786.mock.pstmn.io/Login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, password }),
+          credentials: "include", // Send cookies if needed
+        }
+      );
+
+      // Parse the JSON response
+      const data = await response.json().catch(() => null);
+
+      if (response.ok) {
+        // Store auth token if received
+        if (data?.token) {
+          localStorage.setItem("authToken", data.token);
+        }
+
+        message.success("Login successful");
+        router.push(ROUTES.BOOKING);
       } else {
-        message.error("Invalid username or password");
+        // Handle specific error codes
+        if (response.status === 401) {
+          message.error("Invalid username or password");
+        } else if (response.status === 429) {
+          message.error("Too many login attempts. Please try again later.");
+        } else {
+          message.error(data?.message || "Login failed");
+        }
       }
-    }, 1200);
+    } catch (error) {
+      console.error("Login error:", error);
+      message.error("Connection error. Please check your internet connection.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-pink-50">
-      <Card className={cn("w-full max-w-md shadow-lg p-8")}>
+    <div className="min-h-screen flex items-center justify-center">
+      <Card className={cn("w-full max-w-md shadow-lg p-8 bg-white/60 backdrop-blur-sm")}>
         <Typography.Title level={2} className="text-center mb-6">
           Login
         </Typography.Title>
