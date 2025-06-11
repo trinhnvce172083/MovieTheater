@@ -11,7 +11,7 @@ import {
   YoutubeOutlined,
   InstagramOutlined,
 } from "@ant-design/icons";
-import ROUTES from "@/constants/routes";
+//import ROUTES from "@/constants/routes";
 
 export default function Footer() {
   return (
