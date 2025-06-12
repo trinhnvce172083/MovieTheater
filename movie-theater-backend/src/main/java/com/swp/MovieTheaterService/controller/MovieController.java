@@ -7,6 +7,8 @@ import com.swp.MovieTheaterService.dto.movie.MovieResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieSummaryResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieUpdateRequest;
 import com.swp.MovieTheaterService.service.MovieService;
+import com.swp.MovieTheaterService.service.MovieStatusScheduler;
+import com.swp.MovieTheaterService.enums.MovieStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -26,6 +28,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Movie Controller
@@ -42,6 +46,7 @@ import java.util.List;
 public class MovieController {
 
     private final MovieService movieService;
+    private final MovieStatusScheduler movieStatusScheduler;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -49,20 +54,45 @@ public class MovieController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<MovieResponse> createMovie(@RequestBody MovieCreateRequest request) {
         log.info("Creating new movie: {}", request.getTitle());
-        
+
         MovieResponse response = movieService.createMovie(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Update movie", description = "Update an existing movie (Admin only)")
+    @Operation(summary = "Update movie", description = """
+            Update an existing movie with smart field updating (Admin only)
+
+            **Smart Update Features:**
+            - **Partial Update**: Chỉ update các field có nội dung thực sự
+            - **CLEAR_FIELD**: Xóa nội dung field bằng cách gửi "CLEAR_FIELD"
+            - **Smart Handling**: Bỏ qua null, empty string, và whitespace-only
+            - **Preserve Original**: Giữ nguyên giá trị cũ nếu không gửi field
+
+            **Examples:**
+            ```json
+            {
+              "title": "Updated Title",     // Update title
+              "description": "CLEAR_FIELD", // Clear description (set to null)
+              "genre": "   ",              // Ignored (whitespace only)
+              "price": 150000.0            // Update price
+              // Other fields not sent -> keep original values
+            }
+            ```
+
+            **Use Cases:**
+            1. Update chỉ title: `{"title": "New Title"}`
+            2. Clear description: `{"description": "CLEAR_FIELD"}`
+            3. Update multiple fields: `{"title": "New Title", "price": 200000.0}`
+            4. Mixed operations: `{"title": "New Title", "description": "CLEAR_FIELD", "genre": "Action"}`
+            """)
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<MovieResponse> updateMovie(
             @PathVariable Long id,
             @RequestBody MovieUpdateRequest request) {
-        log.info("Updating movie with ID: {}", id);
-        
+        log.info("Updating movie with ID: {} using smart update", id);
+
         MovieResponse response = movieService.updateMovie(id, request);
         return ResponseEntity.ok(response);
     }
@@ -71,7 +101,7 @@ public class MovieController {
     @Operation(summary = "Get movie by ID", description = "Retrieve movie details by ID")
     public ResponseEntity<MovieResponse> getMovie(@PathVariable Long id) {
         log.info("Fetching movie with ID: {}", id);
-        
+
         MovieResponse response = movieService.getMovieById(id);
         return ResponseEntity.ok(response);
     }
@@ -82,7 +112,7 @@ public class MovieController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> deleteMovie(@PathVariable Long id) {
         log.info("Deleting movie with ID: {}", id);
-        
+
         movieService.deleteMovie(id);
         return ResponseEntity.noContent().build();
     }
@@ -94,23 +124,22 @@ public class MovieController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "title") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDirection) {
-        
+
         log.info("Fetching movies - page: {}, size: {}", page, size);
-        
+
         Sort sort = Sort.by(sortDirection.equals("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
-        
+
         Page<MovieSummaryResponse> movies = movieService.getAllMovies(pageable);
         return ResponseEntity.ok(movies);
     }
 
     @PostMapping("/filter")
-    @Operation(summary = "Filter movies with advanced criteria", 
-               description = "Filter movies with multiple criteria including genre, rating, price range, etc.")
+    @Operation(summary = "Filter movies with advanced criteria", description = "Filter movies with multiple criteria including genre, rating, price range, etc.")
     public ResponseEntity<MovieListResponse> filterMovies(@Valid @RequestBody MovieFilterRequest filterRequest) {
-        log.info("Filtering movies with criteria: keyword={}, genres={}, status={}", 
+        log.info("Filtering movies with criteria: keyword={}, genres={}, status={}",
                 filterRequest.getKeyword(), filterRequest.getGenres(), filterRequest.getStatus());
-        
+
         MovieListResponse response = movieService.getMoviesWithFilter(filterRequest);
         return ResponseEntity.ok(response);
     }
@@ -121,9 +150,9 @@ public class MovieController {
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
+
         log.info("Searching movies with keyword: {}", keyword);
-        
+
         Pageable pageable = PageRequest.of(page, size);
         Page<MovieSummaryResponse> movies = movieService.searchMovies(keyword, pageable);
         return ResponseEntity.ok(movies);
@@ -133,7 +162,7 @@ public class MovieController {
     @Operation(summary = "Get movies by genre", description = "Retrieve movies filtered by genre")
     public ResponseEntity<List<MovieSummaryResponse>> getMoviesByGenre(@PathVariable String genre) {
         log.info("Fetching movies by genre: {}", genre);
-        
+
         List<MovieSummaryResponse> movies = movieService.getMoviesByGenre(genre);
         return ResponseEntity.ok(movies);
     }
@@ -142,7 +171,7 @@ public class MovieController {
     @Operation(summary = "Get now showing movies", description = "Retrieve currently showing movies")
     public ResponseEntity<List<MovieSummaryResponse>> getNowShowingMovies() {
         log.info("Fetching now showing movies");
-        
+
         List<MovieSummaryResponse> movies = movieService.getMoviesByStatus("NOW_SHOWING");
         return ResponseEntity.ok(movies);
     }
@@ -151,7 +180,7 @@ public class MovieController {
     @Operation(summary = "Get coming soon movies", description = "Retrieve upcoming movies")
     public ResponseEntity<List<MovieSummaryResponse>> getComingSoonMovies() {
         log.info("Fetching coming soon movies");
-        
+
         List<MovieSummaryResponse> movies = movieService.getMoviesByStatus("COMING_SOON");
         return ResponseEntity.ok(movies);
     }
@@ -160,9 +189,9 @@ public class MovieController {
     @Operation(summary = "Get popular movies", description = "Retrieve popular movies based on ratings")
     public ResponseEntity<List<MovieSummaryResponse>> getPopularMovies(
             @RequestParam(defaultValue = "10") int limit) {
-        
+
         log.info("Fetching popular movies, limit: {}", limit);
-        
+
         List<MovieSummaryResponse> movies = movieService.getTopRatedMovies(limit);
         return ResponseEntity.ok(movies);
     }
@@ -173,8 +202,54 @@ public class MovieController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<MovieService.MovieStatistics> getMovieStatistics() {
         log.info("Fetching movie statistics");
-        
+
         MovieService.MovieStatistics statistics = movieService.getMovieStatistics();
         return ResponseEntity.ok(statistics);
     }
-} 
+
+    @PostMapping("/auto-update-status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Auto update movie status", description = "Manually trigger auto update movie status based on current date (Admin only)")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<Map<String, Object>> autoUpdateMovieStatus() {
+        log.info("Manual trigger: Auto updating movie status");
+
+        Map<String, String> updatedMovies = movieStatusScheduler.autoUpdateMovieStatus();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Movie status auto-update completed");
+        response.put("updatedCount", updatedMovies.size());
+        response.put("updatedMovies", updatedMovies);
+        response.put("timestamp", java.time.LocalDateTime.now());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/status-update-stats")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get movie status update statistics", description = "Get statistics about movie status updates (Admin only)")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<MovieStatusScheduler.MovieStatusUpdateStats> getStatusUpdateStats() {
+        log.info("Getting movie status update statistics");
+
+        MovieStatusScheduler.MovieStatusUpdateStats stats = movieStatusScheduler.getStatusUpdateStats();
+        return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/status-options")
+    @Operation(summary = "Get movie status options", description = "Get all available movie status options")
+    public ResponseEntity<Map<String, Object>> getStatusOptions() {
+        log.info("Getting movie status options");
+
+        Map<String, Object> statusOptions = new HashMap<>();
+        for (MovieStatus status : MovieStatus.values()) {
+            Map<String, String> statusInfo = new HashMap<>();
+            statusInfo.put("code", status.getCode());
+            statusInfo.put("displayName", status.getDisplayName());
+            statusInfo.put("description", status.getDescription());
+            statusOptions.put(status.name(), statusInfo);
+        }
+
+        return ResponseEntity.ok(statusOptions);
+    }
+}

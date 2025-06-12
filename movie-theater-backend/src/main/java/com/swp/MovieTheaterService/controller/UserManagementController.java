@@ -1,6 +1,7 @@
 package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.user.*;
+import com.swp.MovieTheaterService.dto.response.PageResponse;
 import com.swp.MovieTheaterService.exception.AppException;
 import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.service.UserManagementService;
@@ -23,6 +24,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 /**
  * User Management Controller
@@ -46,7 +49,7 @@ public class UserManagementController {
 
     @GetMapping
     @Operation(summary = "Get all users", description = "Get all users with pagination and sorting (Admin only)")
-    public ResponseEntity<Page<UserManagementResponse>> getAllUsers(
+    public ResponseEntity<PageResponse<UserManagementResponse>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -60,7 +63,7 @@ public class UserManagementController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
         Page<UserManagementResponse> users = userManagementService.getAllUsers(pageable);
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(PageResponse.of(users));
     }
 
     @GetMapping("/{userId}")
@@ -116,7 +119,7 @@ public class UserManagementController {
 
     @PostMapping("/search")
     @Operation(summary = "Search users", description = "Search and filter users with advanced criteria (Admin only)")
-    public ResponseEntity<Page<UserManagementResponse>> searchUsers(
+    public ResponseEntity<PageResponse<UserManagementResponse>> searchUsers(
             @RequestBody UserSearchRequest searchRequest,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -131,12 +134,12 @@ public class UserManagementController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
         Page<UserManagementResponse> users = userManagementService.searchUsers(searchRequest, pageable);
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(PageResponse.of(users));
     }
 
     @GetMapping("/role/{role}")
     @Operation(summary = "Get users by role", description = "Get users filtered by role (Admin only)")
-    public ResponseEntity<Page<UserManagementResponse>> getUsersByRole(
+    public ResponseEntity<PageResponse<UserManagementResponse>> getUsersByRole(
             @PathVariable String role,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -146,12 +149,12 @@ public class UserManagementController {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<UserManagementResponse> users = userManagementService.getUsersByRole(role, pageable);
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(PageResponse.of(users));
     }
 
     @GetMapping("/active")
     @Operation(summary = "Get active users", description = "Get all active users (Admin only)")
-    public ResponseEntity<Page<UserManagementResponse>> getActiveUsers(
+    public ResponseEntity<PageResponse<UserManagementResponse>> getActiveUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             Authentication authentication) {
@@ -160,12 +163,12 @@ public class UserManagementController {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<UserManagementResponse> users = userManagementService.getActiveUsers(pageable);
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(PageResponse.of(users));
     }
 
     @GetMapping("/locked")
     @Operation(summary = "Get locked accounts", description = "Get all locked user accounts (Admin only)")
-    public ResponseEntity<Page<UserManagementResponse>> getLockedAccounts(
+    public ResponseEntity<PageResponse<UserManagementResponse>> getLockedAccounts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             Authentication authentication) {
@@ -174,7 +177,7 @@ public class UserManagementController {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "accountLockedUntil"));
         Page<UserManagementResponse> users = userManagementService.getLockedAccounts(pageable);
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(PageResponse.of(users));
     }
 
     // ==================== ACCOUNT MANAGEMENT ====================
@@ -204,22 +207,16 @@ public class UserManagementController {
     }
 
     @PostMapping("/{userId}/lock")
-    @Operation(summary = "Lock user account", description = "Lock user account with reason (Admin only)")
+    @Operation(summary = "Lock user account", description = "Lock user account with detailed reason and duration (Admin only)")
     public ResponseEntity<UserManagementResponse> lockUser(
             @PathVariable Long userId,
-            @RequestBody Map<String, String> requestBody,
+            @Valid @RequestBody LockUserRequest lockRequest,
             Authentication authentication) {
 
-        // Validate required fields
-        String lockReason = requestBody.get("reason");
-        if (lockReason == null || lockReason.trim().isEmpty()) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR, "Lock reason is required");
-        }
+        log.info("Admin {} is locking user ID: {} - reason: {} - hours: {}",
+                authentication.getName(), userId, lockRequest.getReason(), lockRequest.getLockHours());
 
-        log.info("Admin {} is locking user ID: {} - reason: {}",
-                authentication.getName(), userId, lockReason);
-
-        UserManagementResponse user = userManagementService.lockUser(userId, lockReason);
+        UserManagementResponse user = userManagementService.lockUser(userId, lockRequest);
         return ResponseEntity.ok(user);
     }
 
@@ -273,43 +270,132 @@ public class UserManagementController {
     // ==================== MEMBERSHIP MANAGEMENT ====================
 
     @PostMapping("/{userId}/membership/points")
-    @Operation(summary = "Update membership points", description = "Add or subtract membership points (Admin only)")
+    @Operation(summary = "Update membership points", description = "Add or subtract membership points with detailed tracking (Admin only)")
     public ResponseEntity<UserManagementResponse> updateMembershipPoints(
             @PathVariable Long userId,
-            @RequestBody Map<String, Object> requestBody,
+            @Valid @RequestBody MembershipPointsRequest request,
             Authentication authentication) {
 
-        Integer points = (Integer) requestBody.get("points");
-        String reason = (String) requestBody.getOrDefault("reason", "Admin adjustment");
-
-        if (points == null) {
-            return ResponseEntity.badRequest().build();
-        }
-
         log.info("Admin {} is adjusting {} points for user ID: {} - reason: {}",
-                authentication.getName(), points, userId, reason);
+                authentication.getName(), request.getPoints(), userId, request.getReason());
 
-        UserManagementResponse user = userManagementService.updateMembershipPoints(userId, points, reason);
+        UserManagementResponse user = userManagementService.updateMembershipPoints(userId, request);
         return ResponseEntity.ok(user);
     }
 
     @PostMapping("/{userId}/membership/level")
-    @Operation(summary = "Update membership level", description = "Update user membership level (Admin only)")
+    @Operation(summary = "Update membership level", description = "Update user membership level with detailed tracking (Admin only)")
     public ResponseEntity<UserManagementResponse> updateMembershipLevel(
             @PathVariable Long userId,
-            @RequestBody Map<String, String> requestBody,
+            @Valid @RequestBody MembershipLevelRequest request,
             Authentication authentication) {
 
-        String level = requestBody.get("level");
-        if (level == null || level.trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
+        log.info("Admin {} is updating membership level to {} for user ID: {} - reason: {}",
+                authentication.getName(), request.getLevel(), userId, request.getReason());
 
-        log.info("Admin {} is updating membership level to {} for user ID: {}",
-                authentication.getName(), level, userId);
-
-        UserManagementResponse user = userManagementService.updateMembershipLevel(userId, level);
+        UserManagementResponse user = userManagementService.updateMembershipLevel(userId, request);
         return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/membership/levels")
+    @Operation(summary = "Get membership levels info", description = "Get all membership levels with requirements and benefits (Admin only)")
+    public ResponseEntity<Map<String, Object>> getMembershipLevelsInfo(Authentication authentication) {
+
+        log.info("Admin {} is getting membership levels information", authentication.getName());
+
+        Map<String, Object> levelInfo = userManagementService.getMembershipLevelInfo();
+        return ResponseEntity.ok(levelInfo);
+    }
+
+    @GetMapping("/{userId}/membership/recommendation")
+    @Operation(summary = "Get membership level recommendation", description = "Get recommended membership level for user (Admin only)")
+    public ResponseEntity<Map<String, Object>> getMembershipRecommendation(
+            @PathVariable Long userId,
+            Authentication authentication) {
+
+        log.info("Admin {} is getting membership recommendation for user ID: {}", authentication.getName(), userId);
+
+        Map<String, Object> recommendation = userManagementService.calculateRecommendedMembershipLevel(userId);
+        return ResponseEntity.ok(recommendation);
+    }
+
+    @GetMapping("/{userId}/membership/points/history")
+    @Operation(summary = "Get membership points history", description = "Get membership points transaction history for user (Admin only)")
+    public ResponseEntity<PageResponse<Map<String, Object>>> getMembershipPointsHistory(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication authentication) {
+
+        log.info("Admin {} is getting points history for user ID: {}", authentication.getName(), userId);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Map<String, Object>> history = userManagementService.getMembershipPointsHistory(userId, pageable);
+        return ResponseEntity.ok(PageResponse.of(history));
+    }
+
+    @GetMapping("/search/options")
+    @Operation(summary = "Get search options", description = "Get available sort fields and directions for user search (Admin only)")
+    public ResponseEntity<Map<String, Object>> getSearchOptions(Authentication authentication) {
+
+        Map<String, Object> options = new HashMap<>();
+
+        // Sort fields với mô tả tiếng Việt
+        Map<String, String> sortFields = new LinkedHashMap<>();
+        sortFields.put("createdAt", "Ngày tạo tài khoản");
+        sortFields.put("updatedAt", "Ngày cập nhật cuối");
+        sortFields.put("username", "Tên đăng nhập");
+        sortFields.put("email", "Địa chỉ email");
+        sortFields.put("fullName", "Họ và tên");
+        sortFields.put("lastLogin", "Lần đăng nhập cuối");
+        sortFields.put("membershipPoints", "Điểm thành viên");
+        sortFields.put("membershipLevel", "Cấp độ thành viên");
+        sortFields.put("totalBookings", "Tổng số lượt đặt vé");
+        sortFields.put("totalSpent", "Tổng số tiền đã chi");
+        sortFields.put("dateOfBirth", "Ngày sinh");
+        sortFields.put("salary", "Lương (nhân viên)");
+        sortFields.put("employeeCode", "Mã nhân viên");
+        sortFields.put("department", "Phòng ban");
+        sortFields.put("isActive", "Trạng thái hoạt động");
+        sortFields.put("isVerified", "Trạng thái xác thực");
+        sortFields.put("emailVerified", "Trạng thái xác thực email");
+        sortFields.put("failedLoginAttempts", "Số lần đăng nhập thất bại");
+        sortFields.put("accountLockedUntil", "Thời gian khóa tài khoản");
+
+        // Sort directions
+        Map<String, String> sortDirections = new LinkedHashMap<>();
+        sortDirections.put("ASC", "Sắp xếp tăng dần");
+        sortDirections.put("DESC", "Sắp xếp giảm dần");
+
+        // Membership levels
+        Map<String, String> membershipLevels = new LinkedHashMap<>();
+        membershipLevels.put("BRONZE", "Đồng");
+        membershipLevels.put("SILVER", "Bạc");
+        membershipLevels.put("GOLD", "Vàng");
+        membershipLevels.put("PLATINUM", "Bạch kim");
+
+        // User roles
+        Map<String, String> userRoles = new LinkedHashMap<>();
+        userRoles.put("CUSTOMER", "Khách hàng");
+        userRoles.put("EMPLOYEE", "Nhân viên");
+        userRoles.put("ADMIN", "Quản trị viên");
+
+        // Search modes
+        Map<String, String> searchModes = new LinkedHashMap<>();
+        searchModes.put("CONTAINS", "Tìm kiếm gần đúng");
+        searchModes.put("EXACT", "Tìm kiếm chính xác");
+
+        options.put("sortFields", sortFields);
+        options.put("sortDirections", sortDirections);
+        options.put("membershipLevels", membershipLevels);
+        options.put("userRoles", userRoles);
+        options.put("searchModes", searchModes);
+        options.put("defaultSortBy", "createdAt");
+        options.put("defaultSortDirection", "DESC");
+        options.put("defaultPageSize", 20);
+        options.put("maxPageSize", 100);
+
+        return ResponseEntity.ok(options);
     }
 
     // ==================== STATISTICS & ANALYTICS ====================

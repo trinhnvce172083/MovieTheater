@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * User Management Service Interface
@@ -113,13 +114,13 @@ public interface UserManagementService {
     UserManagementResponse deactivateUser(Long userId);
 
     /**
-     * Lock user account
+     * Lock user account with detailed request
      * 
-     * @param userId     user ID
-     * @param lockReason lock reason
+     * @param userId      user ID
+     * @param lockRequest lock request details
      * @return updated user details
      */
-    UserManagementResponse lockUser(Long userId, String lockReason);
+    UserManagementResponse lockUser(Long userId, LockUserRequest lockRequest);
 
     /**
      * Unlock user account
@@ -149,23 +150,46 @@ public interface UserManagementService {
     // ==================== MEMBERSHIP MANAGEMENT ====================
 
     /**
-     * Update user membership points
+     * Update user membership points with detailed request
      * 
-     * @param userId user ID
-     * @param points points to add/subtract
-     * @param reason adjustment reason
+     * @param userId  user ID
+     * @param request membership points request
      * @return updated user details
      */
-    UserManagementResponse updateMembershipPoints(Long userId, Integer points, String reason);
+    UserManagementResponse updateMembershipPoints(Long userId, MembershipPointsRequest request);
 
     /**
-     * Update user membership level
+     * Update user membership level with detailed request
      * 
-     * @param userId user ID
-     * @param level  new membership level
+     * @param userId  user ID
+     * @param request membership level request
      * @return updated user details
      */
-    UserManagementResponse updateMembershipLevel(Long userId, String level);
+    UserManagementResponse updateMembershipLevel(Long userId, MembershipLevelRequest request);
+
+    /**
+     * Get membership level requirements and benefits
+     * 
+     * @return membership level information
+     */
+    Map<String, Object> getMembershipLevelInfo();
+
+    /**
+     * Calculate recommended membership level for user based on points and spending
+     * 
+     * @param userId user ID
+     * @return recommended level information
+     */
+    Map<String, Object> calculateRecommendedMembershipLevel(Long userId);
+
+    /**
+     * Get membership points history for user
+     * 
+     * @param userId   user ID
+     * @param pageable pagination info
+     * @return points transaction history
+     */
+    Page<Map<String, Object>> getMembershipPointsHistory(Long userId, Pageable pageable);
 
     // ==================== STATISTICS & ANALYTICS ====================
 
@@ -224,8 +248,8 @@ public interface UserManagementService {
      * Check if username is available
      * 
      * @param username      username to check
-     * @param excludeUserId user ID to exclude from check (for updates)
-     * @return true if available
+     * @param excludeUserId user ID to exclude from check
+     * @return true if available, false if taken
      */
     boolean isUsernameAvailable(String username, Long excludeUserId);
 
@@ -233,8 +257,8 @@ public interface UserManagementService {
      * Check if email is available
      * 
      * @param email         email to check
-     * @param excludeUserId user ID to exclude from check (for updates)
-     * @return true if available
+     * @param excludeUserId user ID to exclude from check
+     * @return true if available, false if taken
      */
     boolean isEmailAvailable(String email, Long excludeUserId);
 
@@ -242,8 +266,8 @@ public interface UserManagementService {
      * Check if employee code is available
      * 
      * @param employeeCode  employee code to check
-     * @param excludeUserId user ID to exclude from check (for updates)
-     * @return true if available
+     * @param excludeUserId user ID to exclude from check
+     * @return true if available, false if taken
      */
     boolean isEmployeeCodeAvailable(String employeeCode, Long excludeUserId);
 }

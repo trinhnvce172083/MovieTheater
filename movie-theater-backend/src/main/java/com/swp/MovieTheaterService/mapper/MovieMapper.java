@@ -8,6 +8,7 @@ import com.swp.MovieTheaterService.entity.Movie;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.function.Consumer;
 
 /**
  * Movie Mapper
@@ -18,6 +19,42 @@ import java.time.LocalDateTime;
  */
 @Component
 public class MovieMapper {
+
+    /**
+     * Check if string has meaningful content (not null, empty, or whitespace only)
+     */
+    private boolean hasContent(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
+    /**
+     * Check if object has content (not null)
+     */
+    private boolean hasContent(Object value) {
+        return value != null;
+    }
+
+    /**
+     * Check if field should be cleared
+     */
+    private boolean shouldClearField(String value) {
+        return MovieUpdateRequest.CLEAR_FIELD.equals(value);
+    }
+
+    /**
+     * Update string field with smart logic:
+     * - CLEAR_FIELD: set field to null
+     * - Has content: trim and set value
+     * - No content: skip update
+     */
+    private void updateStringField(String newValue, java.util.function.Consumer<String> setter) {
+        if (shouldClearField(newValue)) {
+            setter.accept(null);
+        } else if (hasContent(newValue)) {
+            setter.accept(newValue.trim());
+        }
+        // If newValue is null or empty, skip update (keep existing value)
+    }
 
     /**
      * Convert MovieCreateRequest to Movie entity
@@ -56,73 +93,55 @@ public class MovieMapper {
 
     /**
      * Update Movie entity from MovieUpdateRequest
+     * Chỉ update các field có nội dung thực sự (không null, empty, hoặc chỉ có
+     * whitespace)
      */
     public void updateEntity(Movie movie, MovieUpdateRequest request) {
         if (movie == null || request == null) {
             return;
         }
 
-        if (request.getTitle() != null) {
-            movie.setTitle(request.getTitle());
-        }
-        if (request.getDescription() != null) {
-            movie.setDescription(request.getDescription());
-        }
-        if (request.getDuration() != null) {
+        // Update String fields only if they have meaningful content
+        updateStringField(request.getTitle(), movie::setTitle);
+        updateStringField(request.getDescription(), movie::setDescription);
+        updateStringField(request.getGenre(), movie::setGenre);
+        updateStringField(request.getDirector(), movie::setDirector);
+        updateStringField(request.getCast(), movie::setCast);
+        updateStringField(request.getLanguage(), movie::setLanguage);
+        updateStringField(request.getCountry(), movie::setCountry);
+        updateStringField(request.getRating(), movie::setRating);
+        updateStringField(request.getPosterUrl(), movie::setPosterUrl);
+        updateStringField(request.getTrailerUrl(), movie::setTrailerUrl);
+        updateStringField(request.getStatus(), movie::setStatus);
+        updateStringField(request.getProductionCompany(), movie::setProductionCompany);
+
+        // Update non-String fields only if they have content (not null)
+        if (hasContent(request.getDuration())) {
             movie.setDuration(request.getDuration());
         }
-        if (request.getGenre() != null) {
-            movie.setGenre(request.getGenre());
-        }
-        if (request.getDirector() != null) {
-            movie.setDirector(request.getDirector());
-        }
-        if (request.getCast() != null) {
-            movie.setCast(request.getCast());
-        }
-        if (request.getLanguage() != null) {
-            movie.setLanguage(request.getLanguage());
-        }
-        if (request.getCountry() != null) {
-            movie.setCountry(request.getCountry());
-        }
-        if (request.getReleaseDate() != null) {
+        if (hasContent(request.getReleaseDate())) {
             movie.setReleaseDate(request.getReleaseDate());
         }
-        if (request.getRating() != null) {
-            movie.setRating(request.getRating());
-        }
-        if (request.getPosterUrl() != null) {
-            movie.setPosterUrl(request.getPosterUrl());
-        }
-        if (request.getTrailerUrl() != null) {
-            movie.setTrailerUrl(request.getTrailerUrl());
-        }
-        if (request.getPrice() != null) {
+        if (hasContent(request.getPrice())) {
             movie.setPrice(request.getPrice());
         }
-        if (request.getStatus() != null) {
-            movie.setStatus(request.getStatus());
-        }
-        if (request.getIsFeatured() != null) {
+        if (hasContent(request.getIsFeatured())) {
             movie.setIsFeatured(request.getIsFeatured());
         }
-        if (request.getIsActive() != null) {
+        if (hasContent(request.getIsActive())) {
             movie.setIsActive(request.getIsActive());
         }
-        if (request.getImdbRating() != null) {
+        if (hasContent(request.getImdbRating())) {
             movie.setImdbRating(request.getImdbRating());
         }
-        if (request.getProductionCompany() != null) {
-            movie.setProductionCompany(request.getProductionCompany());
-        }
-        if (request.getBudget() != null) {
+        if (hasContent(request.getBudget())) {
             movie.setBudget(request.getBudget());
         }
-        if (request.getBoxOffice() != null) {
+        if (hasContent(request.getBoxOffice())) {
             movie.setBoxOffice(request.getBoxOffice());
         }
 
+        // Always update timestamp
         movie.setUpdatedAt(LocalDateTime.now());
     }
 
@@ -165,7 +184,7 @@ public class MovieMapper {
         response.setIsNowShowing(movie.isNowShowing());
         response.setIsComingSoon(movie.isComingSoon());
         response.setIsEnded(movie.isEnded());
-        
+
         // Schedule count will be set by service layer
         response.setScheduleCount(movie.getSchedules() != null ? movie.getSchedules().size() : 0);
 
@@ -197,4 +216,4 @@ public class MovieMapper {
 
         return response;
     }
-} 
+}

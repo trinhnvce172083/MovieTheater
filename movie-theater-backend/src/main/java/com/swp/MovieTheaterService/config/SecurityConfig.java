@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -94,6 +95,14 @@ public class SecurityConfig {
                                                                 "/api/test/**")
                                                 .permitAll()
 
+                                                // =================== PUBLIC READ ACCESS ===================
+                                                // GET operations for movies, schedules, cinema-rooms (public read)
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/movies/**", // GET movies (public read)
+                                                                "/schedules/**", // GET schedules (public read)
+                                                                "/cinema-rooms/**" // GET cinema-rooms (public read)
+                                                ).permitAll()
+
                                                 // =================== ADMIN ENDPOINTS ===================
                                                 // Theo SRS: Admin có quyền cao nhất - add, edit, delete all modules
                                                 .requestMatchers(
@@ -104,10 +113,18 @@ public class SecurityConfig {
                                                                 // Movie Management (SRS 3.1.9)
                                                                 "/api/admin/movies/**", // Movie CRUD
                                                                 "/api/movies/admin/**", // Movie management
+                                                                "/movies/**", // Movie Controller - all operations
 
                                                                 // Cinema Room Management (SRS 3.1.8)
                                                                 "/api/admin/cinema-rooms/**", // Room CRUD
                                                                 "/api/cinema-rooms/admin/**", // Room management
+                                                                "/cinema-rooms/**", // Cinema Room Controller - all
+                                                                                    // operations
+
+                                                                // Schedule Management (SRS 3.1.8)
+                                                                "/api/admin/schedules/**", // Schedule CRUD
+                                                                "/api/schedules/admin/**", // Schedule management
+                                                                "/schedules/**", // Schedule Controller - all operations
 
                                                                 // Promotion Management (SRS 3.1.10)
                                                                 "/api/admin/promotions/**", // Promotion CRUD
@@ -120,11 +137,7 @@ public class SecurityConfig {
                                                                 // System Analytics & Reports
                                                                 "/api/admin/analytics/**", // System analytics
                                                                 "/api/reports/**", // Business reports
-                                                                "/api/analytics/**", // Analytics dashboard
-
-                                                                // Schedule Management
-                                                                "/api/admin/schedules/**", // Schedule CRUD
-                                                                "/api/schedules/admin/**" // Schedule management
+                                                                "/api/analytics/**" // Analytics dashboard
                                                 ).hasRole("ADMIN")
 
                                                 // =================== EMPLOYEE ENDPOINTS ===================
