@@ -8,6 +8,7 @@ import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.mapper.BookingMapper;
 import com.swp.MovieTheaterService.repository.*;
 import com.swp.MovieTheaterService.service.BookingService;
+import com.swp.MovieTheaterService.service.ConcessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,10 +38,12 @@ public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
     private final BookingSeatRepository bookingSeatRepository;
+    private final BookingConcessionRepository bookingConcessionRepository;
     private final ScheduleRepository scheduleRepository;
     private final SeatRepository seatRepository;
     private final AccountRepository accountRepository;
     private final BookingMapper bookingMapper;
+    private final ConcessionService concessionService;
 
     // Booking expiration time in minutes
     private static final int BOOKING_EXPIRATION_MINUTES = 15;
@@ -53,10 +57,10 @@ public class BookingServiceImpl implements BookingService {
 
         // Validate and create booking
         BookingResponse booking = createBookingInternal(request, account);
-        
-        log.info("Booking created successfully with ID: {} for account: {}", 
+
+        log.info("Booking created successfully with ID: {} for account: {}",
                 booking.getBookingId(), account.getEmail());
-        
+
         return booking;
     }
 
@@ -78,7 +82,7 @@ public class BookingServiceImpl implements BookingService {
 
         // Check seat availability
         List<Long> selectedSeatIds = request.getSeatIds();
-        
+
         // Validate seat count
         if (selectedSeatIds.size() > 10) {
             log.warn("Too many seats selected: {}", selectedSeatIds.size());
@@ -94,54 +98,206 @@ public class BookingServiceImpl implements BookingService {
 
         // Create booking without account
         BookingResponse booking = createBookingInternal(request, null);
-        
-        log.info("Guest booking created successfully with ID: {} for customer: {}", 
+
+        log.info("Guest booking created successfully with ID: {} for customer: {}",
                 booking.getBookingId(), request.getCustomerEmail());
-        
+
         return booking;
     }
 
     private BookingResponse createBookingInternal(BookingCreateRequest request, Account account) {
+        log.info("Creating booking with atomic seat locking for schedule: {}, seats: {}",
+                request.getScheduleId(), request.getSeatIds());
+
         // Validate schedule exists and is bookable
         Schedule schedule = findScheduleById(request.getScheduleId());
         validateScheduleForBooking(schedule);
 
-        // Validate seats availability
+        // Validate seat count limits
+        if (request.getSeatIds().size() > 10) {
+            throw new AppException(ErrorCode.BOOKING_SEAT_LIMIT_EXCEEDED);
+        }
+
+        // Remove duplicates and collect seat IDs
         List<Long> seatIds = request.getSeatIds().stream()
+                .distinct()
                 .collect(Collectors.toList());
-        
-        if (!areSeatsAvailable(request.getScheduleId(), seatIds)) {
+
+        // ===== ATOMIC SEAT BOOKING OPERATION =====
+        // This entire block needs to be atomic to prevent race conditions
+
+        // 1. Lock and validate seats atomically
+        if (!lockAndValidateSeats(request.getScheduleId(), seatIds)) {
             throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED);
         }
 
-        // Calculate booking amount
-        Double totalAmount = calculateBookingAmount(request.getScheduleId(), seatIds, request.getPromotionId());
-        
-        // Create booking entity
-        Booking booking = bookingMapper.toEntity(request);
+        try {
+            // 2. Validate and process concession orders if any
+            List<BookingConcession> bookingConcessions = new ArrayList<>();
+            Double concessionAmount = 0.0;
+
+            if (request.getConcessionOrders() != null && !request.getConcessionOrders().isEmpty()) {
+                log.info("Processing {} concession orders", request.getConcessionOrders().size());
+
+                // Validate concession orders
+                if (!request.isValidConcessionOrders()) {
+                    throw new IllegalArgumentException("Đơn hàng đồ ăn/uống không hợp lệ");
+                }
+
+                // Process each concession order
+                for (ConcessionOrderRequest concessionOrder : request.getConcessionOrders()) {
+                    // Validate concession availability
+                    if (!concessionService.isAvailableForOrder(concessionOrder.getConcessionId(),
+                            concessionOrder.getQuantity())) {
+                        Concession concession = concessionService.getConcessionById(concessionOrder.getConcessionId());
+                        throw new IllegalArgumentException(
+                                String.format("Không đủ số lượng cho %s (yêu cầu: %d, còn lại: %d)",
+                                        concession.getFullName(),
+                                        concessionOrder.getQuantity(),
+                                        concession.getStockQuantity()));
+                    }
+
+                    concessionAmount += concessionOrder.getTotalPrice().doubleValue();
+                }
+
+                log.info("Total concession amount: {}", concessionAmount);
+            }
+
+            // 3. Calculate total booking amount (seats + concessions)
+            Double seatAmount = calculateBookingAmount(request.getScheduleId(), seatIds, request.getPromotionId());
+            Double totalAmount = seatAmount + concessionAmount;
+
+            // 4. Create booking entity
+            Booking booking = createBookingEntity(request, account, schedule, totalAmount);
+
+            // 5. Save booking first to get ID
+            Booking savedBooking = bookingRepository.save(booking);
+            log.info("Created booking with ID: {} and code: {}", savedBooking.getBookingId(),
+                    savedBooking.getBookingCode());
+
+            // 6. Create booking seats relationships
+            createBookingSeats(savedBooking, seatIds);
+
+            // 7. Create booking concessions relationships if any
+            if (!request.getConcessionOrders().isEmpty()) {
+                createBookingConcessions(savedBooking, request.getConcessionOrders());
+                log.info("Created {} concession orders for booking {}",
+                        request.getConcessionOrders().size(), savedBooking.getBookingId());
+            }
+
+            // 8. Update schedule seat counts
+            updateScheduleSeatCounts(schedule, seatIds.size(), 0);
+
+            // 9. Generate QR code for the booking
+            generateQRCode(savedBooking.getBookingId());
+
+            log.info("Booking creation completed successfully - ID: {}, Code: {}, Seats: {}, Concessions: {}",
+                    savedBooking.getBookingId(), savedBooking.getBookingCode(),
+                    seatIds.size(), request.getConcessionOrders().size());
+
+            return bookingMapper.toResponse(savedBooking);
+
+        } catch (Exception e) {
+            // If anything fails, release the locked seats
+            log.error("Booking creation failed, releasing locked seats: {}", seatIds, e);
+            releaseSeatLocks(request.getScheduleId(), seatIds);
+            throw e;
+        }
+    }
+
+    /**
+     * Atomically lock and validate seats for booking
+     * Uses database-level locking to prevent race conditions
+     */
+    private boolean lockAndValidateSeats(Long scheduleId, List<Long> seatIds) {
+        log.debug("Attempting to lock {} seats for schedule {}", seatIds.size(), scheduleId);
+
+        // Get all seats with database lock
+        List<Seat> seats = seatRepository.findByIdInAndLockForUpdate(seatIds);
+
+        if (seats.size() != seatIds.size()) {
+            log.warn("Some seats not found - requested: {}, found: {}", seatIds.size(), seats.size());
+            return false;
+        }
+
+        // Check if any seats are already booked for this schedule
+        List<BookingSeat> existingBookings = bookingSeatRepository
+                .findOccupiedSeatsByScheduleAndSeatIds(scheduleId, seatIds);
+
+        if (!existingBookings.isEmpty()) {
+            List<Long> bookedSeatIds = existingBookings.stream()
+                    .map(bs -> bs.getSeat().getSeatId())
+                    .collect(Collectors.toList());
+            log.warn("Seats already booked for schedule {}: {}", scheduleId, bookedSeatIds);
+            return false;
+        }
+
+        // Check schedule capacity
+        Schedule schedule = findScheduleById(scheduleId);
+        if (schedule.getAvailableSeats() < seatIds.size()) {
+            log.warn("Not enough available seats - requested: {}, available: {}",
+                    seatIds.size(), schedule.getAvailableSeats());
+            return false;
+        }
+
+        log.debug("Successfully locked {} seats for schedule {}", seatIds.size(), scheduleId);
+        return true;
+    }
+
+    /**
+     * Release seat locks if booking creation fails
+     */
+    private void releaseSeatLocks(Long scheduleId, List<Long> seatIds) {
+        log.debug("Releasing seat locks for schedule {}, seats: {}", scheduleId, seatIds);
+        // In this implementation, locks are released automatically when transaction
+        // rollback
+        // But we can add explicit cleanup if needed
+    }
+
+    /**
+     * Create booking entity with all required fields
+     */
+    private Booking createBookingEntity(BookingCreateRequest request, Account account,
+            Schedule schedule, Double totalAmount) {
+
+        Booking booking = new Booking();
+
+        // Basic info
         booking.setBookingCode(generateBookingCode());
+        booking.setBookingDate(LocalDateTime.now());
+        booking.setSeatCount(request.getSeatIds().size());
+
+        // Amounts
         booking.setTotalAmount(totalAmount);
+        booking.setDiscountAmount(0.0);
         booking.setFinalAmount(totalAmount); // Will be adjusted if promotion applied
+
+        // Status and relationships
         booking.setBookingStatus(BookingStatus.PENDING);
+        booking.setAccount(account); // null for guest bookings
+        booking.setSchedule(schedule);
+
+        // Customer information (for guest bookings or override)
+        if (account == null || request.getIsGuestBooking()) {
+            booking.setCustomerName(request.getCustomerName());
+            booking.setCustomerEmail(request.getCustomerEmail());
+            booking.setCustomerPhone(request.getCustomerPhone());
+        } else {
+            // Use account info as default, but allow override
+            booking.setCustomerName(account.getFullName());
+            booking.setCustomerEmail(account.getEmail());
+            booking.setCustomerPhone(account.getPhoneNumber());
+        }
+
+        // Additional info
+        booking.setNotes(request.getNotes());
+        booking.setIsActive(true);
+
+        // Timestamps
         booking.setCreatedAt(LocalDateTime.now());
         booking.setUpdatedAt(LocalDateTime.now());
-        
-        // Set customer information for guest booking
-        booking.setCustomerName(request.getCustomerName());
-        booking.setCustomerEmail(request.getCustomerEmail());
-        booking.setCustomerPhone(request.getCustomerPhone());
-        
-        // Save booking
-        Booking savedBooking = bookingRepository.save(booking);
-        log.info("Created booking with ID: {} and code: {}", savedBooking.getBookingId(), savedBooking.getBookingCode());
-        
-        // Create booking seats
-        createBookingSeats(savedBooking, request.getSeatIds());
-        
-        // Update schedule seat counts
-        updateScheduleSeatCounts(schedule, request.getSeatIds().size(), 0);
 
-        return bookingMapper.toResponse(savedBooking);
+        return booking;
     }
 
     @Override
@@ -158,7 +314,7 @@ public class BookingServiceImpl implements BookingService {
         // Update booking
         bookingMapper.updateEntity(booking, request);
         Booking updatedBooking = bookingRepository.save(booking);
-        
+
         log.info("Booking updated successfully with ID: {}", bookingId);
         return bookingMapper.toResponse(updatedBooking);
     }
@@ -175,17 +331,17 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public BookingResponse getBookingByCode(String bookingCode) {
         log.info("Getting booking by code: {}", bookingCode);
-        
+
         Booking booking = bookingRepository.findByBookingCodeAndIsActiveTrue(bookingCode)
                 .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
-        
+
         return bookingMapper.toResponse(booking);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<BookingResponse> getAllBookings(Pageable pageable) {
-        log.info("Getting all bookings with pagination: page={}, size={}", 
+        log.info("Getting all bookings with pagination: page={}, size={}",
                 pageable.getPageNumber(), pageable.getPageSize());
         Page<Booking> bookings = bookingRepository.findAll(pageable);
         return bookings.map(bookingMapper::toResponse);
@@ -195,7 +351,8 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public List<BookingResponse> getBookingsByAccount(Long accountId) {
         log.info("Getting bookings by account ID: {}", accountId);
-        List<Booking> bookings = bookingRepository.findByAccountAccountIdAndIsActiveTrueOrderByBookingDateDesc(accountId);
+        List<Booking> bookings = bookingRepository
+                .findByAccountAccountIdAndIsActiveTrueOrderByBookingDateDesc(accountId);
         return bookings.stream()
                 .map(bookingMapper::toResponse)
                 .collect(Collectors.toList());
@@ -205,7 +362,8 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public Page<BookingResponse> getBookingsByAccount(Long accountId, Pageable pageable) {
         log.info("Getting bookings by account ID: {} with pagination", accountId);
-        Page<Booking> bookings = bookingRepository.findByAccountAccountIdAndIsActiveTrueOrderByBookingDateDesc(accountId, pageable);
+        Page<Booking> bookings = bookingRepository
+                .findByAccountAccountIdAndIsActiveTrueOrderByBookingDateDesc(accountId, pageable);
         return bookings.map(bookingMapper::toResponse);
     }
 
@@ -257,9 +415,11 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<BookingResponse> getBookingsByDateRange(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+    public Page<BookingResponse> getBookingsByDateRange(LocalDateTime startDate, LocalDateTime endDate,
+            Pageable pageable) {
         log.info("Getting bookings by date range: {} to {} with pagination", startDate, endDate);
-        Page<Booking> bookings = bookingRepository.findByBookingDateBetweenAndIsActiveTrue(startDate, endDate, pageable);
+        Page<Booking> bookings = bookingRepository.findByBookingDateBetweenAndIsActiveTrue(startDate, endDate,
+                pageable);
         return bookings.map(bookingMapper::toResponse);
     }
 
@@ -267,7 +427,8 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public List<BookingResponse> getBookingsByCustomerEmail(String customerEmail) {
         log.info("Getting bookings by customer email: {}", customerEmail);
-        List<Booking> bookings = bookingRepository.findByCustomerEmailAndIsActiveTrueOrderByBookingDateDesc(customerEmail);
+        List<Booking> bookings = bookingRepository
+                .findByCustomerEmailAndIsActiveTrueOrderByBookingDateDesc(customerEmail);
         return bookings.stream()
                 .map(bookingMapper::toResponse)
                 .collect(Collectors.toList());
@@ -277,7 +438,8 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public List<BookingResponse> getBookingsByCustomerPhone(String customerPhone) {
         log.info("Getting bookings by customer phone: {}", customerPhone);
-        List<Booking> bookings = bookingRepository.findByCustomerPhoneAndIsActiveTrueOrderByBookingDateDesc(customerPhone);
+        List<Booking> bookings = bookingRepository
+                .findByCustomerPhoneAndIsActiveTrueOrderByBookingDateDesc(customerPhone);
         return bookings.stream()
                 .map(bookingMapper::toResponse)
                 .collect(Collectors.toList());
@@ -362,7 +524,7 @@ public class BookingServiceImpl implements BookingService {
 
         booking.setBookingStatus(BookingStatus.CONFIRMED);
         Booking updatedBooking = bookingRepository.save(booking);
-        
+
         log.info("Booking confirmed successfully with ID: {}", bookingId);
         return bookingMapper.toResponse(updatedBooking);
     }
@@ -391,7 +553,7 @@ public class BookingServiceImpl implements BookingService {
         // Process payment
         booking.confirmPayment(paymentRequest.getPaymentMethod(), paymentRequest.getPaymentReference());
         Booking updatedBooking = bookingRepository.save(booking);
-        
+
         log.info("Payment processed successfully for booking ID: {}", booking.getBookingId());
         return bookingMapper.toResponse(updatedBooking);
     }
@@ -407,13 +569,13 @@ public class BookingServiceImpl implements BookingService {
 
         // Cancel booking
         booking.cancel(cancellationReason);
-        
+
         // Release seats
         List<BookingSeat> bookingSeats = bookingSeatRepository.findByBookingBookingIdAndActiveTrue(bookingId);
         updateScheduleSeatCounts(booking.getSchedule(), 0, bookingSeats.size());
 
         Booking updatedBooking = bookingRepository.save(booking);
-        
+
         log.info("Booking cancelled successfully with ID: {}", bookingId);
         return bookingMapper.toResponse(updatedBooking);
     }
@@ -443,7 +605,7 @@ public class BookingServiceImpl implements BookingService {
         // Check-in booking
         booking.checkIn();
         Booking updatedBooking = bookingRepository.save(booking);
-        
+
         log.info("Booking checked in successfully with ID: {}", booking.getBookingId());
         return bookingMapper.toResponse(updatedBooking);
     }
@@ -476,9 +638,9 @@ public class BookingServiceImpl implements BookingService {
         booking.setPromotion(null);
         booking.setDiscountAmount(0.0);
         booking.setFinalAmount(booking.getTotalAmount());
-        
+
         Booking updatedBooking = bookingRepository.save(booking);
-        
+
         log.info("Promotion removed successfully from booking ID: {}", bookingId);
         return bookingMapper.toResponse(updatedBooking);
     }
@@ -487,14 +649,15 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public List<Long> getAvailableSeats(Long scheduleId) {
         log.info("Getting available seats for schedule ID: {}", scheduleId);
-        
+
         // Get all seats for the cinema room
         Schedule schedule = findScheduleById(scheduleId);
-        List<Seat> allSeats = seatRepository.findByCinemaRoomCinemaRoomIdAndIsActiveTrue(schedule.getCinemaRoom().getCinemaRoomId());
-        
+        List<Seat> allSeats = seatRepository
+                .findByCinemaRoomCinemaRoomIdAndIsActiveTrue(schedule.getCinemaRoom().getCinemaRoomId());
+
         // Get booked seats
         List<Long> bookedSeatIds = getBookedSeats(scheduleId);
-        
+
         // Return available seats
         return allSeats.stream()
                 .map(Seat::getSeatId)
@@ -520,13 +683,13 @@ public class BookingServiceImpl implements BookingService {
     public String generateQRCode(Long bookingId) {
         log.info("Generating QR code for booking ID: {}", bookingId);
         Booking booking = findBookingById(bookingId);
-        
+
         if (booking.getQrCode() == null) {
             String qrCode = generateQRCodeInternal();
             booking.setQrCode(qrCode);
             bookingRepository.save(booking);
         }
-        
+
         return booking.getQrCode();
     }
 
@@ -556,7 +719,7 @@ public class BookingServiceImpl implements BookingService {
 
         booking.setIsActive(false);
         bookingRepository.save(booking);
-        
+
         log.info("Booking soft deleted successfully with ID: {}", bookingId);
     }
 
@@ -568,7 +731,7 @@ public class BookingServiceImpl implements BookingService {
 
         booking.setIsActive(true);
         Booking restoredBooking = bookingRepository.save(booking);
-        
+
         log.info("Booking restored successfully with ID: {}", bookingId);
         return bookingMapper.toResponse(restoredBooking);
     }
@@ -578,7 +741,7 @@ public class BookingServiceImpl implements BookingService {
         log.info("Cleaning up expired pending bookings");
         LocalDateTime expiredTime = LocalDateTime.now().minusMinutes(BOOKING_EXPIRATION_MINUTES);
         List<Booking> expiredBookings = bookingRepository.findExpiredPendingBookings(expiredTime);
-        
+
         int cleanedCount = 0;
         for (Booking booking : expiredBookings) {
             try {
@@ -588,7 +751,7 @@ public class BookingServiceImpl implements BookingService {
                 log.error("Failed to cleanup expired booking ID: {}", booking.getBookingId(), e);
             }
         }
-        
+
         log.info("Cleaned up {} expired bookings", cleanedCount);
         return cleanedCount;
     }
@@ -656,9 +819,267 @@ public class BookingServiceImpl implements BookingService {
 
         booking.setRefundAmount(refundAmount);
         Booking updatedBooking = bookingRepository.save(booking);
-        
+
         log.info("Refund processed successfully for booking ID: {}", bookingId);
         return bookingMapper.toResponse(updatedBooking);
+    }
+
+    // ==================== CONCESSION MANAGEMENT ====================
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingConcessionResponse> getBookingConcessions(Long bookingId) {
+        log.info("Getting concessions for booking ID: {}", bookingId);
+
+        // Validate booking exists
+        findBookingById(bookingId);
+
+        List<BookingConcession> concessions = bookingConcessionRepository
+                .findByBookingBookingIdAndIsActiveTrue(bookingId);
+
+        List<BookingConcessionResponse> responses = concessions.stream()
+                .map(this::mapToBookingConcessionResponse)
+                .collect(Collectors.toList());
+
+        log.info("Found {} concession orders for booking {}", responses.size(), bookingId);
+        return responses;
+    }
+
+    @Override
+    public BookingResponse addConcessionToBooking(Long bookingId, ConcessionOrderRequest request) {
+        log.info("Adding concession {} to booking {}", request.getConcessionId(), bookingId);
+
+        Booking booking = findBookingById(bookingId);
+
+        // Only allow adding concessions to PENDING bookings
+        if (!booking.isPending()) {
+            throw new IllegalArgumentException("Chỉ có thể thêm đồ ăn/uống vào booking đang chờ xử lý");
+        }
+
+        // Validate concession availability
+        if (!concessionService.isAvailableForOrder(request.getConcessionId(), request.getQuantity())) {
+            Concession concession = concessionService.getConcessionById(request.getConcessionId());
+            throw new IllegalArgumentException(
+                    String.format("Không đủ số lượng cho %s (yêu cầu: %d, còn lại: %d)",
+                            concession.getFullName(),
+                            request.getQuantity(),
+                            concession.getStockQuantity()));
+        }
+
+        // Create new concession order
+        createBookingConcessions(booking, List.of(request));
+
+        // Update booking total amount
+        updateBookingAmountWithConcessions(booking);
+
+        log.info("Added concession to booking {} - new total: {}", bookingId, booking.getFinalAmount());
+        return bookingMapper.toResponse(booking);
+    }
+
+    @Override
+    public BookingResponse removeConcessionFromBooking(Long bookingId, Long concessionId) {
+        log.info("Removing concession {} from booking {}", concessionId, bookingId);
+
+        Booking booking = findBookingById(bookingId);
+
+        // Only allow removing concessions from PENDING bookings
+        if (!booking.isPending()) {
+            throw new IllegalArgumentException("Chỉ có thể xóa đồ ăn/uống từ booking đang chờ xử lý");
+        }
+
+        // Find and remove concession
+        List<BookingConcession> concessions = bookingConcessionRepository
+                .findByBookingBookingIdAndIsActiveTrue(bookingId);
+        BookingConcession toRemove = concessions.stream()
+                .filter(bc -> bc.getConcession().getConcessionId().equals(concessionId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đồ ăn/uống trong booking"));
+
+        // Restore stock
+        concessionService.updateStock(concessionId, -toRemove.getQuantity()); // Negative to restore
+
+        // Soft delete concession
+        toRemove.setIsActive(false);
+        bookingConcessionRepository.save(toRemove);
+
+        // Update booking total amount
+        updateBookingAmountWithConcessions(booking);
+
+        log.info("Removed concession from booking {} - new total: {}", bookingId, booking.getFinalAmount());
+        return bookingMapper.toResponse(booking);
+    }
+
+    @Override
+    public BookingResponse updateConcessionQuantity(Long bookingId, Long concessionId, Integer quantity) {
+        log.info("Updating concession {} quantity to {} in booking {}", concessionId, quantity, bookingId);
+
+        Booking booking = findBookingById(bookingId);
+
+        // Only allow updating concessions in PENDING bookings
+        if (!booking.isPending()) {
+            throw new IllegalArgumentException("Chỉ có thể cập nhật đồ ăn/uống trong booking đang chờ xử lý");
+        }
+
+        // Find concession in booking
+        List<BookingConcession> concessions = bookingConcessionRepository
+                .findByBookingBookingIdAndIsActiveTrue(bookingId);
+        BookingConcession toUpdate = concessions.stream()
+                .filter(bc -> bc.getConcession().getConcessionId().equals(concessionId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đồ ăn/uống trong booking"));
+
+        // Calculate stock change
+        Integer oldQuantity = toUpdate.getQuantity();
+        Integer stockChange = quantity - oldQuantity;
+
+        // Validate availability for increase
+        if (stockChange > 0 && !concessionService.isAvailableForOrder(concessionId, stockChange)) {
+            Concession concession = concessionService.getConcessionById(concessionId);
+            throw new IllegalArgumentException(
+                    String.format("Không đủ số lượng để tăng %s (yêu cầu thêm: %d, còn lại: %d)",
+                            concession.getFullName(),
+                            stockChange,
+                            concession.getStockQuantity()));
+        }
+
+        // Update quantity and total price
+        toUpdate.setQuantity(quantity);
+        toUpdate.setTotalPrice(toUpdate.getUnitPrice().multiply(new BigDecimal(quantity)));
+        bookingConcessionRepository.save(toUpdate);
+
+        // Update stock
+        concessionService.updateStock(concessionId, stockChange);
+
+        // Update booking total amount
+        updateBookingAmountWithConcessions(booking);
+
+        log.info("Updated concession quantity in booking {} - new total: {}", bookingId, booking.getFinalAmount());
+        return bookingMapper.toResponse(booking);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BookingSummaryResponse getBookingSummary(Long bookingId) {
+        log.info("Getting booking summary for ID: {}", bookingId);
+
+        Booking booking = findBookingById(bookingId);
+
+        // Get booking seats
+        List<BookingSeat> bookingSeats = bookingSeatRepository.findByBookingBookingId(bookingId);
+
+        // Get booking concessions
+        List<BookingConcession> bookingConcessions = bookingConcessionRepository
+                .findByBookingBookingIdAndIsActiveTrue(bookingId);
+
+        // Map to summary response
+        BookingSummaryResponse summary = mapToBookingSummaryResponse(booking, bookingSeats, bookingConcessions);
+
+        log.info("Generated summary for booking {} - {} seats, {} concessions",
+                bookingId, summary.getSeatCount(), summary.getConcessionItems());
+        return summary;
+    }
+
+    // ==================== HELPER METHODS FOR CONCESSIONS ====================
+
+    private void updateBookingAmountWithConcessions(Booking booking) {
+        // Calculate seat amount
+        List<BookingSeat> seats = bookingSeatRepository.findByBookingBookingId(booking.getBookingId());
+        Double seatAmount = seats.stream()
+                .mapToDouble(BookingSeat::getSeatPrice)
+                .sum();
+
+        // Calculate concession amount
+        BigDecimal concessionAmount = bookingConcessionRepository
+                .calculateTotalConcessionAmount(booking.getBookingId());
+
+        // Update booking amounts
+        booking.setTotalAmount(seatAmount + concessionAmount.doubleValue());
+        booking.setFinalAmount(
+                booking.getTotalAmount() - (booking.getDiscountAmount() != null ? booking.getDiscountAmount() : 0.0));
+
+        bookingRepository.save(booking);
+    }
+
+    private BookingConcessionResponse mapToBookingConcessionResponse(BookingConcession bookingConcession) {
+        BookingConcessionResponse response = new BookingConcessionResponse();
+        response.setBookingConcessionId(bookingConcession.getBookingConcessionId());
+        response.setBookingId(bookingConcession.getBooking().getBookingId());
+        response.setConcessionId(bookingConcession.getConcession().getConcessionId());
+        response.setConcessionName(bookingConcession.getConcession().getFullName());
+        response.setConcessionCategory(bookingConcession.getConcession().getCategory().name());
+        response.setConcessionImageUrl(bookingConcession.getConcession().getImageUrl());
+        response.setQuantity(bookingConcession.getQuantity());
+        response.setUnitPrice(bookingConcession.getUnitPrice());
+        response.setTotalPrice(bookingConcession.getTotalPrice());
+        response.setNotes(bookingConcession.getNotes());
+        response.setCreatedAt(bookingConcession.getCreatedAt());
+        return response;
+    }
+
+    private BookingSummaryResponse mapToBookingSummaryResponse(Booking booking,
+            List<BookingSeat> bookingSeats,
+            List<BookingConcession> bookingConcessions) {
+        BookingSummaryResponse summary = new BookingSummaryResponse();
+
+        // Basic booking info
+        summary.setBookingId(booking.getBookingId());
+        summary.setBookingCode(booking.getBookingCode());
+        summary.setBookingStatus(booking.getBookingStatus().name());
+        summary.setBookingDate(booking.getBookingDate());
+
+        // Movie and schedule info
+        summary.setMovieTitle(booking.getSchedule().getMovie().getTitle());
+        summary.setShowDateTime(booking.getSchedule().getShowDateTime());
+        summary.setCinemaRoomName(booking.getSchedule().getCinemaRoom().getCinemaRoomName());
+
+        // Customer info
+        summary.setCustomerName(booking.getCustomerDisplayName());
+        summary.setCustomerEmail(booking.getCustomerDisplayEmail());
+        summary.setCustomerPhone(booking.getCustomerDisplayPhone());
+
+        // Seat information
+        summary.setSeatCount(booking.getSeatCount());
+        List<BookingSummaryResponse.SeatSummary> seats = bookingSeats.stream()
+                .map(this::mapToSeatSummary)
+                .collect(Collectors.toList());
+        summary.setSeats(seats);
+        summary.setSeatAmount(bookingSeats.stream().mapToDouble(BookingSeat::getSeatPrice).sum());
+
+        // Concession information
+        summary.setConcessionItems(bookingConcessions.size());
+        List<BookingConcessionResponse> concessions = bookingConcessions.stream()
+                .map(this::mapToBookingConcessionResponse)
+                .collect(Collectors.toList());
+        summary.setConcessions(concessions);
+        summary.setConcessionAmount(bookingConcessions.stream()
+                .mapToDouble(bc -> bc.getTotalPrice().doubleValue())
+                .sum());
+
+        // Payment information
+        summary.setTotalAmount(booking.getTotalAmount());
+        summary.setDiscountAmount(booking.getDiscountAmount());
+        summary.setFinalAmount(booking.getFinalAmount());
+        summary.setPaymentMethod(booking.getPaymentMethod());
+        summary.setPaymentDate(booking.getPaymentDate());
+
+        // Additional info
+        summary.setNotes(booking.getNotes());
+        summary.setQrCode(booking.getQrCode());
+        summary.setIsCheckedIn(booking.getIsCheckedIn());
+        summary.setCheckInTime(booking.getCheckInTime());
+
+        return summary;
+    }
+
+    private BookingSummaryResponse.SeatSummary mapToSeatSummary(BookingSeat bookingSeat) {
+        BookingSummaryResponse.SeatSummary seatSummary = new BookingSummaryResponse.SeatSummary();
+        seatSummary.setSeatId(bookingSeat.getSeat().getSeatId());
+        seatSummary.setSeatNumber(bookingSeat.getSeat().getSeatNumber());
+        seatSummary.setSeatType(bookingSeat.getSeat().getSeatType());
+        seatSummary.setSeatPrice(bookingSeat.getSeatPrice());
+        seatSummary.setIsVIP(bookingSeat.getSeat().isVIP());
+        seatSummary.setIsCouple(bookingSeat.getSeat().isCouple());
+        return seatSummary;
     }
 
     // Helper methods
@@ -692,25 +1113,25 @@ public class BookingServiceImpl implements BookingService {
 
     private void validatePaymentRequest(PaymentRequest request) {
         if (request.isCardPayment() && !request.hasValidCardDetails()) {
-                            throw new AppException(ErrorCode.PAYMENT_METHOD_INVALID);
+            throw new AppException(ErrorCode.PAYMENT_METHOD_INVALID);
         }
-        
+
         if (request.isOnlinePayment() && !request.hasValidOnlineDetails()) {
-                            throw new AppException(ErrorCode.PAYMENT_METHOD_INVALID);
+            throw new AppException(ErrorCode.PAYMENT_METHOD_INVALID);
         }
-        
+
         if (request.isWalletPayment() && !request.hasValidWalletDetails()) {
-                            throw new AppException(ErrorCode.PAYMENT_METHOD_INVALID);
+            throw new AppException(ErrorCode.PAYMENT_METHOD_INVALID);
         }
     }
 
     private void createBookingSeats(Booking booking, List<Long> seatIds) {
         List<BookingSeat> bookingSeats = new ArrayList<>();
-        
+
         for (Long seatId : seatIds) {
             Seat seat = seatRepository.findById(seatId)
                     .orElseThrow(() -> new AppException(ErrorCode.SEAT_NOT_FOUND));
-            
+
             BookingSeat bookingSeat = new BookingSeat();
             bookingSeat.setBooking(booking);
             bookingSeat.setSeat(seat);
@@ -720,11 +1141,54 @@ public class BookingServiceImpl implements BookingService {
             bookingSeat.setActive(true);
             bookingSeat.setCreatedAt(LocalDateTime.now());
             bookingSeat.setUpdatedAt(LocalDateTime.now());
-            
+
             bookingSeats.add(bookingSeat);
         }
-        
+
         bookingSeatRepository.saveAll(bookingSeats);
+    }
+
+    /**
+     * Create booking concessions relationships
+     */
+    private void createBookingConcessions(Booking booking, List<ConcessionOrderRequest> concessionOrders) {
+        List<BookingConcession> bookingConcessions = new ArrayList<>();
+
+        for (ConcessionOrderRequest order : concessionOrders) {
+            // Get concession details
+            Concession concession = concessionService.getConcessionById(order.getConcessionId());
+
+            // Validate availability again (double check)
+            if (!concessionService.isAvailableForOrder(order.getConcessionId(), order.getQuantity())) {
+                throw new IllegalArgumentException(
+                        String.format("Không đủ số lượng cho %s", concession.getFullName()));
+            }
+
+            // Create booking concession entity
+            BookingConcession bookingConcession = BookingConcession.builder()
+                    .booking(booking)
+                    .concession(concession)
+                    .quantity(order.getQuantity())
+                    .unitPrice(order.getUnitPrice())
+                    .totalPrice(order.getTotalPrice())
+                    .notes(order.getNotes())
+                    .isActive(true)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+
+            bookingConcessions.add(bookingConcession);
+
+            // Update concession stock
+            concessionService.updateStock(order.getConcessionId(), order.getQuantity());
+
+            log.debug("Created concession order: {} x {} = {}",
+                    concession.getFullName(), order.getQuantity(), order.getFormattedTotalPrice());
+        }
+
+        bookingConcessionRepository.saveAll(bookingConcessions);
+        log.info("Saved {} concession orders for booking {}",
+                bookingConcessions.size(), booking.getBookingId());
     }
 
     private void updateScheduleSeatCounts(Schedule schedule, int bookedSeatsToAdd, int bookedSeatsToRemove) {
@@ -744,20 +1208,20 @@ public class BookingServiceImpl implements BookingService {
     private Double calculateBookingAmount(Long scheduleId, List<Long> seatIds, Long promotionId) {
         try {
             Double totalAmount = 0.0;
-            
+
             // Calculate total seat prices
             for (Long seatId : seatIds) {
-                            Seat seat = seatRepository.findById(seatId)
-                    .orElseThrow(() -> new AppException(ErrorCode.SEAT_NOT_FOUND));
+                Seat seat = seatRepository.findById(seatId)
+                        .orElseThrow(() -> new AppException(ErrorCode.SEAT_NOT_FOUND));
                 totalAmount += seat.getSeatPrice();
             }
-            
+
             // Apply promotion discount if available
             if (promotionId != null) {
                 // TODO: Implement promotion discount logic
                 log.info("Promotion ID {} will be applied later", promotionId);
             }
-            
+
             return totalAmount;
         } catch (Exception e) {
             log.error("Error calculating booking amount: {}", e.getMessage());
@@ -767,7 +1231,7 @@ public class BookingServiceImpl implements BookingService {
 
     private BookingStatistics calculateStatistics(LocalDateTime startDate, LocalDateTime endDate) {
         List<Booking> bookings;
-        
+
         if (startDate != null && endDate != null) {
             bookings = bookingRepository.findByBookingDateBetweenAndIsActiveTrue(startDate, endDate);
         } else {
@@ -782,38 +1246,38 @@ public class BookingServiceImpl implements BookingService {
         Long paidCount = bookings.stream().mapToLong(b -> b.isPaid() ? 1 : 0).sum();
         Long completedCount = bookings.stream().mapToLong(b -> b.isCompleted() ? 1 : 0).sum();
         Long cancelledCount = bookings.stream().mapToLong(b -> b.isCancelled() ? 1 : 0).sum();
-        
+
         Long totalSeatsBooked = bookings.stream().mapToLong(Booking::getSeatCount).sum();
-        
+
         Double totalRevenue = bookings.stream()
                 .filter(b -> b.isPaid() || b.isCompleted())
                 .mapToDouble(Booking::getFinalAmount)
                 .sum();
-        
+
         Double averageBookingAmount = bookings.stream()
                 .filter(b -> b.isPaid() || b.isCompleted())
                 .mapToDouble(Booking::getFinalAmount)
                 .average()
                 .orElse(0.0);
-        
+
         Long guestBookings = bookings.stream().mapToLong(b -> b.isGuestBooking() ? 1 : 0).sum();
         Long memberBookings = bookings.stream().mapToLong(b -> b.isMemberBooking() ? 1 : 0).sum();
-        
+
         Long cashPayments = bookings.stream().mapToLong(b -> "CASH".equals(b.getPaymentMethod()) ? 1 : 0).sum();
         Long cardPayments = bookings.stream().mapToLong(b -> "CARD".equals(b.getPaymentMethod()) ? 1 : 0).sum();
         Long onlinePayments = bookings.stream().mapToLong(b -> "ONLINE".equals(b.getPaymentMethod()) ? 1 : 0).sum();
         Long walletPayments = bookings.stream().mapToLong(b -> "WALLET".equals(b.getPaymentMethod()) ? 1 : 0).sum();
-        
+
         Double refundAmount = bookings.stream()
                 .filter(b -> b.getRefundAmount() != null)
                 .mapToDouble(Booking::getRefundAmount)
                 .sum();
-        
+
         Long checkedInBookings = bookings.stream().mapToLong(b -> b.getIsCheckedIn() ? 1 : 0).sum();
 
-        return new BookingStatistics(totalBookings, pendingCount, confirmedCount, paidCount, 
-                                   completedCount, cancelledCount, totalSeatsBooked, totalRevenue, 
-                                   averageBookingAmount, guestBookings, memberBookings, cashPayments, 
-                                   cardPayments, onlinePayments, walletPayments, refundAmount, checkedInBookings);
+        return new BookingStatistics(totalBookings, pendingCount, confirmedCount, paidCount,
+                completedCount, cancelledCount, totalSeatsBooked, totalRevenue,
+                averageBookingAmount, guestBookings, memberBookings, cashPayments,
+                cardPayments, onlinePayments, walletPayments, refundAmount, checkedInBookings);
     }
-} 
+}

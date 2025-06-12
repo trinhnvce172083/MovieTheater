@@ -51,30 +51,35 @@ public interface BookingService {
      * Get bookings by account
      */
     List<BookingResponse> getBookingsByAccount(Long accountId);
+
     Page<BookingResponse> getBookingsByAccount(Long accountId, Pageable pageable);
 
     /**
      * Get bookings by schedule
      */
     List<BookingResponse> getBookingsBySchedule(Long scheduleId);
+
     Page<BookingResponse> getBookingsBySchedule(Long scheduleId, Pageable pageable);
 
     /**
      * Get bookings by status
      */
     List<BookingResponse> getBookingsByStatus(BookingStatus status);
+
     Page<BookingResponse> getBookingsByStatus(BookingStatus status, Pageable pageable);
 
     /**
      * Get bookings by date range
      */
     List<BookingResponse> getBookingsByDateRange(LocalDateTime startDate, LocalDateTime endDate);
+
     Page<BookingResponse> getBookingsByDateRange(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
     /**
      * Get bookings by customer info (for guest bookings)
      */
     List<BookingResponse> getBookingsByCustomerEmail(String customerEmail);
+
     List<BookingResponse> getBookingsByCustomerPhone(String customerPhone);
 
     /**
@@ -131,6 +136,7 @@ public interface BookingService {
      * Check-in booking
      */
     BookingResponse checkInBooking(String bookingCode);
+
     BookingResponse checkInBooking(String qrCode, boolean useQrCode);
 
     /**
@@ -218,6 +224,33 @@ public interface BookingService {
      */
     BookingResponse processRefund(Long bookingId, Double refundAmount);
 
+    // ==================== CONCESSION MANAGEMENT ====================
+
+    /**
+     * Get concession orders for booking
+     */
+    List<BookingConcessionResponse> getBookingConcessions(Long bookingId);
+
+    /**
+     * Add concession to existing booking
+     */
+    BookingResponse addConcessionToBooking(Long bookingId, ConcessionOrderRequest request);
+
+    /**
+     * Remove concession from booking
+     */
+    BookingResponse removeConcessionFromBooking(Long bookingId, Long concessionId);
+
+    /**
+     * Update concession quantity in booking
+     */
+    BookingResponse updateConcessionQuantity(Long bookingId, Long concessionId, Integer quantity);
+
+    /**
+     * Get booking summary including concessions
+     */
+    BookingSummaryResponse getBookingSummary(Long bookingId);
+
     /**
      * Inner class for booking statistics
      */
@@ -241,14 +274,15 @@ public interface BookingService {
         private Long checkedInBookings;
 
         // Constructors, getters, setters
-        public BookingStatistics() {}
+        public BookingStatistics() {
+        }
 
-        public BookingStatistics(Long totalBookings, Long pendingCount, Long confirmedCount, 
-                               Long paidCount, Long completedCount, Long cancelledCount, 
-                               Long totalSeatsBooked, Double totalRevenue, Double averageBookingAmount,
-                               Long guestBookings, Long memberBookings, Long cashPayments, 
-                               Long cardPayments, Long onlinePayments, Long walletPayments,
-                               Double refundAmount, Long checkedInBookings) {
+        public BookingStatistics(Long totalBookings, Long pendingCount, Long confirmedCount,
+                Long paidCount, Long completedCount, Long cancelledCount,
+                Long totalSeatsBooked, Double totalRevenue, Double averageBookingAmount,
+                Long guestBookings, Long memberBookings, Long cashPayments,
+                Long cardPayments, Long onlinePayments, Long walletPayments,
+                Double refundAmount, Long checkedInBookings) {
             this.totalBookings = totalBookings;
             this.pendingCount = pendingCount;
             this.confirmedCount = confirmedCount;
@@ -269,55 +303,140 @@ public interface BookingService {
         }
 
         // Getters and setters
-        public Long getTotalBookings() { return totalBookings; }
-        public void setTotalBookings(Long totalBookings) { this.totalBookings = totalBookings; }
+        public Long getTotalBookings() {
+            return totalBookings;
+        }
 
-        public Long getPendingCount() { return pendingCount; }
-        public void setPendingCount(Long pendingCount) { this.pendingCount = pendingCount; }
+        public void setTotalBookings(Long totalBookings) {
+            this.totalBookings = totalBookings;
+        }
 
-        public Long getConfirmedCount() { return confirmedCount; }
-        public void setConfirmedCount(Long confirmedCount) { this.confirmedCount = confirmedCount; }
+        public Long getPendingCount() {
+            return pendingCount;
+        }
 
-        public Long getPaidCount() { return paidCount; }
-        public void setPaidCount(Long paidCount) { this.paidCount = paidCount; }
+        public void setPendingCount(Long pendingCount) {
+            this.pendingCount = pendingCount;
+        }
 
-        public Long getCompletedCount() { return completedCount; }
-        public void setCompletedCount(Long completedCount) { this.completedCount = completedCount; }
+        public Long getConfirmedCount() {
+            return confirmedCount;
+        }
 
-        public Long getCancelledCount() { return cancelledCount; }
-        public void setCancelledCount(Long cancelledCount) { this.cancelledCount = cancelledCount; }
+        public void setConfirmedCount(Long confirmedCount) {
+            this.confirmedCount = confirmedCount;
+        }
 
-        public Long getTotalSeatsBooked() { return totalSeatsBooked; }
-        public void setTotalSeatsBooked(Long totalSeatsBooked) { this.totalSeatsBooked = totalSeatsBooked; }
+        public Long getPaidCount() {
+            return paidCount;
+        }
 
-        public Double getTotalRevenue() { return totalRevenue; }
-        public void setTotalRevenue(Double totalRevenue) { this.totalRevenue = totalRevenue; }
+        public void setPaidCount(Long paidCount) {
+            this.paidCount = paidCount;
+        }
 
-        public Double getAverageBookingAmount() { return averageBookingAmount; }
-        public void setAverageBookingAmount(Double averageBookingAmount) { this.averageBookingAmount = averageBookingAmount; }
+        public Long getCompletedCount() {
+            return completedCount;
+        }
 
-        public Long getGuestBookings() { return guestBookings; }
-        public void setGuestBookings(Long guestBookings) { this.guestBookings = guestBookings; }
+        public void setCompletedCount(Long completedCount) {
+            this.completedCount = completedCount;
+        }
 
-        public Long getMemberBookings() { return memberBookings; }
-        public void setMemberBookings(Long memberBookings) { this.memberBookings = memberBookings; }
+        public Long getCancelledCount() {
+            return cancelledCount;
+        }
 
-        public Long getCashPayments() { return cashPayments; }
-        public void setCashPayments(Long cashPayments) { this.cashPayments = cashPayments; }
+        public void setCancelledCount(Long cancelledCount) {
+            this.cancelledCount = cancelledCount;
+        }
 
-        public Long getCardPayments() { return cardPayments; }
-        public void setCardPayments(Long cardPayments) { this.cardPayments = cardPayments; }
+        public Long getTotalSeatsBooked() {
+            return totalSeatsBooked;
+        }
 
-        public Long getOnlinePayments() { return onlinePayments; }
-        public void setOnlinePayments(Long onlinePayments) { this.onlinePayments = onlinePayments; }
+        public void setTotalSeatsBooked(Long totalSeatsBooked) {
+            this.totalSeatsBooked = totalSeatsBooked;
+        }
 
-        public Long getWalletPayments() { return walletPayments; }
-        public void setWalletPayments(Long walletPayments) { this.walletPayments = walletPayments; }
+        public Double getTotalRevenue() {
+            return totalRevenue;
+        }
 
-        public Double getRefundAmount() { return refundAmount; }
-        public void setRefundAmount(Double refundAmount) { this.refundAmount = refundAmount; }
+        public void setTotalRevenue(Double totalRevenue) {
+            this.totalRevenue = totalRevenue;
+        }
 
-        public Long getCheckedInBookings() { return checkedInBookings; }
-        public void setCheckedInBookings(Long checkedInBookings) { this.checkedInBookings = checkedInBookings; }
+        public Double getAverageBookingAmount() {
+            return averageBookingAmount;
+        }
+
+        public void setAverageBookingAmount(Double averageBookingAmount) {
+            this.averageBookingAmount = averageBookingAmount;
+        }
+
+        public Long getGuestBookings() {
+            return guestBookings;
+        }
+
+        public void setGuestBookings(Long guestBookings) {
+            this.guestBookings = guestBookings;
+        }
+
+        public Long getMemberBookings() {
+            return memberBookings;
+        }
+
+        public void setMemberBookings(Long memberBookings) {
+            this.memberBookings = memberBookings;
+        }
+
+        public Long getCashPayments() {
+            return cashPayments;
+        }
+
+        public void setCashPayments(Long cashPayments) {
+            this.cashPayments = cashPayments;
+        }
+
+        public Long getCardPayments() {
+            return cardPayments;
+        }
+
+        public void setCardPayments(Long cardPayments) {
+            this.cardPayments = cardPayments;
+        }
+
+        public Long getOnlinePayments() {
+            return onlinePayments;
+        }
+
+        public void setOnlinePayments(Long onlinePayments) {
+            this.onlinePayments = onlinePayments;
+        }
+
+        public Long getWalletPayments() {
+            return walletPayments;
+        }
+
+        public void setWalletPayments(Long walletPayments) {
+            this.walletPayments = walletPayments;
+        }
+
+        public Double getRefundAmount() {
+            return refundAmount;
+        }
+
+        public void setRefundAmount(Double refundAmount) {
+            this.refundAmount = refundAmount;
+        }
+
+        public Long getCheckedInBookings() {
+            return checkedInBookings;
+        }
+
+        public void setCheckedInBookings(Long checkedInBookings) {
+            this.checkedInBookings = checkedInBookings;
+        }
     }
-} 
+}
