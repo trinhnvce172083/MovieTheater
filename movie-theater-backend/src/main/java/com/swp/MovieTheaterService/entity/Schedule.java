@@ -43,6 +43,9 @@ public class Schedule extends BaseEntity {
     @Column(name = "price", nullable = false)
     private Double price;
 
+    @Column(name = "time_slot_type", length = 20)
+    private String timeSlotType; // MORNING, AFTERNOON, EVENING, LATE_NIGHT
+
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
@@ -127,7 +130,8 @@ public class Schedule extends BaseEntity {
     }
 
     public double getOccupancyRate() {
-        if (availableSeats + bookedSeats == 0) return 0.0;
+        if (availableSeats + bookedSeats == 0)
+            return 0.0;
         return (double) bookedSeats / (availableSeats + bookedSeats) * 100;
     }
 
@@ -157,9 +161,46 @@ public class Schedule extends BaseEntity {
 
     public String getSpecialFeaturesText() {
         StringBuilder features = new StringBuilder();
-        if (is3D) features.append("3D ");
-        if (isIMAX) features.append("IMAX ");
-        if (is4DX) features.append("4DX ");
+        if (is3D)
+            features.append("3D ");
+        if (isIMAX)
+            features.append("IMAX ");
+        if (is4DX)
+            features.append("4DX ");
         return features.toString().trim();
     }
-} 
+
+    public String getTimeSlotTypeDisplay() {
+        if (timeSlotType == null)
+            return "Không xác định";
+
+        switch (timeSlotType) {
+            case "MORNING":
+                return "Buổi sáng";
+            case "AFTERNOON":
+                return "Buổi chiều";
+            case "EVENING":
+                return "Buổi tối";
+            case "LATE_NIGHT":
+                return "Đêm khuya";
+            default:
+                return timeSlotType;
+        }
+    }
+
+    public boolean isMorningSlot() {
+        return "MORNING".equals(timeSlotType);
+    }
+
+    public boolean isAfternoonSlot() {
+        return "AFTERNOON".equals(timeSlotType);
+    }
+
+    public boolean isEveningSlot() {
+        return "EVENING".equals(timeSlotType);
+    }
+
+    public boolean isLateNightSlot() {
+        return "LATE_NIGHT".equals(timeSlotType);
+    }
+}

@@ -43,7 +43,8 @@ public class ScheduleMapper {
         schedule.setIs3D(request.getIs3D() != null ? request.getIs3D() : false);
         schedule.setIsIMAX(request.getIsIMAX() != null ? request.getIsIMAX() : false);
         schedule.setIs4DX(request.getIs4DX() != null ? request.getIs4DX() : false);
-        schedule.setSubtitleLanguage(request.getSubtitleLanguage() != null ? request.getSubtitleLanguage() : "Vietnamese");
+        schedule.setSubtitleLanguage(
+                request.getSubtitleLanguage() != null ? request.getSubtitleLanguage() : "Vietnamese");
         schedule.setAudioLanguage(request.getAudioLanguage() != null ? request.getAudioLanguage() : "Vietnamese");
         schedule.setIsActive(true);
         schedule.setCreatedAt(LocalDateTime.now());
@@ -111,6 +112,7 @@ public class ScheduleMapper {
         response.setStartTime(schedule.getStartTime());
         response.setEndTime(schedule.getEndTime());
         response.setPrice(schedule.getPrice());
+        response.setTimeSlotType(schedule.getTimeSlotType());
         response.setIsActive(schedule.getIsActive());
         response.setStatus(schedule.getStatus());
         response.setIs3D(schedule.getIs3D());
@@ -207,6 +209,7 @@ public class ScheduleMapper {
         response.setEndDateTime(schedule.getEndDateTime());
         response.setDisplayTime(schedule.getDisplayTime());
         response.setDisplayDate(schedule.getShowDate().format(DATE_FORMATTER));
+        response.setTimeSlotTypeDisplay(schedule.getTimeSlotTypeDisplay());
         response.setIsToday(schedule.isToday());
         response.setIsPast(schedule.isPast());
         response.setIsFuture(schedule.isFuture());
@@ -220,7 +223,7 @@ public class ScheduleMapper {
         response.setCanUpdate(canUpdate(schedule));
         response.setCanDelete(canDelete(schedule));
         response.setPriceDisplay(CURRENCY_FORMATTER.format(schedule.getPrice()));
-        
+
         if (schedule.getMovie() != null && schedule.getMovie().getDuration() != null) {
             response.setDurationDisplay(formatDuration(schedule.getMovie().getDuration()));
         }
@@ -269,15 +272,16 @@ public class ScheduleMapper {
      * Format duration in minutes to hours and minutes
      */
     private String formatDuration(Integer durationMinutes) {
-        if (durationMinutes == null) return "";
-        
+        if (durationMinutes == null)
+            return "";
+
         int hours = durationMinutes / 60;
         int minutes = durationMinutes % 60;
-        
+
         if (hours > 0) {
             return String.format("%d giờ %d phút", hours, minutes);
         } else {
             return String.format("%d phút", minutes);
         }
     }
-} 
+}

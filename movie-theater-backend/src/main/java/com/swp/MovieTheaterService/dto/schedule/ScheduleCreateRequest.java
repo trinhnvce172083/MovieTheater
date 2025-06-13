@@ -45,8 +45,10 @@ public class ScheduleCreateRequest {
     @DecimalMax(value = "1000000.0", message = "Giá vé không được vượt quá 1,000,000")
     private Double price;
 
-    @Pattern(regexp = "^(SCHEDULED|ONGOING|COMPLETED|CANCELLED)$", 
-             message = "Trạng thái không hợp lệ (SCHEDULED, ONGOING, COMPLETED, CANCELLED)")
+    @Pattern(regexp = "^(MORNING|AFTERNOON|EVENING|LATE_NIGHT)$", message = "Loại khung giờ không hợp lệ (MORNING, AFTERNOON, EVENING, LATE_NIGHT)")
+    private String timeSlotType;
+
+    @Pattern(regexp = "^(SCHEDULED|ONGOING|COMPLETED|CANCELLED)$", message = "Trạng thái không hợp lệ (SCHEDULED, ONGOING, COMPLETED, CANCELLED)")
     private String status = "SCHEDULED";
 
     private Boolean is3D = false;
@@ -76,4 +78,4 @@ public class ScheduleCreateRequest {
         }
         return true;
     }
-} 
+}

@@ -50,6 +50,13 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
             "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
             "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00");
 
+    // Khung giờ chiếu tối ưu cho từng loại phòng
+    private static final Map<String, List<String>> ROOM_OPTIMAL_TIMES = Map.of(
+            "STANDARD", Arrays.asList("09:00", "11:30", "14:00", "16:30", "19:00", "21:30"),
+            "VIP", Arrays.asList("10:00", "13:00", "16:00", "19:30", "22:00"),
+            "IMAX", Arrays.asList("09:30", "12:30", "15:30", "18:30", "21:00"),
+            "4DX", Arrays.asList("10:30", "13:30", "16:30", "19:00", "21:30"));
+
     // Giá vé theo khung giờ
     private static final Map<String, Double> TIME_PRICE_MULTIPLIER = Map.of(
             "MORNING", 0.8, // 8:00 - 12:00
@@ -425,61 +432,102 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
             List<CinemaRoom> availableRooms) {
         List<ScheduleResponse> schedules = new ArrayList<>();
 
-        // Chọn số suất chiếu dựa trên độ phổ biến của phim
-        int schedulesPerDay = determineSchedulesPerDay(movie);
+        log.info("Tạo lịch chiếu cho phim: {} trên {} phòng", movie.getTitle(), availableRooms.size());
 
-        // Chọn khung giờ chiếu phù hợp
-        List<String> selectedTimes = selectOptimalShowtimes(schedulesPerDay);
+        // Phân loại phòng theo loại
+        Map<String, List<CinemaRoom>> roomsByType = availableRooms.stream()
+                .collect(Collectors.groupingBy(this::getRoomType));
 
-        // Chọn phòng chiếu phù hợp
-        List<CinemaRoom> suitableRooms = selectSuitableRooms(movie, availableRooms, schedulesPerDay);
+        // Tạo lịch chiếu đa dạng cho từng loại phòng
+        for (Map.Entry<String, List<CinemaRoom>> entry : roomsByType.entrySet()) {
+            String roomType = entry.getKey();
+            List<CinemaRoom> roomsOfType = entry.getValue();
 
-        for (int i = 0; i < Math.min(Math.min(schedulesPerDay, suitableRooms.size()), selectedTimes.size()); i++) {
-            try {
-                CinemaRoom room = suitableRooms.get(i);
-                LocalTime startTime = LocalTime.parse(selectedTimes.get(i));
-                LocalTime endTime = calculateEndTime(startTime, movie.getDuration());
+            // Lấy khung giờ tối ưu cho loại phòng này
+            List<String> optimalTimes = ROOM_OPTIMAL_TIMES.getOrDefault(roomType,
+                    Arrays.asList("14:00", "19:00", "21:30"));
 
-                // Kiểm tra xung đột lịch chiếu
-                if (!scheduleService.hasScheduleConflict(room.getCinemaRoomId(), date, startTime, endTime)) {
-                    ScheduleCreateRequest request = createScheduleRequest(movie, room, date, startTime, endTime);
-                    ScheduleResponse schedule = scheduleService.createSchedule(request);
-                    schedules.add(schedule);
+            log.info("Tạo lịch cho {} phòng {} với {} khung giờ",
+                    roomsOfType.size(), roomType, optimalTimes.size());
 
-                    log.debug("Tạo lịch chiếu: {} - {} tại phòng {} lúc {}",
-                            movie.getTitle(), date, room.getCinemaRoomName(), startTime);
+            // Tạo lịch chiếu cho từng phòng thuộc loại này
+            for (int roomIndex = 0; roomIndex < roomsOfType.size(); roomIndex++) {
+                CinemaRoom room = roomsOfType.get(roomIndex);
+
+                // Mỗi phòng sẽ có 2-3 suất chiếu với khung giờ khác nhau
+                int schedulesPerRoom = Math.min(3, optimalTimes.size());
+
+                for (int timeIndex = 0; timeIndex < schedulesPerRoom; timeIndex++) {
+                    try {
+                        // Chọn khung giờ theo pattern để tránh trùng
+                        int selectedTimeIndex = (roomIndex + timeIndex * roomsOfType.size()) % optimalTimes.size();
+                        String selectedTime = optimalTimes.get(selectedTimeIndex);
+
+                        LocalTime startTime = LocalTime.parse(selectedTime);
+                        LocalTime endTime = calculateEndTime(startTime, movie.getDuration());
+
+                        // Kiểm tra xung đột lịch chiếu
+                        if (!scheduleService.hasScheduleConflict(room.getCinemaRoomId(), date, startTime, endTime)) {
+                            ScheduleCreateRequest request = createScheduleRequest(movie, room, date, startTime,
+                                    endTime);
+                            ScheduleResponse schedule = scheduleService.createSchedule(request);
+                            schedules.add(schedule);
+
+                            log.debug("✓ Tạo lịch: {} - {} tại {} lúc {}",
+                                    movie.getTitle(), date, room.getCinemaRoomName(), startTime);
+                        } else {
+                            log.debug("✗ Bị xung đột: {} tại {} lúc {}",
+                                    movie.getTitle(), room.getCinemaRoomName(), startTime);
+                        }
+                    } catch (Exception e) {
+                        log.error("Lỗi khi tạo lịch chiếu cho phim {} tại phòng {}: {}",
+                                movie.getTitle(), room.getCinemaRoomName(), e.getMessage());
+                    }
                 }
-            } catch (Exception e) {
-                log.error("Lỗi khi tạo lịch chiếu cho phim {} vào {}: {}",
-                        movie.getTitle(), selectedTimes.get(i), e.getMessage());
             }
         }
 
+        log.info("Đã tạo {} lịch chiếu cho phim {}", schedules.size(), movie.getTitle());
         return schedules;
     }
 
+    private String getRoomType(CinemaRoom room) {
+        if (room.isVIP())
+            return "VIP";
+        if (room.isIMAX())
+            return "IMAX";
+        if (room.is4DX())
+            return "4DX";
+        return "STANDARD";
+    }
+
     private int determineSchedulesPerDay(Movie movie) {
-        // Phim hot/featured có nhiều suất chiếu hơn
+        // Với hệ thống mới, mỗi phim sẽ có nhiều suất chiếu trên nhiều phòng
         if (movie.getIsFeatured()) {
-            return 4; // 4 suất/ngày cho phim nổi bật
+            return 8; // 8 suất/ngày cho phim nổi bật trên nhiều phòng
         }
 
         // Dựa trên rating IMDB
         if (movie.getImdbRating() != null && movie.getImdbRating() >= 8.0) {
-            return 3; // 3 suất/ngày cho phim rating cao
+            return 6; // 6 suất/ngày cho phim rating cao
         }
 
-        return 2; // 2 suất/ngày cho phim thường
+        return 4; // 4 suất/ngày cho phim thường
     }
 
     private List<String> selectOptimalShowtimes(int count) {
         List<String> selected = new ArrayList<>();
 
-        // Ưu tiên các khung giờ vàng
+        // Ưu tiên các khung giờ vàng với phân bố đều trong ngày
         List<String> priorityTimes = Arrays.asList(
-                "14:30", "16:30", "19:00", "21:00", "18:30", "20:30", "15:00", "17:00");
+                "09:00", "11:30", "14:00", "16:30", "19:00", "21:30", // Khung giờ chính
+                "10:00", "12:30", "15:00", "17:30", "20:00", "22:00", // Khung giờ phụ
+                "08:30", "13:30", "18:30", "20:30"); // Khung giờ bổ sung
 
-        selected.addAll(priorityTimes.subList(0, Math.min(count, priorityTimes.size())));
+        // Chọn theo pattern để phân bố đều
+        for (int i = 0; i < count && i < priorityTimes.size(); i++) {
+            selected.add(priorityTimes.get(i));
+        }
 
         // Nếu cần thêm, lấy từ danh sách chuẩn
         if (selected.size() < count) {
@@ -503,31 +551,59 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
             }
         }
 
-        // Nếu không đủ, thêm các phòng thường
-        if (suitable.size() < neededCount) {
-            for (CinemaRoom room : availableRooms) {
-                if (!suitable.contains(room) && suitable.size() < neededCount) {
-                    suitable.add(room);
-                }
+        // Thêm tất cả phòng còn lại để đảm bảo sử dụng hết
+        for (CinemaRoom room : availableRooms) {
+            if (!suitable.contains(room)) {
+                suitable.add(room);
             }
         }
 
-        // Sắp xếp theo sức chứa (phòng lớn trước)
-        suitable.sort((r1, r2) -> Integer.compare(r2.getSeatQuantity(), r1.getSeatQuantity()));
+        // Sắp xếp theo thứ tự ưu tiên: VIP, IMAX, 4DX, Standard
+        suitable.sort((r1, r2) -> {
+            int priority1 = getRoomPriority(r1);
+            int priority2 = getRoomPriority(r2);
+            if (priority1 != priority2) {
+                return Integer.compare(priority1, priority2);
+            }
+            // Nếu cùng loại, ưu tiên phòng lớn hơn
+            return Integer.compare(r2.getSeatQuantity(), r1.getSeatQuantity());
+        });
 
         return suitable;
+    }
+
+    private int getRoomPriority(CinemaRoom room) {
+        if (room.isVIP())
+            return 1;
+        if (room.isIMAX())
+            return 2;
+        if (room.is4DX())
+            return 3;
+        return 4; // Standard rooms
     }
 
     private boolean isRoomSuitableForMovie(Movie movie, CinemaRoom room) {
         // Logic chọn phòng phù hợp dựa trên thể loại phim
         String genre = movie.getGenres() != null ? movie.getGenres().toLowerCase() : "";
 
-        if (genre.contains("action") || genre.contains("adventure") || genre.contains("sci-fi")) {
+        // Action/Adventure/Sci-Fi phù hợp với IMAX và 4DX
+        if (genre.contains("action") || genre.contains("adventure") || genre.contains("science fiction")) {
             return room.isIMAX() || room.is4DX() || room.getHasDolbyAtmos();
         }
 
+        // Romance/Drama phù hợp với VIP
         if (genre.contains("romance") || genre.contains("drama")) {
             return room.isVIP() || room.getHasReclinerSeats();
+        }
+
+        // Horror/Thriller phù hợp với phòng có âm thanh tốt
+        if (genre.contains("horror") || genre.contains("thriller")) {
+            return room.getHasDolbyAtmos() || room.isIMAX();
+        }
+
+        // Animation/Family phù hợp với mọi loại phòng, ưu tiên 4DX
+        if (genre.contains("animation") || genre.contains("family")) {
+            return true; // Phù hợp với mọi phòng
         }
 
         return true; // Phòng thường phù hợp với mọi loại phim
@@ -555,10 +631,12 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
         // Tính giá vé dựa trên giá gốc của phim và hệ số phòng
         double basePrice = movie.getPrice();
         double roomMultiplier = room.getPriceMultiplier();
+        String timeSlotType = getTimeSlotType(startTime);
         double timeMultiplier = getTimeMultiplier(startTime);
 
         double finalPrice = basePrice * roomMultiplier * timeMultiplier;
         request.setPrice(Math.round(finalPrice / 1000.0) * 1000.0); // Làm tròn đến nghìn
+        request.setTimeSlotType(timeSlotType); // Set time slot type
 
         // Cài đặt tính năng đặc biệt
         request.setIs3D(room.getHas3D());
@@ -568,6 +646,20 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
         request.setAudioLanguage("Vietnamese");
 
         return request;
+    }
+
+    private String getTimeSlotType(LocalTime startTime) {
+        int hour = startTime.getHour();
+
+        if (hour >= 8 && hour < 12) {
+            return "MORNING";
+        } else if (hour >= 12 && hour < 18) {
+            return "AFTERNOON";
+        } else if (hour >= 18 && hour < 22) {
+            return "EVENING";
+        } else {
+            return "LATE_NIGHT";
+        }
     }
 
     private double getTimeMultiplier(LocalTime startTime) {

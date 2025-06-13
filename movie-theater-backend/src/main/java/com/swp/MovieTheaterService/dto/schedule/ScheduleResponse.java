@@ -25,6 +25,7 @@ public class ScheduleResponse {
     private LocalTime startTime;
     private LocalTime endTime;
     private Double price;
+    private String timeSlotType;
     private Boolean isActive;
     private String status;
     private Boolean is3D;
@@ -60,6 +61,7 @@ public class ScheduleResponse {
     private LocalDateTime endDateTime;
     private String displayTime;
     private String displayDate;
+    private String timeSlotTypeDisplay;
     private Boolean isToday;
     private Boolean isPast;
     private Boolean isFuture;
@@ -74,4 +76,4 @@ public class ScheduleResponse {
     private Boolean canDelete;
     private String priceDisplay;
     private String durationDisplay;
-} 
+}

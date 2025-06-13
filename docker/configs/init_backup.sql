@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS movietheater_movie (
     trailer_url VARCHAR(255),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     is_featured BOOLEAN NOT NULL DEFAULT FALSE,
-    price DOUBLE NOT NULL,
+    base_price DOUBLE NOT NULL,
     status VARCHAR(20) DEFAULT 'COMING_SOON',
     imdb_rating DOUBLE,
     production_company VARCHAR(100),
@@ -240,26 +240,28 @@ INSERT IGNORE INTO movietheater_account (
  'Cinema Employee', '0901234568', '1992-05-15', '456 Employee Avenue, District 3, Ho Chi Minh City',
  'EMPLOYEE', true, true, true, 0, 'GOLD', NOW(), NOW());
 
--- CINEMA ROOMS (6 phòng: 3 Standard + VIP + IMAX + 4DX)
+-- CINEMA ROOMS (11 phòng)
 INSERT IGNORE INTO movietheater_cinema_room (
     cinema_room_name, seat_quantity, room_type, is_active, description, row_count, column_count, 
     has_3d, has_dolby_atmos, has_recliner_seats, price_multiplier, is_imax, is_4dx, is_vip, created_at, updated_at
 ) VALUES 
--- 3 phòng Standard chính
-('Standard Room 1', 120, 'STANDARD', true, 'Phòng chiếu tiêu chuẩn với hệ thống âm thanh Dolby Atmos', 10, 12, true, true, false, 1.0, false, false, false, NOW(), NOW()),
-('Standard Room 2', 140, 'STANDARD', true, 'Phòng chiếu lớn với sức chứa tối đa', 14, 10, true, true, false, 1.0, false, false, false, NOW(), NOW()),
-('Standard Room 3', 100, 'STANDARD', true, 'Phòng chiếu nhỏ gọn với thiết kế hiện đại', 10, 10, true, false, false, 1.0, false, false, false, NOW(), NOW()),
-
--- 3 phòng đặc biệt
-('VIP Cinema Room', 60, 'VIP', true, 'Trải nghiệm VIP sang trọng với ghế massage và bàn ăn', 6, 10, true, true, true, 1.8, false, false, true, NOW(), NOW()),
-('IMAX Theater', 200, 'IMAX', true, 'Rạp IMAX với màn hình khổng lồ và âm thanh vòm', 15, 14, true, true, true, 2.2, true, false, false, NOW(), NOW()),
-('4DX Experience', 80, '4DX', true, 'Trải nghiệm 4DX đầy cảm xúc với ghế chuyển động', 8, 10, true, true, true, 2.5, false, true, false, NOW(), NOW());
+('Standard Room 1', 120, 'STANDARD', true, 'Phòng chiếu tiêu chuẩn với ghế thoải mái', 10, 12, false, false, false, 1.0, false, false, false, NOW(), NOW()),
+('Standard Room 2', 120, 'STANDARD', true, 'Phòng chiếu tiêu chuẩn với hệ thống âm thanh tốt', 10, 12, false, true, false, 1.0, false, false, false, NOW(), NOW()),
+('Standard Room 3', 100, 'STANDARD', true, 'Phòng chiếu nhỏ gọn', 10, 10, false, false, false, 1.0, false, false, false, NOW(), NOW()),
+('Standard Room 4', 140, 'STANDARD', true, 'Phòng chiếu lớn với sức chứa tối đa', 14, 10, false, true, false, 1.0, false, false, false, NOW(), NOW()),
+('Standard Room 5', 110, 'STANDARD', true, 'Phòng chiếu tiêu chuẩn với thiết kế hiện đại', 11, 10, true, false, false, 1.0, false, false, false, NOW(), NOW()),
+('Standard Room 6', 130, 'STANDARD', true, 'Phòng chiếu rộng rãi', 13, 10, true, true, false, 1.0, false, false, false, NOW(), NOW()),
+('Standard Room 7', 115, 'STANDARD', true, 'Phòng chiếu với màn hình lớn', 11, 10, false, true, false, 1.0, false, false, false, NOW(), NOW()),
+('Standard Room 8', 125, 'STANDARD', true, 'Phòng chiếu premium', 12, 10, true, true, false, 1.0, false, false, false, NOW(), NOW()),
+('VIP Cinema Room', 60, 'VIP', true, 'Trải nghiệm VIP sang trọng', 6, 10, true, true, true, 1.8, false, false, true, NOW(), NOW()),
+('IMAX Theater', 200, 'IMAX', true, 'Rạp IMAX với màn hình khổng lồ', 15, 14, true, true, false, 2.2, true, false, false, NOW(), NOW()),
+('4DX Experience', 80, '4DX', true, 'Trải nghiệm 4DX đầy cảm xúc', 8, 10, true, true, true, 2.5, false, true, false, NOW(), NOW());
 
 -- REAL MOVIES từ tháng 6/2025 trở đi
 INSERT INTO movietheater_movie (
     title, original_title, description, duration, genres, director, cast, language, country,
     release_date, end_date, rating, poster_url, backdrop_url, trailer_url, 
-    is_active, is_featured, price, status, imdb_rating, production_company,
+    is_active, is_featured, base_price, status, imdb_rating, production_company,
     auto_schedule_enabled, priority_score, min_daily_shows, max_daily_shows, preferred_room_types
 ) VALUES 
 -- NOW_SHOWING (đang chiếu từ 6/2025)
@@ -307,13 +309,87 @@ INSERT IGNORE INTO movietheater_schedule (
 (@ballerina_id, @std_room1, CURDATE(), '09:00:00', '10:49:00', 150000, true, 'SCHEDULED', 
  false, false, false, 'Vietnamese', 'English', 120, 0, false, 'MORNING', NOW(), NOW()),
 (@httyd_id, @std_room2, CURDATE(), '14:30:00', '16:14:00', 140000, true, 'SCHEDULED', 
- false, false, false, 'Vietnamese', 'English', 140, 0, false, 'AFTERNOON', NOW(), NOW()),
+ false, false, false, 'Vietnamese', 'English', 120, 0, false, 'AFTERNOON', NOW(), NOW()),
 (@materialists_id, @vip_room, CURDATE(), '21:00:00', '22:55:00', 234000, true, 'SCHEDULED', 
  false, false, false, 'Vietnamese', 'English', 60, 0, false, 'EVENING', NOW(), NOW());
 
 -- =============================================
--- TẠO DỮ LIỆU GHẾ CHO 6 PHÒNG CHIẾU MỚI
+-- TẠO DỮ LIỆU GHẾ CHO TẤT CẢ 11 PHÒNG CHIẾU  
 -- =============================================
+
+-- Tạo bảng tạm để generate seats
+CREATE TEMPORARY TABLE temp_numbers (num INT);
+INSERT INTO temp_numbers VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14),(15);
+
+-- Standard Room 1 (10x12 = 120 ghế)
+INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
+SELECT 
+    (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'),
+    CONCAT(CHAR(64 + r.num), c.num) as seat_number,
+    r.num as seat_row,
+    c.num as seat_column,
+    'AVAILABLE' as seat_status,
+    CASE 
+        WHEN r.num <= 2 THEN 'PREMIUM'
+        WHEN r.num >= 9 THEN 'COUPLE' 
+        ELSE 'STANDARD' 
+    END as seat_type,
+    CASE 
+        WHEN r.num <= 2 THEN 1.2
+        WHEN r.num >= 9 THEN 1.5
+        ELSE 1.0 
+    END as price_multiplier,
+    FALSE as is_recliner,
+    FALSE as has_table,
+    TRUE as is_active
+FROM 
+    (SELECT num FROM temp_numbers WHERE num <= 10) r
+CROSS JOIN 
+    (SELECT num FROM temp_numbers WHERE num <= 12) c;
+
+-- Standard Room 2 (10x12 = 120 ghế)  
+INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
+SELECT 
+    (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'),
+    CONCAT(CHAR(64 + r.num), c.num) as seat_number,
+    r.num as seat_row,
+    c.num as seat_column,
+    'AVAILABLE' as seat_status,
+    CASE 
+        WHEN r.num <= 2 THEN 'PREMIUM'
+        WHEN r.num >= 9 THEN 'COUPLE' 
+        ELSE 'STANDARD' 
+    END as seat_type,
+    CASE 
+        WHEN r.num <= 2 THEN 1.2
+        WHEN r.num >= 9 THEN 1.5
+        ELSE 1.0 
+    END as price_multiplier,
+    FALSE as is_recliner,
+    FALSE as has_table,
+    TRUE as is_active
+FROM 
+    (SELECT num FROM temp_numbers WHERE num <= 10) r
+CROSS JOIN 
+    (SELECT num FROM temp_numbers WHERE num <= 12) c;
+
+-- VIP Cinema Room (6x10 = 60 ghế VIP)
+INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
+SELECT 
+    (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'),
+    CONCAT(CHAR(64 + r.num), c.num) as seat_number,
+    r.num as seat_row,
+    c.num as seat_column,
+    'AVAILABLE' as seat_status,
+    'VIP' as seat_type,
+    1.8 as price_multiplier,
+    TRUE as is_recliner,
+    TRUE as has_table,
+    TRUE as is_active
+FROM 
+    (SELECT num FROM temp_numbers WHERE num <= 6) r
+CROSS JOIN 
+    (SELECT num FROM temp_numbers WHERE num <= 10) c;
 
 -- Standard Room 1 (10x12 = 120 ghế)
 INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
@@ -341,7 +417,7 @@ FROM
 CROSS JOIN 
     (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12) cols;
 
--- Standard Room 2 (14x10 = 140 ghế)
+-- Standard Room 2 (10x12 = 120 ghế)
 INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
 SELECT 
     (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'),
@@ -350,22 +426,22 @@ SELECT
     c as seat_column,
     'AVAILABLE' as seat_status,
     CASE 
-        WHEN r <= 3 THEN 'PREMIUM'
-        WHEN r >= 12 THEN 'COUPLE' 
+        WHEN r <= 2 THEN 'PREMIUM'
+        WHEN r >= 9 THEN 'COUPLE' 
         ELSE 'STANDARD' 
     END as seat_type,
     CASE 
-        WHEN r <= 3 THEN 1.2
-        WHEN r >= 12 THEN 1.5
+        WHEN r <= 2 THEN 1.2
+        WHEN r >= 9 THEN 1.5
         ELSE 1.0 
     END as price_multiplier,
     FALSE as is_recliner,
     FALSE as has_table,
     TRUE as is_active
 FROM 
-    (SELECT 1 as r UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13 UNION SELECT 14) rows
+    (SELECT 1 as r UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) rows
 CROSS JOIN 
-    (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) cols;
+    (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12) cols;
 
 -- Standard Room 3 (10x10 = 100 ghế)
 INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
@@ -393,6 +469,138 @@ FROM
 CROSS JOIN 
     (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) cols;
 
+-- Standard Room 4 (14x10 = 140 ghế)
+INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
+SELECT 
+    (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 4'),
+    CONCAT(CHAR(64 + r), c) as seat_number,
+    r as seat_row,
+    c as seat_column,
+    'AVAILABLE' as seat_status,
+    CASE 
+        WHEN r <= 3 THEN 'PREMIUM'
+        WHEN r >= 12 THEN 'COUPLE' 
+        ELSE 'STANDARD' 
+    END as seat_type,
+    CASE 
+        WHEN r <= 3 THEN 1.2
+        WHEN r >= 12 THEN 1.5
+        ELSE 1.0 
+    END as price_multiplier,
+    FALSE as is_recliner,
+    FALSE as has_table,
+    TRUE as is_active
+FROM 
+    (SELECT 1 as r UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13 UNION SELECT 14) rows
+CROSS JOIN 
+    (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) cols;
+
+-- Standard Room 5 (11x10 = 110 ghế)
+INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
+SELECT 
+    (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 5'),
+    CONCAT(CHAR(64 + r), c) as seat_number,
+    r as seat_row,
+    c as seat_column,
+    'AVAILABLE' as seat_status,
+    CASE 
+        WHEN r <= 2 THEN 'PREMIUM'
+        WHEN r >= 10 THEN 'COUPLE' 
+        ELSE 'STANDARD' 
+    END as seat_type,
+    CASE 
+        WHEN r <= 2 THEN 1.2
+        WHEN r >= 10 THEN 1.5
+        ELSE 1.0 
+    END as price_multiplier,
+    FALSE as is_recliner,
+    FALSE as has_table,
+    TRUE as is_active
+FROM 
+    (SELECT 1 as r UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11) rows
+CROSS JOIN 
+    (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) cols;
+
+-- Standard Room 6 (13x10 = 130 ghế)
+INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
+SELECT 
+    (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 6'),
+    CONCAT(CHAR(64 + r), c) as seat_number,
+    r as seat_row,
+    c as seat_column,
+    'AVAILABLE' as seat_status,
+    CASE 
+        WHEN r <= 3 THEN 'PREMIUM'
+        WHEN r >= 11 THEN 'COUPLE' 
+        ELSE 'STANDARD' 
+    END as seat_type,
+    CASE 
+        WHEN r <= 3 THEN 1.2
+        WHEN r >= 11 THEN 1.5
+        ELSE 1.0 
+    END as price_multiplier,
+    FALSE as is_recliner,
+    FALSE as has_table,
+    TRUE as is_active
+FROM 
+    (SELECT 1 as r UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13) rows
+CROSS JOIN 
+    (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) cols;
+
+-- Standard Room 7 (11x10 = 108 ghế, bỏ 2 ghế ở giữa tạo lối đi)
+INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
+SELECT 
+    (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 7'),
+    CONCAT(CHAR(64 + r), c) as seat_number,
+    r as seat_row,
+    c as seat_column,
+    'AVAILABLE' as seat_status,
+    CASE 
+        WHEN r <= 2 THEN 'PREMIUM'
+        WHEN r >= 10 THEN 'COUPLE' 
+        ELSE 'STANDARD' 
+    END as seat_type,
+    CASE 
+        WHEN r <= 2 THEN 1.2
+        WHEN r >= 10 THEN 1.5
+        ELSE 1.0 
+    END as price_multiplier,
+    FALSE as is_recliner,
+    FALSE as has_table,
+    TRUE as is_active
+FROM 
+    (SELECT 1 as r UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11) rows
+CROSS JOIN 
+    (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) cols
+WHERE NOT (r = 6 AND c IN (5,6));
+
+-- Standard Room 8 (12x10 = 115 ghế, bỏ 5 ghế ở lối đi)
+INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
+SELECT 
+    (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 8'),
+    CONCAT(CHAR(64 + r), c) as seat_number,
+    r as seat_row,
+    c as seat_column,
+    'AVAILABLE' as seat_status,
+    CASE 
+        WHEN r <= 3 THEN 'PREMIUM'
+        WHEN r >= 10 THEN 'COUPLE' 
+        ELSE 'STANDARD' 
+    END as seat_type,
+    CASE 
+        WHEN r <= 3 THEN 1.2
+        WHEN r >= 10 THEN 1.5
+        ELSE 1.0 
+    END as price_multiplier,
+    FALSE as is_recliner,
+    FALSE as has_table,
+    TRUE as is_active
+FROM 
+    (SELECT 1 as r UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12) rows
+CROSS JOIN 
+    (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) cols
+WHERE NOT (r = 7 AND c IN (4,5,6,7,8));
+
 -- VIP Cinema Room (6x10 = 60 ghế VIP)
 INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
 SELECT 
@@ -411,7 +619,7 @@ FROM
 CROSS JOIN 
     (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) cols;
 
--- IMAX Theater (15x14 = 200 ghế IMAX)
+-- IMAX Theater (15x14 = 195 ghế, bỏ 5 ghế ở giữa tạo lối đi)
 INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
 SELECT 
     (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'IMAX Theater'),
@@ -420,22 +628,23 @@ SELECT
     c as seat_column,
     'AVAILABLE' as seat_status,
     CASE 
-        WHEN r <= 3 THEN 'PREMIUM'
-        WHEN r >= 13 THEN 'COUPLE' 
-        ELSE 'STANDARD' 
+        WHEN r <= 5 THEN 'IMAX_PREMIUM'
+        WHEN r >= 13 THEN 'IMAX_COUPLE' 
+        ELSE 'IMAX_STANDARD' 
     END as seat_type,
     CASE 
-        WHEN r <= 3 THEN 1.3
-        WHEN r >= 13 THEN 1.6
-        ELSE 1.1 
+        WHEN r <= 5 THEN 2.5
+        WHEN r >= 13 THEN 2.8
+        ELSE 2.2 
     END as price_multiplier,
-    TRUE as is_recliner,
+    CASE WHEN r <= 5 THEN TRUE ELSE FALSE END as is_recliner,
     FALSE as has_table,
     TRUE as is_active
 FROM 
     (SELECT 1 as r UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13 UNION SELECT 14 UNION SELECT 15) rows
 CROSS JOIN 
-    (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13 UNION SELECT 14) cols;
+    (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13 UNION SELECT 14) cols
+WHERE NOT (r = 8 AND c IN (6,7,8,9,10));
 
 -- 4DX Experience (8x10 = 80 ghế 4DX)
 INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
@@ -445,18 +654,10 @@ SELECT
     r as seat_row,
     c as seat_column,
     'AVAILABLE' as seat_status,
-    CASE 
-        WHEN r <= 2 THEN 'PREMIUM'
-        WHEN r >= 7 THEN 'COUPLE' 
-        ELSE 'STANDARD' 
-    END as seat_type,
-    CASE 
-        WHEN r <= 2 THEN 1.4
-        WHEN r >= 7 THEN 1.7
-        ELSE 1.2 
-    END as price_multiplier,
+    '4DX' as seat_type,
+    2.5 as price_multiplier,
     TRUE as is_recliner,
-    TRUE as has_table,
+    FALSE as has_table,
     TRUE as is_active
 FROM 
     (SELECT 1 as r UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8) rows
