@@ -13,6 +13,7 @@ const ROUTES = {
   ADMIN_DASHBOARD: "/admin",
   ADMIN_USERS: "/admin/users",
   ADMIN_MOVIES: "/admin/movies",
+  ADMIN_MEMBERS: "/admin/members",
   ADMIN_ROOMS: "/admin/rooms",
   ADMIN_SHOWTIMES: "/admin/showtimes",
   ADMIN_TICKETS: "/admin/tickets",

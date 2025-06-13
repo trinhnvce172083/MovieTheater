@@ -111,88 +111,6 @@ const movieData = [
   },
 ];
 
-// Professional Admin Header Component
-const ProfessionalAdminHeader = () => {
-  const userMenuItems = [
-    {
-      key: "profile",
-      label: (
-        <div className="flex items-center gap-2 px-2 py-1">
-          <UserCircle size={16} />
-          <span>Profile Settings</span>
-        </div>
-      ),
-    },
-    {
-      key: "settings",
-      label: (
-        <div className="flex items-center gap-2 px-2 py-1">
-          <Settings size={16} />
-          <span>System Settings</span>
-        </div>
-      ),
-    },
-    { type: "divider" },
-    {
-      key: "logout",
-      label: (
-        <div className="flex items-center gap-2 px-2 py-1 text-red-600">
-          <LogOut size={16} />
-          <span>Sign Out</span>
-        </div>
-      ),
-    },
-  ];
-
-  return (
-    <header className="w-full flex items-center justify-between px-8 py-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 shadow-sm">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
-            <VideoCameraOutlined className="text-white text-lg" />
-          </div>
-          <div>
-            <Title level={3} className="m-0 text-gray-800">
-              Cinema Management
-            </Title>
-            <Text type="secondary" className="text-sm">
-              Professional Admin Dashboard
-            </Text>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <Badge count={5} size="small">
-          <Button
-            type="text"
-            icon={<Bell size={20} />}
-            className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-white/50"
-          />
-        </Badge>
-
-        <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
-          <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/50 cursor-pointer transition-all">
-            <Avatar
-              size={32}
-              src="/api/placeholder/32/32"
-              className="border-2 border-blue-200"
-            />
-            <div className="text-left">
-              <Text strong className="block text-sm">
-                Administrator
-              </Text>
-              <Text type="secondary" className="text-xs">
-                Super Admin
-              </Text>
-            </div>
-          </div>
-        </Dropdown>
-      </div>
-    </header>
-  );
-};
-
 // Movie Management Component
 export default function ProfessionalMovieManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -270,7 +188,7 @@ export default function ProfessionalMovieManagement() {
       dataIndex: "id",
       key: "id",
       width: 60,
-      render: (text, record, index) => (
+      render: (_: any, record: any, index: any) => (
         <div className="text-center">
           <span className="font-mono text-sm text-gray-500">
             {(currentPage - 1) * pageSize + index + 1}
@@ -282,7 +200,7 @@ export default function ProfessionalMovieManagement() {
       title: "Movie Information",
       key: "movie_info",
       width: 280,
-      render: (_, record) => (
+      render: (_: any, record: any) => (
         <div className="flex items-center gap-3">
           <Avatar
             src={record.poster}
@@ -310,7 +228,7 @@ export default function ProfessionalMovieManagement() {
       title: "Company",
       key: "company",
       width: 120,
-      render: (_, record: any) => (
+      render: (_: any, record: any) => (
         <div className="text-sm">
           <div className="font-medium text-gray-900 truncate">
             {record.company}
@@ -325,7 +243,8 @@ export default function ProfessionalMovieManagement() {
       title: "Details",
       key: "details",
       width: 80,
-      render: (_, record) => (
+      align: "center",
+      render: (_: any, record: any) => (
         <div className="text-center">
           <div className="text-sm font-medium">{record.duration}m</div>
           <Tag color="orange" className="text-xs mt-1">
@@ -338,10 +257,11 @@ export default function ProfessionalMovieManagement() {
       title: "Versions",
       dataIndex: "version",
       key: "version",
+      align: "center" as const,
       width: 120,
-      render: (versions) => (
+      render: (versions: any) => (
         <div className="flex flex-wrap gap-1">
-          {versions.slice(0, 2).map((version) => (
+          {versions.slice(0, 2).map((version: any) => (
             <Tag
               key={version}
               color={
@@ -367,7 +287,8 @@ export default function ProfessionalMovieManagement() {
       dataIndex: "status",
       key: "status",
       width: 80,
-      render: (status) => (
+      align: "center",
+      render: (status: any) => (
         <div className="text-center">
           <Tag
             color={status === "active" ? "success" : "default"}
@@ -376,6 +297,7 @@ export default function ProfessionalMovieManagement() {
             {status === "active" ? "Active" : "Inactive"}
           </Tag>
         </div>
+        
       ),
     },
     {
@@ -383,7 +305,8 @@ export default function ProfessionalMovieManagement() {
       dataIndex: "revenue",
       key: "revenue",
       width: 90,
-      render: (revenue) => (
+      align: "right",
+      render: (revenue: any) => (
         <div className="text-right">
           <span className="font-mono text-sm font-semibold text-green-600">
             ${(revenue / 1000000).toFixed(1)}M
@@ -395,8 +318,9 @@ export default function ProfessionalMovieManagement() {
       title: "Actions",
       key: "actions",
       width: 100,
-      fixed: "right",
-      render: (_, record) => (
+      fixed: "right" as const,
+      align: "center",
+      render: (_: any, record: any) => (
         <Space size="small">
           <Tooltip title="View">
             <Button
@@ -439,13 +363,11 @@ export default function ProfessionalMovieManagement() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <ProfessionalAdminHeader />
-
-      <div className="p-2 xl:p-4 max-w-full">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Statistics Cards */}
         <Row gutter={[16, 16]} className="mb-6">
           <Col xs={12} sm={12} lg={6}>
-            <Card className="text-center border-0 shadow-sm" size="small">
+            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center" size="small">
               <Statistic
                 title="Total Movies"
                 value={statistics.totalMovies}
@@ -455,7 +377,7 @@ export default function ProfessionalMovieManagement() {
             </Card>
           </Col>
           <Col xs={12} sm={12} lg={6}>
-            <Card className="text-center border-0 shadow-sm" size="small">
+            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center" size="small">
               <Statistic
                 title="Active Movies"
                 value={statistics.activeMovies}
@@ -465,7 +387,7 @@ export default function ProfessionalMovieManagement() {
             </Card>
           </Col>
           <Col xs={12} sm={12} lg={6}>
-            <Card className="text-center border-0 shadow-sm" size="small">
+            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center" size="small">
               <Statistic
                 title="Total Revenue"
                 value={statistics.totalRevenue / 1000000}
@@ -477,7 +399,7 @@ export default function ProfessionalMovieManagement() {
             </Card>
           </Col>
           <Col xs={12} sm={12} lg={6}>
-            <Card className="text-center border-0 shadow-sm" size="small">
+            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center" size="small">
               <Statistic
                 title="Avg Duration"
                 value={statistics.avgDuration}
@@ -496,47 +418,45 @@ export default function ProfessionalMovieManagement() {
           style={{ borderRadius: 16 }}
         >
           {/* Header Section */}
-          <div className="px-4 xl:px-8 py-4 xl:py-6 border-b border-gray-100 bg-white">
-            <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-              <div>
-                <Title level={2} className="m-0 text-gray-900 text-xl xl:text-2xl">
-                  Movie Management
-                </Title>
-                <Text type="secondary" className="text-sm xl:text-base">
-                  Manage and organize your cinema's movie collection
-                </Text>
-              </div>
+          <div className="px-6 py-5 border-b border-gray-100 bg-white flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+            <div>
+              <Title level={2} className="m-0 text-gray-900 text-xl xl:text-2xl">
+                Movie Management
+              </Title>
+              <Text type="secondary" className="text-sm xl:text-base">
+                Manage and organize your cinema's movie collection
+              </Text>
+            </div>
 
-              <div className="flex items-center gap-2 xl:gap-3">
-                <Button
-                  icon={<ImportOutlined />}
-                  className="border-gray-300 text-xs xl:text-sm"
-                  size="small"
-                >
-                  Import
-                </Button>
-                <Button
-                  icon={<ExportOutlined />}
-                  className="border-gray-300 text-xs xl:text-sm"
-                  size="small"
-                >
-                  Export
-                </Button>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  size="middle"
-                  className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm"
-                  onClick={() => setIsModalVisible(true)}
-                >
-                  Add New Movie
-                </Button>
-              </div>
+            <div className="flex items-center gap-3">
+              <Button
+                icon={<ImportOutlined />}
+                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
+                size="middle"
+              >
+                Import
+              </Button>
+              <Button
+                icon={<ExportOutlined />}
+                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
+                size="middle"
+              >
+                Export
+              </Button>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                size="middle"
+                className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
+                onClick={() => setIsModalVisible(true)}
+              >
+                Add New Movie
+              </Button>
             </div>
           </div>
 
           {/* Filters Section */}
-          <div className="px-4 xl:px-8 py-4 xl:py-6 bg-gray-50 border-b border-gray-100">
+          <div className="px-6 py-5 bg-gray-50 border-b border-gray-100">
             <Row gutter={[12, 12]}>
               <Col xs={24} sm={12} lg={10} xl={8}>
                 <Input
@@ -544,7 +464,7 @@ export default function ProfessionalMovieManagement() {
                   prefix={<SearchOutlined className="text-gray-400" />}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-9"
+                  className="h-10"
                   allowClear
                 />
               </Col>
@@ -553,9 +473,9 @@ export default function ProfessionalMovieManagement() {
                   placeholder="Version"
                   value={filterVersion}
                   onChange={setFilterVersion}
-                  className="w-full h-9"
+                  className="w-full h-10"
                   allowClear
-                  size="small"
+                  size="middle"
                 >
                   <Option value="2D">2D</Option>
                   <Option value="3D">3D</Option>
@@ -568,9 +488,9 @@ export default function ProfessionalMovieManagement() {
                   placeholder="Status"
                   value={filterStatus}
                   onChange={setFilterStatus}
-                  className="w-full h-9"
+                  className="w-full h-10"
                   allowClear
-                  size="small"
+                  size="middle"
                 >
                   <Option value="active">Active</Option>
                   <Option value="inactive">Inactive</Option>
@@ -581,9 +501,9 @@ export default function ProfessionalMovieManagement() {
                   placeholder="Genre"
                   value={filterGenre}
                   onChange={setFilterGenre}
-                  className="w-full h-9"
+                  className="w-full h-10"
                   allowClear
-                  size="small"
+                  size="middle"
                 >
                   <Option value="Action">Action</Option>
                   <Option value="Adventure">Adventure</Option>
@@ -596,8 +516,8 @@ export default function ProfessionalMovieManagement() {
               <Col xs={12} sm={6} lg={4} xl={3}>
                 <Button
                   icon={<ReloadOutlined />}
-                  className="w-full h-9"
-                  size="small"
+                  className="w-full h-10"
+                  size="middle"
                   onClick={() => {
                     setSearchTerm("");
                     setFilterVersion("");
@@ -625,7 +545,7 @@ export default function ProfessionalMovieManagement() {
             />
 
             {/* Pagination */}
-            <div className="px-4 xl:px-8 py-4 xl:py-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <Text type="secondary" className="text-sm">
                 Showing {(currentPage - 1) * pageSize + 1} to{" "}
                 {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
@@ -673,7 +593,7 @@ export default function ProfessionalMovieManagement() {
                 label="English Title"
                 rules={[{ required: true, message: "Please enter English title" }]}
               >
-                <Input placeholder="Enter English title" />
+                <Input placeholder="Enter English title" className="h-10" />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
@@ -682,7 +602,7 @@ export default function ProfessionalMovieManagement() {
                 label="Vietnamese Title"
                 rules={[{ required: true, message: "Please enter Vietnamese title" }]}
               >
-                <Input placeholder="Enter Vietnamese title" />
+                <Input placeholder="Enter Vietnamese title" className="h-10" />
               </Form.Item>
             </Col>
           </Row>
@@ -694,7 +614,7 @@ export default function ProfessionalMovieManagement() {
                 label="Production Company"
                 rules={[{ required: true, message: "Please enter production company" }]}
               >
-                <Input placeholder="Enter production company" />
+                <Input placeholder="Enter production company" className="h-10" />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
@@ -703,7 +623,7 @@ export default function ProfessionalMovieManagement() {
                 label="Release Date"
                 rules={[{ required: true, message: "Please select release date" }]}
               >
-                <DatePicker className="w-full" />
+                <DatePicker className="w-full h-10" />
               </Form.Item>
             </Col>
           </Row>
@@ -715,7 +635,7 @@ export default function ProfessionalMovieManagement() {
                 label="Duration (minutes)"
                 rules={[{ required: true, message: "Please enter duration" }]}
               >
-                <Input type="number" placeholder="Duration" />
+                <Input type="number" placeholder="Duration" className="h-10" />
               </Form.Item>
             </Col>
             <Col xs={24} sm={8}>
@@ -724,7 +644,7 @@ export default function ProfessionalMovieManagement() {
                 label="Rating"
                 rules={[{ required: true, message: "Please select rating" }]}
               >
-                <Select placeholder="Select rating">
+                <Select placeholder="Select rating" className="h-10">
                   <Option value="G">G</Option>
                   <Option value="PG">PG</Option>
                   <Option value="PG-13">PG-13</Option>
@@ -739,7 +659,7 @@ export default function ProfessionalMovieManagement() {
                 label="Status"
                 rules={[{ required: true, message: "Please select status" }]}
               >
-                <Select placeholder="Select status">
+                <Select placeholder="Select status" className="h-10">
                   <Option value="active">Active</Option>
                   <Option value="inactive">Inactive</Option>
                 </Select>
@@ -754,7 +674,7 @@ export default function ProfessionalMovieManagement() {
                 label="Available Versions"
                 rules={[{ required: true, message: "Please select versions" }]}
               >
-                <Select mode="multiple" placeholder="Select versions">
+                <Select mode="multiple" placeholder="Select versions" className="h-10">
                   <Option value="2D">2D</Option>
                   <Option value="3D">3D</Option>
                   <Option value="IMAX">IMAX</Option>
@@ -768,7 +688,7 @@ export default function ProfessionalMovieManagement() {
                 label="Genres"
                 rules={[{ required: true, message: "Please select genres" }]}
               >
-                <Select mode="multiple" placeholder="Select genres">
+                <Select mode="multiple" placeholder="Select genres" className="h-10">
                   <Option value="Action">Action</Option>
                   <Option value="Adventure">Adventure</Option>
                   <Option value="Fantasy">Fantasy</Option>

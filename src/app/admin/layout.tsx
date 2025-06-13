@@ -16,6 +16,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import ROUTES from "@/constants/routes";
 import Image from "next/image";
+import AdminHeader from "./AdminHeader";
 
 const { Sider, Content } = Layout;
 
@@ -36,7 +37,7 @@ export default function AdminLayout({
       label: "Dashboard",
     },
     {
-      key: ROUTES.ADMIN_USERS,
+      key: ROUTES.ADMIN_MEMBERS,
       icon: <UserOutlined />,
       label: "Member management",
     },
@@ -276,6 +277,8 @@ export default function AdminLayout({
       </Sider>
 
       <Layout style={contentStyle}>
+        {/* Admin Header at the top of the content */}
+        <AdminHeader />
         <Content
           style={{
             background: "#fff",
@@ -303,13 +306,11 @@ export default function AdminLayout({
         
         .admin-sidebar-menu .ant-menu-item:hover {
           background: rgba(255, 255, 255, 0.15) !important;
-          transform: translateX(4px);
         }
         
         .admin-sidebar-menu .ant-menu-item-selected {
           background: rgba(255, 255, 255, 0.2) !important;
           border: 1px solid rgba(255, 255, 255, 0.3) !important;
-          transform: translateX(4px);
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         
