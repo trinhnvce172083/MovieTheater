@@ -5,6 +5,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 // import ScrollToTopButton from "@/components/ScrollToTopButton";
 import BackTop from "antd/es/float-button/BackTop";
+import { AntdRegistry } from "@ant-design/nextjs-registry";
+import { App } from "antd";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,12 +33,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <header className="fixed top-0 left-0 right-0 z-50">
-          <Header />
-        </header>
-        <main className="min-h-screen pt-24">{children}</main>
-        <Footer />
-        <BackTop duration={200} visibilityHeight={50} />
+        <AntdRegistry>
+          <App>
+            <header className="fixed top-0 left-0 right-0 z-50">
+              <Header />
+            </header>
+            <main className="min-h-screen pt-24">{children}</main>
+            <Footer />
+            <BackTop duration={200} visibilityHeight={50} />
+          </App>
+        </AntdRegistry>
       </body>
     </html>
   );
