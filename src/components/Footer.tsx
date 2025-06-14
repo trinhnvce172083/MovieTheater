@@ -11,7 +11,6 @@ import {
   YoutubeOutlined,
   InstagramOutlined,
 } from "@ant-design/icons";
-import ROUTES from "@/constants/routes";
 
 export default function Footer() {
   return (
@@ -92,14 +91,26 @@ export default function Footer() {
               className="w-auto h-12 mb-6"
             />
             <div className="flex space-x-4 mb-6">
-              <Link href="https://facebook.com" target="_blank" className="hover:opacity-80">
-                <FacebookOutlined style={{ fontSize: '24px' }} />
+              <Link
+                href="https://facebook.com"
+                target="_blank"
+                className="hover:opacity-80"
+              >
+                <FacebookOutlined style={{ fontSize: "24px" }} />
               </Link>
-              <Link href="https://youtube.com" target="_blank" className="hover:opacity-80">
-                <YoutubeOutlined style={{ fontSize: '24px' }} />
+              <Link
+                href="https://youtube.com"
+                target="_blank"
+                className="hover:opacity-80"
+              >
+                <YoutubeOutlined style={{ fontSize: "24px" }} />
               </Link>
-              <Link href="https://instagram.com" target="_blank" className="hover:opacity-80">
-                <InstagramOutlined style={{ fontSize: '24px' }} />
+              <Link
+                href="https://instagram.com"
+                target="_blank"
+                className="hover:opacity-80"
+              >
+                <InstagramOutlined style={{ fontSize: "24px" }} />
               </Link>
             </div>
           </div>
@@ -118,8 +129,13 @@ export default function Footer() {
               />
             </div>
             <div className="md:w-5/6 text-sm">
-              <h3 className="text-base uppercase font-semibold mb-3">Thien Ngan Film Joint Stock Company</h3>
-              <p className="mb-2">F-Town 1 Building, Lot T2, D1 Street, Saigon Hi-Tech Park, Tan Phu Ward, Thu Duc City, Ho Chi Minh City, Vietnam</p>
+              <h3 className="text-base uppercase font-semibold mb-3">
+                Thien Ngan Film Joint Stock Company
+              </h3>
+              <p className="mb-2">
+                F-Town 1 Building, Lot T2, D1 Street, Saigon Hi-Tech Park, Tan
+                Phu Ward, Thu Duc City, Ho Chi Minh City, Vietnam
+              </p>
               <div className="flex flex-wrap gap-x-6 gap-y-2">
                 <div className="flex items-center">
                   <PhoneOutlined className="mr-2" /> 028.39.333.303

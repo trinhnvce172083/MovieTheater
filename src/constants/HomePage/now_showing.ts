@@ -1,15 +1,3 @@
-import { imageConfigDefault } from "next/dist/shared/lib/image-config";
-
-export interface Movie {
-  id: number;
-  title: string;
-  posterUrl: string;
-  releaseDate: string;
-  genre: string;
-  rating: string;
-  description: string;
-}
-
 const NOW_SHOWING = [
   {
     id: 1,

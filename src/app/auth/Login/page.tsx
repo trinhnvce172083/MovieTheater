@@ -1,11 +1,12 @@
 "use client";
 import React, { useState } from "react";
-import { Button, Form, Input, Typography, message } from "antd";
+import { Button, Form, Input, Typography, message, Checkbox } from "antd";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import ROUTES from "@/constants/routes";
-import Link from "next/link";
+import { Login_API } from "@/api/auth/Login_API";
+
 
 export const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -15,51 +16,33 @@ export const LoginPage: React.FC = () => {
   const onFinish = async (values: any) => {
     try {
       setLoading(true);
-      const { username, password } = values;
+      const data = await Login_API({
+        username: values.username,
+        password: values.password,
+        rememberMe: values.rememberMe || false,
+      });
 
-      const response = await fetch(
-        "https://60f9a8f9-7d5e-4e39-9668-2ee29759c786.mock.pstmn.io/Login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ username, password }),
-          credentials: "include", // Send cookies if needed
-        }
-      );
-
-      // Parse the JSON response
-      const data = await response.json().catch(() => null);
-
-      if (response.ok) {
-        // Store auth token if received
-        if (data?.token) {
-          localStorage.setItem("authToken", data.token);
-        }
-
+      // Xử lý đăng nhập thành công (lưu token, chuyển trang, ...)
+      if (data?.token) {
+        localStorage.setItem("authToken", data.token);
         message.success("Login successful");
-        router.push(ROUTES.BOOKING);
+        router.push(ROUTES.HOME);
       } else {
-        // Handle specific error codes
-        if (response.status === 401) {
-          message.error("Invalid username or password");
-        } else if (response.status === 429) {
-          message.error("Too many login attempts. Please try again later.");
-        } else {
-          message.error(data?.message || "Login failed");
-        }
+        message.error(data?.message || "Login failed");
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      message.error("Connection error. Please check your internet connection.");
+    } catch (error: any) {
+      if (error?.response?.data?.message) {
+        message.error(error.response.data.message);
+      } else {
+        message.error("Connection error. Please check your internet connection.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="flex flex-row items-center justify-center p-18">
       <Card className={cn("w-full max-w-md shadow-lg p-8 bg-white/60 backdrop-blur-sm")}>
         <Typography.Title level={2} className="text-center mb-6">
           Login
@@ -69,6 +52,7 @@ export const LoginPage: React.FC = () => {
           layout="vertical"
           onFinish={onFinish}
           autoComplete="off"
+          form={form}
         >
           <Form.Item
             label="Username"
@@ -91,6 +75,9 @@ export const LoginPage: React.FC = () => {
               placeholder="Enter your password"
               className="rounded-lg"
             />
+          </Form.Item>
+          <Form.Item name="rememberMe" valuePropName="checked">
+            <Checkbox>Remember me</Checkbox>
           </Form.Item>
           <Form.Item>
             <Button

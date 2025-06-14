@@ -1,6 +1,6 @@
 const ROUTES = {
-  HOME: "/Homepage",
-  SHOWTIMES: "/showtimes",
+  HOME: "/HomePage",
+  NOW_SHOWING: "/now_showing",
   BOOKING: "/booking",
   MOVIES: "/movies",
   LOGIN: "/auth/Login",
