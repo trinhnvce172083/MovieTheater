@@ -1,4 +1,81 @@
-"use client"
+
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  Users,
+  Clapperboard,
+  Monitor,
+  Percent,
+  CalendarDays,
+  Settings,
+  Menu,
+  BookingLayout,
+  PromotionLayou
+} from "lucide-react";
+import { useState } from "react";
+
+export default function Sidebar() {
+  const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
+
+  const menuItems = [
+    { href: "/", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
+    { href: "/member-management", label: "Member management", icon: <Users size={18} /> },
+    { href: "/movie-management", label: "Movie management", icon: <Clapperboard size={18} /> },
+    { href: "/room-management", label: "Room management", icon: <Monitor size={18} /> },
+    { href: "/promotion-management", label: "Promotion management", icon: <Percent size={18} /> },
+    { href: "/booking-management", label: "Booking management", icon: <CalendarDays size={18} /> },
+  ];
+
+  return (
+    <div className="h-screen w-64 bg-gradient-to-b from-[#12294D] to-[#1E3A74] text-white p-4 flex flex-col justify-between fixed left-0 top-0 shadow-lg">
+      <div>
+        <div className="flex justify-between items-center mb-6 px-2">
+          <div className="w-full text-center">
+            <img
+              src="/logo.png"
+              alt="logo"
+              className="w-16 h-16 mx-auto rounded-full border-4 border-white"
+            />
+            <h1 className="text-lg font-semibold mt-2">Admin Panel</h1>
+          </div>
+          <button onClick={() => setCollapsed(!collapsed)} className="text-white">
+            <Menu />
+          </button>
+        </div>
+
+        <nav className="space-y-2 mt-6">
+          {menuItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center px-4 py-2 rounded-lg transition ${
+                pathname === item.href
+                  ? "bg-white bg-opacity-10 shadow-inner"
+                  : "hover:bg-white hover:bg-opacity-10"
+              }`}
+            >
+              <span className="mr-3">{item.icon}</span>
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+      </div>
+      <div className="px-4 pb-4">
+        <Link
+          href="/settings"
+          className={`flex items-center justify-center px-4 py-2 w-full rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20`}
+        >
+          <Settings className="mr-2" size={18} />
+          Settings
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
@@ -151,7 +228,7 @@ function SidebarProvider({
   )
 }
 
-function Sidebar({
+function sidebar({
   side = "left",
   variant = "sidebar",
   collapsible = "offcanvas",
