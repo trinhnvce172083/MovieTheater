@@ -1,9 +1,12 @@
+// This file defines the Redux slice for authentication state management.
+//Possible roles: CUSTOMER(GUEST), ADMIN, MEMBER, EMPLOYEE
+
 import { createSlice } from "@reduxjs/toolkit";
 import { decodeJwt } from "@/hooks/decodeJwt";
 
 const initialState = {
   token: "",
-  role: "GUEST",
+  role: "CUSTOMER",
   isLoggedIn: false,
   user: null,
 };
