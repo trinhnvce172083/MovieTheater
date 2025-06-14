@@ -5,15 +5,13 @@ const ROUTES = {
   MOVIES: "/movies",
   LOGIN: "/auth/Login",
   REGISTER: "/auth/Register",
-<<<<<<< HEAD
+  ACCOUNT: "/auth/Account",
   MEMBER_DASHBOARD: "/member",
   MEMBER_PROFILE: "/member/profile",
   MEMBER_BOOKINGS: "/member/bookings",
   MEMBER_HISTORY: "/member/history",
   MEMBER_TICKETS: "/member/tickets",
-=======
   SEAT_SELECTION: "/booking/seat-selection"
->>>>>>> feature/Seat-selection
 };
 
 export default ROUTES;

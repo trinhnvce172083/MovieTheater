@@ -6,12 +6,15 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import ROUTES from "@/constants/routes";
 import { Login_API } from "@/api/auth/Login_API";
-
+import { useDispatch } from "react-redux";
+import { login } from "@/store/authSlice";
+import { decodeJwt } from "@/hooks/decodeJwt";
 
 export const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const onFinish = async (values: any) => {
     try {
@@ -23,9 +26,14 @@ export const LoginPage: React.FC = () => {
       });
 
       // Xử lý đăng nhập thành công (lưu token, chuyển trang, ...)
-      if (data?.token) {
-        localStorage.setItem("authToken", data.token);
+      localStorage.removeItem("authToken");
+      const accessToken = data?.data?.accessToken;
+      if (accessToken) {
+        sessionStorage.setItem("authToken", accessToken);
+        const userInfo = decodeJwt(accessToken);
+        dispatch(login({ token: accessToken, user: userInfo }));
         message.success("Login successful");
+        sessionStorage.setItem("userInfo", JSON.stringify(userInfo));
         router.push(ROUTES.HOME);
       } else {
         message.error(data?.message || "Login failed");
