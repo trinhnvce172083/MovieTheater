@@ -122,6 +122,7 @@
   }
 }
 
+<<<<<<< HEAD:src/styles/globals.css
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -131,4 +132,21 @@
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
+=======
+/* Đảm bảo thông báo Ant Design hiển thị trên cùng */
+.ant-message, .ant-message-notice {
+  z-index: 999999 !important;
+}
+
+/* Đảm bảo tất cả các link (<a> tag) có màu trắng */
+a {
+  color: #ffffff !important;
+}
+
+/* Đảm bảo các link trong Typography của Ant Design cũng có màu trắng */
+.ant-typography a,
+.ant-typography a:hover,
+.ant-typography a:visited {
+  color: #ffffff !important;
+>>>>>>> feature/Seat-selection:src/app/globals.css
 }
