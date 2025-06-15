@@ -29,7 +29,7 @@ export const LoginPage: React.FC = () => {
       // localStorage.removeItem("authToken");
       const accessToken = data?.data?.accessToken;
       if (accessToken) {
-        sessionStorage.setItem("authToken", accessToken);
+        sessionStorage.setItem("accessToken", accessToken);
         const userInfo = decodeJwt(accessToken);
         dispatch(login({ token: accessToken, user: userInfo }));
         message.success("Login successful");
