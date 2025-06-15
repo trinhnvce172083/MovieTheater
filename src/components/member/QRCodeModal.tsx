@@ -32,7 +32,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
         <QRCode
           value={`TICKET:${ticketCode}`}
           size={200}
-          className="mb-4"
+          className="text-center mb-4"
         />
         <Typography.Text type="secondary" className="block mb-2">
           Ticket Code: {ticketCode}
