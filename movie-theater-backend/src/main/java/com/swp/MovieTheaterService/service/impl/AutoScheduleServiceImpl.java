@@ -50,12 +50,10 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
             "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
             "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00");
 
-    // Khung giờ chiếu tối ưu cho từng loại phòng
+    // Khung giờ chiếu tối ưu cho từng loại phòng (CHỈ STANDARD VÀ VIP)
     private static final Map<String, List<String>> ROOM_OPTIMAL_TIMES = Map.of(
             "STANDARD", Arrays.asList("09:00", "11:30", "14:00", "16:30", "19:00", "21:30"),
-            "VIP", Arrays.asList("10:00", "13:00", "16:00", "19:30", "22:00"),
-            "IMAX", Arrays.asList("09:30", "12:30", "15:30", "18:30", "21:00"),
-            "4DX", Arrays.asList("10:30", "13:30", "16:30", "19:00", "21:30"));
+            "VIP", Arrays.asList("10:00", "13:00", "16:00", "19:30", "22:00"));
 
     // Giá vé theo khung giờ
     private static final Map<String, Double> TIME_PRICE_MULTIPLIER = Map.of(
@@ -145,7 +143,7 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
                         0, 0, 0, new ArrayList<>());
             }
 
-            // Lấy danh sách phòng chiếu
+            // Lấy danh sách phòng chiếu (đã fix cứng trong database)
             List<CinemaRoom> availableRooms = cinemaRoomRepository.findByIsActiveTrue();
             if (availableRooms.isEmpty()) {
                 log.warn("Không có phòng chiếu nào khả dụng");
@@ -154,14 +152,10 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
                         0, 0, 0, errors);
             }
 
-            // Kiểm tra và tạo thêm phòng nếu cần
-            if (availableRooms.size() < nowShowingMovies.size()) {
-                AutoRoomCreationResult roomResult = createAdditionalRoomsIfNeeded();
-                if (roomResult.isSuccess()) {
-                    availableRooms = cinemaRoomRepository.findByIsActiveTrue(); // Reload rooms
-                    log.info("Đã tạo thêm {} phòng chiếu", roomResult.getRoomsCreated());
-                }
-            }
+            log.info("Sử dụng {} phòng chiếu có sẵn: {} STANDARD, {} VIP",
+                    availableRooms.size(),
+                    availableRooms.stream().filter(r -> "STANDARD".equals(r.getRoomType())).count(),
+                    availableRooms.stream().filter(r -> "VIP".equals(r.getRoomType())).count());
 
             // Tạo lịch chiếu cho từng phim
             for (Movie movie : nowShowingMovies) {
@@ -254,56 +248,12 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
 
     @Override
     public AutoRoomCreationResult createAdditionalRoomsIfNeeded() {
-        log.info("Kiểm tra và tạo thêm phòng chiếu nếu cần thiết");
+        log.info("Database đã được fix cứng với 3 phòng STANDARD + 1 phòng VIP");
+        log.info("Không cần tạo thêm phòng chiếu");
 
-        List<String> errors = new ArrayList<>();
-        List<String> roomNames = new ArrayList<>();
-        int roomsCreated = 0;
-
-        try {
-            List<Movie> nowShowingMovies = movieRepository.findByStatusAndIsActiveTrue("NOW_SHOWING");
-            List<CinemaRoom> currentRooms = cinemaRoomRepository.findByIsActiveTrue();
-
-            int neededRooms = Math.max(0, nowShowingMovies.size() - currentRooms.size());
-
-            if (neededRooms == 0) {
-                return new AutoRoomCreationResult(true, "Số phòng hiện tại đủ để phục vụ",
-                        0, new ArrayList<>(), new ArrayList<>());
-            }
-
-            log.info("Cần tạo thêm {} phòng chiếu", neededRooms);
-
-            // Tạo các phòng chiếu mới với cấu hình đa dạng
-            String[] roomTypes = { "STANDARD", "VIP", "IMAX", "4DX" };
-
-            for (int i = 0; i < neededRooms; i++) {
-                try {
-                    String roomType = roomTypes[i % roomTypes.length];
-                    String roomName = generateRoomName(roomType, currentRooms.size() + roomsCreated + 1);
-
-                    CinemaRoomCreateRequest roomRequest = createRoomRequest(roomName, roomType);
-                    CinemaRoomResponse newRoom = cinemaRoomService.createCinemaRoom(roomRequest);
-
-                    roomNames.add(newRoom.getCinemaRoomName());
-                    roomsCreated++;
-
-                    log.info("Đã tạo phòng mới: {}", newRoom.getCinemaRoomName());
-
-                } catch (Exception e) {
-                    log.error("Lỗi khi tạo phòng thứ {}: {}", i + 1, e.getMessage());
-                    errors.add("Lỗi tạo phòng thứ " + (i + 1) + ": " + e.getMessage());
-                }
-            }
-
-            String message = String.format("Đã tạo thành công %d phòng chiếu mới", roomsCreated);
-            return new AutoRoomCreationResult(true, message, roomsCreated, roomNames, errors);
-
-        } catch (Exception e) {
-            log.error("Lỗi khi tạo phòng chiếu tự động: {}", e.getMessage(), e);
-            errors.add("Lỗi hệ thống: " + e.getMessage());
-            return new AutoRoomCreationResult(false, "Tạo phòng thất bại: " + e.getMessage(),
-                    roomsCreated, roomNames, errors);
-        }
+        return new AutoRoomCreationResult(true,
+                "Database đã fix cứng phòng chiếu - không cần tạo thêm",
+                0, new ArrayList<>(), new ArrayList<>());
     }
 
     @Override
@@ -492,12 +442,11 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
     }
 
     private String getRoomType(CinemaRoom room) {
-        if (room.isVIP())
+        // Chỉ hỗ trợ STANDARD và VIP (database đã fix cứng)
+        if (room.isVIP()) {
             return "VIP";
-        if (room.isIMAX())
-            return "IMAX";
-        if (room.is4DX())
-            return "4DX";
+        }
+        // Mặc định là STANDARD
         return "STANDARD";
     }
 
@@ -558,7 +507,7 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
             }
         }
 
-        // Sắp xếp theo thứ tự ưu tiên: VIP, IMAX, 4DX, Standard
+        // Sắp xếp theo thứ tự ưu tiên: VIP trước, STANDARD sau
         suitable.sort((r1, r2) -> {
             int priority1 = getRoomPriority(r1);
             int priority2 = getRoomPriority(r2);
@@ -573,40 +522,34 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
     }
 
     private int getRoomPriority(CinemaRoom room) {
-        if (room.isVIP())
-            return 1;
-        if (room.isIMAX())
-            return 2;
-        if (room.is4DX())
-            return 3;
-        return 4; // Standard rooms
+        // Chỉ hỗ trợ VIP và STANDARD (database đã fix cứng)
+        if (room.isVIP()) {
+            return 1; // VIP có độ ưu tiên cao nhất
+        }
+        return 2; // STANDARD rooms
     }
 
     private boolean isRoomSuitableForMovie(Movie movie, CinemaRoom room) {
-        // Logic chọn phòng phù hợp dựa trên thể loại phim
+        // Logic chọn phòng phù hợp với chỉ STANDARD và VIP
         String genre = movie.getGenres() != null ? movie.getGenres().toLowerCase() : "";
 
-        // Action/Adventure/Sci-Fi phù hợp với IMAX và 4DX
-        if (genre.contains("action") || genre.contains("adventure") || genre.contains("science fiction")) {
-            return room.isIMAX() || room.is4DX() || room.getHasDolbyAtmos();
-        }
-
-        // Romance/Drama phù hợp với VIP
-        if (genre.contains("romance") || genre.contains("drama")) {
+        // Logic thể loại cho STANDARD và VIP
+        // Romance/Drama/Comedy phù hợp với VIP (trải nghiệm cao cấp)
+        if (genre.contains("romance") || genre.contains("drama") || genre.contains("comedy")) {
             return room.isVIP() || room.getHasReclinerSeats();
         }
 
-        // Horror/Thriller phù hợp với phòng có âm thanh tốt
-        if (genre.contains("horror") || genre.contains("thriller")) {
-            return room.getHasDolbyAtmos() || room.isIMAX();
+        // Action/Thriller/Horror phù hợp với cả VIP và STANDARD
+        if (genre.contains("action") || genre.contains("thriller") || genre.contains("horror")) {
+            return true; // Cả hai loại phòng đều phù hợp
         }
 
-        // Animation/Family phù hợp với mọi loại phòng, ưu tiên 4DX
+        // Animation/Family phù hợp với STANDARD (phù hợp gia đình)
         if (genre.contains("animation") || genre.contains("family")) {
-            return true; // Phù hợp với mọi phòng
+            return !room.isVIP(); // Ưu tiên STANDARD cho gia đình
         }
 
-        return true; // Phòng thường phù hợp với mọi loại phim
+        return true; // Phòng STANDARD phù hợp với mọi loại phim
     }
 
     private LocalTime calculateEndTime(LocalTime startTime, Integer duration) {
@@ -638,12 +581,12 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
         request.setPrice(Math.round(finalPrice / 1000.0) * 1000.0); // Làm tròn đến nghìn
         request.setTimeSlotType(timeSlotType); // Set time slot type
 
-        // Cài đặt tính năng đặc biệt
+        // Cài đặt tính năng đặc biệt (chỉ VIP và STANDARD)
         request.setIs3D(room.getHas3D());
-        request.setIsIMAX(room.isIMAX());
-        request.setIs4DX(room.is4DX());
+        request.setIsIMAX(false); // Không có IMAX trong database fix cứng
+        request.setIs4DX(false); // Không có 4DX trong database fix cứng
         request.setSubtitleLanguage("Vietnamese");
-        request.setAudioLanguage("Vietnamese");
+        request.setAudioLanguage("English");
 
         return request;
     }
@@ -686,15 +629,12 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
     }
 
     private String generateRoomName(String roomType, int number) {
+        // Chỉ hỗ trợ VIP và STANDARD (database đã fix cứng)
         switch (roomType) {
             case "VIP":
-                return "VIP-" + number;
-            case "IMAX":
-                return "IMAX-" + number;
-            case "4DX":
-                return "4DX-" + number;
+                return "VIP Cinema Room " + number;
             default:
-                return "Standard-" + number;
+                return "Standard Room " + number;
         }
     }
 
@@ -703,30 +643,15 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
         request.setCinemaRoomName(roomName);
         request.setRoomType(roomType);
 
-        // Cấu hình theo loại phòng
+        // Cấu hình theo loại phòng (chỉ VIP và STANDARD)
         switch (roomType) {
             case "VIP":
                 request.setSeatQuantity(60);
                 request.setRows(6);
                 request.setColumns(10);
                 request.setHasReclinerSeats(true);
-                request.setPriceMultiplier(1.5);
-                request.setDescription("Phòng VIP với ghế cao cấp");
-                break;
-            case "IMAX":
-                request.setSeatQuantity(200);
-                request.setRows(15);
-                request.setColumns(14);
-                request.setHasDolbyAtmos(true);
                 request.setPriceMultiplier(1.8);
-                request.setDescription("Phòng IMAX với màn hình và âm thanh đặc biệt");
-                break;
-            case "4DX":
-                request.setSeatQuantity(80);
-                request.setRows(8);
-                request.setColumns(10);
-                request.setPriceMultiplier(2.0);
-                request.setDescription("Phòng 4DX với hiệu ứng chuyển động");
+                request.setDescription("Phòng VIP với ghế cao cấp và bàn ăn");
                 break;
             default: // STANDARD
                 request.setSeatQuantity(120);
@@ -775,11 +700,16 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
             for (int i = 1; i <= 3; i++) {
                 LocalDate targetDate = tomorrow.plusDays(i - 1);
 
-                // Kiểm tra xem ngày đó đã có lịch chiếu chưa
+                // Kiểm tra xem ngày đó có cần thêm lịch chiếu không
                 List<Schedule> existingSchedules = scheduleRepository.findByShowDateAndIsActiveTrue(targetDate);
 
-                if (!existingSchedules.isEmpty()) {
-                    log.info("Ngày {} đã có {} lịch chiếu, bỏ qua", targetDate, existingSchedules.size());
+                // Chỉ bỏ qua nếu đã có đủ schedule cho tất cả phim NOW_SHOWING
+                int expectedSchedulesPerMovie = 2; // Tối thiểu 2 lịch chiếu/phim/ngày
+                int minimumSchedulesNeeded = nowShowingMovies.size() * expectedSchedulesPerMovie;
+
+                if (existingSchedules.size() >= minimumSchedulesNeeded) {
+                    log.info("Ngày {} đã có {} lịch chiếu (cần tối thiểu {}), bỏ qua",
+                            targetDate, existingSchedules.size(), minimumSchedulesNeeded);
                     continue;
                 }
 

@@ -65,14 +65,7 @@ Write-Host "Main Class: com.swp.MovieTheaterService.MovieTheaterServiceApplicati
 Write-Host "Server will start on: http://localhost:8080/cinema" -ForegroundColor Cyan
 
 try {
-    java -cp $CLASSPATH `
-         -Dspring.profiles.active=dev `
-         -Dserver.port=8080 `
-         -Dspring.datasource.url="jdbc:mysql://localhost:3306/cinema_db" `
-         -Dspring.datasource.username="cinema_user" `
-         -Dspring.datasource.password="cinema_password" `
-         -Dspring.jpa.hibernate.ddl-auto=update `
-         com.swp.MovieTheaterService.MovieTheaterServiceApplication
+    java -cp $CLASSPATH -Dspring.profiles.active=dev -Dserver.port=8080 -Dspring.datasource.url="jdbc:mysql://localhost:3306/cinema_db" -Dspring.datasource.username="cinema_user" -Dspring.datasource.password="cinema_password" -Dspring.jpa.hibernate.ddl-auto=update com.swp.MovieTheaterService.MovieTheaterServiceApplication
 } catch {
     Write-Host "❌ Failed to start application: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "💡 Make sure MySQL database is running and accessible" -ForegroundColor Yellow

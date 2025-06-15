@@ -8,10 +8,7 @@ package com.swp.MovieTheaterService.enums;
  */
 public enum RoomType {
     STANDARD("Standard Room"),
-    VIP("VIP Room"),
-    IMAX("IMAX Room"),
-    FOUR_DX("4DX Room"),
-    DOLBY_ATMOS("Dolby Atmos Room");
+    VIP("VIP Room");
 
     private final String displayName;
 
@@ -27,4 +24,4 @@ public enum RoomType {
     public String toString() {
         return displayName;
     }
-} 
+}

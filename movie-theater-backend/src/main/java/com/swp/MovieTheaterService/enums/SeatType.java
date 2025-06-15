@@ -15,13 +15,12 @@ import lombok.Getter;
 public enum SeatType {
     STANDARD("Standard"),
     VIP("VIP"),
-    COUPLE("Couple"),
-    WHEELCHAIR("Wheelchair");
+    COUPLE("Couple");
 
     private final String displayName;
-    
+
     @Override
     public String toString() {
         return displayName;
     }
-} 
+}

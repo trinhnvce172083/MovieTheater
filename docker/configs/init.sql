@@ -240,20 +240,19 @@ INSERT IGNORE INTO movietheater_account (
  'Cinema Employee', '0901234568', '1992-05-15', '456 Employee Avenue, District 3, Ho Chi Minh City',
  'EMPLOYEE', true, true, true, 0, 'GOLD', NOW(), NOW());
 
--- CINEMA ROOMS (6 phòng: 3 Standard + VIP + IMAX + 4DX)
+
 INSERT IGNORE INTO movietheater_cinema_room (
     cinema_room_name, seat_quantity, room_type, is_active, description, row_count, column_count, 
     has_3d, has_dolby_atmos, has_recliner_seats, price_multiplier, is_imax, is_4dx, is_vip, created_at, updated_at
 ) VALUES 
 -- 3 phòng Standard chính
 ('Standard Room 1', 120, 'STANDARD', true, 'Phòng chiếu tiêu chuẩn với hệ thống âm thanh Dolby Atmos', 10, 12, true, true, false, 1.0, false, false, false, NOW(), NOW()),
-('Standard Room 2', 140, 'STANDARD', true, 'Phòng chiếu lớn với sức chứa tối đa', 14, 10, true, true, false, 1.0, false, false, false, NOW(), NOW()),
-('Standard Room 3', 100, 'STANDARD', true, 'Phòng chiếu nhỏ gọn với thiết kế hiện đại', 10, 10, true, false, false, 1.0, false, false, false, NOW(), NOW()),
+('Standard Room 2', 120, 'STANDARD', true, 'Phòng chiếu lớn với sức chứa tối đa', 14, 10, true, true, false, 1.0, false, false, false, NOW(), NOW()),
+('Standard Room 3', 120, 'STANDARD', true, 'Phòng chiếu nhỏ gọn với thiết kế hiện đại', 10, 10, true, false, false, 1.0, false, false, false, NOW(), NOW()),
 
--- 3 phòng đặc biệt
-('VIP Cinema Room', 60, 'VIP', true, 'Trải nghiệm VIP sang trọng với ghế massage và bàn ăn', 6, 10, true, true, true, 1.8, false, false, true, NOW(), NOW()),
-('IMAX Theater', 200, 'IMAX', true, 'Rạp IMAX với màn hình khổng lồ và âm thanh vòm', 15, 14, true, true, true, 2.2, true, false, false, NOW(), NOW()),
-('4DX Experience', 80, '4DX', true, 'Trải nghiệm 4DX đầy cảm xúc với ghế chuyển động', 8, 10, true, true, true, 2.5, false, true, false, NOW(), NOW());
+-- 1 phòng đặc biệt
+('VIP Cinema Room', 60, 'VIP', true, 'Trải nghiệm VIP sang trọng với ghế massage và bàn ăn', 6, 10, true, true, true, 1.8, false, false, true, NOW(), NOW());
+
 
 -- REAL MOVIES từ tháng 6/2025 trở đi
 INSERT INTO movietheater_movie (
@@ -310,158 +309,454 @@ INSERT IGNORE INTO movietheater_schedule (
  false, false, false, 'Vietnamese', 'English', 140, 0, false, 'AFTERNOON', NOW(), NOW()),
 (@materialists_id, @vip_room, CURDATE(), '21:00:00', '22:55:00', 234000, true, 'SCHEDULED', 
  false, false, false, 'Vietnamese', 'English', 60, 0, false, 'EVENING', NOW(), NOW());
-
--- =============================================
--- TẠO DỮ LIỆU GHẾ CHO 6 PHÒNG CHIẾU MỚI
--- =============================================
-
--- Standard Room 1 (10x12 = 120 ghế)
-INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
-SELECT 
-    (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'),
-    CONCAT(CHAR(64 + r), c) as seat_number,
-    r as seat_row,
-    c as seat_column,
-    'AVAILABLE' as seat_status,
-    CASE 
-        WHEN r <= 2 THEN 'PREMIUM'
-        WHEN r >= 9 THEN 'COUPLE' 
-        ELSE 'STANDARD' 
-    END as seat_type,
-    CASE 
-        WHEN r <= 2 THEN 1.2
-        WHEN r >= 9 THEN 1.5
-        ELSE 1.0 
-    END as price_multiplier,
-    FALSE as is_recliner,
-    FALSE as has_table,
-    TRUE as is_active
-FROM 
-    (SELECT 1 as r UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) rows
-CROSS JOIN 
-    (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12) cols;
-
--- Standard Room 2 (14x10 = 140 ghế)
-INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
-SELECT 
-    (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'),
-    CONCAT(CHAR(64 + r), c) as seat_number,
-    r as seat_row,
-    c as seat_column,
-    'AVAILABLE' as seat_status,
-    CASE 
-        WHEN r <= 3 THEN 'PREMIUM'
-        WHEN r >= 12 THEN 'COUPLE' 
-        ELSE 'STANDARD' 
-    END as seat_type,
-    CASE 
-        WHEN r <= 3 THEN 1.2
-        WHEN r >= 12 THEN 1.5
-        ELSE 1.0 
-    END as price_multiplier,
-    FALSE as is_recliner,
-    FALSE as has_table,
-    TRUE as is_active
-FROM 
-    (SELECT 1 as r UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13 UNION SELECT 14) rows
-CROSS JOIN 
-    (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) cols;
-
--- Standard Room 3 (10x10 = 100 ghế)
-INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
-SELECT 
-    (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'),
-    CONCAT(CHAR(64 + r), c) as seat_number,
-    r as seat_row,
-    c as seat_column,
-    'AVAILABLE' as seat_status,
-    CASE 
-        WHEN r <= 2 THEN 'PREMIUM'
-        WHEN r >= 9 THEN 'COUPLE' 
-        ELSE 'STANDARD' 
-    END as seat_type,
-    CASE 
-        WHEN r <= 2 THEN 1.2
-        WHEN r >= 9 THEN 1.5
-        ELSE 1.0 
-    END as price_multiplier,
-    FALSE as is_recliner,
-    FALSE as has_table,
-    TRUE as is_active
-FROM 
-    (SELECT 1 as r UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) rows
-CROSS JOIN 
-    (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) cols;
-
--- VIP Cinema Room (6x10 = 60 ghế VIP)
-INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
-SELECT 
-    (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'),
-    CONCAT(CHAR(64 + r), c) as seat_number,
-    r as seat_row,
-    c as seat_column,
-    'AVAILABLE' as seat_status,
-    'VIP' as seat_type,
-    1.8 as price_multiplier,
-    TRUE as is_recliner,
-    TRUE as has_table,
-    TRUE as is_active
-FROM 
-    (SELECT 1 as r UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6) rows
-CROSS JOIN 
-    (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) cols;
-
--- IMAX Theater (15x14 = 200 ghế IMAX)
-INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
-SELECT 
-    (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'IMAX Theater'),
-    CONCAT(CHAR(64 + r), c) as seat_number,
-    r as seat_row,
-    c as seat_column,
-    'AVAILABLE' as seat_status,
-    CASE 
-        WHEN r <= 3 THEN 'PREMIUM'
-        WHEN r >= 13 THEN 'COUPLE' 
-        ELSE 'STANDARD' 
-    END as seat_type,
-    CASE 
-        WHEN r <= 3 THEN 1.3
-        WHEN r >= 13 THEN 1.6
-        ELSE 1.1 
-    END as price_multiplier,
-    TRUE as is_recliner,
-    FALSE as has_table,
-    TRUE as is_active
-FROM 
-    (SELECT 1 as r UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13 UNION SELECT 14 UNION SELECT 15) rows
-CROSS JOIN 
-    (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13 UNION SELECT 14) cols;
-
--- 4DX Experience (8x10 = 80 ghế 4DX)
-INSERT INTO movietheater_seat (cinema_room_id, seat_number, seat_row, seat_column, seat_status, seat_type, price_multiplier, is_recliner, has_table, is_active)
-SELECT 
-    (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = '4DX Experience'),
-    CONCAT(CHAR(64 + r), c) as seat_number,
-    r as seat_row,
-    c as seat_column,
-    'AVAILABLE' as seat_status,
-    CASE 
-        WHEN r <= 2 THEN 'PREMIUM'
-        WHEN r >= 7 THEN 'COUPLE' 
-        ELSE 'STANDARD' 
-    END as seat_type,
-    CASE 
-        WHEN r <= 2 THEN 1.4
-        WHEN r >= 7 THEN 1.7
-        ELSE 1.2 
-    END as price_multiplier,
-    TRUE as is_recliner,
-    TRUE as has_table,
-    TRUE as is_active
-FROM 
-    (SELECT 1 as r UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8) rows
-CROSS JOIN 
-    (SELECT 1 as c UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) cols;
+----TẠO GHẾ----------------------------------------------------------------
+INSERT INTO movietheater_seat (
+    cinema_room_id, seat_number, seat_row, seat_column,
+    seat_status, seat_type, price_multiplier,
+    is_recliner, has_table, is_active,
+    created_at, updated_at
+) VALUES
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'A1', 1, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'A2', 1, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'A3', 1, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'A4', 1, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'A5', 1, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'A6', 1, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'A7', 1, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'A8', 1, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'A9', 1, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'A10', 1, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'A11', 1, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'A12', 1, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'B1', 2, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'B2', 2, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'B3', 2, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'B4', 2, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'B5', 2, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'B6', 2, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'B7', 2, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'B8', 2, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'B9', 2, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'B10', 2, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'B11', 2, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'B12', 2, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'C1', 3, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'C2', 3, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'C3', 3, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'C4', 3, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'C5', 3, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'C6', 3, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'C7', 3, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'C8', 3, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'C9', 3, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'C10', 3, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'C11', 3, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'C12', 3, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'D1', 4, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'D2', 4, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'D3', 4, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'D4', 4, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'D5', 4, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'D6', 4, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'D7', 4, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'D8', 4, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'D9', 4, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'D10', 4, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'D11', 4, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'D12', 4, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'E1', 5, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'E2', 5, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'E3', 5, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'E4', 5, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'E5', 5, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'E6', 5, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'E7', 5, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'E8', 5, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'E9', 5, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'E10', 5, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'E11', 5, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'E12', 5, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'F1', 6, 1, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'F2', 6, 2, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'F3', 6, 3, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'F4', 6, 4, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'F5', 6, 5, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'F6', 6, 6, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'F7', 6, 7, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'F8', 6, 8, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'F9', 6, 9, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'F10', 6, 10, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'F11', 6, 11, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'F12', 6, 12, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'G1', 7, 1, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'G2', 7, 2, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'G3', 7, 3, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'G4', 7, 4, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'G5', 7, 5, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'G6', 7, 6, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'G7', 7, 7, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'G8', 7, 8, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'G9', 7, 9, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'G10', 7, 10, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'G11', 7, 11, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'G12', 7, 12, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'H1', 8, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'H2', 8, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'H3', 8, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'H4', 8, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'H5', 8, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'H6', 8, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'H7', 8, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'H8', 8, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'H9', 8, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'H10', 8, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'H11', 8, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'H12', 8, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'I1', 9, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'I2', 9, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'I3', 9, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'I4', 9, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'I5', 9, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'I6', 9, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'I7', 9, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'I8', 9, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'I9', 9, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'I10', 9, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'I11', 9, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'I12', 9, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'J1', 10, 1, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'J2', 10, 2, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'J3', 10, 3, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'J4', 10, 4, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'J5', 10, 5, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'J6', 10, 6, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'J7', 10, 7, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'J8', 10, 8, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'J9', 10, 9, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'J10', 10, 10, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'J11', 10, 11, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1'), 'J12', 10, 12, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW());
+-- Standard Room 2----------------------------------------------------------------------
+INSERT INTO movietheater_seat (
+    cinema_room_id, seat_number, seat_row, seat_column,
+    seat_status, seat_type, price_multiplier,
+    is_recliner, has_table, is_active,
+    created_at, updated_at
+) VALUES
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'A1', 1, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'A2', 1, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'A3', 1, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'A4', 1, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'A5', 1, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'A6', 1, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'A7', 1, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'A8', 1, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'A9', 1, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'A10', 1, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'A11', 1, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'A12', 1, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'B1', 2, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'B2', 2, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'B3', 2, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'B4', 2, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'B5', 2, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'B6', 2, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'B7', 2, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'B8', 2, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'B9', 2, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'B10', 2, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'B11', 2, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'B12', 2, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'C1', 3, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'C2', 3, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'C3', 3, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'C4', 3, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'C5', 3, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'C6', 3, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'C7', 3, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'C8', 3, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'C9', 3, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'C10', 3, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'C11', 3, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'C12', 3, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'D1', 4, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'D2', 4, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'D3', 4, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'D4', 4, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'D5', 4, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'D6', 4, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'D7', 4, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'D8', 4, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'D9', 4, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'D10', 4, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'D11', 4, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'D12', 4, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'E1', 5, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'E2', 5, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'E3', 5, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'E4', 5, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'E5', 5, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'E6', 5, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'E7', 5, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'E8', 5, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'E9', 5, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'E10', 5, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'E11', 5, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'E12', 5, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'F1', 6, 1, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'F2', 6, 2, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'F3', 6, 3, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'F4', 6, 4, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'F5', 6, 5, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'F6', 6, 6, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'F7', 6, 7, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'F8', 6, 8, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'F9', 6, 9, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'F10', 6, 10, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'F11', 6, 11, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'F12', 6, 12, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'G1', 7, 1, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'G2', 7, 2, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'G3', 7, 3, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'G4', 7, 4, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'G5', 7, 5, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'G6', 7, 6, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'G7', 7, 7, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'G8', 7, 8, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'G9', 7, 9, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'G10', 7, 10, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'G11', 7, 11, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'G12', 7, 12, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'H1', 8, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'H2', 8, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'H3', 8, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'H4', 8, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'H5', 8, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'H6', 8, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'H7', 8, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'H8', 8, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'H9', 8, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'H10', 8, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'H11', 8, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'H12', 8, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'I1', 9, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'I2', 9, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'I3', 9, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'I4', 9, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'I5', 9, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'I6', 9, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'I7', 9, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'I8', 9, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'I9', 9, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'I10', 9, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'I11', 9, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'I12', 9, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'J1', 10, 1, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'J2', 10, 2, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'J3', 10, 3, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'J4', 10, 4, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'J5', 10, 5, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'J6', 10, 6, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'J7', 10, 7, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'J8', 10, 8, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'J9', 10, 9, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'J10', 10, 10, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'J11', 10, 11, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2'), 'J12', 10, 12, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW());
+-- Standard Room 3----------------------------------------------------------------------
+INSERT INTO movietheater_seat (
+    cinema_room_id, seat_number, seat_row, seat_column,
+    seat_status, seat_type, price_multiplier,
+    is_recliner, has_table, is_active,
+    created_at, updated_at
+) VALUES
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'A1', 1, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'A2', 1, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'A3', 1, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'A4', 1, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'A5', 1, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'A6', 1, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'A7', 1, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'A8', 1, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'A9', 1, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'A10', 1, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'A11', 1, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'A12', 1, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'B1', 2, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'B2', 2, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'B3', 2, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'B4', 2, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'B5', 2, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'B6', 2, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'B7', 2, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'B8', 2, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'B9', 2, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'B10', 2, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'B11', 2, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'B12', 2, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'C1', 3, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'C2', 3, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'C3', 3, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'C4', 3, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'C5', 3, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'C6', 3, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'C7', 3, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'C8', 3, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'C9', 3, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'C10', 3, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'C11', 3, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'C12', 3, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'D1', 4, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'D2', 4, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'D3', 4, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'D4', 4, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'D5', 4, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'D6', 4, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'D7', 4, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'D8', 4, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'D9', 4, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'D10', 4, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'D11', 4, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'D12', 4, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'E1', 5, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'E2', 5, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'E3', 5, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'E4', 5, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'E5', 5, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'E6', 5, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'E7', 5, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'E8', 5, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'E9', 5, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'E10', 5, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'E11', 5, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'E12', 5, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'F1', 6, 1, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'F2', 6, 2, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'F3', 6, 3, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'F4', 6, 4, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'F5', 6, 5, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'F6', 6, 6, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'F7', 6, 7, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'F8', 6, 8, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'F9', 6, 9, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'F10', 6, 10, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'F11', 6, 11, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'F12', 6, 12, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'G1', 7, 1, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'G2', 7, 2, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'G3', 7, 3, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'G4', 7, 4, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'G5', 7, 5, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'G6', 7, 6, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'G7', 7, 7, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'G8', 7, 8, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'G9', 7, 9, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'G10', 7, 10, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'G11', 7, 11, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'G12', 7, 12, 'AVAILABLE', 'VIP', 1.2, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'H1', 8, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'H2', 8, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'H3', 8, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'H4', 8, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'H5', 8, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'H6', 8, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'H7', 8, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'H8', 8, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'H9', 8, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'H10', 8, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'H11', 8, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'H12', 8, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'I1', 9, 1, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'I2', 9, 2, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'I3', 9, 3, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'I4', 9, 4, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'I5', 9, 5, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'I6', 9, 6, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'I7', 9, 7, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'I8', 9, 8, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'I9', 9, 9, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'I10', 9, 10, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'I11', 9, 11, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'I12', 9, 12, 'AVAILABLE', 'STANDARD', 1.0, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'J1', 10, 1, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'J2', 10, 2, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'J3', 10, 3, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'J4', 10, 4, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'J5', 10, 5, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'J6', 10, 6, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'J7', 10, 7, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'J8', 10, 8, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'J9', 10, 9, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'J10', 10, 10, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'J11', 10, 11, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 3'), 'J12', 10, 12, 'AVAILABLE', 'COUPLE', 1.8, false, false, true, NOW(), NOW());
+-- VIP Cinema Room----------------------------------------------------------------------
+INSERT INTO movietheater_seat (
+    cinema_room_id, seat_number, seat_row, seat_column,
+    seat_status, seat_type, price_multiplier,
+    is_recliner, has_table, is_active,
+    created_at, updated_at
+) VALUES
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'A1', 1, 1, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'A2', 1, 2, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'A3', 1, 3, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'A4', 1, 4, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'A5', 1, 5, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'A6', 1, 6, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'A7', 1, 7, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'A8', 1, 8, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'A9', 1, 9, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'A10', 1, 10, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'B1', 2, 1, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'B2', 2, 2, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'B3', 2, 3, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'B4', 2, 4, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'B5', 2, 5, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'B6', 2, 6, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'B7', 2, 7, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'B8', 2, 8, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'B9', 2, 9, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'B10', 2, 10, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'C1', 3, 1, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'C2', 3, 2, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'C3', 3, 3, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'C4', 3, 4, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'C5', 3, 5, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'C6', 3, 6, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'C7', 3, 7, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'C8', 3, 8, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'C9', 3, 9, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'C10', 3, 10, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'D1', 4, 1, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'D2', 4, 2, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'D3', 4, 3, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'D4', 4, 4, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'D5', 4, 5, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'D6', 4, 6, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'D7', 4, 7, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'D8', 4, 8, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'D9', 4, 9, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'D10', 4, 10, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'E1', 5, 1, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'E2', 5, 2, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'E3', 5, 3, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'E4', 5, 4, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'E5', 5, 5, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'E6', 5, 6, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'E7', 5, 7, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'E8', 5, 8, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'E9', 5, 9, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'E10', 5, 10, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'F1', 6, 1, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'F2', 6, 2, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'F3', 6, 3, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'F4', 6, 4, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'F5', 6, 5, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'F6', 6, 6, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'F7', 6, 7, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'F8', 6, 8, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'F9', 6, 9, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW()),
+( (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room'), 'F10', 6, 10, 'AVAILABLE', 'VIP', 1.8, true, true, true, NOW(), NOW());
 
 -- Cập nhật seat_quantity trong cinema_room dựa trên số ghế thực tế
 UPDATE movietheater_cinema_room cr 
@@ -479,4 +774,54 @@ SELECT '🎬 Lumiere Cinema Database Initialized Successfully!' as status,
        CONCAT((SELECT COUNT(*) FROM movietheater_movie WHERE status = 'COMING_SOON'), ' movies COMING_SOON') as coming_soon,
        CONCAT((SELECT COUNT(*) FROM movietheater_cinema_room WHERE is_active = true), ' cinema rooms active') as rooms,
        CONCAT((SELECT COUNT(*) FROM movietheater_schedule WHERE is_active = true), ' schedules today (minimal for testing)') as schedules_today,
-       'Ready for Auto-Schedule Testing!' as auto_schedule_status; 
+       'Ready for Auto-Schedule Testing!' as auto_schedule_status;
+
+-- =============================================
+-- KIỂM TRA VÀ TỐI ƯU HÓA CHO MYSQL
+-- =============================================
+
+-- Kiểm tra tổng số ghế được tạo
+SELECT 
+    cr.cinema_room_name,
+    cr.seat_quantity as expected_seats,
+    COUNT(s.seat_id) as actual_seats,
+    CASE 
+        WHEN cr.seat_quantity = COUNT(s.seat_id) THEN '✅ OK' 
+        ELSE '❌ MISMATCH'
+    END as status
+FROM movietheater_cinema_room cr
+LEFT JOIN movietheater_seat s ON cr.cinema_room_id = s.cinema_room_id 
+WHERE cr.is_active = true
+GROUP BY cr.cinema_room_id, cr.cinema_room_name, cr.seat_quantity
+ORDER BY cr.cinema_room_name;
+
+-- Cập nhật lại seat_quantity dựa trên số ghế thực tế (đảm bảo đồng bộ)
+UPDATE movietheater_cinema_room cr 
+SET seat_quantity = (
+    SELECT COUNT(*) 
+    FROM movietheater_seat s 
+    WHERE s.cinema_room_id = cr.cinema_room_id AND s.is_active = true
+)
+WHERE cr.is_active = true;
+
+-- Cập nhật available_seats trong schedule dựa trên số ghế thực tế
+UPDATE movietheater_schedule sch
+SET available_seats = (
+    SELECT COUNT(*)
+    FROM movietheater_seat s
+    WHERE s.cinema_room_id = sch.cinema_room_id AND s.is_active = true
+)
+WHERE sch.is_active = true;
+
+-- Tối ưu hóa performance: Thêm một số index bổ sung cho MySQL
+CREATE INDEX IF NOT EXISTS idx_seat_room_status ON movietheater_seat(cinema_room_id, seat_status, is_active);
+CREATE INDEX IF NOT EXISTS idx_schedule_date_time ON movietheater_schedule(show_date, start_time, is_active);
+CREATE INDEX IF NOT EXISTS idx_movie_status_active ON movietheater_movie(status, is_active);
+
+-- Kiểm tra cuối cùng
+SELECT 
+    '🎬 Database Optimization Complete!' as message,
+    CONCAT('✅ ', (SELECT COUNT(*) FROM movietheater_seat WHERE is_active = true), ' seats created') as seats_status,
+    CONCAT('✅ ', (SELECT COUNT(*) FROM movietheater_cinema_room WHERE is_active = true), ' rooms ready') as rooms_status,
+    CONCAT('✅ ', (SELECT COUNT(*) FROM movietheater_movie WHERE status = 'NOW_SHOWING'), ' movies ready for auto-schedule') as movies_status,
+    '🚀 System Ready!' as final_status; 

@@ -153,39 +153,6 @@ public class AutoScheduleController {
         }
     }
 
-    @PostMapping("/trigger-immediate")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Kích hoạt tạo lịch ngay lập tức", description = "Kiểm tra phim NOW_SHOWING và tạo lịch từ ngày mai nếu chưa có trong database")
-    @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<AutoScheduleResult> triggerImmediateScheduleGeneration() {
-        log.info("API: Kích hoạt tạo lịch chiếu ngay lập tức từ ngày mai");
-
-        try {
-            // Tạo lịch từ ngày mai cho 3 ngày tiếp theo
-            LocalDate tomorrow = LocalDate.now().plusDays(1);
-            log.info("Bắt đầu tạo lịch từ ngày: {}", tomorrow);
-
-            AutoScheduleResult result = autoScheduleService.generateSchedulesFromTomorrow();
-
-            if (result.isSuccess()) {
-                log.info("Tạo lịch thành công: {}", result.getMessage());
-            } else {
-                log.warn("Tạo lịch có vấn đề: {}", result.getMessage());
-            }
-
-            return ResponseEntity.ok(result);
-
-        } catch (Exception e) {
-            log.error("Lỗi khi kích hoạt tạo lịch ngay lập tức: {}", e.getMessage(), e);
-            AutoScheduleResult errorResult = new AutoScheduleResult(
-                    false,
-                    "Lỗi hệ thống: " + e.getMessage(),
-                    0, 0, 0,
-                    List.of("Lỗi khi kích hoạt: " + e.getMessage()));
-            return ResponseEntity.ok(errorResult);
-        }
-    }
-
     @GetMapping("/check-database-status")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Kiểm tra trạng thái database", description = "Kiểm tra phim NOW_SHOWING và lịch chiếu hiện có trong database")
