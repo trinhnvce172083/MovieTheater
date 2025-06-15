@@ -39,10 +39,11 @@ export const LoginPage: React.FC = () => {
         if (userInfo?.role === "MEMBER") {
           router.push(ROUTES.HOME);
         } else if (userInfo?.role === "ADMIN") {
-          router.push(ROUTES.ADMIN_HOME);
-        } else if (userInfo?.role === "EMPLOYEE") {
-          router.push(ROUTES.EMPLOYEE_HOME);
+          router.push(ROUTES.ADMIN_DASHBOARD);
         }
+        //  else if (userInfo?.role === "EMPLOYEE") {
+        //   router.push(ROUTES.EMPLOYEE_HOME);
+        // }
       } else {
         message.error(data?.message || "Login failed");
       }

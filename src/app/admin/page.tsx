@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, Row, Col, Statistic } from "antd";
 import {
   UserOutlined,
@@ -9,15 +9,34 @@ import {
   DollarOutlined,
 } from "@ant-design/icons";
 import AppBarChart from "@/components/AppBarChart";
+import { getAllUsers } from "@/api/admin/getAllUsers";
 
 export default function AdminDashboard() {
+  const [totalUsers, setTotalUsers] = useState<number | null>(null);
   // Mock data - in a real application, this would come from an API
   const stats = {
-    totalUsers: 1234,
+    totalUsers: totalUsers,
     totalMovies: 56,
     totalShowtimes: 789,
     totalRevenue: 98765,
   };
+
+  useEffect(() => {
+    async function fetchTotalUsers() {
+      try {
+        const data = await getAllUsers();
+        // Nếu API trả về { content: [...], totalElements: ... }
+        if (typeof data.totalElements === "number") {
+          setTotalUsers(data.totalElements);
+        } else if (data.content && Array.isArray(data.content)) {
+          setTotalUsers(data.content.length);
+        }
+      } catch (error) {
+        setTotalUsers(null);
+      }
+    }
+    fetchTotalUsers();
+  }, []);
 
   return (
     <div>
@@ -31,7 +50,7 @@ export default function AdminDashboard() {
           <Card>
             <Statistic
               title="Total Users"
-              value={stats.totalUsers}
+              value={stats.totalUsers !== null ? stats.totalUsers : "..."}
               prefix={<UserOutlined />}
               valueStyle={{ color: "#3f8600" }}
             />

@@ -1,7 +1,7 @@
 "use client";
 
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "../styles/globals.css";
 import {ThemeProvider} from "@/components/providers/ThemeProvider";
 import ClientLayoutWrapper from "@/components/ClientLayoutWrapper";
 import BackTop from "antd/es/float-button/BackTop";
@@ -28,18 +28,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Provider store={store}>
-          <main className="min-h-screen pt-24">{children}</main>
-        </Provider>
         <BackTop duration={100} visibilityHeight={50} />
-        <ThemeProvider 
-        attribute="class" 
-        defaultTheme="system" 
-        enableSystem
-        disableTransitionOnChange
-        >
-          <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
-        </ThemeProvider>
+        <Provider store={store}>
+          <ThemeProvider 
+            attribute="class" 
+            defaultTheme="system" 
+            enableSystem
+            disableTransitionOnChange
+          >
+            <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
+          </ThemeProvider>
+        </Provider>
       </body>
     </html>
   );

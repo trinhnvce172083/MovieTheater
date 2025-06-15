@@ -39,27 +39,27 @@ export default function AdminLayout({
     {
       key: ROUTES.ADMIN_MEMBERS,
       icon: <UserOutlined />,
-      label: "Member management",
+      label: "Members",
     },
     {
       key: ROUTES.ADMIN_MOVIES,
       icon: <VideoCameraOutlined />,
-      label: "Movie management",
+      label: "Movies",
     },
     {
       key: "/admin/rooms",
       icon: <BankOutlined />,
-      label: "Room management",
+      label: "Rooms",
     },
     {
       key: "/admin/promotions",
       icon: <GiftOutlined />,
-      label: "Promotion management",
+      label: "Promotions",
     },
     {
       key: "/admin/bookings",
       icon: <CalendarOutlined />,
-      label: "Booking management",
+      label: "Bookings",
     },
   ];
 
@@ -199,11 +199,11 @@ export default function AdminLayout({
             }}>
               <h3 style={{
                 color: '#fff',
-                fontSize: '18px',
-                fontWeight: '600',
+                fontSize: '14px',
+                fontWeight: '500',
                 margin: 0,
                 textAlign: 'center',
-                letterSpacing: '0.5px',
+                letterSpacing: '0.3px',
               }}>
                 Admin Panel
               </h3>
@@ -255,7 +255,7 @@ export default function AdminLayout({
               icon={<SettingOutlined />}
               style={{
                 color: '#fff',
-                fontSize: '20px',
+                fontSize: '16px',
                 opacity: 0.85,
                 border: 'none',
                 background: 'rgba(255, 255, 255, 0.1)',
@@ -270,7 +270,7 @@ export default function AdminLayout({
               }}
               className="hover:bg-white/20 hover:scale-105"
             >
-              {!collapsed && <span style={{ marginLeft: 8, fontSize: '14px' }}>Settings</span>}
+              {!collapsed && <span style={{ marginLeft: 8, fontSize: '12px' }}>Settings</span>}
             </Button>
           </Tooltip>
         </div>
@@ -302,6 +302,19 @@ export default function AdminLayout({
           border-radius: 8px !important;
           transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1) !important;
           backdrop-filter: blur(10px);
+          font-size: 12px !important;
+          height: 38px !important;
+          line-height: 38px !important;
+          display: flex !important;
+          align-items: center !important;
+        }
+        
+        .admin-sidebar-menu .ant-menu-item .ant-menu-title-content {
+          font-weight: 400 !important;
+          white-space: nowrap !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+          font-size: 12px !important;
         }
         
         .admin-sidebar-menu .ant-menu-item:hover {
@@ -316,10 +329,27 @@ export default function AdminLayout({
         
         .admin-sidebar-menu .ant-menu-item .ant-menu-item-icon {
           transition: all 0.3s ease !important;
+          font-size: 14px !important;
         }
         
         .admin-sidebar-menu .ant-menu-item:hover .ant-menu-item-icon {
           transform: scale(1.1);
+        }
+
+        /* Collapsed state specific styles */
+        .admin-sidebar-menu .ant-menu-item.ant-menu-item-only-child {
+          padding-left: 24px !important;
+        }
+
+        /* When collapsed, center the icons */
+        .ant-layout-sider-collapsed .admin-sidebar-menu .ant-menu-item {
+          text-align: center !important;
+          padding-left: 0 !important;
+          padding-right: 0 !important;
+        }
+
+        .ant-layout-sider-collapsed .admin-sidebar-menu .ant-menu-item .ant-menu-item-icon {
+          margin-right: 0 !important;
         }
       `}</style>
     </Layout>
