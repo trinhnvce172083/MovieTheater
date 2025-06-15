@@ -258,7 +258,7 @@ export default function SeatSelectionPage() {
   return (
     <App>
       {contextHolder}
-      <div className="min-h-screen bg-gradient-to-b from-black via-[rgba(8,4,29,0.9)] to-black py-8">
+      <div className="">
         <div className="container mx-auto px-4 flex flex-col md:flex-row gap-8">
           {/* Left: Seat layout */}
           <div className="flex-1">

@@ -11,10 +11,6 @@ import {
   YoutubeOutlined,
   InstagramOutlined,
 } from "@ant-design/icons";
-<<<<<<< HEAD
-=======
-//import ROUTES from "@/constants/routes";
->>>>>>> feature/Seat-selection
 
 export default function Footer() {
   return (

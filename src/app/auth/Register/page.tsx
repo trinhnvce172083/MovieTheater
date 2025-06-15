@@ -1,5 +1,4 @@
-"use client";
-
+  "use client";
 import React, { useState } from "react";
 import {
   Button,
@@ -8,8 +7,8 @@ import {
   DatePicker,
   Typography,
   message,
-  Card,
 } from "antd";
+import { Card } from "@/components/ui/card";
 import {
   UserOutlined,
   IdcardOutlined,
@@ -81,10 +80,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-[rgba(8,4,29,0.9)] to-black">
+    <div className="flex items-center justify-center">
       <Card
         className={cn(
-          "w-full max-w-md shadow-lg p-8 bg-black bg-opacity-60 rounded-2xl"
+          "w-full max-w-md shadow-lg p-8 bg-white/60 backdrop-blur-sm rounded-2xl"
         )}
       >
         <div className="flex flex-col items-center mb-6">
@@ -102,120 +101,129 @@ export default function RegisterPage() {
           onFinish={onFinish}
           autoComplete="off"
           requiredMark={false}
-          className="min-h-[480px]"
+          className="flex-grow"
         >
-          <div className="h-[480px] relative">
-            <div className={`absolute w-full transition-opacity duration-300 ${tab === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-              {tab === 0 && (
-                <>
-                  <div className="flex gap-4">
-                    <Form.Item label="Full Name" name="fullname" className="flex-1" rules={[{ required: true, message: "Please enter your full name!" }]}>
-                      <Input
-                        prefix={<UserOutlined />}
-                        placeholder="Full Name"
-                        size="large"
-                        className="border-2 border-white focus:border-purple-500"
-                      />
-                    </Form.Item>
-                    <Form.Item label="Gender" name="sex" className="flex-1" rules={[{ required: true, message: "Please select your gender!" }]}>
-                      <div className="flex gap-2 w-full">
-                        <button
-                          type="button"
-                          className={`flex-1 h-10 border-2 rounded-lg text-base flex items-center justify-center px-4 transition-colors duration-200 ${gender === 'male' ? 'border-purple-500 bg-gray-100 text-[#2563eb]' : 'border-white bg-white text-gray-500'}`}
-                          onClick={() => setGender('male')}
-                        >
-                          Male
-                        </button>
-                        <button
-                          type="button"
-                          className={`flex-1 h-10 border-2 rounded-lg text-base flex items-center justify-center px-4 transition-colors duration-200 ${gender === 'female' ? 'border-purple-500 bg-gray-100 text-[#2563eb]' : 'border-white bg-white text-gray-500'}`}
-                          onClick={() => setGender('female')}
-                        >
-                          Female
-                        </button>
-                      </div>
-                    </Form.Item>
-                  </div>
-                  <div className="flex gap-4">
-                    <Form.Item label="Date of Birth" name="dob" className="flex-1" rules={[{ required: true, message: "Please select your date of birth!" }]}>
-                      <DatePicker
-                        format="DD-MM-YYYY"
-                        placeholder="DD-MM-YYYY"
-                        size="large"
-                        className="w-full"
-                        disabledDate={(d) => d && d > dayjs()}
-                      />
-                    </Form.Item>
-                    <Form.Item label="ID Card" name="identity" className="flex-1" rules={[{ required: true, message: "Please enter your ID card number!" }]}>
-                      <Input
-                        prefix={<IdcardOutlined />}
-                        placeholder="ID Card"
-                        size="large"
-                        className="border-2 border-white focus:border-purple-500"
-                      />
-                    </Form.Item>
-                  </div>
-                  <Form.Item label="Phone Number" name="phone" rules={[{ required: true, message: "Please enter your phone number!" }]}>
-                    <Input
-                      prefix={<PhoneOutlined />}
-                      placeholder="Phone Number"
-                      size="large"
-                      className="border-2 border-white focus:border-purple-500"
-                    />
-                  </Form.Item>
-                  <Form.Item label="Email" name="email" rules={[{ required: true, message: "Please enter your email!" }, { type: "email", message: "Invalid email!" }]}>
-                    <Input
-                      prefix={<MailOutlined />}
-                      placeholder="Email"
-                      size="large"
-                      className="border-2 border-white focus:border-purple-500"
-                    />
-                  </Form.Item>
-                </>
-              )}
-            </div>
-            <div className={`absolute w-full transition-opacity duration-300 ${tab === 1 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-              {tab === 1 && (
-                <>
-                  <Form.Item label="Username" name="username" rules={[{ required: true, message: "Please enter your username!" }]}>
+          <div className={`w-full transition-opacity duration-300 ${tab === 0 ? 'opacity-100' : 'hidden pointer-events-none'}`}>
+            {tab === 0 && (
+              <>
+                <div className="flex gap-4">
+                  <Form.Item label="Full Name" name="fullname" className="flex-1" rules={[{ required: true, message: "Please enter your full name!" }]}>
                     <Input
                       prefix={<UserOutlined />}
-                      placeholder="Username"
+                      placeholder="Full Name"
                       size="large"
                       className="border-2 border-white focus:border-purple-500"
                     />
                   </Form.Item>
-                  <Form.Item label="Password" name="password" rules={[{ required: true, message: "Please enter your password!" }, { min: 6, message: "Password must be at least 6 characters!" }]} extra={<span className="text-xs text-gray-400">Minimum length is 6 characters.</span>}>
-                    <Input.Password
-                      prefix={<LockOutlined />}
-                      placeholder="Password"
+                  <Form.Item label="Gender" name="sex" className="flex-1" rules={[{ required: true, message: "Please select your gender!" }]}>
+                    <div className="flex gap-2 w-full h-16">
+                      <button
+                        type="button"
+                        className={`flex-1 h-10 border-2 rounded-lg text-base flex items-center justify-center px-4 transition-colors duration-200 ${gender === 'male' ? 'border-purple-500 bg-gray-100 text-[#2563eb]' : 'border-white bg-white text-gray-500'}`}
+                        onClick={() => setGender('male')}
+                      >
+                        Male
+                      </button>
+                      <button
+                        type="button"
+                        className={`flex-1 h-10 border-2 rounded-lg text-base flex items-center justify-center px-4 transition-colors duration-200 ${gender === 'female' ? 'border-purple-500 bg-gray-100 text-[#2563eb]' : 'border-white bg-white text-gray-500'}`}
+                        onClick={() => setGender('female')}
+                      >
+                        Female
+                      </button>
+                    </div>
+                  </Form.Item>
+                </div>
+                <div className="flex gap-4">
+                  <Form.Item label="Date of Birth" name="dob" className="flex-1" rules={[{ required: true, message: "Please select your date of birth!" }]}>
+                    <DatePicker
+                      format="DD-MM-YYYY"
+                      placeholder="DD-MM-YYYY"
+                      size="large"
+                      className="w-full"
+                      disabledDate={(d) => d && d > dayjs()}
+                    />
+                  </Form.Item>
+                  <Form.Item label="ID Card" name="identity" className="flex-1" rules={[{ required: true, message: "Please enter your ID card number!" }]}>
+                    <Input
+                      prefix={<IdcardOutlined />}
+                      placeholder="ID Card"
                       size="large"
                       className="border-2 border-white focus:border-purple-500"
                     />
                   </Form.Item>
-                  <Form.Item label="Confirm Password" name="confirm" dependencies={["password"]} rules={[{ required: true, message: "Please confirm your password!" }, ({ getFieldValue }) => ({ validator(_, value) { if (!value || getFieldValue("password") === value) { return Promise.resolve(); } return Promise.reject(new Error("Passwords do not match!")); }, }), ]}>
-                    <Input.Password
-                      prefix={<LockOutlined />}
-                      placeholder="Confirm Password"
-                      size="large"
-                      className="border-2 border-white focus:border-purple-600"
-                    />
-                  </Form.Item>
-                </>
-              )}
-            </div>
+                </div>
+                <Form.Item label="Phone Number" name="phone" rules={[{ required: true, message: "Please enter your phone number!" }]}>
+                  <Input
+                    prefix={<PhoneOutlined />}
+                    placeholder="Phone Number"
+                    size="large"
+                    className="border-2 border-white focus:border-purple-500"
+                  />
+                </Form.Item>
+                <Form.Item label="Email" name="email" rules={[{ required: true, message: "Please enter your email!" }, { type: "email", message: "Invalid email!" }]}>
+                  <Input
+                    prefix={<MailOutlined />}
+                    placeholder="Email"
+                    size="large"
+                    className="border-2 border-white focus:border-purple-500"
+                  />
+                </Form.Item>
+                <Form.Item className="mt-4">
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    className="w-full mt-2 bg-gradient-to-r from-purple-500 to-orange-400 text-white font-semibold"
+                    size="large"
+                    loading={loading}
+                  >
+                    Save changes
+                  </Button>
+                </Form.Item>
+              </>
+            )}
           </div>
-          <Form.Item className="mt-4">
-            <Button
-              type="primary"
-              htmlType="submit"
-              className="w-full mt-2 bg-gradient-to-r from-purple-500 to-orange-400 text-white font-semibold"
-              size="large"
-              loading={loading}
-            >
-              {tab === 0 ? 'Save changes' : 'Save password'}
-            </Button>
-          </Form.Item>
+          <div className={`w-full transition-opacity duration-300 ${tab === 1 ? 'opacity-100' : 'hidden pointer-events-none'}`}>
+            {tab === 1 && (
+              <>
+                <Form.Item label="Username" name="username" rules={[{ required: true, message: "Please enter your username!" }]}>
+                  <Input
+                    prefix={<UserOutlined />}
+                    placeholder="Username"
+                    size="large"
+                    className="border-2 border-white focus:border-purple-500"
+                  />
+                </Form.Item>
+                <Form.Item label="Password" name="password" rules={[{ required: true, message: "Please enter your password!" }, { min: 6, message: "Password must be at least 6 characters!" }]} extra={<span className="text-xs text-gray-400">Minimum length is 6 characters.</span>}>
+                  <Input.Password
+                    prefix={<LockOutlined />}
+                    placeholder="Password"
+                    size="large"
+                    className="border-2 border-white focus:border-purple-500"
+                  />
+                </Form.Item>
+                <Form.Item label="Confirm Password" name="confirm" dependencies={["password"]} rules={[{ required: true, message: "Please confirm your password!" }, ({ getFieldValue }) => ({ validator(_, value) { if (!value || getFieldValue("password") === value) { return Promise.resolve(); } return Promise.reject(new Error("Passwords do not match!")); }, }), ]}>
+                  <Input.Password
+                    prefix={<LockOutlined />}
+                    placeholder="Confirm Password"
+                    size="large"
+                    className="border-2 border-white focus:border-purple-600"
+                  />
+                </Form.Item>
+                <Form.Item className="mt-4">
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    className="w-full mt-2 bg-gradient-to-r from-purple-500 to-orange-400 text-white font-semibold"
+                    size="large"
+                    loading={loading}
+                  >
+                    Save password
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </div>
         </Form>
         <div className="mt-2 text-xs text-gray-600 text-center">
           By creating an account, you agree to the{" "}

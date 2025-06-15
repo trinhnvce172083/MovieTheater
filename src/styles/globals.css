@@ -122,7 +122,6 @@
   }
 }
 
-<<<<<<< HEAD:src/styles/globals.css
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -132,7 +131,6 @@
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
-=======
 /* Đảm bảo thông báo Ant Design hiển thị trên cùng */
 .ant-message, .ant-message-notice {
   z-index: 999999 !important;
@@ -148,5 +146,5 @@ a {
 .ant-typography a:hover,
 .ant-typography a:visited {
   color: #ffffff !important;
->>>>>>> feature/Seat-selection:src/app/globals.css
+}
 }
