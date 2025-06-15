@@ -24,6 +24,7 @@ import {
   Typography,
   Avatar,
 } from "antd";
+import type { ColumnsType } from 'antd/es/table';
 import {
   PlusOutlined,
   EditOutlined,
@@ -182,7 +183,7 @@ export default function ProfessionalMovieManagement() {
     form.resetFields();
   };
 
-  const columns = [
+  const columns: ColumnsType<any> = [
     {
       title: "#",
       dataIndex: "id",
@@ -287,7 +288,7 @@ export default function ProfessionalMovieManagement() {
       dataIndex: "status",
       key: "status",
       width: 80,
-      align: "center",
+      align: "center" as const,
       render: (status: any) => (
         <div className="text-center">
           <Tag
@@ -305,7 +306,7 @@ export default function ProfessionalMovieManagement() {
       dataIndex: "revenue",
       key: "revenue",
       width: 90,
-      align: "right",
+      align: "right" as const,
       render: (revenue: any) => (
         <div className="text-right">
           <span className="font-mono text-sm font-semibold text-green-600">
@@ -319,7 +320,7 @@ export default function ProfessionalMovieManagement() {
       key: "actions",
       width: 100,
       fixed: "right" as const,
-      align: "center",
+      align: "center" as const,
       render: (_: any, record: any) => (
         <Space size="small">
           <Tooltip title="View">
@@ -464,7 +465,7 @@ export default function ProfessionalMovieManagement() {
                   prefix={<SearchOutlined className="text-gray-400" />}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-10"
+                  className="w-full h-10 px-4"
                   allowClear
                 />
               </Col>
@@ -473,7 +474,7 @@ export default function ProfessionalMovieManagement() {
                   placeholder="Version"
                   value={filterVersion}
                   onChange={setFilterVersion}
-                  className="w-full h-10"
+                  className="w-full h-10 px-4"
                   allowClear
                   size="middle"
                 >
@@ -488,7 +489,7 @@ export default function ProfessionalMovieManagement() {
                   placeholder="Status"
                   value={filterStatus}
                   onChange={setFilterStatus}
-                  className="w-full h-10"
+                  className="w-full h-10 px-4"
                   allowClear
                   size="middle"
                 >
@@ -501,7 +502,7 @@ export default function ProfessionalMovieManagement() {
                   placeholder="Genre"
                   value={filterGenre}
                   onChange={setFilterGenre}
-                  className="w-full h-10"
+                  className="w-full h-10 px-4"
                   allowClear
                   size="middle"
                 >
@@ -516,7 +517,7 @@ export default function ProfessionalMovieManagement() {
               <Col xs={12} sm={6} lg={4} xl={3}>
                 <Button
                   icon={<ReloadOutlined />}
-                  className="w-full h-10"
+                  className="w-full h-10 px-4"
                   size="middle"
                   onClick={() => {
                     setSearchTerm("");

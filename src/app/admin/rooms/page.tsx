@@ -315,10 +315,10 @@ export default function ProfessionalRoomManagement() {
                 <Button
                   variant="primary"
                   icon={<Plus size={16} />}
-                  size="lg"
+                  size="md"
                   onClick={() => setIsAddModalVisible(true)}
                   disabled={false}
-                  className=""
+                  className="text-white px-4 py-2"
                 >
                   Add New Room
                 </Button>
@@ -338,7 +338,7 @@ export default function ProfessionalRoomManagement() {
                     placeholder="Search by room name or ID..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-12"
                   />
                 </div>
               </div>
@@ -348,7 +348,7 @@ export default function ProfessionalRoomManagement() {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-12"
                 >
                   <option value="all">All Types</option>
                   <option value="Standard">Standard</option>
@@ -363,7 +363,7 @@ export default function ProfessionalRoomManagement() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-12"
                 >
                   <option value="all">All Status</option>
                   <option value="Active">Active</option>
@@ -383,7 +383,7 @@ export default function ProfessionalRoomManagement() {
                     setStatusFilter("all")
                   }}
                   disabled={false}
-                  className="w-full"
+                  className="h-12"
                 >
                   Reset Filters
                 </Button>
@@ -397,9 +397,9 @@ export default function ProfessionalRoomManagement() {
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Room ID</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Room Details</th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Room Details</th>
                   <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Capacity</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Features</th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Features</th>
                   <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Actions</th>
                 </tr>
               </thead>
@@ -439,15 +439,15 @@ export default function ProfessionalRoomManagement() {
                     </td>
                     <td className="px-6 py-4">
                       <Space size="small">
-                        <Tooltip title="Layout">
+                        <Tooltip title="View">
                           <AntdButton
                             type="primary"
                             icon={<EyeOutlined />}
                             size="small"
                             onClick={() => handleShowSeatDetail(room)}
-                            className="bg-blue-600 hover:bg-blue-700 border-0"
+                            className="bg-blue-600 hover:bg-blue-700 border-0 text-white"
                           >
-                            Layout
+                            View
                           </AntdButton>
                         </Tooltip>
                         <Tooltip title="Edit">
@@ -559,7 +559,7 @@ export default function ProfessionalRoomManagement() {
             <div className="p-2 bg-blue-100 rounded-lg">
               <Plus className="text-blue-600" size={20} />
             </div>
-            <span>Add New Cinema Room</span>
+            <span className="text-lg font-bold">Add New Cinema Room</span>
           </div>
         }
         footer={
