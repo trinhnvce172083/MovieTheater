@@ -12,7 +12,7 @@ export default function Redirect() {
     // Automatically redirect after a short delay
     const redirectTimer = setTimeout(() => {
       router.push(ROUTES.HOME);
-    }, 250);
+    }, 100);
 
     // Cleanup the timer if the component unmounts
     return () => clearTimeout(redirectTimer);

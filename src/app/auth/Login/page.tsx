@@ -1,31 +1,71 @@
 "use client";
-
 import React, { useState } from "react";
-import { Button, Form, Input, Typography, message } from "antd";
-import { Card } from "@/components/ui/card"; // shadcn/ui Card
-import { cn } from "@/lib/utils"; // shadcn/ui utility (optional)
-import "antd/dist/reset.css";
+import { Button, Form, Input, Typography, message, Checkbox } from "antd";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import ROUTES from "@/constants/routes";
+import { Login_API } from "@/api/auth/Login_API";
+import { useDispatch } from "react-redux";
+import { login } from "@/store/authSlice";
+import { decodeJwt } from "@/hooks/decodeJwt";
+import { LoginFormValues } from "@/types/Login/LoginFormValues";
 
 export const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm();
+  const router = useRouter();
+  const dispatch = useDispatch();
 
-  const onFinish = (values: any) => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      if (values.username === "user" && values.password === "password") {
-        message.success("Login successful!");
-        // Navigate to booking page or dashboard
+  const onFinish = async (values: LoginFormValues) => {
+    try {
+      setLoading(true);
+      const data = await Login_API({
+        username: values.username,
+        password: values.password,
+        rememberMe: values.rememberMe || false,
+      });
+
+      // localStorage.removeItem("authToken");
+      const accessToken = data?.data?.accessToken;
+      if (accessToken) {
+        sessionStorage.setItem("authToken", accessToken);
+        const userInfo = decodeJwt(accessToken);
+        dispatch(login({ token: accessToken, user: userInfo }));
+        message.success("Login successful");
+        sessionStorage.setItem("userInfo", JSON.stringify(userInfo));
+
+        // Redirect based on user role
+        if (userInfo?.role === "MEMBER") {
+          router.push(ROUTES.HOME);
+        } else if (userInfo?.role === "ADMIN") {
+          router.push(ROUTES.ADMIN_HOME);
+        } else if (userInfo?.role === "EMPLOYEE") {
+          router.push(ROUTES.EMPLOYEE_HOME);
+        }
       } else {
-        message.error("Invalid username or password");
+        message.error(data?.message || "Login failed");
       }
-    }, 1200);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        message.error(error.message);
+      } else {
+        message.error(
+          "Connection error. Please check your internet connection."
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-pink-50">
-      <Card className={cn("w-full max-w-md shadow-lg p-8")}>
+    <div className="flex flex-row items-center justify-center p-18">
+      <Card
+        className={cn(
+          "w-full max-w-md shadow-lg p-8 bg-white/60 backdrop-blur-sm"
+        )}
+      >
         <Typography.Title level={2} className="text-center mb-6">
           Login
         </Typography.Title>
@@ -34,6 +74,7 @@ export const LoginPage: React.FC = () => {
           layout="vertical"
           onFinish={onFinish}
           autoComplete="off"
+          form={form}
         >
           <Form.Item
             label="Username"
@@ -57,6 +98,9 @@ export const LoginPage: React.FC = () => {
               className="rounded-lg"
             />
           </Form.Item>
+          <Form.Item name="rememberMe" valuePropName="checked">
+            <Checkbox>Remember me</Checkbox>
+          </Form.Item>
           <Form.Item>
             <Button
               type="primary"
@@ -71,7 +115,7 @@ export const LoginPage: React.FC = () => {
         </Form>
         <div className="mt-4 text-center text-sm text-gray-500">
           Don&apos;t have an account?{" "}
-          <a href="/register" className="text-indigo-600 hover:underline">
+          <a href="/auth/Register" className="text-indigo-600 hover:underline">
             Sign up
           </a>
         </div>

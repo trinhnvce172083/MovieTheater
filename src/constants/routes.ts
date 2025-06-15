@@ -1,10 +1,12 @@
 const ROUTES = {
-  HOME: "/Homepage",
-  SHOWTIMES: "/showtimes",
+  // Public Routes
+  HOME: "/HomePage",
+  NOW_SHOWING: "/now_showing",
   BOOKING: "/booking",
   MOVIES: "/movies",
   LOGIN: "/auth/Login",
   REGISTER: "/auth/Register",
+  ACCOUNT: "/auth/Account",
   MEMBER_DASHBOARD: "/member",
   MEMBER_PROFILE: "/member/profile",
   MEMBER_BOOKINGS: "/member/bookings",
