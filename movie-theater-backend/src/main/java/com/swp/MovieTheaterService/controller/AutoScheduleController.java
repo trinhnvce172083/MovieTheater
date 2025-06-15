@@ -6,6 +6,9 @@ import com.swp.MovieTheaterService.service.AutoScheduleService.AutoRoomCreationR
 import com.swp.MovieTheaterService.service.AutoScheduleService.AutoScheduleStatistics;
 import com.swp.MovieTheaterService.service.AutoScheduleService.StandardShowtime;
 import com.swp.MovieTheaterService.service.AutoScheduleService.DatabaseStatusResponse;
+import com.swp.MovieTheaterService.dto.schedule.MultipleMovieScheduleRequest;
+import com.swp.MovieTheaterService.dto.schedule.MultipleMovieScheduleResponse;
+import com.swp.MovieTheaterService.service.impl.AutoScheduleServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -17,8 +20,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Auto Schedule Controller
@@ -35,6 +41,7 @@ import java.util.List;
 public class AutoScheduleController {
 
     private final AutoScheduleService autoScheduleService;
+    private final AutoScheduleServiceImpl autoScheduleServiceImpl;
 
     @PostMapping("/generate-next-3-days")
     @PreAuthorize("hasRole('ADMIN')")
@@ -162,5 +169,70 @@ public class AutoScheduleController {
 
         DatabaseStatusResponse status = autoScheduleService.checkDatabaseStatus();
         return ResponseEntity.ok(status);
+    }
+
+    /**
+     * 🚀 API MỚI: Tạo lịch chiếu cho NHIỀU PHIM cùng lúc
+     * Phân bổ thông minh và đồng đều giữa các phim
+     */
+    @PostMapping("/generate-for-multiple-movies")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "🎬 Tạo lịch chiếu cho NHIỀU PHIM cùng lúc", description = "Tự động tạo lịch chiếu cho nhiều phim trong khoảng thời gian với thuật toán phân bổ thông minh và đồng đều")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<MultipleMovieScheduleResponse> generateSchedulesForMultipleMovies(
+            @Valid @RequestBody MultipleMovieScheduleRequest request) {
+
+        log.info("🎬 API Mới: Tạo lịch chiếu cho {} phim từ {} đến {}",
+                request.getMovieIds().size(), request.getStartDate(), request.getEndDate());
+
+        try {
+            MultipleMovieScheduleResponse response = autoScheduleServiceImpl
+                    .generateSchedulesForMultipleMovies(request);
+
+            // Log kết quả
+            if (response.getSummary() != null) {
+                log.info("✅ Hoàn thành tạo lịch: {} phim, {} suất chiếu, thời gian: {}ms",
+                        response.getSummary().getTotalMoviesProcessed(),
+                        response.getSummary().getTotalSchedulesCreated(),
+                        response.getProcessingDurationMs());
+            }
+
+            // Trả về response code phù hợp - với null check an toàn
+            String responseStatus = response.getSummary() != null ? response.getSummary().getStatus() : "FAILED";
+
+            if ("SUCCESS".equals(responseStatus)) {
+                return ResponseEntity.ok(response);
+            } else if ("PARTIAL_SUCCESS".equals(responseStatus)) {
+                return ResponseEntity.status(206).body(response); // 206 Partial Content
+            } else {
+                return ResponseEntity.badRequest().body(response);
+            }
+
+        } catch (Exception e) {
+            log.error("❌ Lỗi không xác định trong API: {}", e.getMessage(), e);
+
+            // Tạo error response
+            MultipleMovieScheduleResponse errorResponse = MultipleMovieScheduleResponse.builder()
+                    .processingStartTime(java.time.LocalDateTime.now())
+                    .processingEndTime(java.time.LocalDateTime.now())
+                    .errors(List.of("Lỗi hệ thống: " + e.getMessage()))
+                    .movieResults(new ArrayList<>())
+                    .roomDistribution(new HashMap<>())
+                    .timeSlotDistribution(new HashMap<>())
+                    .warnings(new ArrayList<>())
+                    .summary(MultipleMovieScheduleResponse.BatchSummary.builder()
+                            .status("FAILED")
+                            .totalMoviesProcessed(0)
+                            .totalSchedulesCreated(0)
+                            .successfulMovies(0)
+                            .failedMovies(0)
+                            .totalRoomsUsed(0)
+                            .totalDaysScheduled(0)
+                            .averageSchedulesPerMovie(0.0)
+                            .build())
+                    .build();
+
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
     }
 }

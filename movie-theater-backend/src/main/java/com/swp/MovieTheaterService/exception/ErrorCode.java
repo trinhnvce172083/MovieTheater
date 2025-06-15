@@ -113,7 +113,30 @@ public enum ErrorCode {
     RATE_LIMIT_EXCEEDED(1900, "Quá nhiều yêu cầu, vui lòng thử lại sau", HttpStatus.TOO_MANY_REQUESTS),
     REGISTRATION_RATE_LIMIT(1901, "Quá nhiều yêu cầu đăng ký từ IP này", HttpStatus.TOO_MANY_REQUESTS),
     LOGIN_RATE_LIMIT(1902, "Quá nhiều yêu cầu đăng nhập từ IP này", HttpStatus.TOO_MANY_REQUESTS),
-    EMAIL_RATE_LIMIT(1903, "Quá nhiều yêu cầu gửi email từ địa chỉ này", HttpStatus.TOO_MANY_REQUESTS);
+    EMAIL_RATE_LIMIT(1903, "Quá nhiều yêu cầu gửi email từ địa chỉ này", HttpStatus.TOO_MANY_REQUESTS),
+
+    // ==================== AUTO SCHEDULE MANAGEMENT (2000-2099)
+    // ====================
+    AUTO_SCHEDULE_FAILED(2000, "Tạo lịch chiếu tự động thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
+    AUTO_SCHEDULE_NO_MOVIES(2001, "Không có phim nào để tạo lịch chiếu", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_NO_ROOMS(2002, "Không có phòng chiếu nào khả dụng", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_INVALID_DATE_RANGE(2003, "Khoảng thời gian không hợp lệ", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_DATE_TOO_FAR(2004, "Ngày tạo lịch quá xa trong tương lai (tối đa 30 ngày)", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_PAST_DATE(2005, "Không thể tạo lịch chiếu cho ngày trong quá khứ", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_MOVIE_NOT_FOUND(2006, "Một hoặc nhiều phim không tồn tại", HttpStatus.NOT_FOUND),
+    AUTO_SCHEDULE_MOVIE_NOT_SHOWING(2007, "Phim không ở trạng thái NOW_SHOWING", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_ROOM_CONFLICT(2008, "Xung đột phòng chiếu trong khoảng thời gian", HttpStatus.CONFLICT),
+    AUTO_SCHEDULE_TIME_CONFLICT(2009, "Xung đột thời gian chiếu", HttpStatus.CONFLICT),
+    AUTO_SCHEDULE_INVALID_SHOWS_COUNT(2010, "Số suất chiếu không hợp lệ", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_TRANSACTION_FAILED(2011, "Lỗi transaction khi tạo lịch chiếu", HttpStatus.INTERNAL_SERVER_ERROR),
+    AUTO_SCHEDULE_PARTIAL_SUCCESS(2012, "Tạo lịch chiếu thành công một phần", HttpStatus.PARTIAL_CONTENT),
+    AUTO_SCHEDULE_VALIDATION_FAILED(2013, "Validation request thất bại", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_DATABASE_ERROR(2014, "Lỗi cơ sở dữ liệu khi tạo lịch chiếu", HttpStatus.INTERNAL_SERVER_ERROR),
+    AUTO_SCHEDULE_PROCESSING_TIMEOUT(2015, "Timeout khi xử lý tạo lịch chiếu", HttpStatus.REQUEST_TIMEOUT),
+    AUTO_SCHEDULE_CONCURRENT_MODIFICATION(2016, "Dữ liệu đã bị thay đổi bởi tiến trình khác", HttpStatus.CONFLICT),
+    AUTO_SCHEDULE_INSUFFICIENT_TIME_SLOTS(2017, "Không đủ khung giờ chiếu khả dụng", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_MOVIE_DURATION_CONFLICT(2018, "Thời lượng phim xung đột với khung giờ", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_ROOM_CAPACITY_INSUFFICIENT(2019, "Sức chứa phòng chiếu không đủ", HttpStatus.BAD_REQUEST);
 
     int code;
     String message;

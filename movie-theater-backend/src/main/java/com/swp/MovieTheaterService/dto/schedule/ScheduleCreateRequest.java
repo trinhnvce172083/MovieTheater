@@ -66,6 +66,14 @@ public class ScheduleCreateRequest {
     // Custom validation method
     public boolean isTimeValid() {
         if (startTime != null && endTime != null) {
+            // Cho phép phim chiếu qua đêm (endTime có thể nhỏ hơn startTime)
+            // Ví dụ: 22:00 - 01:13 (qua đêm)
+            if (endTime.isBefore(startTime)) {
+                // Kiểm tra xem có phải trường hợp qua đêm hợp lý không
+                // Chỉ cho phép nếu startTime >= 20:00 và endTime <= 06:00
+                return startTime.getHour() >= 20 && endTime.getHour() <= 6;
+            }
+            // Trường hợp bình thường: endTime sau startTime trong cùng ngày
             return endTime.isAfter(startTime);
         }
         return true; // Let other validations handle null cases
