@@ -6,14 +6,18 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import ROUTES from "@/constants/routes";
 import { Login_API } from "@/api/auth/Login_API";
-
+import { useDispatch } from "react-redux";
+import { login } from "@/store/authSlice";
+import { decodeJwt } from "@/hooks/decodeJwt";
+import { LoginFormValues } from "@/types/Login/LoginFormValues";
 
 export const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const router = useRouter();
+  const dispatch = useDispatch();
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: LoginFormValues) => {
     try {
       setLoading(true);
       const data = await Login_API({
@@ -22,19 +26,34 @@ export const LoginPage: React.FC = () => {
         rememberMe: values.rememberMe || false,
       });
 
-      // Xử lý đăng nhập thành công (lưu token, chuyển trang, ...)
-      if (data?.token) {
-        localStorage.setItem("authToken", data.token);
+      // localStorage.removeItem("authToken");
+      const accessToken = data?.data?.accessToken;
+      if (accessToken) {
+        sessionStorage.setItem("accessToken", accessToken);
+        const userInfo = decodeJwt(accessToken);
+        dispatch(login({ token: accessToken, user: userInfo }));
         message.success("Login successful");
-        router.push(ROUTES.HOME);
+        sessionStorage.setItem("userInfo", JSON.stringify(userInfo));
+
+        // Redirect based on user role
+        if (userInfo?.role === "MEMBER") {
+          router.push(ROUTES.HOME);
+        } else if (userInfo?.role === "ADMIN") {
+          router.push(ROUTES.ADMIN_DASHBOARD);
+        }
+        //  else if (userInfo?.role === "EMPLOYEE") {
+        //   router.push(ROUTES.EMPLOYEE_HOME);
+        // }
       } else {
         message.error(data?.message || "Login failed");
       }
-    } catch (error: any) {
-      if (error?.response?.data?.message) {
-        message.error(error.response.data.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        message.error(error.message);
       } else {
-        message.error("Connection error. Please check your internet connection.");
+        message.error(
+          "Connection error. Please check your internet connection."
+        );
       }
     } finally {
       setLoading(false);
@@ -43,7 +62,11 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="flex flex-row items-center justify-center p-18">
-      <Card className={cn("w-full max-w-md shadow-lg p-8 bg-white/60 backdrop-blur-sm")}>
+      <Card
+        className={cn(
+          "w-full max-w-md shadow-lg p-8 bg-white/60 backdrop-blur-sm"
+        )}
+      >
         <Typography.Title level={2} className="text-center mb-6">
           Login
         </Typography.Title>
