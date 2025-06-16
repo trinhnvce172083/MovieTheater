@@ -34,7 +34,7 @@ public class Booking extends BaseEntity {
     @Column(name = "booking_id")
     private Long bookingId;
 
-    @Column(name = "booking_code", unique = true, nullable = false, length = 20)
+    @Column(name = "booking_code", unique = true, nullable = false, length = 50)
     private String bookingCode;
 
     @Column(name = "booking_date", nullable = false)
@@ -180,18 +180,19 @@ public class Booking extends BaseEntity {
     }
 
     public boolean canBeCancelled() {
-        return (isPending() || isConfirmed() || isPaid()) && 
-               schedule.getShowDateTime().isAfter(LocalDateTime.now().plusHours(2));
+        return (isPending() || isConfirmed() || isPaid()) &&
+                schedule.getShowDateTime().isAfter(LocalDateTime.now().plusHours(2));
     }
 
     public boolean canBeCheckedIn() {
-        return isPaid() && !isCheckedIn && 
-               schedule.getShowDateTime().isAfter(LocalDateTime.now()) &&
-               schedule.getShowDateTime().isBefore(LocalDateTime.now().plusMinutes(30));
+        return isPaid() && !isCheckedIn &&
+                schedule.getShowDateTime().isAfter(LocalDateTime.now()) &&
+                schedule.getShowDateTime().isBefore(LocalDateTime.now().plusMinutes(30));
     }
 
     public double getDiscountPercentage() {
-        if (totalAmount == 0) return 0.0;
+        if (totalAmount == 0)
+            return 0.0;
         return (discountAmount / totalAmount) * 100;
     }
 
@@ -225,7 +226,7 @@ public class Booking extends BaseEntity {
             this.bookingStatus = BookingStatus.CANCELLED;
             this.cancellationDate = LocalDateTime.now();
             this.cancellationReason = reason;
-            
+
             // Calculate refund amount based on cancellation policy
             calculateRefund();
         } else {
@@ -237,7 +238,7 @@ public class Booking extends BaseEntity {
         LocalDateTime showTime = schedule.getShowDateTime();
         LocalDateTime now = LocalDateTime.now();
         long hoursUntilShow = java.time.Duration.between(now, showTime).toHours();
-        
+
         if (hoursUntilShow >= 24) {
             refundAmount = finalAmount; // Full refund
         } else if (hoursUntilShow >= 2) {
@@ -262,4 +263,4 @@ public class Booking extends BaseEntity {
     public void setActive(boolean active) {
         this.isActive = active;
     }
-} 
+}

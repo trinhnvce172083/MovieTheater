@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -109,91 +110,101 @@ public class BookingServiceImpl implements BookingService {
         log.info("Creating booking with atomic seat locking for schedule: {}, seats: {}",
                 request.getScheduleId(), request.getSeatIds());
 
-        // Validate schedule exists and is bookable
+        // 1. Validate request completely
+        request.validateForBooking();
+
+        // 2. Auto-generate sessionId if not provided
+        request.ensureSessionId();
+        log.info("Using sessionId: {}", request.getSessionId());
+
+        // 3. Validate schedule exists and is bookable
         Schedule schedule = findScheduleById(request.getScheduleId());
         validateScheduleForBooking(schedule);
 
-        // Validate seat count limits
-        if (request.getSeatIds().size() > 10) {
-            throw new AppException(ErrorCode.BOOKING_SEAT_LIMIT_EXCEEDED);
-        }
-
-        // Remove duplicates and collect seat IDs
+        // 4. Remove duplicates and collect seat IDs
         List<Long> seatIds = request.getSeatIds().stream()
                 .distinct()
                 .collect(Collectors.toList());
 
+        // 5. Validate seat count limits
+        if (seatIds.size() > 10) {
+            throw new AppException(ErrorCode.BOOKING_SEAT_LIMIT_EXCEEDED);
+        }
+
         // ===== ATOMIC SEAT BOOKING OPERATION =====
         // This entire block needs to be atomic to prevent race conditions
 
-        // 1. Lock and validate seats atomically
+        // 6. Lock and validate seats atomically
         if (!lockAndValidateSeats(request.getScheduleId(), seatIds)) {
             throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED);
         }
 
         try {
-            // 2. Validate and process concession orders if any
-            List<BookingConcession> bookingConcessions = new ArrayList<>();
-            Double concessionAmount = 0.0;
+            // 7. Calculate seat amount
+            Double seatAmount = calculateSeatAmount(request.getScheduleId(), seatIds);
+            request.setSeatAmount(seatAmount);
+            log.info("Calculated seat amount: {}", seatAmount);
 
-            if (request.getConcessionOrders() != null && !request.getConcessionOrders().isEmpty()) {
+            // 8. Validate and calculate concession amount
+            Double concessionAmount = 0.0;
+            if (request.hasConcessionOrders()) {
                 log.info("Processing {} concession orders", request.getConcessionOrders().size());
 
-                // Validate concession orders
-                if (!request.isValidConcessionOrders()) {
-                    throw new IllegalArgumentException("Đơn hàng đồ ăn/uống không hợp lệ");
-                }
-
-                // Process each concession order
+                // Validate each concession order
                 for (ConcessionOrderRequest concessionOrder : request.getConcessionOrders()) {
-                    // Validate concession availability
-                    if (!concessionService.isAvailableForOrder(concessionOrder.getConcessionId(),
-                            concessionOrder.getQuantity())) {
-                        Concession concession = concessionService.getConcessionById(concessionOrder.getConcessionId());
-                        throw new IllegalArgumentException(
-                                String.format("Không đủ số lượng cho %s (yêu cầu: %d, còn lại: %d)",
-                                        concession.getFullName(),
-                                        concessionOrder.getQuantity(),
-                                        concession.getStockQuantity()));
-                    }
-
-                    concessionAmount += concessionOrder.getTotalPrice().doubleValue();
+                    validateConcessionOrder(concessionOrder);
                 }
 
-                log.info("Total concession amount: {}", concessionAmount);
+                concessionAmount = request.getTotalConcessionAmount().doubleValue();
+                request.setConcessionAmount(concessionAmount);
+                log.info("Calculated concession amount: {}", concessionAmount);
             }
 
-            // 3. Calculate total booking amount (seats + concessions)
-            Double seatAmount = calculateBookingAmount(request.getScheduleId(), seatIds, request.getPromotionId());
+            // 9. Calculate total amount before discount
             Double totalAmount = seatAmount + concessionAmount;
+            request.setTotalAmount(totalAmount);
 
-            // 4. Create booking entity
-            Booking booking = createBookingEntity(request, account, schedule, totalAmount);
+            // 10. Apply promotion discount if any
+            Double discountAmount = calculatePromotionDiscount(request, totalAmount);
+            request.setDiscountAmount(discountAmount);
+            log.info("Applied promotion discount: {}", discountAmount);
 
-            // 5. Save booking first to get ID
+            // 11. Calculate final amount
+            Double finalAmount = totalAmount - discountAmount;
+            request.setFinalAmount(finalAmount);
+            log.info("Final booking amount: {} (Total: {} - Discount: {})",
+                    finalAmount, totalAmount, discountAmount);
+
+            // 12. Create booking entity
+            Booking booking = createBookingEntity(request, account, schedule, totalAmount, discountAmount, finalAmount);
+
+            // 13. Save booking first to get ID
             Booking savedBooking = bookingRepository.save(booking);
-            log.info("Created booking with ID: {} and code: {}", savedBooking.getBookingId(),
-                    savedBooking.getBookingCode());
+            log.info("Created booking with ID: {} and code: {}",
+                    savedBooking.getBookingId(), savedBooking.getBookingCode());
 
-            // 6. Create booking seats relationships
+            // 14. Create booking seats relationships
             createBookingSeats(savedBooking, seatIds);
 
-            // 7. Create booking concessions relationships if any
-            if (!request.getConcessionOrders().isEmpty()) {
+            // 15. Create booking concessions relationships if any
+            if (request.hasConcessionOrders()) {
                 createBookingConcessions(savedBooking, request.getConcessionOrders());
                 log.info("Created {} concession orders for booking {}",
                         request.getConcessionOrders().size(), savedBooking.getBookingId());
             }
 
-            // 8. Update schedule seat counts
+            // 16. Update schedule seat counts
             updateScheduleSeatCounts(schedule, seatIds.size(), 0);
 
-            // 9. Generate QR code for the booking
+            // 17. Generate QR code for the booking
             generateQRCode(savedBooking.getBookingId());
 
-            log.info("Booking creation completed successfully - ID: {}, Code: {}, Seats: {}, Concessions: {}",
+
+
+            log.info(
+                    "Booking creation completed successfully - ID: {}, Code: {}, Seats: {}, Concessions: {}, Final Amount: {}",
                     savedBooking.getBookingId(), savedBooking.getBookingCode(),
-                    seatIds.size(), request.getConcessionOrders().size());
+                    seatIds.size(), request.getConcessionOrders().size(), finalAmount);
 
             return bookingMapper.toResponse(savedBooking);
 
@@ -258,7 +269,7 @@ public class BookingServiceImpl implements BookingService {
      * Create booking entity with all required fields
      */
     private Booking createBookingEntity(BookingCreateRequest request, Account account,
-            Schedule schedule, Double totalAmount) {
+            Schedule schedule, Double totalAmount, Double discountAmount, Double finalAmount) {
 
         Booking booking = new Booking();
 
@@ -269,8 +280,8 @@ public class BookingServiceImpl implements BookingService {
 
         // Amounts
         booking.setTotalAmount(totalAmount);
-        booking.setDiscountAmount(0.0);
-        booking.setFinalAmount(totalAmount); // Will be adjusted if promotion applied
+        booking.setDiscountAmount(discountAmount);
+        booking.setFinalAmount(finalAmount);
 
         // Status and relationships
         booking.setBookingStatus(BookingStatus.PENDING);
@@ -1128,14 +1139,21 @@ public class BookingServiceImpl implements BookingService {
     private void createBookingSeats(Booking booking, List<Long> seatIds) {
         List<BookingSeat> bookingSeats = new ArrayList<>();
 
+        // Get schedule to calculate correct seat prices
+        Schedule schedule = booking.getSchedule();
+        Double basePrice = schedule.getPrice();
+
         for (Long seatId : seatIds) {
             Seat seat = seatRepository.findById(seatId)
                     .orElseThrow(() -> new AppException(ErrorCode.SEAT_NOT_FOUND));
 
+            // Calculate correct seat price: schedule base price * seat price multiplier
+            Double correctSeatPrice = basePrice * seat.getPriceMultiplier();
+
             BookingSeat bookingSeat = new BookingSeat();
             bookingSeat.setBooking(booking);
             bookingSeat.setSeat(seat);
-            bookingSeat.setSeatPrice(seat.getSeatPrice());
+            bookingSeat.setSeatPrice(correctSeatPrice); // Use calculated price instead of seat.getSeatPrice()
             bookingSeat.setSeatType(seat.getSeatType());
             bookingSeat.setSeatNumber(seat.getSeatNumber());
             bookingSeat.setActive(true);
@@ -1143,9 +1161,13 @@ public class BookingServiceImpl implements BookingService {
             bookingSeat.setUpdatedAt(LocalDateTime.now());
 
             bookingSeats.add(bookingSeat);
+
+            log.debug("Created booking seat: {} - Base price: {}, Multiplier: {}, Final price: {}",
+                    seat.getSeatNumber(), basePrice, seat.getPriceMultiplier(), correctSeatPrice);
         }
 
         bookingSeatRepository.saveAll(bookingSeats);
+        log.info("Created {} booking seats with correct pricing", bookingSeats.size());
     }
 
     /**
@@ -1202,31 +1224,103 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private String generateBookingCode() {
-        return "BK" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        // Format: BK + timestamp (10 digits) + random (6 chars) = BK + 16 chars = 18
+        // chars total
+        String timestamp = String.valueOf(System.currentTimeMillis()).substring(3); // Lấy 10 số cuối
+        String randomPart = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+        return "BK" + timestamp + randomPart;
     }
 
-    private Double calculateBookingAmount(Long scheduleId, List<Long> seatIds, Long promotionId) {
+    private String generateSessionId() {
+        // Format: SESSION-YYYYMMDD-HHMMSS-RANDOM
+        LocalDateTime now = LocalDateTime.now();
+        String datePart = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String timePart = now.format(DateTimeFormatter.ofPattern("HHmmss"));
+        String randomPart = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        return "SESSION-" + datePart + "-" + timePart + "-" + randomPart;
+    }
+
+    private Double calculateSeatAmount(Long scheduleId, List<Long> seatIds) {
         try {
             Double totalAmount = 0.0;
 
-            // Calculate total seat prices
+            // Get schedule to get base price
+            Schedule schedule = findScheduleById(scheduleId);
+            Double basePrice = schedule.getPrice();
+
+            // Calculate total seat prices based on schedule price and seat multiplier
             for (Long seatId : seatIds) {
                 Seat seat = seatRepository.findById(seatId)
                         .orElseThrow(() -> new AppException(ErrorCode.SEAT_NOT_FOUND));
-                totalAmount += seat.getSeatPrice();
+
+                // Calculate seat price: schedule base price * seat price multiplier
+                Double seatPrice = basePrice * seat.getPriceMultiplier();
+                totalAmount += seatPrice;
+
+                log.debug("Seat {} - Base price: {}, Multiplier: {}, Final price: {}",
+                        seat.getSeatNumber(), basePrice, seat.getPriceMultiplier(), seatPrice);
             }
 
-            // Apply promotion discount if available
-            if (promotionId != null) {
-                // TODO: Implement promotion discount logic
-                log.info("Promotion ID {} will be applied later", promotionId);
-            }
-
+            log.info("Total seat amount for {} seats: {}", seatIds.size(), totalAmount);
             return totalAmount;
         } catch (Exception e) {
-            log.error("Error calculating booking amount: {}", e.getMessage());
+            log.error("Error calculating seat amount: {}", e.getMessage());
             return 0.0;
         }
+    }
+
+    private Double calculatePromotionDiscount(BookingCreateRequest request, Double totalAmount) {
+        // TODO: Implement promotion logic based on promotion code or ID
+        // For now, return 0 - this should be implemented with PromotionService
+        if (request.hasPromotionCode()) {
+            log.info("Promotion code '{}' will be processed later", request.getPromotionCode());
+        }
+        if (request.hasPromotionCode()) {
+            log.info("Promotion ID {} will be processed later", request.getPromotionCode());
+        }
+        return 0.0;
+    }
+
+    private void applyRewardPointsDiscount(Booking booking, Account account, Integer rewardPointsToUse) {
+        // TODO: Implement reward points logic
+        // This should integrate with LoyaltyService when available
+        log.info("Reward points {} will be applied for account {} later",
+                rewardPointsToUse, account.getAccountId());
+    }
+
+    private void validateConcessionOrder(ConcessionOrderRequest order) {
+        // Validate order structure
+        if (!order.isValidOrder()) {
+            throw new IllegalArgumentException("Đơn hàng đồ ăn/uống không hợp lệ");
+        }
+
+        // Validate concession exists and is available
+        Concession concession = concessionService.getConcessionById(order.getConcessionId());
+
+        if (!concession.isInStock()) {
+            throw new IllegalArgumentException(
+                    String.format("Món %s hiện không có sẵn", concession.getFullName()));
+        }
+
+        // Validate quantity availability
+        if (!concessionService.isAvailableForOrder(order.getConcessionId(), order.getQuantity())) {
+            throw new IllegalArgumentException(
+                    String.format("Không đủ số lượng cho %s (yêu cầu: %d, còn lại: %d)",
+                            concession.getFullName(),
+                            order.getQuantity(),
+                            concession.getStockQuantity()));
+        }
+
+        // Validate price consistency
+        if (order.getUnitPrice().compareTo(concession.getPrice()) != 0) {
+            log.warn("Price mismatch for concession {}: expected {}, got {}",
+                    concession.getFullName(), concession.getPrice(), order.getUnitPrice());
+            // Update to correct price
+            order.setUnitPrice(concession.getPrice());
+        }
+
+        log.debug("Validated concession order: {} x {} = {}",
+                concession.getFullName(), order.getQuantity(), order.getFormattedTotalPrice());
     }
 
     private BookingStatistics calculateStatistics(LocalDateTime startDate, LocalDateTime endDate) {

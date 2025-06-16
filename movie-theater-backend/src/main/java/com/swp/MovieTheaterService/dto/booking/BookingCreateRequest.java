@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +16,7 @@ import java.util.List;
  * Data Transfer Object for creating new bookings
  * 
  * @author Dũng_Solo
- * @version 1.0.0
+ * @version 3.0.0 - Simplified schema without reward points
  */
 @Data
 @NoArgsConstructor
@@ -29,11 +30,10 @@ public class BookingCreateRequest {
 
     @NotEmpty(message = "Danh sách ghế không được trống")
     @Size(min = 1, max = 10, message = "Số lượng ghế phải từ 1-10")
-    @Schema(description = "Danh sách ID ghế", example = "[1, 2]", required = true)
+    @Schema(description = "Danh sách ID ghế", example = "[5, 6]", required = true)
     private List<@NotNull Long> seatIds;
 
-    @NotBlank(message = "Session ID không được để trống")
-    @Schema(description = "Session ID để tránh duplicate booking", example = "SESSION-20241212-143015", required = true)
+    @Schema(description = "Session ID để tránh duplicate booking (tự động tạo nếu không có)", example = "SESSION-20241212-143020")
     private String sessionId;
 
     // Customer information for guest bookings
@@ -50,48 +50,29 @@ public class BookingCreateRequest {
     @Schema(description = "Số điện thoại khách hàng (bắt buộc cho guest booking)", example = "0901234567")
     private String customerPhone;
 
-    // Promotion and payment
-    @Schema(description = "ID khuyến mãi (optional)", example = "1")
-    private Long promotionId;
+    // Promotion - Only use promotion code
+    @Size(max = 50, message = "Mã khuyến mãi không được vượt quá 50 ký tự")
+    @Schema(description = "Mã khuyến mãi (optional)", example = "WELCOME10")
+    private String promotionCode;
 
+    @NotNull(message = "Phương thức thanh toán không được để trống")
     @Pattern(regexp = "^(CASH|CARD|ONLINE|WALLET)$", message = "Phương thức thanh toán không hợp lệ")
     @Schema(description = "Phương thức thanh toán", example = "ONLINE", allowableValues = { "CASH", "CARD", "ONLINE",
-            "WALLET" })
+            "WALLET" }, required = true)
     private String paymentMethod = "ONLINE";
 
     @Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự")
-    @Schema(description = "Ghi chú thêm", example = "Booking cho gia đình có trẻ em")
+    @Schema(description = "Ghi chú thêm", example = "Member booking")
     private String notes;
 
-    // Concession orders
+    // Concession orders with full information
     @Valid
-    @Schema(description = "Danh sách đồ ăn/uống đặt kèm", example = """
-            [
-                {
-                    "concessionId": 1,
-                    "quantity": 2,
-                    "unitPrice": 45000,
-                    "notes": "Extra butter"
-                },
-                {
-                    "concessionId": 3,
-                    "quantity": 2,
-                    "unitPrice": 35000,
-                    "notes": "No ice"
-                }
-            ]
-            """)
+    @Schema(description = "Danh sách đồ ăn/uống đặt kèm với thông tin đầy đủ")
     private List<ConcessionOrderRequest> concessionOrders = new ArrayList<>();
 
     // Business validation flags
-    @Schema(description = "Có phải booking khách vãng lai", example = "true")
+    @Schema(description = "Có phải booking khách vãng lai", example = "false")
     private Boolean isGuestBooking = false;
-
-    @Schema(description = "Sử dụng điểm tích lũy", example = "false")
-    private Boolean useRewardPoints = false;
-
-    @Schema(description = "Số điểm tích lũy muốn sử dụng", example = "0")
-    private Integer rewardPointsToUse = 0;
 
     // Special requirements
     @Schema(description = "Cần hỗ trợ xe lăn", example = "false")
@@ -100,19 +81,28 @@ public class BookingCreateRequest {
     @Schema(description = "Có trẻ em đi cùng", example = "false")
     private Boolean hasChildren = false;
 
+    // Auto-calculated fields (will be set by service)
+    @Schema(description = "Tổng tiền ghế (tự động tính)", example = "288000", accessMode = Schema.AccessMode.READ_ONLY)
+    private Double seatAmount;
+
+    @Schema(description = "Tổng tiền đồ ăn/uống (tự động tính)", example = "90000", accessMode = Schema.AccessMode.READ_ONLY)
+    private Double concessionAmount;
+
+    @Schema(description = "Tổng tiền trước giảm giá (tự động tính)", example = "378000", accessMode = Schema.AccessMode.READ_ONLY)
+    private Double totalAmount;
+
+    @Schema(description = "Số tiền giảm giá (tự động tính)", example = "37800", accessMode = Schema.AccessMode.READ_ONLY)
+    private Double discountAmount;
+
+    @Schema(description = "Số tiền cuối cùng (tự động tính)", example = "340200", accessMode = Schema.AccessMode.READ_ONLY)
+    private Double finalAmount;
+
     // Validation methods
     public boolean isValidGuestBooking() {
-        if (isGuestBooking) {
+        if (Boolean.TRUE.equals(isGuestBooking)) {
             return customerName != null && !customerName.trim().isEmpty() &&
                     customerEmail != null && !customerEmail.trim().isEmpty() &&
                     customerPhone != null && !customerPhone.trim().isEmpty();
-        }
-        return true;
-    }
-
-    public boolean isValidRewardPointsUsage() {
-        if (useRewardPoints && rewardPointsToUse != null) {
-            return rewardPointsToUse > 0 && rewardPointsToUse <= 10000; // Max 10k points per booking
         }
         return true;
     }
@@ -121,7 +111,6 @@ public class BookingCreateRequest {
         if (concessionOrders == null || concessionOrders.isEmpty()) {
             return true; // Concession is optional
         }
-
         return concessionOrders.stream().allMatch(ConcessionOrderRequest::isValidOrder);
     }
 
@@ -133,46 +122,75 @@ public class BookingCreateRequest {
                 .sum();
     }
 
-    /**
-     * Inner class for seat selection details
-     */
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class SeatSelectionRequest {
-        @NotNull(message = "Seat ID không được để trống")
-        private Long seatId;
+    public BigDecimal getTotalConcessionAmount() {
+        if (concessionOrders == null)
+            return BigDecimal.ZERO;
+        return concessionOrders.stream()
+                .map(ConcessionOrderRequest::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 
-        @NotNull(message = "Giá ghế không được để trống")
-        @DecimalMin(value = "0.0", message = "Giá ghế phải lớn hơn 0")
-        private Double seatPrice;
+    // Helper methods for service layer
+    public boolean hasPromotionCode() {
+        return promotionCode != null && !promotionCode.trim().isEmpty();
+    }
 
-        @NotBlank(message = "Số ghế không được để trống")
-        private String seatNumber;
+    public boolean hasConcessionOrders() {
+        return concessionOrders != null && !concessionOrders.isEmpty();
+    }
 
-        private String seatRow;
-        private Integer seatColumn;
-        private String seatType;
-        private Boolean isVIP = false;
-        private Boolean isCouple = false;
+    public boolean isOnlinePayment() {
+        return "ONLINE".equals(paymentMethod);
+    }
 
-        // Helper methods
-        public String getSeatLabel() {
-            if (seatRow != null && seatNumber != null) {
-                return seatRow + seatNumber;
-            }
-            return seatNumber != null ? seatNumber : "";
+    public boolean isCashPayment() {
+        return "CASH".equals(paymentMethod);
+    }
+
+    public boolean isCardPayment() {
+        return "CARD".equals(paymentMethod);
+    }
+
+    public boolean isWalletPayment() {
+        return "WALLET".equals(paymentMethod);
+    }
+
+    // Auto-generate sessionId if empty
+    public void ensureSessionId() {
+        if (sessionId == null || sessionId.trim().isEmpty()) {
+            sessionId = generateSessionId();
+        }
+    }
+
+    private String generateSessionId() {
+        return "SESSION-" + System.currentTimeMillis() + "-" +
+                java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    // Validation for complete booking request
+    public void validateForBooking() {
+        if (scheduleId == null) {
+            throw new IllegalArgumentException("Schedule ID không được để trống");
         }
 
-        public String getFormattedPrice() {
-            if (seatPrice != null) {
-                return String.format("%,.0f VND", seatPrice);
-            }
-            return "";
+        if (seatIds == null || seatIds.isEmpty()) {
+            throw new IllegalArgumentException("Phải chọn ít nhất một ghế");
         }
 
-        public boolean isPremiumSeat() {
-            return isVIP || isCouple || "PREMIUM".equals(seatType);
+        if (seatIds.size() > 10) {
+            throw new IllegalArgumentException("Không thể đặt quá 10 ghế trong một lần");
+        }
+
+        if (Boolean.TRUE.equals(isGuestBooking) && !isValidGuestBooking()) {
+            throw new IllegalArgumentException("Thông tin khách hàng không hợp lệ cho đặt vé khách");
+        }
+
+        if (hasConcessionOrders() && !isValidConcessionOrders()) {
+            throw new IllegalArgumentException("Đơn hàng đồ ăn/uống không hợp lệ");
+        }
+
+        if (paymentMethod == null || paymentMethod.trim().isEmpty()) {
+            throw new IllegalArgumentException("Phương thức thanh toán không được để trống");
         }
     }
 }
