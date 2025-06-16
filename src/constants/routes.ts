@@ -1,6 +1,6 @@
 const ROUTES = {
   // Public Routes
-  HOME: "/HomePage",
+  HOME: "/homepage",
   NOW_SHOWING: "/now_showing",
   LOGIN: "/auth/Login",
   REGISTER: "/auth/Register",
@@ -33,6 +33,6 @@ const ROUTES = {
   ADMIN_SHOWTIMES: "/admin/showtimes",
   ADMIN_TICKETS: "/admin/tickets",
   ADMIN_REVENUE: "/admin/revenue",
-};
+} as const;
 
 export default ROUTES;
