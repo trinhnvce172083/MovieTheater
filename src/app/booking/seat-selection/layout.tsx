@@ -4,7 +4,7 @@ import React from "react";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer";
 
-export default function SeatSelectionLayout({
+export default function HomePageLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -15,16 +15,12 @@ export default function SeatSelectionLayout({
       <header className="fixed top-0 left-0 right-0 z-50">
         <Header />
       </header>
-
       {/* Main content area */}
-      <main className="pt-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-black via-orange-900 to-black flex-1">
+      <main className=" px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-black via-orange-900 to-black flex-1">
         {children}
       </main>
-
       {/* Footer section */}
-      <footer>
-        <Footer />
-      </footer>
+      <Footer />
     </section>
   );
 }
