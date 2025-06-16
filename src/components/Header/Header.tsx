@@ -33,12 +33,12 @@ export default function Header() {
           >
             Now Showing
           </Link>
-          <Link
+          {/* <Link
             href={ROUTES.BOOKING}
             className="hover:text-red-500 transition-colors"
           >
             Booking
-          </Link>
+          </Link> */}
           <Link
             href={ROUTES.MOVIES}
             className="hover:text-red-500 transition-colors"

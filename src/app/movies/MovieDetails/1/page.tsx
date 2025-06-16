@@ -1,6 +1,8 @@
 "use client";
 import { Row } from "antd";
 import React from "react";
+import Link from "next/link";
+import ROUTES from "@/constants/routes";
 
 // //import { Typography, Card, Button, Tag, QRCode, Modal, Empty, Divider } from "antd";
 // //import { CalendarOutlined, EnvironmentOutlined, ClockCircleOutlined, QrcodeOutlined } from "@ant-design/icons";
@@ -42,7 +44,9 @@ export default function MovieDetailsPage() {
           {/* Nút hành động */}
           <div className="mt-4 flex gap-4">
             <button className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-full font-medium">
-              🎟 Buy Ticket
+              <Link href={ROUTES.BOOKING_SELECT_SEAT}>
+                🎟 Buy Ticket
+              </Link>
             </button>
           </div>
         </div>

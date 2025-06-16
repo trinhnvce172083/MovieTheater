@@ -1,7 +1,10 @@
 "use client";
 import React, { useState } from "react";
 import { Dropdown, Avatar } from "antd";
-import { SettingOutlined, UserOutlined, LogoutOutlined } from "@ant-design/icons";
+import {
+  // SettingOutlined,
+  UserOutlined,
+  LogoutOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import ROUTES from "@/constants/routes";
 
@@ -19,15 +22,15 @@ export default function UserDropdown({ user }: { user: User }) {
       onOpenChange={() => setOpen((prev) => !prev)}
       menu={{
         items: [
-          {
-            key: "settings",
-            icon: <SettingOutlined />,
-            label: <Link href={ROUTES.ACCOUNT + "/settings"}>Settings</Link>,
-          },
+          // {
+          //   key: "settings",
+          //   icon: <SettingOutlined />,
+          //   label: <Link href={ROUTES.MEMBER_DASHBOARD}>Settings</Link>,
+          // },
           {
             key: "profile",
             icon: <UserOutlined />,
-            label: <Link href={ROUTES.ACCOUNT}>Profile</Link>,
+            label: <Link href={ROUTES.MEMBER_DASHBOARD}>Profile</Link>,
           },
           { type: "divider" },
           {
