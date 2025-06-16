@@ -1,5 +1,3 @@
-//Footer
-
 "use client";
 
 import Image from "next/image";
@@ -21,7 +19,7 @@ export default function Footer() {
           {/* First Column - ABOUT */}
           <div>
             <h3 className="text-lg uppercase font-semibold mb-6">About</h3>
-            <div className="flex flex-col space-y-3">
+            <nav className="flex flex-col space-y-3" aria-label="About links">
               <Link href="/about-us" className="text-sm hover:text-gray-300">
                 About Us
               </Link>
@@ -34,13 +32,13 @@ export default function Footer() {
               <Link href="/privacy" className="text-sm hover:text-gray-300">
                 Privacy Policy
               </Link>
-            </div>
+            </nav>
           </div>
 
           {/* Second Column - CINEMA */}
           <div>
             <h3 className="text-lg uppercase font-semibold mb-6">Cinema</h3>
-            <div className="flex flex-col space-y-3">
+            <nav className="flex flex-col space-y-3" aria-label="Cinema links">
               <Link href="/movies" className="text-sm hover:text-gray-300">
                 Movie Genres
               </Link>
@@ -56,13 +54,13 @@ export default function Footer() {
               <Link href="/imax" className="text-sm hover:text-gray-300">
                 IMAX Films
               </Link>
-            </div>
+            </nav>
           </div>
 
           {/* Third Column - SUPPORT */}
           <div>
             <h3 className="text-lg uppercase font-semibold mb-6">Support</h3>
-            <div className="flex flex-col space-y-3">
+            <nav className="flex flex-col space-y-3" aria-label="Support links">
               <Link href="/feedback" className="text-sm hover:text-gray-300">
                 Feedback
               </Link>
@@ -78,7 +76,7 @@ export default function Footer() {
               <Link href="/faq" className="text-sm hover:text-gray-300">
                 FAQ
               </Link>
-            </div>
+            </nav>
           </div>
 
           {/* Fourth Column - Logo and Social Media */}
@@ -116,7 +114,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom Section - Company Info (optional) */}
+        {/* Bottom Section - Company Info */}
         <div className="border-t border-gray-700 pt-8">
           <div className="flex flex-col md:flex-row items-center">
             <div className="md:w-1/6 mb-6 md:mb-0">
@@ -137,13 +135,13 @@ export default function Footer() {
                 Phu Ward, Thu Duc City, Ho Chi Minh City, Vietnam
               </p>
               <div className="flex flex-wrap gap-x-6 gap-y-2">
-                <div className="flex items-center">
+                <div className="flex items-center" role="contentinfo">
                   <PhoneOutlined className="mr-2" /> 028.39.333.303
                 </div>
-                <div className="flex items-center">
+                <div className="flex items-center" role="contentinfo">
                   <PhoneOutlined className="mr-2" /> 19002224 (9:00 - 22:00)
                 </div>
-                <div className="flex items-center">
+                <div className="flex items-center" role="contentinfo">
                   <MailOutlined className="mr-2" /> support@galaxystudio.com
                 </div>
               </div>

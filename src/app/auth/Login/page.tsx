@@ -82,11 +82,7 @@ export const LoginPage: React.FC = () => {
             name="username"
             rules={[{ required: true, message: "Please input your username!" }]}
           >
-            <Input
-              size="large"
-              placeholder="Enter your username"
-              className="rounded-lg"
-            />
+            <Input size="large" placeholder="Enter your username" className="rounded-lg" />
           </Form.Item>
           <Form.Item
             label="Password"
