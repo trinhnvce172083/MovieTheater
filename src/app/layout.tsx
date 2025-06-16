@@ -4,7 +4,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
 import {ThemeProvider} from "@/components/providers/ThemeProvider";
 import ClientLayoutWrapper from "@/components/ClientLayoutWrapper";
-import BackTop from "antd/es/float-button/BackTop";
 import { Provider } from "react-redux";
 import store from "@/store";
 
@@ -28,7 +27,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <BackTop duration={100} visibilityHeight={50} />
+        {/* <BackTop duration={100} visibilityHeight={50} /> */}
         <Provider store={store}>
           <ThemeProvider 
             attribute="class" 
