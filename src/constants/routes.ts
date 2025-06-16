@@ -1,6 +1,6 @@
 const ROUTES = {
   // Public Routes
-  HOME: "/homepage",
+  HOME: "/HomePage",
   NOW_SHOWING: "/now_showing",
   LOGIN: "/auth/Login",
   REGISTER: "/auth/Register",
