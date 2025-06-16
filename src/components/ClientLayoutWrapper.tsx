@@ -23,7 +23,7 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
       <header className="fixed top-0 left-0 right-0 z-50">
         <Header />
       </header>
-      <main className="min-h-screen pt-24">{children}</main>
+      <main className="min-h-screen pt-24 bg-gradient-to-b from-black via-orange-900 to-black flex-1">{children}</main>
       <BackTop duration={200} visibilityHeight={50} />
       <footer className="mt-8">
         <Footer />

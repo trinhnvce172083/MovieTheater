@@ -258,20 +258,20 @@ export default function SeatSelectionPage() {
   return (
     <App>
       {contextHolder}
-      <div className="">
+      <div className="py-8">
         <div className="container mx-auto px-4 flex flex-col md:flex-row gap-8">
           {/* Left: Seat layout */}
           <div className="flex-1">
-            <Card className="bg-black bg-opacity-60 border-none">
+            <Card className="shadow-lg p-6 bg-white/80 backdrop-blur-sm rounded-2xl">
               <div className="text-center mb-8">
-                <Typography.Title level={3} className="text-white">
+                <Typography.Title level={3} className="text-black">
                   Seat Selection
                 </Typography.Title>
-                <Typography.Text className="text-gray-400">
+                <Typography.Text className="text-gray-600">
                   Doraemon: Nobita&apos;s Earth Symphony
                 </Typography.Text>
                 <br />
-                <Typography.Text className="text-gray-400">
+                <Typography.Text className="text-gray-600">
                   Showtime: 19:00 - 21:30 | Theater 1
                 </Typography.Text>
               </div>
@@ -289,25 +289,25 @@ export default function SeatSelectionPage() {
 
           {/* Right: Booking information */}
           <div className="w-full md:w-[350px]">
-            <Card className="bg-black bg-opacity-80 border-none p-6">
+            <Card className="shadow-lg p-6 bg-white/90 rounded-2xl">
               <div className="mb-4">
-                <Typography.Text className="text-white block text-lg font-semibold">
+                <Typography.Text className="text-black block text-lg font-semibold">
                   Doraemon: Nobita&apos;s Earth Symphony
                 </Typography.Text>
-                <Typography.Text className="text-gray-400 block">
+                <Typography.Text className="text-gray-600 block">
                   Showtime: 19:00 - 21:30
                 </Typography.Text>
-                <Typography.Text className="text-gray-400 block">
+                <Typography.Text className="text-gray-600 block">
                   Screening room: 01
                 </Typography.Text>
               </div>
               <div className="mb-4">
-                <Typography.Text className="text-white font-medium">
+                <Typography.Text className="text-black font-medium">
                   Selected Seats:
                 </Typography.Text>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {selectedSeats.length === 0 ? (
-                    <span className="text-gray-400">None selected</span>
+                    <span className="text-gray-600">None selected</span>
                   ) : (
                     selectedSeats.map((seat) => (
                       <span
@@ -322,7 +322,7 @@ export default function SeatSelectionPage() {
                 </div>
               </div>
               <div className="mb-6">
-                <Typography.Text className="text-white font-medium">
+                <Typography.Text className="text-black font-medium">
                   Total Order:
                 </Typography.Text>
                 <span className="text-xl text-black font-bold ml-2">

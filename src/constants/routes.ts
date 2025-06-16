@@ -1,12 +1,13 @@
 const ROUTES = {
   // Public Routes
-  HOME: "/HomePage",
+  HOME: "/homepage",
   NOW_SHOWING: "/now_showing",
   BOOKING: "/booking",
   MOVIES: "/movies",
   LOGIN: "/auth/Login",
   REGISTER: "/auth/Register",
   ACCOUNT: "/auth/Account",
+  SEAT_SELECTION: "/booking/seat-selection",
   MEMBER_DASHBOARD: "/member",
   MEMBER_PROFILE: "/member/profile",
   MEMBER_BOOKINGS: "/member/bookings",
@@ -20,6 +21,6 @@ const ROUTES = {
   ADMIN_SHOWTIMES: "/admin/showtimes",
   ADMIN_TICKETS: "/admin/tickets",
   ADMIN_REVENUE: "/admin/revenue",
-};
+} as const;
 
 export default ROUTES;

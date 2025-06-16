@@ -1,11 +1,10 @@
 "use client";
 
 import React from 'react';
-
-import Header from '@/components/Header';
+import Header from '@/components/Header/Header';
 import Footer from '@/components/Footer';
 
-export default function RegisterLayout({children}: {children: React.ReactNode}) {
+const SeatSelectionLayout = ({children}: {children: React.ReactNode}) => {
   return (
     <section className="flex flex-col min-h-screen">
       {/* Header section */}
@@ -13,11 +12,13 @@ export default function RegisterLayout({children}: {children: React.ReactNode}) 
         <Header />
       </header>
       {/* Main content area */}
-      <main className="pt-6 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-black via-orange-900 to-black flex-1">
+      <main className="pt-24 px-4 sm:px-6 lg:px-8 flex-1">
         {children}
       </main>
       {/* Footer section */}
       <Footer />
     </section>
   );
-}
+};
+
+export default SeatSelectionLayout;
