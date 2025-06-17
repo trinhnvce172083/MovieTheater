@@ -1,9 +1,15 @@
 "use client";
 import React, { useState } from "react";
 import { Dropdown, Avatar } from "antd";
-import { SettingOutlined, UserOutlined, LogoutOutlined } from "@ant-design/icons";
+import {
+  // SettingOutlined,
+  UserOutlined,
+  LogoutOutlined } from "@ant-design/icons";
 import Link from "next/link";
+import nookies from "nookies";
 import ROUTES from "@/constants/routes";
+import router from "next/router";
+import { Logout_API } from "@/api/auth/Logout_API";
 
 type User = {
   name: string;
@@ -19,21 +25,31 @@ export default function UserDropdown({ user }: { user: User }) {
       onOpenChange={() => setOpen((prev) => !prev)}
       menu={{
         items: [
-          {
-            key: "settings",
-            icon: <SettingOutlined />,
-            label: <Link href={ROUTES.ACCOUNT + "/settings"}>Settings</Link>,
-          },
+          // {
+          //   key: "settings",
+          //   icon: <SettingOutlined />,
+          //   label: <Link href={ROUTES.MEMBER_DASHBOARD}>Settings</Link>,
+          // },
           {
             key: "profile",
             icon: <UserOutlined />,
-            label: <Link href={ROUTES.ACCOUNT}>Profile</Link>,
+            label: <Link href={ROUTES.MEMBER_DASHBOARD}>Profile</Link>,
           },
           { type: "divider" },
           {
             key: "logout",
             icon: <LogoutOutlined />,
             label: "Logout",
+            //Thực hiện logic logout
+            onClick: () => {
+              Logout_API().then(() => {
+                nookies.destroy(null, "accessToken");
+                localStorage.removeItem("userInfo");
+                router.push(ROUTES.HOME);
+              }).catch((error) => {
+                console.error("Logout failed:", error);
+              });
+            },
           },
         ],
       }}

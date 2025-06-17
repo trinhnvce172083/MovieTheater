@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button, Form, Input, Typography, message, Alert } from "antd";
 import { MemberCard } from "@/components/member";
 
@@ -43,6 +43,7 @@ const AccountInformation: React.FC = () => {
     setTimeout(() => {
       setLoading(false);
       setUserProfile(values);
+      setHasChanges(false);
       message.success("Profile updated successfully!");
       console.log("Updated profile:", values);
     }, 1000);
@@ -53,20 +54,6 @@ const AccountInformation: React.FC = () => {
     setHasChanges(false);
     message.info("Form has been reset to original values");
   };
-
-  // Track form changes
-  useEffect(() => {
-    const handleFormChange = () => {
-      const currentValues = form.getFieldsValue();
-      const hasAnyChanges = Object.keys(currentValues).some(
-        key => currentValues[key] !== userProfile[key as keyof UserProfile]
-      );
-      setHasChanges(hasAnyChanges);
-    };
-
-    // Listen for form changes
-    form.getFieldsValue();
-  }, [form, userProfile]);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -130,14 +117,20 @@ const AccountInformation: React.FC = () => {
             />
           )}
 
-                      <Form
-              form={form}
-              layout="vertical"
-              initialValues={userProfile}
-              onFinish={onFinish}
-              onValuesChange={() => setHasChanges(true)}
-              className="max-w-2xl"
-            >
+          <Form
+            form={form}
+            layout="vertical"
+            initialValues={userProfile}
+            onFinish={onFinish}
+            onValuesChange={() => {
+              const currentValues = form.getFieldsValue();
+              const hasAnyChanges = Object.keys(currentValues).some(
+                key => currentValues[key] !== userProfile[key as keyof UserProfile]
+              );
+              setHasChanges(hasAnyChanges);
+            }}
+            className="max-w-2xl"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Form.Item
                 label="Account"
@@ -272,4 +265,4 @@ const AccountInformation: React.FC = () => {
   );
 };
 
-export default AccountInformation; 
+export default AccountInformation;

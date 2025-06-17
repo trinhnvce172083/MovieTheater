@@ -41,11 +41,11 @@ export default function MovieDetailsPage() {
 
           {/* Nút hành động */}
           <div className="mt-4 flex gap-4">
-            {/* <button className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-full font-medium">
+            <button className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-full font-medium">
               <Link href={ROUTES.BOOKING_SELECT_SEAT}>
                 🎟 Buy Ticket
               </Link>
-            </button> */}
+            </button>
           </div>
         </div>
       </div>

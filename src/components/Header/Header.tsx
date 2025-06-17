@@ -15,7 +15,7 @@ export default function Header() {
   const { isLoggedIn, user } = useAuth();
 
   return (
-    <header className="flex items-center justify-between px-6 py-0 bg-black text-white relative z-10">
+    <header className="flex items-center justify-between px-6 bg-black py-0 text-white relative z-10">
       <div className="flex items-center">
         <Link href={ROUTES.HOME} className="mr-8">
           <Image
@@ -33,12 +33,12 @@ export default function Header() {
           >
             Now Showing
           </Link>
-          <Link
+          {/* <Link
             href={ROUTES.BOOKING}
             className="hover:text-red-500 transition-colors"
           >
             Booking
-          </Link>
+          </Link> */}
           <Link
             href={ROUTES.MOVIES}
             className="hover:text-red-500 transition-colors"

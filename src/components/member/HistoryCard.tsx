@@ -2,27 +2,30 @@
 
 import React from "react";
 import { Card, Typography } from "antd";
-import { CalendarOutlined, EnvironmentOutlined, ClockCircleOutlined, DollarOutlined } from "@ant-design/icons";
+import {
+  CalendarOutlined,
+  EnvironmentOutlined,
+  ClockCircleOutlined,
+  DollarOutlined,
+} from "@ant-design/icons";
 import MoviePoster from "./MoviePoster";
 import StatusTag from "./StatusTag";
 import PriceDisplay from "./PriceDisplay";
 import DateTimeDisplay from "./DateTimeDisplay";
 
 interface HistoryCardProps {
-  id: string;
   movieTitle: string;
   moviePoster?: string;
   cinema: string;
   showtime: string;
   seats: string[];
   totalPrice: number;
-  status: 'completed' | 'cancelled';
+  status: "completed" | "cancelled";
   bookingDate: string;
   className?: string;
 }
 
 const HistoryCard: React.FC<HistoryCardProps> = ({
-  id,
   movieTitle,
   moviePoster,
   cinema,
@@ -31,20 +34,15 @@ const HistoryCard: React.FC<HistoryCardProps> = ({
   totalPrice,
   status,
   bookingDate,
-  className = ""
+  className = "",
 }) => {
   return (
-    <Card 
+    <Card
       className={`w-full shadow-sm hover:shadow-md transition-shadow ${className}`}
-      bodyStyle={{ padding: '20px' }}
+      bodyStyle={{ padding: "20px" }}
     >
       <div className="flex gap-4">
-        <MoviePoster 
-          src={moviePoster}
-          alt={movieTitle}
-          width={96}
-          height={144}
-        />
+        <MoviePoster src={moviePoster} alt={movieTitle} width={96} height={144} />
 
         <div className="flex-1">
           <div className="flex justify-between items-start mb-3">
@@ -59,27 +57,20 @@ const HistoryCard: React.FC<HistoryCardProps> = ({
               <EnvironmentOutlined className="text-blue-500" />
               <span>{cinema}</span>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <CalendarOutlined className="text-green-500" />
-              <DateTimeDisplay 
-                dateTime={showtime} 
-                format="full"
-              />
+              <DateTimeDisplay dateTime={showtime} format="full" />
             </div>
-            
+
             <div className="flex items-center gap-2">
               <ClockCircleOutlined className="text-orange-500" />
-              <span>Seats: {seats.join(', ')}</span>
+              <span>Seats: {seats.join(", ")}</span>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <DollarOutlined className="text-red-500" />
-              <PriceDisplay 
-                amount={totalPrice}
-                size="large"
-                strong
-              />
+              <PriceDisplay amount={totalPrice} size="large" strong />
             </div>
           </div>
 
@@ -94,4 +85,4 @@ const HistoryCard: React.FC<HistoryCardProps> = ({
   );
 };
 
-export default HistoryCard; 
+export default HistoryCard;

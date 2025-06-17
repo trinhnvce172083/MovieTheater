@@ -4,6 +4,7 @@ import { Movie } from "@/types/HomePage/movie";
 import { Card } from "antd";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import ROUTES from "@/constants/routes";
 
 const formatReleaseDate = (dateString: string) =>
   new Date(dateString).toLocaleDateString("vi-VN", {
@@ -64,7 +65,7 @@ export default function MovieCard({
              bg-gradient-to-r from-blue-500 to-purple-500 py-2 px-4 rounded hover:from-purple-500 hover:to-blue-500 group"
           >
             <Link
-              href={`/booking/${movie.id}`}
+              href={ROUTES.MOVIE_DETAILS(String(movie.id))}
               className="flex items-center justify-center"
             >
               <span className="text-white group-hover:text-blue-200 transition-colors duration-300">

@@ -1,10 +1,14 @@
 "use client";
 
-import React from 'react';
-import Header from '@/components/Header/Header';
-import Footer from '@/components/Footer';
+import React from "react";
+import Header from "@/components/Header/Header";
+import Footer from "@/components/Footer";
 
-export default function HomePageLayout({children}: {children: React.ReactNode}) {
+export default function HomePageLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <section className="flex flex-col min-h-screen">
       {/* Header section */}
@@ -12,7 +16,7 @@ export default function HomePageLayout({children}: {children: React.ReactNode}) 
         <Header />
       </header>
       {/* Main content area */}
-      <main className=" p-30 sm:px-6 lg:px-8 bg-gradient-to-b from-black via-orange-900 to-black flex-1">
+      <main className=" px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-black via-orange-900 to-black flex-1">
         {children}
       </main>
       {/* Footer section */}
