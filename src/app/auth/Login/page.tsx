@@ -26,7 +26,6 @@ export const LoginPage: React.FC = () => {
         rememberMe: values.rememberMe || false,
       });
 
-      // localStorage.removeItem("authToken");
       const accessToken = data?.data?.accessToken;
       if (accessToken) {
         sessionStorage.setItem("accessToken", accessToken);
