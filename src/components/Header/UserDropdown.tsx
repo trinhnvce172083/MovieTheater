@@ -6,7 +6,10 @@ import {
   UserOutlined,
   LogoutOutlined } from "@ant-design/icons";
 import Link from "next/link";
+import nookies from "nookies";
 import ROUTES from "@/constants/routes";
+import router from "next/router";
+import { Logout_API } from "@/api/auth/Logout_API";
 
 type User = {
   name: string;
@@ -37,6 +40,16 @@ export default function UserDropdown({ user }: { user: User }) {
             key: "logout",
             icon: <LogoutOutlined />,
             label: "Logout",
+            //Thực hiện logic logout
+            onClick: () => {
+              Logout_API().then(() => {
+                nookies.destroy(null, "accessToken");
+                localStorage.removeItem("userInfo");
+                router.push(ROUTES.HOME);
+              }).catch((error) => {
+                console.error("Logout failed:", error);
+              });
+            },
           },
         ],
       }}

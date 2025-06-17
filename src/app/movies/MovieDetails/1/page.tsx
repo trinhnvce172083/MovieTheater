@@ -1,27 +1,25 @@
 "use client";
-import { Row } from "antd";
+//import { Row } from "antd";
 import React from "react";
 import Link from "next/link";
 import ROUTES from "@/constants/routes";
-
-// //import { Typography, Card, Button, Tag, QRCode, Modal, Empty, Divider } from "antd";
-// //import { CalendarOutlined, EnvironmentOutlined, ClockCircleOutlined, QrcodeOutlined } from "@ant-design/icons";
- 
-
+import Image from "next/image";
 
 export default function MovieDetailsPage() {
   return (
     <div className="min-h-screen bg-[#0D062D] text-white flex flex-col items-center p-10">
-      <h1 className="text-3xl font-bold mb-8">DORAEMON: NOBITA'S ART WORLD TALES</h1>
+      <h1 className="text-3xl font-bold mb-8">DORAEMON: NOBITA&apos;S ART WORLD TALES</h1>
 
       <div className="flex flex-col md:flex-row items-center justify-center bg-[#1E1B3A] p-6 rounded-xl shadow-xl max-w-7xl gap-10">
         {/* Poster bên trái */}
         <div className="relative">
-          <img
-            src="https://www.bhdstar.vn/wp-content/uploads/2025/05/referenceSchemeHeadOfficeallowPlaceHoldertrueheight700ldapp-5.jpg"
+          <Image
+            src="https://res.cloudinary.com/dltuc4zjz/image/upload/v1749560503/Doraemon_Nobita_Art_World_Tales_t405ur.jpg"
             alt="Doraemon Poster"
-            className="w-[280px] rounded-lg shadow-md"
-          />
+            width={280}
+            height={420}
+            className="w-[280px] h-[420px] rounded-lg shadow-md"
+            ></Image>
           <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded font-semibold">
             RECOMMENDED
           </span>

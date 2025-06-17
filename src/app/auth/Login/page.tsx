@@ -9,6 +9,7 @@ import { Login_API } from "@/api/auth/Login_API";
 import { useDispatch } from "react-redux";
 import { login } from "@/store/authSlice";
 import { decodeJwt } from "@/hooks/decodeJwt";
+import nookies from "nookies";
 import { LoginFormValues } from "@/types/Login/LoginFormValues";
 
 export const LoginPage: React.FC = () => {
@@ -26,14 +27,19 @@ export const LoginPage: React.FC = () => {
         rememberMe: values.rememberMe || false,
       });
 
-      // localStorage.removeItem("authToken");
       const accessToken = data?.data?.accessToken;
       if (accessToken) {
-        sessionStorage.setItem("accessToken", accessToken);
+
+        // Store access token in cookies for SSR compatibility
+        nookies.set(null, "accessToken", accessToken, {
+          maxAge: 24 * 60 * 60, // 1 day
+          path: "/",
+        });
+
         const userInfo = decodeJwt(accessToken);
         dispatch(login({ token: accessToken, user: userInfo }));
         message.success("Login successful");
-        sessionStorage.setItem("userInfo", JSON.stringify(userInfo));
+        localStorage.setItem("userInfo", JSON.stringify(userInfo));
 
         // Redirect based on user role
         if (userInfo?.role === "MEMBER") {
