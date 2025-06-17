@@ -10,16 +10,27 @@ import {
 } from "@ant-design/icons";
 import AppBarChart from "@/components/AppBarChart";
 import { getAllUsers } from "@/api/admin/getAllUsers";
+import { getMovies } from "@/api/admin/getAllMovies";
 
 export default function AdminDashboard() {
   const [totalUsers, setTotalUsers] = useState<number | null>(null);
+  const [totalMovies, setTotalMovies] = useState<number | null>(null);
   // Mock data - in a real application, this would come from an API
   const stats = {
     totalUsers: totalUsers,
-    totalMovies: 56,
+    totalMovies: totalMovies !== null ? totalMovies : "...",
     totalShowtimes: 789,
     totalRevenue: 98765,
   };
+
+  
+
+const movies = await getMovies({
+  page: 0,
+  size: 10,
+  sortBy: "title",
+  sortDirection: "asc",
+});
 
   useEffect(() => {
     async function fetchTotalUsers() {
@@ -31,11 +42,27 @@ export default function AdminDashboard() {
         } else if (data.content && Array.isArray(data.content)) {
           setTotalUsers(data.content.length);
         }
-      } catch (error) {
+      } catch {
         setTotalUsers(null);
       }
     }
     fetchTotalUsers();
+  }, []);
+
+  useEffect(() => {
+    async function fetchTotalMovies() {
+      try {
+        // const data = await GetMoviesParams();
+        if (typeof data.totalElements === "number") {
+          setTotalMovies(data.totalElements);
+        } else if (data.content && Array.isArray(data.content)) {
+          setTotalMovies(data.content.length);
+        }
+      } catch {
+        setTotalMovies(null);
+      }
+    }
+    fetchTotalMovies();
   }, []);
 
   return (

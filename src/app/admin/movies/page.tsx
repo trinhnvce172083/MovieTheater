@@ -16,8 +16,6 @@ import {
   Form,
   DatePicker,
   Tag,
-  Dropdown,
-  Badge,
   Statistic,
   Row,
   Col,
@@ -41,7 +39,6 @@ import {
   ClockCircleOutlined,
   GlobalOutlined,
 } from "@ant-design/icons";
-import { Bell, UserCircle, Settings, LogOut } from "lucide-react";
 import Image from "next/image";
 
 const { Option } = Select;
