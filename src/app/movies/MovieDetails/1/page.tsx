@@ -1,25 +1,25 @@
 "use client";
-import { Row } from "antd";
+//import { Row } from "antd";
 import React from "react";
-
-// //import { Typography, Card, Button, Tag, QRCode, Modal, Empty, Divider } from "antd";
-// //import { CalendarOutlined, EnvironmentOutlined, ClockCircleOutlined, QrcodeOutlined } from "@ant-design/icons";
- 
-
+import Link from "next/link";
+import ROUTES from "@/constants/routes";
+import Image from "next/image";
 
 export default function MovieDetailsPage() {
   return (
     <div className="min-h-screen bg-[#0D062D] text-white flex flex-col items-center p-10">
-      <h1 className="text-3xl font-bold mb-8">DORAEMON: NOBITA'S ART WORLD TALES</h1>
+      <h1 className="text-3xl font-bold mb-8">DORAEMON: NOBITA&apos;S ART WORLD TALES</h1>
 
       <div className="flex flex-col md:flex-row items-center justify-center bg-[#1E1B3A] p-6 rounded-xl shadow-xl max-w-7xl gap-10">
         {/* Poster bên trái */}
         <div className="relative">
-          <img
-            src="https://www.bhdstar.vn/wp-content/uploads/2025/05/referenceSchemeHeadOfficeallowPlaceHoldertrueheight700ldapp-5.jpg"
+          <Image
+            src="https://res.cloudinary.com/dltuc4zjz/image/upload/v1749560503/Doraemon_Nobita_Art_World_Tales_t405ur.jpg"
             alt="Doraemon Poster"
-            className="w-[280px] rounded-lg shadow-md"
-          />
+            width={280}
+            height={420}
+            className="w-[280px] h-[420px] rounded-lg shadow-md"
+            ></Image>
           <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded font-semibold">
             RECOMMENDED
           </span>
@@ -30,7 +30,7 @@ export default function MovieDetailsPage() {
           <div>
             <p className="font-bold text-2xl">CONTENT</p>
             <p className="text-sm max-w-xl tẽt  text-gray-300">
-              The magnificent world of medieval Europe is depicted in paintings. Doraemon and his friends jump into the "world of paintings" with Claire and her friends Milo and Chai as they embark on a wonderful adventure.
+              The magnificent world of medieval Europe is depicted in paintings. Doraemon and his friends jump into the &quot;world of paintings&quot; with Claire and her friends Milo and Chai as they embark on a wonderful adventure.
 
             </p>
           </div>
@@ -41,14 +41,15 @@ export default function MovieDetailsPage() {
 
           {/* Nút hành động */}
           <div className="mt-4 flex gap-4">
-            <button className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-full font-medium">
-              🎟 Buy Ticket
-            </button>
+            {/* <button className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-full font-medium">
+              <Link href={ROUTES.BOOKING_SELECT_SEAT}>
+                🎟 Buy Ticket
+              </Link>
+            </button> */}
           </div>
         </div>
       </div>
-  
-  
+      {/* Video Trailer */}
   <div className="mt-8 w-full flex justify-center">
         <iframe
           width="1280"

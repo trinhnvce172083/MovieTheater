@@ -25,13 +25,6 @@ export default function AdminDashboard() {
 
   
 
-const movies = await getMovies({
-  page: 0,
-  size: 10,
-  sortBy: "title",
-  sortDirection: "asc",
-});
-
   useEffect(() => {
     async function fetchTotalUsers() {
       try {
@@ -49,10 +42,16 @@ const movies = await getMovies({
     fetchTotalUsers();
   }, []);
 
+  //Take all movies from the API
   useEffect(() => {
     async function fetchTotalMovies() {
       try {
-        // const data = await GetMoviesParams();
+        const data = await getMovies({
+          page: 0,
+          size: 100,
+          sortBy: "title",
+          sortDirection: "asc",
+        });
         if (typeof data.totalElements === "number") {
           setTotalMovies(data.totalElements);
         } else if (data.content && Array.isArray(data.content)) {

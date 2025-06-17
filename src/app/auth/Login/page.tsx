@@ -9,6 +9,7 @@ import { Login_API } from "@/api/auth/Login_API";
 import { useDispatch } from "react-redux";
 import { login } from "@/store/authSlice";
 import { decodeJwt } from "@/hooks/decodeJwt";
+import nookies from "nookies";
 import { LoginFormValues } from "@/types/Login/LoginFormValues";
 
 export const LoginPage: React.FC = () => {
@@ -26,8 +27,10 @@ export const LoginPage: React.FC = () => {
         rememberMe: values.rememberMe || false,
       });
 
+      // localStorage.removeItem("authToken");
       const accessToken = data?.data?.accessToken;
       if (accessToken) {
+        // Store access token in cookies for SSR compatibility
         sessionStorage.setItem("accessToken", accessToken);
         const userInfo = decodeJwt(accessToken);
         dispatch(login({ token: accessToken, user: userInfo }));
@@ -81,11 +84,7 @@ export const LoginPage: React.FC = () => {
             name="username"
             rules={[{ required: true, message: "Please input your username!" }]}
           >
-            <Input
-              size="large"
-              placeholder="Enter your username"
-              className="rounded-lg"
-            />
+            <Input size="large" placeholder="Enter your username" className="rounded-lg" />
           </Form.Item>
           <Form.Item
             label="Password"

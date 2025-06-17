@@ -123,11 +123,16 @@ export default function AdminMemberManagement() {
   // Statistics calculations
   const statistics = useMemo(() => {
     const totalMembers = memberData.length;
-    const activeMembers = memberData.filter((m) => m.status === "active").length;
+    const activeMembers = memberData.filter(
+      (m) => m.status === "active"
+    ).length;
     const newMembers = memberData.filter((m) => {
       const join = new Date(m.joinDate);
       const now = new Date();
-      return join.getMonth() === now.getMonth() && join.getFullYear() === now.getFullYear();
+      return (
+        join.getMonth() === now.getMonth() &&
+        join.getFullYear() === now.getFullYear()
+      );
     }).length;
     const types = memberData.reduce((acc, m) => {
       acc[m.type] = (acc[m.type] || 0) + 1;
@@ -148,7 +153,11 @@ export default function AdminMemberManagement() {
 
   const handleModalOk = () => {
     form.validateFields().then((values) => {
-      message.success(editingMember ? "Member updated successfully" : "Member added successfully");
+      message.success(
+        editingMember
+          ? "Member updated successfully"
+          : "Member added successfully"
+      );
       setIsModalVisible(false);
       setEditingMember(null);
       form.resetFields();
@@ -169,7 +178,9 @@ export default function AdminMemberManagement() {
       width: 60,
       render: (_: any, record: any, index: any) => (
         <div className="text-center">
-          <span className="font-mono text-sm text-gray-500">{(currentPage - 1) * pageSize + index + 1}</span>
+          <span className="font-mono text-sm text-gray-500">
+            {(currentPage - 1) * pageSize + index + 1}
+          </span>
         </div>
       ),
     },
@@ -181,9 +192,15 @@ export default function AdminMemberManagement() {
         <div className="flex items-center gap-3">
           <Avatar src={record.avatar} size={40} icon={<UserOutlined />} />
           <div className="flex-1 min-w-0">
-            <div className="font-semibold text-gray-900 mb-1 truncate text-sm">{record.name}</div>
-            <div className="text-xs text-gray-600 mb-1 truncate">{record.email}</div>
-            <Tag color="blue" className="text-xs m-0">{record.id}</Tag>
+            <div className="font-semibold text-gray-900 mb-1 truncate text-sm">
+              {record.name}
+            </div>
+            <div className="text-xs text-gray-600 mb-1 truncate">
+              {record.email}
+            </div>
+            <Tag color="blue" className="text-xs m-0">
+              {record.id}
+            </Tag>
           </div>
         </div>
       ),
@@ -200,7 +217,9 @@ export default function AdminMemberManagement() {
       dataIndex: "joinDate",
       key: "joinDate",
       width: 120,
-      render: (date: any) => <span className="text-sm">{new Date(date).toLocaleDateString()}</span>,
+      render: (date: any) => (
+        <span className="text-sm">{new Date(date).toLocaleDateString()}</span>
+      ),
     },
     {
       title: "Type",
@@ -208,7 +227,14 @@ export default function AdminMemberManagement() {
       key: "type",
       width: 100,
       render: (type: any) => (
-        <Tag color={type === "Platinum" ? "purple" : type === "Gold" ? "gold" : "silver"} className="text-xs m-0">{type}</Tag>
+        <Tag
+          color={
+            type === "Platinum" ? "purple" : type === "Gold" ? "gold" : "silver"
+          }
+          className="text-xs m-0"
+        >
+          {type}
+        </Tag>
       ),
     },
     {
@@ -218,7 +244,12 @@ export default function AdminMemberManagement() {
       width: 90,
       align: "center" as const,
       render: (status: any) => (
-        <Tag color={status === "active" ? "success" : "default"} className="font-medium text-xs">{status === "active" ? "Active" : "Inactive"}</Tag>
+        <Tag
+          color={status === "active" ? "success" : "default"}
+          className="font-medium text-xs"
+        >
+          {status === "active" ? "Active" : "Inactive"}
+        </Tag>
       ),
     },
     {
@@ -230,11 +261,29 @@ export default function AdminMemberManagement() {
       render: (_: any, record: any) => (
         <Space size="small">
           <Tooltip title="Edit">
-            <Button type="text" icon={<EditOutlined />} size="small" className="text-green-600 hover:bg-green-50" onClick={() => handleEdit(record)} />
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              size="small"
+              className="text-green-600 hover:bg-green-50"
+              onClick={() => handleEdit(record)}
+            />
           </Tooltip>
           <Tooltip title="Delete">
-            <Popconfirm title="Delete Member" description="Are you sure?" onConfirm={() => handleDelete(record)} okText="Delete" cancelText="Cancel" okButtonProps={{ danger: true }}>
-              <Button type="text" icon={<DeleteOutlined />} size="small" className="text-red-600 hover:bg-red-50" />
+            <Popconfirm
+              title="Delete Member"
+              description="Are you sure?"
+              onConfirm={() => handleDelete(record)}
+              okText="Delete"
+              cancelText="Cancel"
+              okButtonProps={{ danger: true }}
+            >
+              <Button
+                type="text"
+                icon={<DeleteOutlined />}
+                size="small"
+                className="text-red-600 hover:bg-red-50"
+              />
             </Popconfirm>
           </Tooltip>
         </Space>
@@ -248,39 +297,104 @@ export default function AdminMemberManagement() {
         {/* Statistics Cards */}
         <Row gutter={[16, 16]} className="mb-6">
           <Col xs={12} sm={12} lg={6}>
-            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center" size="small">
-              <Statistic title="Total Members" value={statistics.totalMembers} prefix={<UsergroupAddOutlined className="text-blue-600" />} valueStyle={{ color: "#1677ff", fontSize: "1.5rem" }} />
+            <Card
+              className="text-center border-0 shadow-sm h-32 flex flex-col justify-center"
+              size="small"
+            >
+              <Statistic
+                title="Total Members"
+                value={statistics.totalMembers}
+                prefix={<UsergroupAddOutlined className="text-blue-600" />}
+                valueStyle={{ color: "#1677ff", fontSize: "1.5rem" }}
+              />
             </Card>
           </Col>
           <Col xs={12} sm={12} lg={6}>
-            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center" size="small">
-              <Statistic title="Active Members" value={statistics.activeMembers} prefix={<CheckCircleOutlined className="text-green-600" />} valueStyle={{ color: "#52c41a", fontSize: "1.5rem" }} />
+            <Card
+              className="text-center border-0 shadow-sm h-32 flex flex-col justify-center"
+              size="small"
+            >
+              <Statistic
+                title="Active Members"
+                value={statistics.activeMembers}
+                prefix={<CheckCircleOutlined className="text-green-600" />}
+                valueStyle={{ color: "#52c41a", fontSize: "1.5rem" }}
+              />
             </Card>
           </Col>
           <Col xs={12} sm={12} lg={6}>
-            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center" size="small">
-              <Statistic title="New This Month" value={statistics.newMembers} prefix={<UserAddOutlined className="text-purple-600" />} valueStyle={{ color: "#722ed1", fontSize: "1.5rem" }} />
+            <Card
+              className="text-center border-0 shadow-sm h-32 flex flex-col justify-center"
+              size="small"
+            >
+              <Statistic
+                title="New This Month"
+                value={statistics.newMembers}
+                prefix={<UserAddOutlined className="text-purple-600" />}
+                valueStyle={{ color: "#722ed1", fontSize: "1.5rem" }}
+              />
             </Card>
           </Col>
           <Col xs={12} sm={12} lg={6}>
-            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center" size="small">
-              <Statistic title="Gold/Platinum/Silver" value={Object.entries(statistics.types).map(([type, count]) => `${type[0]}:${count}`).join(" ")} prefix={<UserSwitchOutlined className="text-gold-600" />} valueStyle={{ color: "#faad14", fontSize: "1.1rem" }} />
+            <Card
+              className="text-center border-0 shadow-sm h-32 flex flex-col justify-center"
+              size="small"
+            >
+              <Statistic
+                title="Gold/Platinum/Silver"
+                value={Object.entries(statistics.types)
+                  .map(([type, count]) => `${type[0]}:${count}`)
+                  .join(" ")}
+                prefix={<UserSwitchOutlined className="text-gold-600" />}
+                valueStyle={{ color: "#faad14", fontSize: "1.1rem" }}
+              />
             </Card>
           </Col>
         </Row>
 
         {/* Main Content Card */}
-        <Card className="shadow-sm border-0" bodyStyle={{ padding: 0 }} style={{ borderRadius: 16 }}>
+        <Card
+          className="shadow-sm border-0"
+          bodyStyle={{ padding: 0 }}
+          style={{ borderRadius: 16 }}
+        >
           {/* Header Section */}
           <div className="px-6 py-5 border-b border-gray-100 bg-white flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
             <div>
-              <Title level={2} className="m-0 text-gray-900 text-xl xl:text-2xl">Member Management</Title>
-              <Text type="secondary" className="text-sm xl:text-base">Manage and organize your cinema's member list</Text>
+              <Title
+                level={2}
+                className="m-0 text-gray-900 text-xl xl:text-2xl"
+              >
+                Member Management
+              </Title>
+              <Text type="secondary" className="text-sm xl:text-base">
+                Manage and organize your cinema's member list
+              </Text>
             </div>
             <div className="flex items-center gap-3">
-              <Button icon={<ImportOutlined />} className="border-gray-300 text-xs xl:text-sm h-10 px-4" size="middle">Import</Button>
-              <Button icon={<ExportOutlined />} className="border-gray-300 text-xs xl:text-sm h-10 px-4" size="middle">Export</Button>
-              <Button type="primary" icon={<PlusOutlined />} size="middle" className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4" onClick={() => setIsModalVisible(true)}>Add New Member</Button>
+              <Button
+                icon={<ImportOutlined />}
+                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
+                size="middle"
+              >
+                Import
+              </Button>
+              <Button
+                icon={<ExportOutlined />}
+                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
+                size="middle"
+              >
+                Export
+              </Button>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                size="middle"
+                className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
+                onClick={() => setIsModalVisible(true)}
+              >
+                Add New Member
+              </Button>
             </div>
           </div>
 
@@ -288,16 +402,37 @@ export default function AdminMemberManagement() {
           <div className="px-6 py-5 bg-gray-50 border-b border-gray-100">
             <Row gutter={[12, 12]}>
               <Col xs={24} sm={12} lg={10} xl={8}>
-                <Input placeholder="Search members, ID, or email..." prefix={<SearchOutlined className="text-gray-400" />} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="h-10" allowClear />
+                <Input
+                  placeholder="Search members, ID, or email..."
+                  prefix={<SearchOutlined className="text-gray-400" />}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="h-10"
+                  allowClear
+                />
               </Col>
               <Col xs={12} sm={6} lg={4} xl={3}>
-                <Select placeholder="Status" value={filterStatus} onChange={setFilterStatus} className="w-full h-10" allowClear size="middle">
+                <Select
+                  placeholder="Status"
+                  value={filterStatus}
+                  onChange={setFilterStatus}
+                  className="w-full h-10"
+                  allowClear
+                  size="middle"
+                >
                   <Option value="active">Active</Option>
                   <Option value="inactive">Inactive</Option>
                 </Select>
               </Col>
               <Col xs={12} sm={6} lg={4} xl={3}>
-                <Select placeholder="Type" value={filterType} onChange={setFilterType} className="w-full h-10" allowClear size="middle">
+                <Select
+                  placeholder="Type"
+                  value={filterType}
+                  onChange={setFilterType}
+                  className="w-full h-10"
+                  allowClear
+                  size="middle"
+                >
                   <Option value="Platinum">Platinum</Option>
                   <Option value="Gold">Gold</Option>
                   <Option value="Silver">Silver</Option>
@@ -307,50 +442,149 @@ export default function AdminMemberManagement() {
                 <RangePicker className="w-full h-10" onChange={setDateRange} />
               </Col>
               <Col xs={12} sm={6} lg={4} xl={3}>
-                <Button icon={<ReloadOutlined />} className="w-full h-10" size="middle" onClick={() => { setSearchTerm(""); setFilterStatus(""); setFilterType(""); setDateRange(null); }}>Reset</Button>
+                <Button
+                  icon={<ReloadOutlined />}
+                  className="w-full h-10"
+                  size="middle"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setFilterStatus("");
+                    setFilterType("");
+                    setDateRange(null);
+                  }}
+                >
+                  Reset
+                </Button>
               </Col>
             </Row>
           </div>
 
           {/* Table Section */}
           <div className="bg-white">
-            <Table dataSource={filteredData} columns={columns} pagination={false} scroll={{ x: 950 }} rowClassName="hover:bg-gray-50 transition-colors" className="professional-table" size="small" />
+            <Table
+              dataSource={filteredData}
+              columns={columns}
+              pagination={false}
+              scroll={{ x: 950 }}
+              rowClassName="hover:bg-gray-50 transition-colors"
+              className="professional-table"
+              size="small"
+            />
             {/* Pagination */}
             <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <Text type="secondary" className="text-sm">
-                Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} members
+                Showing {(currentPage - 1) * pageSize + 1} to{" "}
+                {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+                {filteredData.length} members
               </Text>
-              <Pagination current={currentPage} pageSize={pageSize} total={filteredData.length} onChange={(page, size) => { setCurrentPage(page); setPageSize(size); }} showSizeChanger showQuickJumper={false} pageSizeOptions={["5", "10", "20", "50"]} className="professional-pagination" size="small" />
+              <Pagination
+                current={currentPage}
+                pageSize={pageSize}
+                total={filteredData.length}
+                onChange={(page, size) => {
+                  setCurrentPage(page);
+                  setPageSize(size);
+                }}
+                showSizeChanger
+                showQuickJumper={false}
+                pageSizeOptions={["5", "10", "20", "50"]}
+                className="professional-pagination"
+                size="small"
+              />
             </div>
           </div>
         </Card>
       </div>
 
       {/* Add/Edit Member Modal */}
-      <Modal title={editingMember ? "Edit Member" : "Add New Member"} open={isModalVisible} onOk={handleModalOk} onCancel={handleModalCancel} width={600} className="professional-modal" okText={editingMember ? "Update Member" : "Add Member"} cancelText="Cancel">
+      <Modal
+        title={editingMember ? "Edit Member" : "Add New Member"}
+        open={isModalVisible}
+        onOk={handleModalOk}
+        onCancel={handleModalCancel}
+        width={600}
+        className="professional-modal"
+        okText={editingMember ? "Update Member" : "Add Member"}
+        cancelText="Cancel"
+      >
         <Form form={form} layout="vertical" className="mt-6">
           <Row gutter={16}>
             <Col xs={24} sm={12}>
-              <Form.Item name="name" label="Full Name" rules={[{ required: true, message: "Please enter full name" }]}> <Input placeholder="Enter full name" className="h-10" /> </Form.Item>
+              <Form.Item
+                name="name"
+                label="Full Name"
+                rules={[{ required: true, message: "Please enter full name" }]}
+              >
+                {" "}
+                <Input placeholder="Enter full name" className="h-10" />{" "}
+              </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
-              <Form.Item name="email" label="Email" rules={[{ required: true, message: "Please enter email" }]}> <Input placeholder="Enter email" className="h-10" /> </Form.Item>
+              <Form.Item
+                name="email"
+                label="Email"
+                rules={[{ required: true, message: "Please enter email" }]}
+              >
+                {" "}
+                <Input placeholder="Enter email" className="h-10" />{" "}
+              </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
             <Col xs={24} sm={12}>
-              <Form.Item name="phone" label="Phone" rules={[{ required: true, message: "Please enter phone number" }]}> <Input placeholder="Enter phone number" className="h-10" /> </Form.Item>
+              <Form.Item
+                name="phone"
+                label="Phone"
+                rules={[
+                  { required: true, message: "Please enter phone number" },
+                ]}
+              >
+                {" "}
+                <Input placeholder="Enter phone number" className="h-10" />{" "}
+              </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
-              <Form.Item name="type" label="Membership Type" rules={[{ required: true, message: "Please select membership type" }]}> <Select placeholder="Select type" className="h-10"> <Option value="Platinum">Platinum</Option> <Option value="Gold">Gold</Option> <Option value="Silver">Silver</Option> </Select> </Form.Item>
+              <Form.Item
+                name="type"
+                label="Membership Type"
+                rules={[
+                  { required: true, message: "Please select membership type" },
+                ]}
+              >
+                {" "}
+                <Select placeholder="Select type" className="h-10">
+                  {" "}
+                  <Option value="Platinum">Platinum</Option>{" "}
+                  <Option value="Gold">Gold</Option>{" "}
+                  <Option value="Silver">Silver</Option>{" "}
+                </Select>{" "}
+              </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
             <Col xs={24} sm={12}>
-              <Form.Item name="status" label="Status" rules={[{ required: true, message: "Please select status" }]}> <Select placeholder="Select status" className="h-10"> <Option value="active">Active</Option> <Option value="inactive">Inactive</Option> </Select> </Form.Item>
+              <Form.Item
+                name="status"
+                label="Status"
+                rules={[{ required: true, message: "Please select status" }]}
+              >
+                {" "}
+                <Select placeholder="Select status" className="h-10">
+                  {" "}
+                  <Option value="active">Active</Option>{" "}
+                  <Option value="inactive">Inactive</Option>{" "}
+                </Select>{" "}
+              </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
-              <Form.Item name="joinDate" label="Join Date" rules={[{ required: true, message: "Please select join date" }]}> <DatePicker className="w-full h-10" /> </Form.Item>
+              <Form.Item
+                name="joinDate"
+                label="Join Date"
+                rules={[{ required: true, message: "Please select join date" }]}
+              >
+                {" "}
+                <DatePicker className="w-full h-10" />{" "}
+              </Form.Item>
             </Col>
           </Row>
         </Form>
@@ -383,4 +617,4 @@ export default function AdminMemberManagement() {
       `}</style>
     </div>
   );
-} 
+}
