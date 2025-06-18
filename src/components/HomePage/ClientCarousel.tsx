@@ -42,20 +42,18 @@ export default function ClientCarousel({
       </AntCarousel>
       <button
         onClick={() => carouselRef.current?.prev()}
-        className="absolute left-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-60 hover:bg-gray-200 bg-opacity-90 rounded-full w-10 h-10 flex items-center justify-center z-10 shadow-md transition-all"
+        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black text-white bg-opacity-60 hover:bg-neutral-700 bg-opacity-90 rounded-full w-10 h-10 flex items-center justify-center z-10 shadow-md transition-all"
         aria-label="Previous slide"
         type="button"
       >
         <LeftOutlined style={{ fontSize: 16 }} />
-        <LeftOutlined style={{ fontSize: 16 }} />
       </button>
       <button
         onClick={() => carouselRef.current?.next()}
-        className="absolute right-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-60 hover:bg-gray-200 bg-opacity-90 rounded-full w-10 h-10 flex items-center justify-center z-10 shadow-md transition-all"
+        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black text-white bg-opacity-60 hover:bg-neutral-700 bg-opacity-90 rounded-full w-10 h-10 flex items-center justify-center z-10 shadow-md transition-all"
         aria-label="Next slide"
         type="button"
       >
-        <RightOutlined style={{ fontSize: 16 }} />
         <RightOutlined style={{ fontSize: 16 }} />
       </button>
     </div>

@@ -35,7 +35,10 @@ export function MovieCard({ movie, onBookNow }: MovieCardProps) {
   // Đảm bảo genre là mảng
   const genreArr = Array.isArray(movie.genre)
     ? movie.genre
-    : (typeof movie.genre === "string" ? movie.genre : "").split(",").map((g) => g.trim()).filter(Boolean);
+    : (typeof movie.genre === "string" ? movie.genre : "")
+        .split(",")
+        .map((g) => g.trim())
+        .filter(Boolean);
 
   const imageUrl = movie.posterUrl || ""; // hoặc movie.imageUrl
 
@@ -123,7 +126,9 @@ export function MovieCard({ movie, onBookNow }: MovieCardProps) {
           {/* Price and Action */}
           <div className="flex items-center justify-between mt-4 pt-4 border-t border-orange-500/20">
             <div className="text-orange-400 font-bold text-lg">
-              ${movie.price.toFixed(2)}
+              {typeof movie.price === "number"
+                ? `$${movie.price.toFixed(2)}`
+                : "Đang cập nhật"}
             </div>
             <Button
               size="sm"

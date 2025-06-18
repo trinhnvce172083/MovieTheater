@@ -6,7 +6,6 @@ import Image from "next/image";
 import Link from "next/link";
 import ROUTES from "@/constants/routes";
 import { useAuth } from "@/hooks/useAuth";
-import SearchBar from "./SearchBar";
 import NotificationDropdown from "./NotificationDropdown";
 import UserDropdown from "./UserDropdown";
 import LanguageDropdown from "./LanguageDropdown";
@@ -48,7 +47,6 @@ export default function Header() {
         </nav>
       </div>
       <div className="flex items-center space-x-6">
-        <SearchBar />
         {!isLoggedIn ? (
           <Link
             href={ROUTES.LOGIN}
