@@ -15,6 +15,7 @@ const ROUTES = {
 
   // Movie Routes
   MOVIES: "/movies",
+  MOVIES_API: "/movies-api",
   MOVIE_DETAILS: (id: string) => `/movies/MovieDetails/${id}`,
 
   // Member Routes
