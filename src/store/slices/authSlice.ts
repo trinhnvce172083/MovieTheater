@@ -1,43 +1,61 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { decodeJwt } from "@/hooks/decodeJwt";
 
+// Định nghĩa kiểu dữ liệu cho user
 interface User {
-  id: string;
-  username: string;
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-  role: string;
+  id?: string;
+  username?: string;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  role?: string;
+  [key: string]: unknown; // Cho phép mở rộng nếu backend trả thêm trường
 }
 
+// Định nghĩa kiểu dữ liệu cho state xác thực
 interface AuthState {
   user: User | null;
   token: string | null;
-  isAuthenticated: boolean;
+  role: string; // Lưu role để kiểm tra nhanh
+  isLoggedIn: boolean; // Trạng thái đăng nhập
 }
 
+// State mặc định ban đầu
 const initialState: AuthState = {
   user: null,
   token: null,
-  isAuthenticated: false,
+  role: "CUSTOMER",
+  isLoggedIn: false,
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
-    setCredentials: (state, action: PayloadAction<{ user: User; token: string }>) => {
-      const { user, token } = action.payload;
-      state.user = user;
-      state.token = token;
-      state.isAuthenticated = true;
+    // Đăng nhập: truyền vào token, tự decode user và role từ token
+    login(state, action: PayloadAction<{ token: string }>) {
+      state.token = action.payload.token;
+      state.isLoggedIn = true;
+      const payload = decodeJwt(action.payload.token);
+      state.role = payload?.role || "CUSTOMER";
+      state.user = payload || null;
     },
-    logout: (state) => {
-      state.user = null;
+    // Đăng nhập: truyền vào user và token từ ngoài (nếu đã decode sẵn)
+    setCredentials(state, action: PayloadAction<{ user: User; token: string }>) {
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.role = action.payload.user.role || "CUSTOMER";
+      state.isLoggedIn = true;
+    },
+    // Đăng xuất: reset toàn bộ state về mặc định
+    logout(state) {
       state.token = null;
-      state.isAuthenticated = false;
+      state.isLoggedIn = false;
+      state.role = "CUSTOMER";
+      state.user = null;
     },
   },
 });
 
-export const { setCredentials, logout } = authSlice.actions;
-export default authSlice.reducer; 
+export const { login, setCredentials, logout } = authSlice.actions;
+export default authSlice.reducer;

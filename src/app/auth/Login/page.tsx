@@ -7,9 +7,8 @@ import { useRouter } from "next/navigation";
 import ROUTES from "@/constants/routes";
 import { Login_API } from "@/api/auth/Login_API";
 import { useDispatch } from "react-redux";
-import { login } from "@/store/authSlice";
+import { login } from "@/store/slices/authSlice";
 import { decodeJwt } from "@/hooks/decodeJwt";
-import nookies from "nookies";
 import { LoginFormValues } from "@/types/Login/LoginFormValues";
 
 export const LoginPage: React.FC = () => {
@@ -29,16 +28,9 @@ export const LoginPage: React.FC = () => {
 
       const accessToken = data?.data?.accessToken;
       if (accessToken) {
-
-        // Store access token in cookies for SSR compatibility
-        nookies.set(null, "accessToken", accessToken, {
-          maxAge: 24 * 60 * 60, // 1 day
-          path: "/",
-        });
-
         const userInfo = decodeJwt(accessToken);
-        dispatch(login({ token: accessToken, user: userInfo }));
-        message.success("Login successful");
+        localStorage.setItem("accessToken", accessToken);
+        dispatch(login({ token: accessToken }));
         localStorage.setItem("userInfo", JSON.stringify(userInfo));
 
         // Redirect based on user role
@@ -47,7 +39,7 @@ export const LoginPage: React.FC = () => {
         } else if (userInfo?.role === "ADMIN") {
           router.push(ROUTES.ADMIN_DASHBOARD);
         }
-        //  else if (userInfo?.role === "EMPLOYEE") {
+        // else if (userInfo?.role === "EMPLOYEE") {
         //   router.push(ROUTES.EMPLOYEE_HOME);
         // }
       } else {

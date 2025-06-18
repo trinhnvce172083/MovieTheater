@@ -1,7 +1,7 @@
 const ROUTES = {
   // Public Routes
   HOME: "/HomePage",
-  NOW_SHOWING: "/now_showing",
+  NOW_SHOWING: "/NowShowing",
   LOGIN: "/auth/Login",
   REGISTER: "/auth/Register",
   ACCOUNT: "/auth/Account",

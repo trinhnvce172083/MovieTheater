@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 
+import bundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -9,8 +15,15 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "image.tmdb.org",
+        port: "",
+        pathname: "/**",
+      },
+      // Thêm host khác nếu cần
     ],
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);
