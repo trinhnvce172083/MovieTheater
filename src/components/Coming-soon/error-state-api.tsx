@@ -115,12 +115,12 @@ export function ErrorStateApi({ error, onRetry }: ErrorStateApiProps) {
         </div>
 
         {/* API Status */}
-        <div className="mt-4 text-center">
-          <div className="inline-flex items-center gap-2 text-xs text-gray-400">
-            <WifiOff className="h-3 w-3" />
-            <span>API Status: Disconnected</span>
-          </div>
-        </div>
+        
+        
+        
+        
+        
+        
       </div>
     </div>
   );

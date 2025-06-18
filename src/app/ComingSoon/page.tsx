@@ -33,18 +33,18 @@ export default function MoviesApiPage() {
         {/* Page Header */}
         <div className="text-center mb-8 pt-20">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Movies API Collection
+            Coming Soon
           </h1>
           <p className="text-orange-200 text-lg max-w-2xl mx-auto">
-            Discover movies from our API backend with real-time data and advanced filtering
+            Discover coming soon movies 
           </p>
-          <div className="mt-4 flex justify-center">
-            <div className="bg-orange-500/20 border border-orange-500/30 rounded-lg px-4 py-2">
-              <span className="text-orange-300 text-sm">
-                🚀 Connected to Backend API
-              </span>
-            </div>
-          </div>
+          
+          
+          
+        
+          
+        
+        
         </div>
 
         {/* Search and Filters */}
@@ -62,10 +62,10 @@ export default function MoviesApiPage() {
               Showing {filteredMovies.length} movie
               {filteredMovies.length !== 1 ? "s" : ""}
             </p>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-green-400 text-sm">API Connected</span>
-            </div>
+           
+           
+           
+           
           </div>
         )}
 
