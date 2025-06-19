@@ -39,10 +39,10 @@ export default function Header() {
             Booking
           </Link> */}
           <Link
-            href={ROUTES.MOVIES}
+            href={ROUTES.COMING_SOON}
             className="hover:text-red-500 transition-colors"
           >
-            Movies
+            Coming Soon
           </Link>
         </nav>
       </div>

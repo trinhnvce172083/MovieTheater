@@ -43,16 +43,15 @@ export function MovieCard({ movie, onBookNow }: MovieCardProps) {
   const imageUrl = movie.posterUrl || ""; // hoặc movie.imageUrl
 
   return (
-    <Card className=" bg-gray-900/80 border-orange-500/20 hover:border-orange-500/50 transition-all duration-300 hover:scale-105 group">
-      <CardContent className="p-0">
+    <Card className="w-[300px] h-[550px] p-6 bg-gray-900/80 border-orange-500/20 hover:border-orange-500/50 transition-all duration-300 hover:scale-105 group flex flex-col">
+      <CardContent className="p-0 flex-1 flex flex-col">
         {/* Movie Poster */}
         <div className="relative overflow-hidden rounded-t-lg">
           <Image
-            src={imageUrl || "/default-image.png"} // hoặc để "" nếu muốn không hiển thị gì
+            src={imageUrl || "/default-image.png"}
             alt={movie.title}
             width={200}
             height={300}
-            // Nếu không có hình thì không render Image
             style={{ display: imageUrl ? "block" : "none" }}
             className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
             priority={movie.isFeatured}
@@ -84,7 +83,7 @@ export function MovieCard({ movie, onBookNow }: MovieCardProps) {
         </div>
 
         {/* Movie Info */}
-        <div className="p-4">
+        <div className="p-4 flex flex-col flex-1 justify-between">
           <h3 className="text-white font-bold text-lg mb-2 line-clamp-2 group-hover:text-orange-300 transition-colors">
             {movie.title}
           </h3>
@@ -124,12 +123,13 @@ export function MovieCard({ movie, onBookNow }: MovieCardProps) {
           </div>
 
           {/* Price and Action */}
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-orange-500/20">
+          <div className="flex items-start justify-center mt-4 pt-4 border-t border-orange-500/20">
             <div className="text-orange-400 font-bold text-lg">
               {typeof movie.price === "number"
                 ? `$${movie.price.toFixed(2)}`
                 : "Đang cập nhật"}
             </div>
+            <div>
             <Button
               size="sm"
               className="bg-orange-500 hover:bg-orange-600 text-black font-semibold"
@@ -137,6 +137,7 @@ export function MovieCard({ movie, onBookNow }: MovieCardProps) {
             >
               Book Now
             </Button>
+            </div>
           </div>
         </div>
       </CardContent>

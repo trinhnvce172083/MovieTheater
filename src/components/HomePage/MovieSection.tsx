@@ -1,5 +1,5 @@
 import React from "react";
-import { MovieCard } from "@/components/NowShowing/movie-card";
+import { MovieCard } from "@/components/HomePage/MovieCard";
 import NavButton from "./NavButton";
 import { Movie } from "@/types/NowShowing/movie";
 
@@ -25,7 +25,7 @@ export default function MovieSection({
       <NavButton direction="right" onClick={onScrollRight} />
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide py-2 px-1"
+        className="flex gap-8 overflow-x-auto scrollbar-hide py-2 px-1"
         style={{ scrollBehavior: "smooth" }}
       >
         {loading ? (

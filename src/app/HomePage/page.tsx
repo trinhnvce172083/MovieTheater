@@ -18,7 +18,7 @@ export default function Home() {
   ) => {
     if (ref.current) {
       ref.current.scrollTo({
-        left: ref.current.scrollLeft + (direction === "left" ? -300 : 300),
+        left: ref.current.scrollLeft + (direction === "left" ? -316 : 316),
         behavior: "smooth",
       });
     }
@@ -49,6 +49,7 @@ export default function Home() {
         loading={loading}
         onScrollLeft={() => scroll(nowShowingRef, "left")}
         onScrollRight={() => scroll(nowShowingRef, "right")}
+        isUpcoming={false}
       />
       </div>
       <div className="mt-8 text-white">
@@ -57,7 +58,7 @@ export default function Home() {
         movies={upcomingMovies}
         scrollRef={upcomingRef}
         loading={loading}
-        isUpcoming
+        isUpcoming={true}
         onScrollLeft={() => scroll(upcomingRef, "left")}
         onScrollRight={() => scroll(upcomingRef, "right")}
       />

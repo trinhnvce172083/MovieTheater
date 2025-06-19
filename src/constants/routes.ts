@@ -2,6 +2,7 @@ const ROUTES = {
   // Public Routes
   HOME: "/HomePage",
   NOW_SHOWING: "/NowShowing",
+  COMING_SOON: "/Coming-soon",
   LOGIN: "/auth/Login",
   REGISTER: "/auth/Register",
   ACCOUNT: "/auth/Account",
