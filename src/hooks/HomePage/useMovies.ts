@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
-import NOW_SHOWING from "@/constants/HomePage/now_showing";
-import UPCOMING from "@/constants/HomePage/upcoming";
-import { Movie } from "@/types/HomePage/movie";
+import { useEffect, useState } from "react";
+import { Movie } from "@/types/NowShowing/movie";
+import { MovieApiService } from "@/api/movie-api";
 
 export function useMovies() {
   const [nowShowingMovies, setNowShowingMovies] = useState<Movie[]>([]);
@@ -9,12 +8,15 @@ export function useMovies() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API delay
-    setTimeout(() => {
-      setNowShowingMovies(NOW_SHOWING);
-      setUpcomingMovies(UPCOMING);
+    setLoading(true);
+    Promise.all([
+      MovieApiService.getNowShowingMovies(),
+      MovieApiService.getUpComingMovies(),
+    ]).then(([nowRes, upRes]) => {
+      setNowShowingMovies(nowRes.data || []);
+      setUpcomingMovies(upRes.data || []);
       setLoading(false);
-    }, 500); // 0.5s delay for demo
+    });
   }, []);
 
   return { nowShowingMovies, upcomingMovies, loading };

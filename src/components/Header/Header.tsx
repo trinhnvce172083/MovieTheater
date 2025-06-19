@@ -6,7 +6,6 @@ import Image from "next/image";
 import Link from "next/link";
 import ROUTES from "@/constants/routes";
 import { useAuth } from "@/hooks/useAuth";
-import SearchBar from "./SearchBar";
 import NotificationDropdown from "./NotificationDropdown";
 import UserDropdown from "./UserDropdown";
 import LanguageDropdown from "./LanguageDropdown";
@@ -40,15 +39,14 @@ export default function Header() {
             Booking
           </Link> */}
           <Link
-            href={ROUTES.MOVIES}
+            href={ROUTES.COMING_SOON}
             className="hover:text-red-500 transition-colors"
           >
-            Movies
+            Coming Soon
           </Link>
         </nav>
       </div>
       <div className="flex items-center space-x-6">
-        <SearchBar />
         {!isLoggedIn ? (
           <Link
             href={ROUTES.LOGIN}

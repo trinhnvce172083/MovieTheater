@@ -1,24 +1,24 @@
 import React from "react";
-import MovieCard from "./MovieCard";
+import { MovieCard } from "@/components/HomePage/MovieCard";
 import NavButton from "./NavButton";
-import { Movie } from "@/types/HomePage/movie";
+import { Movie } from "@/types/NowShowing/movie";
 
 export default function MovieSection({
   title,
   movies,
   scrollRef,
   loading,
-  isUpcoming = false,
   onScrollLeft,
   onScrollRight,
+  isUpcoming = false,
 }: {
   title: string;
   movies: Movie[];
-  scrollRef: React.RefObject<HTMLDivElement  | null>;
+  scrollRef: React.RefObject<HTMLDivElement | null>;
   loading: boolean;
-  isUpcoming?: boolean;
   onScrollLeft: () => void;
   onScrollRight: () => void;
+  isUpcoming?: boolean;
 }) {
   return (
     <section className="mb-16 relative">
@@ -27,16 +27,16 @@ export default function MovieSection({
       <NavButton direction="right" onClick={onScrollRight} />
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide py-2 px-1"
+        className="flex gap-8 overflow-x-auto scrollbar-hide py-2 px-1"
         style={{ scrollBehavior: "smooth" }}
       >
-        {loading
-          ? <div>Loading...</div>
-          : movies.length === 0
-            ? <div>No movies found.</div>
-            : movies.map(movie => (
-                <MovieCard key={movie.id} movie={movie} isUpcoming={isUpcoming} />
-              ))}
+        {loading ? (
+          <div>Loading...</div>
+        ) : movies.length === 0 ? (
+          <div>No movies found.</div>
+        ) : (
+          movies.map((movie) => <MovieCard key={movie.title} movie={movie} />)
+        )}
       </div>
     </section>
   );

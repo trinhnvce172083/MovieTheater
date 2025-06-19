@@ -1,80 +1,146 @@
-import React from "react";
+"use client";
+
 import Image from "next/image";
-import { Movie } from "@/types/HomePage/movie";
-import { Card } from "antd";
+import { Star, Clock, Calendar } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import ROUTES from "@/constants/routes";
+import { Card, CardContent } from "@/components/ui/card";
+import type { Movie } from "@/types/NowShowing/movie";
 
-const formatReleaseDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString("vi-VN", {
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-  });
-
-export default function MovieCard({
-  movie,
-  isUpcoming = false,
-}: {
+interface MovieCardProps {
   movie: Movie;
-  isUpcoming?: boolean;
-}): React.ReactElement {
+  onBookNow?: (movieId: string) => void;
+}
+
+export function MovieCard({ movie, onBookNow }: MovieCardProps) {
+  const getRatingColor = (rating: string) => {
+    switch (rating) {
+      case "G":
+        return "bg-green-500";
+      case "PG":
+        return "bg-blue-500";
+      case "PG-13":
+        return "bg-yellow-500";
+      case "R":
+        return "bg-red-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
+  const handleBookNow = () => {
+    onBookNow?.(movie.movieId);
+  };
+
+  // Đảm bảo genre là mảng
+  const genreArr = Array.isArray(movie.genre)
+    ? movie.genre
+    : (typeof movie.genre === "string" ? movie.genre : "")
+        .split(",")
+        .map((g) => g.trim())
+        .filter(Boolean);
+
+  const imageUrl = movie.posterUrl || ""; // hoặc movie.imageUrl
+
   return (
-    <div className="min-w-[280px] max-w-[280px] flex-shrink-0">
-      <Card
-        hoverable
-        cover={
-          <div className="h-[360px] relative">
-            <Image
-              src={movie.posterUrl}
-              alt={movie.title}
-              fill
-              className="object-cover"
-              sizes="(max-width: 300px) 100vw, 300px"
-            />
+    <Card className="w-[300px] h-[550px] p-6 bg-gray-900/80 border-orange-500/20 hover:border-orange-500/50 transition-all duration-300 hover:scale-105 group flex flex-col">
+      <CardContent className="p-0 flex-1 flex flex-col">
+        {/* Movie Poster */}
+        <div className="relative overflow-hidden rounded-t-lg">
+          <Image
+            src={imageUrl || "/default-image.png"}
+            alt={movie.title}
+            width={200}
+            height={300}
+            style={{ display: imageUrl ? "block" : "none" }}
+            className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
+            priority={movie.isFeatured}
+          />
+
+          {/* Featured Badge */}
+          {movie.isFeatured && (
+            <Badge className="absolute top-2 left-2 bg-orange-500 text-black font-semibold">
+              Featured
+            </Badge>
+          )}
+
+          {/* Rating Badge */}
+          <Badge
+            className={`absolute top-2 right-2 ${getRatingColor(
+              movie.rating
+            )} text-white font-semibold`}
+          >
+            {movie.rating}
+          </Badge>
+
+          {/* IMDB Rating */}
+          <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
+            <Star className="h-3 w-3 text-yellow-400 fill-current" />
+            <span className="text-white text-xs font-semibold">
+              {movie.imdbRating}
+            </span>
           </div>
-        }
-        className="overflow-hidden h-full"
-      >
-        <Card.Meta
-          title={movie.title}
-          description={
-            <div>
-              <p className="text-gray-500">{movie.genre}</p>
-              <p className="text-gray-500">
-                {isUpcoming
-                  ? `Coming ${formatReleaseDate(movie.releaseDate)}`
-                  : movie.rating}
-              </p>
+        </div>
+
+        {/* Movie Info */}
+        <div className="p-4 flex flex-col flex-1 justify-between">
+          <h3 className="text-white font-bold text-lg mb-2 line-clamp-2 group-hover:text-orange-300 transition-colors">
+            {movie.title}
+          </h3>
+
+          {/* Genres */}
+          <div className="flex flex-wrap gap-1 mb-3">
+            {genreArr.slice(0, 2).map((genre) => (
+              <Badge
+                key={genre}
+                variant="outline"
+                className="text-xs border-orange-500/30 text-orange-300"
+              >
+                {genre}
+              </Badge>
+            ))}
+            {genreArr.length > 2 && (
+              <Badge
+                variant="outline"
+                className="text-xs border-orange-500/30 text-orange-300"
+              >
+                +{genreArr.length - 2}
+              </Badge>
+            )}
+          </div>
+
+          {/* Movie Details */}
+          <div className="space-y-2 text-sm text-gray-300">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-orange-400" />
+              <span>{movie.formattedDuration}</span>
             </div>
-          }
-        />
-        {isUpcoming ? (
-          <Button
-            variant="outline"
-            className="w-full mt-4 font-medium border-gray-300 hover:bg-gray-100 transition-colors"
-          >
-            Notify Me
-          </Button>
-        ) : (
-          <Button
-            asChild
-            variant="ghost"
-            className="w-full mt-4 border-none font-medium transition-all duration-300 
-             bg-gradient-to-r from-blue-500 to-purple-500 py-2 px-4 rounded hover:from-purple-500 hover:to-blue-500 group"
-          >
-            <Link
-              href={ROUTES.MOVIE_DETAILS(String(movie.id))}
-              className="flex items-center justify-center"
+
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-orange-400" />
+              <span>{new Date(movie.releaseDate).getFullYear()}</span>
+            </div>
+          </div>
+
+          {/* Price and Action */}
+          <div className="flex items-start justify-center mt-4 pt-4 border-t border-orange-500/20">
+            <div className="text-orange-400 font-bold text-lg">
+              {typeof movie.price === "number"
+                ? `$${movie.price.toFixed(2)}`
+                : "Đang cập nhật"}
+            </div>
+            <div>
+            <Button
+              size="sm"
+              className="bg-orange-500 hover:bg-orange-600 text-black font-semibold"
+              onClick={handleBookNow}
             >
-              <span className="text-white group-hover:text-blue-200 transition-colors duration-300">
-                Book Now
-              </span>
-            </Link>
-          </Button>
-        )}
-      </Card>
-    </div>
+              Book Now
+            </Button>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
