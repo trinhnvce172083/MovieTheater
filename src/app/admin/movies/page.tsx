@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { getMovies } from "@/api/admin/getAllMovies";
 import {
   Card,
   Table,
@@ -110,6 +111,7 @@ const movieData = [
 ];
 
 // Movie Management Component
+// Inside the ProfessionalMovieManagement component
 export default function ProfessionalMovieManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterVersion, setFilterVersion] = useState("");
@@ -121,10 +123,68 @@ export default function ProfessionalMovieManagement() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMovie, setEditingMovie] = useState(null);
   const [form] = Form.useForm();
+  const [apiMovies, setApiMovies] = useState([]);
+  const [totalElements, setTotalElements] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch movies from API
+  useEffect(() => {
+    async function fetchMovies() {
+      setLoading(true);
+      try {
+        const data = await getMovies({
+          page: currentPage - 1, // API uses 0-based indexing
+          size: pageSize,
+          sortBy: "title",
+          sortDirection: "asc",
+        });
+        
+        if (data.content && Array.isArray(data.content)) {
+          // Transform API data to match our expected format
+          const transformedData = data.content.map((movie, index) => ({
+            key: String(index + 1),
+            id: movie.id || `MV${String(index + 1).padStart(3, '0')}`,
+            eng: movie.title || "",
+            vn: movie.vietnameseTitle || "",
+            date: movie.releaseDate || "",
+            company: movie.company || "",
+            duration: movie.duration || 0,
+            version: movie.versions || ["2D"],
+            genre: movie.genres || ["Action"],
+            rating: movie.rating || "PG",
+            status: movie.status || "active",
+            revenue: movie.revenue || 0,
+            poster: movie.posterUrl || "/api/placeholder/150/225",
+          }));
+          
+          setApiMovies(transformedData);
+          setTotalElements(data.totalElements || data.content.length);
+        }
+      } catch (error) {
+        console.error("Error fetching movies:", error);
+        // Fallback to local data if API fails
+        setApiMovies(movieData);
+        setTotalElements(movieData.length);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchMovies();
+  }, [currentPage, pageSize]);
+
+  // Define the handlePaginationChange function
+  const handlePaginationChange = (page, size) => {
+    setCurrentPage(page);
+    setPageSize(size);
+  };
+
+  // Use API data if available, otherwise use local data
+  const displayData = apiMovies.length > 0 ? apiMovies : movieData;
 
   // Filter and search logic
   const filteredData = useMemo(() => {
-    return movieData.filter((movie) => {
+    return displayData.filter((movie) => {
       const matchesSearch =
         movie.eng.toLowerCase().includes(searchTerm.toLowerCase()) ||
         movie.vn.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -136,19 +196,19 @@ export default function ProfessionalMovieManagement() {
 
       return matchesSearch && matchesVersion && matchesStatus && matchesGenre;
     });
-  }, [searchTerm, filterVersion, filterStatus, filterGenre, dateRange]);
+  }, [searchTerm, filterVersion, filterStatus, filterGenre, dateRange, displayData]);
 
   // Statistics calculations
   const statistics = useMemo(() => {
-    const totalMovies = movieData.length;
-    const activeMovies = movieData.filter((m) => m.status === "active").length;
-    const totalRevenue = movieData.reduce((sum, movie) => sum + movie.revenue, 0);
+    const totalMovies = totalElements || displayData.length;
+    const activeMovies = displayData.filter((m) => m.status === "active").length;
+    const totalRevenue = displayData.reduce((sum, movie) => sum + movie.revenue, 0);
     const avgDuration = Math.round(
-      movieData.reduce((sum, movie) => sum + movie.duration, 0) / totalMovies
+      displayData.reduce((sum, movie) => sum + movie.duration, 0) / (displayData.length || 1)
     );
 
     return { totalMovies, activeMovies, totalRevenue, avgDuration };
-  }, []);
+  }, [displayData, totalElements]);
 
   const handleEdit = (record) => {
     setEditingMovie(record);
@@ -186,6 +246,7 @@ export default function ProfessionalMovieManagement() {
       dataIndex: "id",
       key: "id",
       width: 60,
+      align: "center" as const,
       render: (_: any, record: any, index: any) => (
         <div className="text-center">
           <span className="font-mono text-sm text-gray-500">
@@ -238,8 +299,8 @@ export default function ProfessionalMovieManagement() {
       ),
     },
     {
-      title: "Details",
-      key: "details",
+      title: "Duration",
+      key: "duration",
       width: 80,
       align: "center",
       render: (_: any, record: any) => (
@@ -258,7 +319,7 @@ export default function ProfessionalMovieManagement() {
       align: "center" as const,
       width: 120,
       render: (versions: any) => (
-        <div className="flex flex-wrap gap-1">
+        <div className="items-center gap-1">
           {versions.slice(0, 2).map((version: any) => (
             <Tag
               key={version}
@@ -303,9 +364,9 @@ export default function ProfessionalMovieManagement() {
       dataIndex: "revenue",
       key: "revenue",
       width: 90,
-      align: "right" as const,
+      align: "center" as const,
       render: (revenue: any) => (
-        <div className="text-right">
+        <div className="text-center">
           <span className="font-mono text-sm font-semibold text-green-600">
             ${(revenue / 1000000).toFixed(1)}M
           </span>
@@ -431,6 +492,45 @@ export default function ProfessionalMovieManagement() {
                 icon={<ImportOutlined />}
                 className="border-gray-300 text-xs xl:text-sm h-10 px-4"
                 size="middle"
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    const data = await getMovies({
+                      page: 0,
+                      size: 100,
+                      sortBy: "title",
+                      sortDirection: "asc",
+                    });
+                    
+                    if (data.content && Array.isArray(data.content)) {
+                      // Transform API data to match our expected format
+                      const transformedData = data.content.map((movie, index) => ({
+                        key: String(index + 1),
+                        id: movie.id || `MV${String(index + 1).padStart(3, '0')}`,
+                        eng: movie.title || "",
+                        vn: movie.vietnameseTitle || "",
+                        date: movie.releaseDate || "",
+                        company: movie.company || "",
+                        duration: movie.duration || 0,
+                        version: movie.versions || ["2D"],
+                        genre: movie.genres || ["Action"],
+                        rating: movie.rating || "PG",
+                        status: movie.status || "active",
+                        revenue: movie.revenue || 0,
+                        poster: movie.posterUrl || "/api/placeholder/150/225",
+                      }));
+                      
+                      setApiMovies(transformedData);
+                      setTotalElements(data.totalElements || data.content.length);
+                      message.success("Movies imported successfully");
+                    }
+                  } catch (error) {
+                    console.error("Error importing movies:", error);
+                    message.error("Failed to import movies");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
               >
                 Import
               </Button>
@@ -540,23 +640,21 @@ export default function ProfessionalMovieManagement() {
               rowClassName="hover:bg-gray-50 transition-colors"
               className="professional-table"
               size="small"
+              loading={loading}
             />
 
             {/* Pagination */}
             <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <Text type="secondary" className="text-sm">
                 Showing {(currentPage - 1) * pageSize + 1} to{" "}
-                {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-                {filteredData.length} movies
+                {Math.min(currentPage * pageSize, totalElements)} of{" "}
+                {totalElements} movies
               </Text>
               <Pagination
                 current={currentPage}
                 pageSize={pageSize}
-                total={filteredData.length}
-                onChange={(page, size) => {
-                  setCurrentPage(page);
-                  setPageSize(size);
-                }}
+                total={totalElements || filteredData.length}
+                onChange={handlePaginationChange}
                 showSizeChanger
                 showQuickJumper={false}
                 pageSizeOptions={["5", "10", "20", "50"]}
@@ -735,4 +833,3 @@ export default function ProfessionalMovieManagement() {
       `}</style>
     </div>
   );
-}
