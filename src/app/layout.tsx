@@ -3,6 +3,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
 import "../styles/animations.css";
+import '@ant-design/v5-patch-for-react-19';
 import {ThemeProvider} from "@/components/providers/ThemeProvider";
 import ClientLayoutWrapper from "@/components/ClientLayoutWrapper";
 import { AntdRegistry } from "@ant-design/nextjs-registry";

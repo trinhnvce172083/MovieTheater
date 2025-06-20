@@ -1,8 +1,8 @@
 "use client";
 import { useMovies, useMovieFilters } from "@/hooks/NowShowing/use-movie";
-import { SearchFilters } from "@/components/NowShowing/search-filters";
-import { MovieGrid } from "@/components/NowShowing/movie-grid";
-import { ErrorState } from "@/components/NowShowing/error-state";
+import { SearchFilters } from "@/app/NowShowing/components/search-filters";
+import { MovieGrid } from "@/app/NowShowing/components/movie-grid";
+import { ErrorState } from "@/app/NowShowing/components/error-state";
 
 
 export default function NowShowingPage() {

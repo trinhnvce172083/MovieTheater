@@ -1,16 +1,37 @@
 //Header
 "use client";
 
-import React from "react";
+import React, { memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import ROUTES from "@/constants/routes";
 import { useAuth } from "@/hooks/useAuth";
-import NotificationDropdown from "./NotificationDropdown";
-import UserDropdown from "./UserDropdown";
-import LanguageDropdown from "./LanguageDropdown";
+import dynamic from "next/dynamic";
 
-export default function Header() {
+// Dynamically import dropdowns with preload in production for better performance
+const NotificationDropdown = dynamic(() => import("./NotificationDropdown"), { 
+  ssr: false, 
+  loading: () => <div className="w-6 h-6" /> 
+});
+
+const UserDropdown = dynamic(() => import("./UserDropdown"), { 
+  ssr: false,
+  loading: () => <div className="w-6 h-6" /> 
+});
+
+const LanguageDropdown = dynamic(() => import("./LanguageDropdown"), { 
+  ssr: false,
+  loading: () => <div className="w-6 h-6" /> 
+});
+
+// Preload these components in production for better UX
+if (process.env.NODE_ENV === 'production') {
+  import("./NotificationDropdown");
+  import("./UserDropdown");
+  import("./LanguageDropdown");
+}
+
+function Header() {
   const { isLoggedIn, user } = useAuth();
 
   return (
@@ -20,9 +41,11 @@ export default function Header() {
           <Image
             src="/Logo.png"
             alt="Logo"
-            width={500}
-            height={500}
+            width={180}
+            height={72}
             className="w-auto h-24"
+            priority // Logo is important for First Contentful Paint
+            sizes="180px"
           />
         </Link>
         <nav className="flex space-x-8">
@@ -32,12 +55,6 @@ export default function Header() {
           >
             Now Showing
           </Link>
-          {/* <Link
-            href={ROUTES.BOOKING}
-            className="hover:text-red-500 transition-colors"
-          >
-            Booking
-          </Link> */}
           <Link
             href={ROUTES.COMING_SOON}
             className="hover:text-red-500 transition-colors"
@@ -65,3 +82,5 @@ export default function Header() {
     </header>
   );
 }
+
+export default memo(Header);

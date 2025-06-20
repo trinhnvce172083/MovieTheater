@@ -6,13 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Movie } from "@/types/NowShowing/movie";
+import { memo, useCallback } from "react";
+
+// Simple blur placeholder for better user experience
+const BLUR_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAEwgJ5i4Fx7AAAAABJRU5ErkJggg==";
 
 interface MovieCardProps {
   movie: Movie;
   onBookNow?: (movieId: string) => void;
 }
 
-export function MovieCard({ movie, onBookNow }: MovieCardProps) {
+function MovieCardComponent({ movie, onBookNow }: MovieCardProps) {
   const getRatingColor = (rating: string) => {
     switch (rating) {
       case "G":
@@ -28,11 +32,11 @@ export function MovieCard({ movie, onBookNow }: MovieCardProps) {
     }
   };
 
-  const handleBookNow = () => {
+  const handleBookNow = useCallback(() => {
     onBookNow?.(movie.movieId);
-  };
+  }, [movie.movieId, onBookNow]);
 
-  // Đảm bảo genre là mảng
+  // Ensure genre is an array
   const genreArr = Array.isArray(movie.genre)
     ? movie.genre
     : (typeof movie.genre === "string" ? movie.genre : "")
@@ -40,22 +44,26 @@ export function MovieCard({ movie, onBookNow }: MovieCardProps) {
         .map((g) => g.trim())
         .filter(Boolean);
 
-  const imageUrl = movie.posterUrl || ""; // hoặc movie.imageUrl
+  const imageUrl = movie.posterUrl || ""; // or movie.imageUrl
 
   return (
-    <Card className="w-[300px] h-[550px] p-6 bg-gray-900/80 border-orange-500/20 hover:border-orange-500/50 transition-all duration-300 hover:scale-105 group flex flex-col">
-      <CardContent className="p-0 flex-1 flex flex-col">
+    <Card className="bg-gray-900/80 border-orange-500/20 hover:border-orange-500/50 transition-all duration-300 hover:scale-105 group">
+      <CardContent className="p-0">
         {/* Movie Poster */}
         <div className="relative overflow-hidden rounded-t-lg">
-          <Image
-            src={imageUrl || "/default-image.png"}
-            alt={movie.title}
-            width={200}
-            height={300}
-            style={{ display: imageUrl ? "block" : "none" }}
-            className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
-            priority={movie.isFeatured}
-          />
+          {imageUrl && (
+            <Image
+              src={imageUrl}
+              alt={movie.title}
+              width={300}
+              height={450}
+              className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
+              priority={movie.isFeatured}
+              placeholder="blur"
+              blurDataURL={BLUR_DATA_URL}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          )}
 
           {/* Featured Badge */}
           {movie.isFeatured && (
@@ -83,7 +91,7 @@ export function MovieCard({ movie, onBookNow }: MovieCardProps) {
         </div>
 
         {/* Movie Info */}
-        <div className="p-4 flex flex-col flex-1 justify-between">
+        <div className="p-4">
           <h3 className="text-white font-bold text-lg mb-2 line-clamp-2 group-hover:text-orange-300 transition-colors">
             {movie.title}
           </h3>
@@ -123,13 +131,12 @@ export function MovieCard({ movie, onBookNow }: MovieCardProps) {
           </div>
 
           {/* Price and Action */}
-          <div className="flex items-start justify-center mt-4 pt-4 border-t border-orange-500/20">
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-orange-500/20">
             <div className="text-orange-400 font-bold text-lg">
               {typeof movie.price === "number"
                 ? `$${movie.price.toFixed(2)}`
                 : "Đang cập nhật"}
             </div>
-            <div>
             <Button
               size="sm"
               className="bg-orange-500 hover:bg-orange-600 text-black font-semibold"
@@ -137,10 +144,10 @@ export function MovieCard({ movie, onBookNow }: MovieCardProps) {
             >
               Book Now
             </Button>
-            </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </CardContent>    </Card>
   );
 }
+
+export const MovieCard = memo(MovieCardComponent);
