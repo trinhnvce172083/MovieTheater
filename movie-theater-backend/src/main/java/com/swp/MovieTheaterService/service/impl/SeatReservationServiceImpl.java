@@ -1,8 +1,12 @@
 package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.entity.BookingSeat;
+import com.swp.MovieTheaterService.entity.Schedule;
 import com.swp.MovieTheaterService.entity.Seat;
+import com.swp.MovieTheaterService.exception.AppException;
+import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.repository.BookingSeatRepository;
+import com.swp.MovieTheaterService.repository.ScheduleRepository;
 import com.swp.MovieTheaterService.repository.SeatRepository;
 import com.swp.MovieTheaterService.service.SeatReservationService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +20,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 /**
  * Seat Reservation Service Implementation
@@ -31,6 +36,7 @@ public class SeatReservationServiceImpl implements SeatReservationService {
     
     private final SeatRepository seatRepository;
     private final BookingSeatRepository bookingSeatRepository;
+    private final ScheduleRepository scheduleRepository;
     
     // In-memory storage for temporary reservations
     // Key: sessionId, Value: TempReservation
@@ -136,53 +142,79 @@ public class SeatReservationServiceImpl implements SeatReservationService {
     
     @Override
     public SeatStatusResponse getSeatStatus(Long scheduleId) {
-        // List<Seat> allSeats = seatRepository.findByScheduleId(scheduleId);
-        // List<Long> bookedSeatIds = bookingSeatRepository.findBookedSeatIdsByScheduleId(scheduleId);
+        log.info("Lấy trạng thái ghế cho lịch chiếu: {}", scheduleId);
         
-        // Temporary implementation - return empty list
-        List<Seat> allSeats = new ArrayList<>();
-        List<Long> bookedSeatIds = new ArrayList<>();
-        
-        List<SeatStatus> seatStatuses = allSeats.stream()
-                .map(seat -> {
-                    String status = "AVAILABLE";
-                    String reservedBySession = null;
-                    LocalDateTime reservationExpiry = null;
-                    
-                    if (bookedSeatIds.contains(seat.getSeatId())) {
-                        status = "BOOKED";
-                    } else {
-                        // Check temporary reservations
-                        for (TempReservation tempReservation : temporaryReservations.values()) {
-                            if (tempReservation.getScheduleId().equals(scheduleId) && 
-                                tempReservation.getSeatIds().contains(seat.getSeatId())) {
-                                
-                                if (tempReservation.isExpired()) {
-                                    continue; // Skip expired reservations
+        try {
+            // Lấy tất cả ghế của phòng chiếu cho lịch này
+            Schedule schedule = scheduleRepository.findById(scheduleId)
+                    .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
+            
+            Long cinemaRoomId = schedule.getCinemaRoom().getCinemaRoomId();
+            
+            // Lấy tất cả ghế trong phòng chiếu
+            List<Seat> allSeats = seatRepository.findByCinemaRoomCinemaRoomIdAndIsActiveTrue(cinemaRoomId);
+            log.debug("Tìm thấy {} ghế cho phòng chiếu: {}", allSeats.size(), cinemaRoomId);
+            
+            // Lấy ID ghế đã được đặt cho lịch chiếu này (chỉ CONFIRMED hoặc PAID)
+            List<BookingSeat> bookedSeats = bookingSeatRepository.findOccupiedSeatsBySchedule(scheduleId);
+            List<Long> bookedSeatIds = bookedSeats.stream()
+                    .map(bs -> bs.getSeat().getSeatId())
+                    .collect(Collectors.toList());
+            
+            log.debug("Tìm thấy {} ghế đã đặt cho lịch chiếu: {}. IDs: {}", 
+                    bookedSeatIds.size(), scheduleId, bookedSeatIds);
+            
+            // Xây dựng response trạng thái ghế
+            List<SeatStatus> seatStatuses = allSeats.stream()
+                    .map(seat -> {
+                        String status = "AVAILABLE";
+                        String reservedBySession = null;
+                        LocalDateTime reservationExpiry = null;
+                        
+                        // Kiểm tra ghế đã được đặt vĩnh viễn
+                        if (bookedSeatIds.contains(seat.getSeatId())) {
+                            status = "BOOKED";
+                        } else {
+                            // Kiểm tra đặt chỗ tạm thời
+                            for (TempReservation tempReservation : temporaryReservations.values()) {
+                                if (tempReservation.getScheduleId().equals(scheduleId) && 
+                                    tempReservation.getSeatIds().contains(seat.getSeatId())) {
+                                    
+                                    if (tempReservation.isExpired()) {
+                                        continue; // Bỏ qua đặt chỗ đã hết hạn
+                                    }
+                                    
+                                    status = "TEMPORARILY_RESERVED";
+                                    reservedBySession = tempReservation.getSessionId();
+                                    reservationExpiry = tempReservation.getExpiryTime();
+                                    break;
                                 }
-                                
-                                status = "TEMPORARILY_RESERVED";
-                                reservedBySession = tempReservation.getSessionId();
-                                reservationExpiry = tempReservation.getExpiryTime();
-                                break;
                             }
                         }
-                    }
-                    
-                    SeatStatus seatStatus = new SeatStatus(
-                        seat.getSeatId(),
-                        seat.getSeatNumber(),
-                        seat.getRowLetter(), // Use getRowLetter() instead of getSeatRow()
-                        status
-                    );
-                    seatStatus.setReservedBySession(reservedBySession);
-                    seatStatus.setReservationExpiry(reservationExpiry);
-                    
-                    return seatStatus;
-                })
-                .collect(Collectors.toList());
-        
-        return new SeatStatusResponse(seatStatuses, LocalDateTime.now());
+                        
+                        SeatStatus seatStatus = new SeatStatus(
+                                seat.getSeatId(),
+                                seat.getSeatNumber(),
+                                seat.getRowLetter(),
+                                status
+                        );
+                        seatStatus.setReservedBySession(reservedBySession);
+                        seatStatus.setReservationExpiry(reservationExpiry);
+                        
+                        return seatStatus;
+                    })
+                    .collect(Collectors.toList());
+            
+            log.info("Trả về {} trạng thái ghế cho lịch chiếu: {}", seatStatuses.size(), scheduleId);
+            return new SeatStatusResponse(seatStatuses, LocalDateTime.now());
+            
+        } catch (AppException e) {
+            // Re-throw AppException để giữ nguyên error code
+            throw e;
+        } catch (Exception e) {
+            log.error("Lỗi khi lấy trạng thái ghế cho lịch chiếu: {}", scheduleId, e);
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
     }
     
     @Override

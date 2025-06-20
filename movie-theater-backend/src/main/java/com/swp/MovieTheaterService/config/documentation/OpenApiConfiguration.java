@@ -1,6 +1,7 @@
 package com.swp.MovieTheaterService.config.documentation;
 
 import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.examples.Example;
 import io.swagger.v3.oas.models.info.Contact;
@@ -181,102 +182,27 @@ public class OpenApiConfiguration {
                         .description("JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\""))
                 .addExamples("RegisterRequest", new Example()
                         .summary("Đăng ký tài khoản mới")
-                        .description("Ví dụ về yêu cầu đăng ký tài khoản mới với đầy đủ thông tin bao gồm username")
-                        .value("""
-                        {
-                          "username": "lumieretest2025",
-                          "fullName": "Nguyễn Văn Nam",
-                          "email": "nguyenvannam@example.com",
-                          "password": "SecurePassword123!",
-                          "confirmPassword": "SecurePassword123!",
-                          "phoneNumber": "0901234567",
-                          "dateOfBirth": "1995-05-15",
-                          "address": "123 Đường Lê Lợi, Quận 1, TP.HCM",
-                          "agreeToTerms": true,
-                          "acceptMarketing": false
-                        }
-                        """))
+                        .description("Ví dụ về yêu cầu đăng ký tài khoản mới với đầy đủ thông tin")
+                        .value(OpenApiExamples.REGISTER_REQUEST_EXAMPLE))
                 .addExamples("LoginRequest", new Example()
                         .summary("Đăng nhập hệ thống")
                         .description("Thông tin đăng nhập với email và mật khẩu")
-                        .value("""
-                        {
-                          "email": "nguyenvannam@example.com",
-                          "password": "SecurePassword123!"
-                        }
-                        """))
+                        .value(OpenApiExamples.LOGIN_REQUEST_EXAMPLE))
                 .addExamples("BookingCreateRequest", new Example()
                         .summary("Tạo booking mới")
                         .description("Đặt vé xem phim cho khách hàng")
-                        .value("""
-                        {
-                          "scheduleId": 1,
-                          "seatIds": [15, 16],
-                          "customerName": "Trần Thị Mai",
-                          "customerEmail": "tranthimai@example.com",
-                          "customerPhone": "0987654321",
-                          "promotionId": null,
-                          "notes": "Đặt vé cho 2 người, ghế đôi"
-                        }
-                        """))
+                        .value(OpenApiExamples.GUEST_BOOKING_WITH_CONCESSIONS_EXAMPLE))
                 .addExamples("MovieCreateRequest", new Example()
                         .summary("Thêm phim mới")
                         .description("Thông tin phim mới cần thêm vào hệ thống")
-                        .value("""
-                        {
-                          "title": "Spider-Man: No Way Home",
-                          "originalTitle": "Spider-Man: No Way Home",
-                          "description": "Peter Parker's secret identity is revealed to the entire world...",
-                          "duration": 148,
-                          "releaseDate": "2021-12-15",
-                          "endDate": "2022-03-15",
-                          "language": "English",
-                          "subtitle": "Vietnamese",
-                          "country": "United States",
-                          "director": "Jon Watts",
-                          "cast": "Tom Holland, Zendaya, Benedict Cumberbatch",
-                          "genres": "Action, Adventure, Sci-Fi",
-                          "rating": "T13",
-                          "trailerUrl": "https://youtube.com/watch?v=JfVOs4VSpmA",
-                          "posterUrl": "https://image.tmdb.org/t/p/w500/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg",
-                          "bannerUrl": "https://image.tmdb.org/t/p/original/14QbnygCuTO0vl7CAFmPf1fgZfV.jpg",
-                          "status": "NOW_SHOWING",
-                          "ticketPrice": 120000.0
-                        }
-                        """))
+                        .value(OpenApiExamples.MOVIE_CREATE_REQUEST_EXAMPLE))
                 .addExamples("SuccessResponse", new Example()
                         .summary("Phản hồi thành công")
                         .description("Cấu trúc phản hồi khi thao tác thành công")
-                        .value("""
-                        {
-                          "success": true,
-                          "message": "Thao tác thành công",
-                          "data": {
-                            "id": 123,
-                            "createdAt": "2025-06-06T12:00:00"
-                          }
-                        }
-                        """))
+                        .value(OpenApiExamples.SUCCESS_RESPONSE_EXAMPLE))
                 .addExamples("ErrorResponse", new Example()
                         .summary("Phản hồi lỗi")
                         .description("Cấu trúc phản hồi khi có lỗi")
-                        .value("""
-                        {
-                          "success": false,
-                          "message": "Dữ liệu không hợp lệ",
-                          "errorCode": "VALIDATION_ERROR",
-                          "errors": [
-                            {
-                              "field": "email",
-                              "message": "Email không đúng định dạng"
-                            },
-                            {
-                              "field": "password",
-                              "message": "Mật khẩu phải có ít nhất 8 ký tự"
-                            }
-                          ],
-                          "timestamp": "2025-06-06T12:00:00"
-                        }
-                        """));
+                        .value(OpenApiExamples.ERROR_RESPONSE_EXAMPLE));
     }
 } 

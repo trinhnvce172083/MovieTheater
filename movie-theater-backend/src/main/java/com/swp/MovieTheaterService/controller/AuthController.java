@@ -7,6 +7,8 @@ import com.swp.MovieTheaterService.dto.request.RegisterRequest;
 import com.swp.MovieTheaterService.dto.request.ResetPasswordRequest;
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.dto.response.AuthResponse;
+import com.swp.MovieTheaterService.dto.response.UserProfileResponse;
+import com.swp.MovieTheaterService.dto.request.UserProfileUpdateRequest;
 import com.swp.MovieTheaterService.exception.RateLimitExceededException;
 import com.swp.MovieTheaterService.service.AuthService;
 import com.swp.MovieTheaterService.service.RateLimitService;
@@ -17,8 +19,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -183,53 +188,66 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Email xác thực đã được gửi lại", null));
     }
 
-    @PostMapping("/test-registration")
-    @Operation(summary = "Test registration with debug info", description = "Test registration và debug email sending")
-    public ResponseEntity<Map<String, Object>> testRegistration(
-            @RequestBody RegisterRequest request,
-            HttpServletRequest httpRequest) {
+    // ==================== PROFILE MANAGEMENT ====================
 
-        String clientIp = IpUtils.getClientIpAddress(httpRequest);
-        log.info("=== TEST REGISTRATION DEBUG START ===");
-        log.info("Test registration request from IP: {}", clientIp);
-        log.info("Request email: {}", request.getEmail());
-        log.info("Request username: {}", request.getUsername());
+    @GetMapping("/profile")
+    @Operation(summary = "Lấy thông tin profile", description = "Lấy thông tin chi tiết profile của user hiện tại")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> getProfile(Authentication authentication) {
+        String username = authentication.getName();
+        log.info("Getting profile for user: {}", username);
+        
+        UserProfileResponse profile = authService.getUserProfile(username);
+        return ResponseEntity.ok(ApiResponse.success("Lấy thông tin profile thành công", profile));
+    }
 
-        try {
-            // Attempt registration
-            log.info("🔄 Attempting registration...");
-            AuthResponse response = authService.register(request);
+    @PutMapping("/profile")
+    @Operation(summary = "Cập nhật profile", description = "Cập nhật thông tin profile của user hiện tại")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> updateProfile(
+            @Valid @RequestBody UserProfileUpdateRequest request,
+            Authentication authentication) {
+        
+        String username = authentication.getName();
+        log.info("Updating profile for user: {}", username);
+        
+        UserProfileResponse updatedProfile = authService.updateUserProfile(username, request);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật profile thành công", updatedProfile));
+    }
 
-            log.info("✅ Registration successful!");
-            log.info("User ID: {}", response.getUser().getId());
-            log.info("Email: {}", response.getUser().getEmail());
-            log.info("Email Verified: {}", response.getUser().isEmailVerified());
+    @PostMapping(value = "/profile/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload avatar", description = "Upload avatar cho user hiện tại")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> uploadAvatar(
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication) {
+        
+        String username = authentication.getName();
+        log.info("Uploading avatar for user: {}", username);
+        
+        Map<String, Object> result = authService.uploadUserAvatar(username, file);
+        return ResponseEntity.ok(ApiResponse.success("Upload avatar thành công", result));
+    }
 
-            Map<String, Object> debugResponse = new HashMap<>();
-            debugResponse.put("registrationSuccessful", true);
-            debugResponse.put("userId", response.getUser().getId());
-            debugResponse.put("email", response.getUser().getEmail());
-            debugResponse.put("emailVerified", response.getUser().isEmailVerified());
-            debugResponse.put("accessToken", response.getAccessToken());
-            debugResponse.put("refreshToken", response.getRefreshToken());
-            debugResponse.put("message", "Registration thành công! Kiểm tra log để xem email verification status");
-            debugResponse.put("timestamp", java.time.LocalDateTime.now().toString());
+    @DeleteMapping("/profile/avatar")
+    @Operation(summary = "Xóa avatar", description = "Xóa avatar của user hiện tại")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deleteAvatar(Authentication authentication) {
+        String username = authentication.getName();
+        log.info("Deleting avatar for user: {}", username);
+        
+        Map<String, Object> result = authService.deleteUserAvatar(username);
+        return ResponseEntity.ok(ApiResponse.success("Xóa avatar thành công", result));
+    }
 
-            log.info("=== TEST REGISTRATION DEBUG END ===");
-            return ResponseEntity.ok(debugResponse);
-
-        } catch (Exception e) {
-            log.error("❌ Registration failed: {}", e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("registrationSuccessful", false);
-            errorResponse.put("error", e.getMessage());
-            errorResponse.put("errorType", e.getClass().getSimpleName());
-            errorResponse.put("timestamp", java.time.LocalDateTime.now().toString());
-
-            log.info("=== TEST REGISTRATION DEBUG END (WITH ERROR) ===");
-            return ResponseEntity.status(400).body(errorResponse);
-        }
+    @PutMapping(value = "/profile/with-avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Cập nhật profile kèm avatar", description = "Cập nhật thông tin profile và avatar cùng lúc")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> updateProfileWithAvatar(
+            @RequestParam(value = "profileData", required = false) String profileDataJson,
+            @RequestParam(value = "avatar", required = false) MultipartFile avatarFile,
+            Authentication authentication) {
+        
+        String username = authentication.getName();
+        log.info("Updating profile with avatar for user: {}", username);
+        
+        UserProfileResponse updatedProfile = authService.updateProfileWithAvatar(username, profileDataJson, avatarFile);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật profile và avatar thành công", updatedProfile));
     }
 
 }

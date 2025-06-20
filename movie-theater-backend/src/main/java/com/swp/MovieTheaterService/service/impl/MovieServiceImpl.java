@@ -9,9 +9,11 @@ import com.swp.MovieTheaterService.dto.movie.MovieUpdateRequest;
 import com.swp.MovieTheaterService.entity.Movie;
 import com.swp.MovieTheaterService.exception.AppException;
 import com.swp.MovieTheaterService.exception.ErrorCode;
+import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.mapper.MovieMapper;
 import com.swp.MovieTheaterService.repository.MovieRepository;
 import com.swp.MovieTheaterService.service.MovieService;
+import com.swp.MovieTheaterService.service.SupabaseStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -20,7 +22,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,6 +44,7 @@ public class MovieServiceImpl implements MovieService {
 
     private final MovieRepository movieRepository;
     private final MovieMapper movieMapper;
+    private final SupabaseStorageService supabaseStorageService;
 
     @Override
     public MovieResponse createMovie(MovieCreateRequest request) {
@@ -398,5 +403,93 @@ public class MovieServiceImpl implements MovieService {
         return movieRepository.findById(movieId)
                 .filter(Movie::getIsActive)
                 .orElseThrow(() -> new AppException(ErrorCode.MOVIE_NOT_FOUND));
+    }
+    
+    // =============== IMAGE MANAGEMENT METHODS ===============
+    
+    @Override
+    @Transactional
+    public MovieResponse updateMoviePoster(Long movieId, MultipartFile posterFile) {
+        log.info("Updating poster for movie ID: {}", movieId);
+        
+        Movie movie = findMovieById(movieId);
+        
+        // Upload poster mới (replaceFile sẽ tự động xóa file cũ)
+        String posterUrl = supabaseStorageService.replaceFile(
+            movie.getPosterUrl(),
+            posterFile,
+            "movies/posters"
+        );
+        movie.setPosterUrl(posterUrl);
+        
+        Movie updatedMovie = movieRepository.save(movie);
+        log.info("Movie poster updated successfully for ID: {}", movieId);
+        
+        return movieMapper.toResponse(updatedMovie);
+    }
+    
+    @Override
+    @Transactional
+    public MovieResponse updateMovieBackdrop(Long movieId, MultipartFile backdropFile) {
+        log.info("Updating backdrop for movie ID: {}", movieId);
+        
+        Movie movie = findMovieById(movieId);
+        
+        // Upload backdrop mới (replaceFile sẽ tự động xóa file cũ)
+        String backdropUrl = supabaseStorageService.replaceFile(
+            movie.getBackdropUrl(),
+            backdropFile,
+            "movies/backdrops"
+        );
+        movie.setBackdropUrl(backdropUrl);
+        
+        Movie updatedMovie = movieRepository.save(movie);
+        log.info("Movie backdrop updated successfully for ID: {}", movieId);
+        
+        return movieMapper.toResponse(updatedMovie);
+    }
+    
+    @Override
+    @Transactional
+    public MovieResponse deleteMoviePoster(Long movieId) {
+        log.info("Deleting poster for movie ID: {}", movieId);
+        
+        Movie movie = findMovieById(movieId);
+        
+        if (movie.getPosterUrl() != null) {
+            boolean deleted = supabaseStorageService.deleteFile(movie.getPosterUrl());
+            
+            if (deleted) {
+                movie.setPosterUrl(null);
+                movieRepository.save(movie);
+                log.info("Movie poster deleted successfully for ID: {}", movieId);
+            } else {
+                throw new AppException(ErrorCode.FILE_DELETE_FAILED);
+            }
+        }
+        
+        return movieMapper.toResponse(movie);
+    }
+    
+    @Override
+    @Transactional
+    public MovieResponse deleteMovieBackdrop(Long movieId) {
+        log.info("Deleting backdrop for movie ID: {}", movieId);
+        
+        Movie movie = findMovieById(movieId);
+        
+        if (movie.getBackdropUrl() != null) {
+            boolean deleted = supabaseStorageService.deleteFile(movie.getBackdropUrl());
+            
+            if (deleted) {
+                movie.setBackdropUrl(null);
+                movieRepository.save(movie);
+                log.info("Movie backdrop deleted successfully for ID: {}", movieId);
+            } else {
+                throw new AppException(ErrorCode.FILE_DELETE_FAILED);
+            }
+        }
+        
+        return movieMapper.toResponse(movie);
     }
 } 

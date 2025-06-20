@@ -4,6 +4,7 @@ import com.swp.MovieTheaterService.dto.user.*;
 import com.swp.MovieTheaterService.dto.response.PageResponse;
 import com.swp.MovieTheaterService.exception.AppException;
 import com.swp.MovieTheaterService.exception.ErrorCode;
+import com.swp.MovieTheaterService.service.ImageManagementService;
 import com.swp.MovieTheaterService.service.UserManagementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -21,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -44,6 +46,7 @@ import java.util.LinkedHashMap;
 public class UserManagementController {
 
     private final UserManagementService userManagementService;
+    private final ImageManagementService imageManagementService;
 
     // ==================== CRUD OPERATIONS ====================
 
@@ -113,6 +116,67 @@ public class UserManagementController {
 
         userManagementService.deleteUser(userId);
         return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
+    }
+
+    // ==================== AVATAR MANAGEMENT ====================
+
+    @PostMapping(value = "/{userId}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload user avatar", description = "Upload avatar image for user (Admin only)")
+    public ResponseEntity<Map<String, Object>> uploadUserAvatar(
+            @PathVariable Long userId,
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication) {
+
+        log.info("Admin {} is uploading avatar for user ID: {}", authentication.getName(), userId);
+
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            String newAvatarUrl = imageManagementService.updateAccountAvatar(userId, file);
+            
+            response.put("success", true);
+            response.put("message", "Upload avatar thành công");
+            response.put("avatarUrl", newAvatarUrl);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Failed to upload avatar for user ID: {}", userId, e);
+            response.put("success", false);
+            response.put("message", "Upload avatar thất bại: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @DeleteMapping("/{userId}/avatar")
+    @Operation(summary = "Delete user avatar", description = "Delete avatar image of user (Admin only)")
+    public ResponseEntity<Map<String, Object>> deleteUserAvatar(
+            @PathVariable Long userId,
+            Authentication authentication) {
+
+        log.info("Admin {} is deleting avatar for user ID: {}", authentication.getName(), userId);
+
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            boolean deleted = imageManagementService.deleteAccountAvatar(userId);
+            
+            if (deleted) {
+                response.put("success", true);
+                response.put("message", "Xóa avatar thành công");
+            } else {
+                response.put("success", false);
+                response.put("message", "Không thể xóa avatar");
+            }
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Failed to delete avatar for user ID: {}", userId, e);
+            response.put("success", false);
+            response.put("message", "Xóa avatar thất bại: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
     // ==================== SEARCH & FILTER ====================

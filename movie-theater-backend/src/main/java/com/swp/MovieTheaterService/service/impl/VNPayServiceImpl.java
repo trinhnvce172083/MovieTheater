@@ -1,373 +1,286 @@
 package com.swp.MovieTheaterService.service.impl;
 
-import com.swp.MovieTheaterService.dto.payment.*;
-import com.swp.MovieTheaterService.service.PaymentService;
+import com.swp.MovieTheaterService.config.VNPayConfig;
+import com.swp.MovieTheaterService.dto.payment.VNPayPaymentRequestDTO;
+import com.swp.MovieTheaterService.entity.Booking;
+import com.swp.MovieTheaterService.enums.BookingStatus;
+import com.swp.MovieTheaterService.exception.AppException;
+import com.swp.MovieTheaterService.exception.ErrorCode;
+import com.swp.MovieTheaterService.repository.BookingRepository;
+import com.swp.MovieTheaterService.service.VNPayService;
+import com.swp.MovieTheaterService.utils.VNPayHashUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
- * VNPay Payment Service Implementation
- * Handles VNPay payment integration
+ * VNPay Service Implementation
+ * Implementation cho dịch vụ thanh toán VNPay
  * 
  * @author Dũng_Solo
  * @version 1.0.0
  */
+@Service
 @Slf4j
-@Service("vnpayService")
-public class VNPayServiceImpl implements PaymentService {
-    
-    @Value("${vnpay.url:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}")
-    private String vnpUrl;
-    
-    @Value("${vnpay.api.url:https://sandbox.vnpayment.vn/merchant_webapi/api/transaction}")
-    private String vnpApiUrl;
-    
-    @Value("${vnpay.tmn.code:DEMOSHOP}")
-    private String vnpTmnCode;
-    
-    @Value("${vnpay.hash.secret:RAOEXHYVSDDIIENYWSLDIIZTANUBSAWS}")
-    private String vnpHashSecret;
-    
-    @Value("${vnpay.version:2.1.0}")
-    private String vnpVersion;
-    
-    @Value("${vnpay.command:pay}")
-    private String vnpCommand;
-    
-    @Value("${vnpay.currency:VND}")
-    private String vnpCurrencyCode;
-    
-    @Value("${vnpay.locale:vn}")
-    private String vnpLocale;
-    
+@RequiredArgsConstructor
+public class VNPayServiceImpl implements VNPayService {
+
+    private final VNPayConfig vnPayConfig;
+    private final BookingRepository bookingRepository;
+
     @Override
-    public PaymentResponse createPayment(PaymentRequest request) {
+    public String createPaymentUrl(@NonNull VNPayPaymentRequestDTO requestDTO, @NonNull String ipAddress) {
+        validateCreatePaymentRequest(requestDTO, ipAddress);
+
         try {
-            log.info("Creating VNPay payment for booking: {}", request.getBookingId());
-            
-            // Validate request
-            if (request.getAmount() == null || request.getAmount() < 1000) {
-                return PaymentResponse.builder()
-                        .success(false)
-                        .message("Số tiền thanh toán không hợp lệ")
-                        .errorCode("INVALID_AMOUNT")
-                        .build();
-            }
-            
-            // Create transaction ID
-            String transactionId = generateTransactionId(request.getBookingId());
-            
-            // Prepare VNPay parameters
-            Map<String, String> vnpParams = new HashMap<>();
-            vnpParams.put("vnp_Version", vnpVersion);
-            vnpParams.put("vnp_Command", vnpCommand);
-            vnpParams.put("vnp_TmnCode", vnpTmnCode);
-            vnpParams.put("vnp_Amount", String.valueOf(request.getAmount().longValue() * 100)); // VNPay uses xu (1/100 VND)
-            vnpParams.put("vnp_CurrCode", vnpCurrencyCode);
-            vnpParams.put("vnp_TxnRef", transactionId);
-            vnpParams.put("vnp_OrderInfo", request.getDescription() != null ? 
-                    request.getDescription() : "Thanh toan ve xem phim - Booking " + request.getBookingId());
-            vnpParams.put("vnp_OrderType", request.getOrderType());
-            vnpParams.put("vnp_Locale", request.getLanguage() != null ? request.getLanguage() : vnpLocale);
-            vnpParams.put("vnp_ReturnUrl", request.getReturnUrl());
-            vnpParams.put("vnp_IpAddr", request.getIpAddress() != null ? request.getIpAddress() : "127.0.0.1");
-            
-            // Add create date and expire date
-            String createDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-            vnpParams.put("vnp_CreateDate", createDate);
-            
-            // Add expire date (15 minutes from now)
-            Calendar expireDate = Calendar.getInstance();
-            expireDate.add(Calendar.MINUTE, request.getExpireMinutes() != null ? request.getExpireMinutes() : 15);
-            String expireDateStr = new SimpleDateFormat("yyyyMMddHHmmss").format(expireDate.getTime());
-            vnpParams.put("vnp_ExpireDate", expireDateStr);
-            
-            // Add bank code if specified
-            if (request.getBankCode() != null && !request.getBankCode().isEmpty()) {
-                vnpParams.put("vnp_BankCode", request.getBankCode());
-            }
-            
-            // Generate payment URL
-            String paymentUrl = buildPaymentUrl(vnpParams);
-            
-            return PaymentResponse.builder()
-                    .success(true)
-                    .message("Tạo URL thanh toán VNPay thành công")
-                    .transactionId(transactionId)
-                    .paymentUrl(paymentUrl)
-                    .bookingId(request.getBookingId())
-                    .amount(request.getAmount())
-                    .currency(request.getCurrency())
-                    .paymentMethod("VNPAY")
-                    .provider("VNPAY")
-                    .status("PENDING")
-                    .createdAt(LocalDateTime.now())
-                    .expiredAt(LocalDateTime.now().plusMinutes(request.getExpireMinutes() != null ? request.getExpireMinutes() : 15))
-                    .returnUrl(request.getReturnUrl())
-                    .notifyUrl(request.getNotifyUrl())
-                    .build();
-            
+            Map<String, String> vnp_Params = buildPaymentParams(requestDTO, ipAddress);
+            String queryUrl = VNPayHashUtils.createQueryUrl(vnp_Params, vnPayConfig.getHashSecret());
+            String fullUrl = vnPayConfig.getPayUrl() + "?" + queryUrl;
+
+            log.info("Tạo URL thanh toán cho TxnRef: {}", vnp_Params.get("vnp_TxnRef"));
+            return fullUrl;
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Error creating VNPay payment: {}", e.getMessage(), e);
-            return PaymentResponse.builder()
-                    .success(false)
-                    .message("Lỗi tạo thanh toán VNPay: " + e.getMessage())
-                    .errorCode("VNPAY_ERROR")
-                    .build();
+            log.error("Lỗi tạo URL thanh toán: {}", e.getMessage());
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         }
     }
-    
+
     @Override
-    public PaymentResponse processCallback(PaymentCallbackRequest callbackRequest) {
+    public String processPaymentResponseUpdate(@NonNull Map<String, String> response) {
+        Assert.notEmpty(response, "Payment response không được rỗng");
+
         try {
-            log.info("Processing VNPay callback for transaction: {}", callbackRequest.getTransactionId());
-            
-            Map<String, String> vnpParams = callbackRequest.getRawData();
-            
-            // Validate signature
-            if (!validateVNPaySignature(vnpParams)) {
-                log.warn("Invalid VNPay signature for transaction: {}", callbackRequest.getTransactionId());
-                return PaymentResponse.builder()
-                        .success(false)
-                        .message("Chữ ký không hợp lệ")
-                        .errorCode("INVALID_SIGNATURE")
-                        .transactionId(callbackRequest.getTransactionId())
-                        .build();
+            if (response.isEmpty()) {
+                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
             }
-            
-            // Check response code
-            String responseCode = vnpParams.get("vnp_ResponseCode");
-            String transactionStatus = vnpParams.get("vnp_TransactionStatus");
-            
-            PaymentResponse.PaymentResponseBuilder responseBuilder = PaymentResponse.builder()
-                    .transactionId(callbackRequest.getTransactionId())
-                    .providerTransactionId(vnpParams.get("vnp_TransactionNo"))
-                    .amount(Double.valueOf(vnpParams.get("vnp_Amount")) / 100) // Convert from xu to VND
-                    .currency("VND")
-                    .paymentMethod("VNPAY")
-                    .provider("VNPAY")
-                    .paymentStatus(responseCode)
-                    .providerResponse(vnpParams.toString());
-            
-            if ("00".equals(responseCode) && "00".equals(transactionStatus)) {
-                // Payment successful
-                responseBuilder
-                        .success(true)
-                        .message("Thanh toán VNPay thành công")
-                        .status("SUCCESS")
-                        .paidAt(LocalDateTime.now());
-            } else {
-                // Payment failed
-                String errorMessage = getVNPayErrorMessage(responseCode);
-                responseBuilder
-                        .success(false)
-                        .message("Thanh toán VNPay thất bại: " + errorMessage)
-                        .status("FAILED")
-                        .errorCode(responseCode);
-            }
-            
-            return responseBuilder.build();
-            
+
+            validatePaymentResponse(response);
+            return buildPaymentResultUpdate(response);
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Error processing VNPay callback: {}", e.getMessage(), e);
-            return PaymentResponse.builder()
-                    .success(false)
-                    .message("Lỗi xử lý callback VNPay: " + e.getMessage())
-                    .errorCode("CALLBACK_ERROR")
-                    .transactionId(callbackRequest.getTransactionId())
-                    .build();
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         }
     }
-    
+
     @Override
-    public PaymentResponse verifyPayment(String transactionId, String provider) {
-        // VNPay verification implementation
-        log.info("Verifying VNPay payment for transaction: {}", transactionId);
-        
-        // This would typically make an API call to VNPay to verify the transaction
-        // For now, return a basic response
-        return PaymentResponse.builder()
-                .success(true)
-                .message("Xác thực giao dịch VNPay")
-                .transactionId(transactionId)
-                .provider("VNPAY")
-                .build();
-    }
-    
-    @Override
-    public RefundResponse processRefund(RefundRequest request) {
+    public Map<String, String> processIPNResponse(@NonNull Map<String, String> response) {
+        Assert.notEmpty(response, "IPN response không được rỗng");
+
         try {
-            log.info("Processing VNPay refund for transaction: {}", request.getTransactionId());
-            
-            // VNPay refund implementation
-            // This would involve calling VNPay's refund API
-            
-            return RefundResponse.builder()
-                    .success(true)
-                    .message("Yêu cầu hoàn tiền VNPay đã được gửi")
-                    .refundId(generateRefundId())
-                    .transactionId(request.getTransactionId())
-                    .bookingId(request.getBookingId())
-                    .refundAmount(request.getRefundAmount())
-                    .finalRefundAmount(request.getRefundAmount()) // No fee for demo
-                    .status("PENDING")
-                    .paymentMethod("VNPAY")
-                    .provider("VNPAY")
-                    .reason(request.getReason())
-                    .requestedAt(LocalDateTime.now())
-                    .expectedCompletionDate(LocalDateTime.now().plusDays(3))
-                    .processingMethod(request.getIsAutomatic() ? "AUTO" : "MANUAL")
-                    .build();
-            
+            if (response.isEmpty()) {
+                return createIPNResponse("99", "Invalid Request");
+            }
+
+            validatePaymentResponse(response);
+            return processIPNResult(response);
+        } catch (AppException e) {
+            log.error("Lỗi xử lý IPN response: {}", e.getMessage());
+            return createIPNResponse("99", e.getMessage());
         } catch (Exception e) {
-            log.error("Error processing VNPay refund: {}", e.getMessage(), e);
-            return RefundResponse.builder()
-                    .success(false)
-                    .message("Lỗi xử lý hoàn tiền VNPay: " + e.getMessage())
-                    .errorCode("REFUND_ERROR")
-                    .transactionId(request.getTransactionId())
-                    .build();
+            log.error("Lỗi xử lý IPN response: {}", e.getMessage());
+            return createIPNResponse("99", "Unknown error");
         }
     }
-    
-    @Override
-    public PaymentStatus getPaymentStatus(Long bookingId) {
-        return new PaymentStatus(bookingId, null, "VNPAY", "PENDING", 0.0, "VND");
+
+    private void validateCreatePaymentRequest(VNPayPaymentRequestDTO requestDTO, String ipAddress) {
+        Assert.notNull(requestDTO, "Payment request không được null");
+        Assert.hasText(ipAddress, "IP address không được rỗng");
+
+        if (!StringUtils.hasText(ipAddress)) {
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
+
+        if (requestDTO.getBookingId() == null) {
+            throw new AppException(ErrorCode.BOOKING_NOT_FOUND);
+        }
     }
-    
-    @Override
-    public Map<String, Object> getSupportedPaymentMethods() {
-        Map<String, Object> methods = new HashMap<>();
-        methods.put("VNPAY", Map.of(
-                "name", "VNPay",
-                "description", "Cổng thanh toán VNPay",
-                "fee", "0%",
-                "minAmount", 1000,
-                "maxAmount", 50000000,
-                "supportedBanks", Arrays.asList("VNPAYQR", "VNBANK", "INTCARD")
-        ));
-        return methods;
-    }
-    
-    @Override
-    public Double calculatePaymentFee(Double amount, String paymentMethod) {
-        // VNPay typically charges no fee for QR payments
-        return 0.0;
-    }
-    
-    @Override
-    public boolean validateSignature(Map<String, String> data, String signature, String provider) {
-        return validateVNPaySignature(data);
-    }
-    
-    // Private helper methods
-    
-    private String generateTransactionId(Long bookingId) {
-        return "MOVIE_" + bookingId + "_" + System.currentTimeMillis();
-    }
-    
-    private String generateRefundId() {
-        return "REFUND_" + System.currentTimeMillis();
-    }
-    
-    private String buildPaymentUrl(Map<String, String> params) throws Exception {
-        // Sort parameters
-        List<String> fieldNames = new ArrayList<>(params.keySet());
-        Collections.sort(fieldNames);
+
+    private Map<String, String> buildPaymentParams(VNPayPaymentRequestDTO requestDTO, String ipAddress) {
+        // Lấy thông tin booking
+        Booking booking = bookingRepository.findById(requestDTO.getBookingId())
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
+
+        // Kiểm tra trạng thái booking
+        if (booking.getBookingStatus() == BookingStatus.PAID) {
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
+
+        Map<String, String> vnp_Params = new HashMap<>();
+        vnp_Params.put("vnp_Version", VNPayConfig.VERSION);
+        vnp_Params.put("vnp_Command", VNPayConfig.COMMAND);
+        vnp_Params.put("vnp_TmnCode", vnPayConfig.getTmnCode());
+        vnp_Params.put("vnp_Amount", String.valueOf(booking.getFinalAmount().longValue() * 100));
+        vnp_Params.put("vnp_CurrCode", VNPayConfig.CURR_CODE);
+
+        String vnp_TxnRef = generateTxnRef();
+        vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
+
+        String orderInfo = requestDTO.getOrderInfo() != null ? 
+                requestDTO.getOrderInfo() : 
+                String.format("Thanh toan ve xem phim - Booking #%s", requestDTO.getBookingId());
+        vnp_Params.put("vnp_OrderInfo", orderInfo);
+
+        vnp_Params.put("vnp_OrderType", "billpayment");
+        vnp_Params.put("vnp_Locale", requestDTO.getLanguage() != null ? requestDTO.getLanguage() : VNPayConfig.LOCALE);
         
-        StringBuilder hashData = new StringBuilder();
-        StringBuilder query = new StringBuilder();
+        String returnUrl = requestDTO.getReturnUrl() != null ? 
+                requestDTO.getReturnUrl() : vnPayConfig.getReturnUrl();
+        vnp_Params.put("vnp_ReturnUrl", returnUrl);
         
-        for (String fieldName : fieldNames) {
-            String fieldValue = params.get(fieldName);
-            if (fieldValue != null && fieldValue.length() > 0) {
-                // Build hash data
-                hashData.append(fieldName).append('=').append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8.toString()));
+        vnp_Params.put("vnp_IpAddr", ipAddress);
+
+        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        String vnp_CreateDate = formatter.format(cld.getTime());
+        vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
+
+        cld.add(Calendar.MINUTE, 15);
+        String vnp_ExpireDate = formatter.format(cld.getTime());
+        vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
+
+        if (requestDTO.getBankCode() != null && !requestDTO.getBankCode().isEmpty()) {
+            vnp_Params.put("vnp_BankCode", requestDTO.getBankCode());
+        }
+
+        return vnp_Params;
+    }
+
+    private void validatePaymentResponse(@NonNull Map<String, String> response) {
+        if (!response.containsKey("vnp_SecureHash")) {
+            log.warn("Thiếu secure hash trong response");
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
+
+        String vnp_SecureHash = response.get("vnp_SecureHash");
+        if (vnp_SecureHash == null || vnp_SecureHash.isEmpty()) {
+            log.warn("Secure hash rỗng trong response");
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
+
+        Map<String, String> fields = new HashMap<>(response);
+        fields.remove("vnp_SecureHash");
+        fields.remove("vnp_SecureHashType");
+
+        String checkSum = VNPayHashUtils.hashAllFields(fields, vnPayConfig.getHashSecret());
+        if (!checkSum.equals(vnp_SecureHash)) {
+            log.warn("Invalid secure hash. Expected: {}, Got: {}", checkSum, vnp_SecureHash);
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
+    }
+
+    private String buildPaymentResultUpdate(Map<String, String> response) {
+        String responseCode = response.getOrDefault("vnp_ResponseCode", "99");
+        String transactionStatus = response.getOrDefault("vnp_TransactionStatus", "99");
+        String transactionNo = response.get("vnp_TransactionNo");
+        String transactionRef = response.get("vnp_TxnRef");
+
+        if (!response.containsKey("vnp_Amount")) {
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
+
+        long amount = Long.parseLong(response.get("vnp_Amount")) / 100;
+        boolean isSuccess = "00".equals(responseCode) && "00".equals(transactionStatus);
+
+        String redirectUrl = "http://localhost:3000/payment/";
+
+        if (isSuccess) {
+            try {
+                String orderInfo = response.get("vnp_OrderInfo");
+                Long bookingId = extractBookingId(orderInfo);
+
+                Booking booking = bookingRepository.findById(bookingId)
+                        .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
+
+                booking.setBookingStatus(BookingStatus.PAID);
+                booking.setUpdatedAt(LocalDateTime.now());
+                bookingRepository.save(booking);
+
+                redirectUrl += "success?bookingId=" + bookingId;
+                log.info("Thanh toán thành công cho booking: {}", bookingId);
                 
-                // Build query
-                query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8.toString()))
-                        .append('=')
-                        .append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8.toString()));
+            } catch (Exception e) {
+                log.error("Lỗi cập nhật booking sau thanh toán: {}", e.getMessage());
+                redirectUrl += "error";
+            }
+        } else {
+            try {
+                String orderInfo = response.get("vnp_OrderInfo");
+                Long bookingId = extractBookingId(orderInfo);
+
+                Booking booking = bookingRepository.findById(bookingId)
+                        .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
+
+                booking.setBookingStatus(BookingStatus.CANCELLED);
+                booking.setUpdatedAt(LocalDateTime.now());
+                bookingRepository.save(booking);
+
+                redirectUrl += "failed?bookingId=" + bookingId;
+                log.info("Thanh toán thất bại cho booking: {}", bookingId);
                 
-                if (!fieldName.equals(fieldNames.get(fieldNames.size() - 1))) {
-                    hashData.append('&');
-                    query.append('&');
-                }
+            } catch (Exception e) {
+                log.error("Lỗi cập nhật booking sau thanh toán thất bại: {}", e.getMessage());
+                redirectUrl += "error";
             }
         }
-        
-        // Generate secure hash
-        String secureHash = hmacSHA512(vnpHashSecret, hashData.toString());
-        query.append("&vnp_SecureHash=").append(secureHash);
-        
-        return vnpUrl + "?" + query.toString();
+
+        return redirectUrl;
     }
-    
-    private boolean validateVNPaySignature(Map<String, String> params) {
+
+    private Long extractBookingId(String orderInfo) {
         try {
-            String receivedSignature = params.remove("vnp_SecureHash");
-            
-            // Sort and build hash data
-            List<String> fieldNames = new ArrayList<>(params.keySet());
-            Collections.sort(fieldNames);
-            
-            StringBuilder hashData = new StringBuilder();
-            for (String fieldName : fieldNames) {
-                String fieldValue = params.get(fieldName);
-                if (fieldValue != null && fieldValue.length() > 0) {
-                    hashData.append(fieldName).append('=').append(fieldValue);
-                    if (!fieldName.equals(fieldNames.get(fieldNames.size() - 1))) {
-                        hashData.append('&');
-                    }
-                }
-            }
-            
-            String calculatedSignature = hmacSHA512(vnpHashSecret, hashData.toString());
-            return calculatedSignature.equals(receivedSignature);
-            
+            // Format: "Thanh toan ve xem phim - Booking #123"
+            String[] parts = orderInfo.split("#");
+            return Long.parseLong(parts[1].trim());
         } catch (Exception e) {
-            log.error("Error validating VNPay signature: {}", e.getMessage());
-            return false;
+            log.error("Lỗi extract booking ID từ orderInfo: {}", orderInfo);
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         }
     }
-    
-    private String hmacSHA512(String key, String data) throws Exception {
-        Mac mac = Mac.getInstance("HmacSHA512");
-        SecretKeySpec secretKeySpec = new SecretKeySpec(key.getBytes(), "HmacSHA512");
-        mac.init(secretKeySpec);
-        byte[] hash = mac.doFinal(data.getBytes());
-        
-        StringBuilder result = new StringBuilder();
-        for (byte b : hash) {
-            result.append(String.format("%02x", b));
+
+    private Map<String, String> processIPNResult(Map<String, String> response) {
+        String responseCode = response.get("vnp_ResponseCode");
+        String transactionStatus = response.get("vnp_TransactionStatus");
+        String transactionRef = response.get("vnp_TxnRef");
+
+        if (!response.containsKey("vnp_Amount")) {
+            return createIPNResponse("99", "Missing Amount");
         }
-        return result.toString();
+
+        long amount = Long.parseLong(response.get("vnp_Amount")) / 100;
+
+        log.info("IPN Notification - TxnRef: {}, Amount: {}, Status: {}",
+                transactionRef, amount, transactionStatus);
+
+        if ("00".equals(responseCode) && "00".equals(transactionStatus)) {
+            return createIPNResponse("00", "Confirm Success");
+        }
+
+        log.warn("IPN notification failed - ResponseCode: {}, TransactionStatus: {}",
+                responseCode, transactionStatus);
+        return createIPNResponse("99", "Transaction Failed");
     }
-    
-    private String getVNPayErrorMessage(String errorCode) {
-        switch (errorCode) {
-            case "07": return "Trừ tiền thành công. Giao dịch bị nghi ngờ (liên quan tới lừa đảo, giao dịch bất thường).";
-            case "09": return "Giao dịch không thành công do: Thẻ/Tài khoản của khách hàng chưa đăng ký dịch vụ InternetBanking tại ngân hàng.";
-            case "10": return "Giao dịch không thành công do: Khách hàng xác thực thông tin thẻ/tài khoản không đúng quá 3 lần";
-            case "11": return "Giao dịch không thành công do: Đã hết hạn chờ thanh toán. Xin quý khách vui lòng thực hiện lại giao dịch.";
-            case "12": return "Giao dịch không thành công do: Thẻ/Tài khoản của khách hàng bị khóa.";
-            case "13": return "Giao dịch không thành công do Quý khách nhập sai mật khẩu xác thực giao dịch (OTP).";
-            case "24": return "Giao dịch không thành công do: Khách hàng hủy giao dịch";
-            case "51": return "Giao dịch không thành công do: Tài khoản của quý khách không đủ số dư để thực hiện giao dịch.";
-            case "65": return "Giao dịch không thành công do: Tài khoản của Quý khách đã vượt quá hạn mức giao dịch trong ngày.";
-            case "75": return "Ngân hàng thanh toán đang bảo trì.";
-            case "79": return "Giao dịch không thành công do: KH nhập sai mật khẩu thanh toán quá số lần quy định.";
-            default: return "Giao dịch thất bại";
-        }
+
+    private String generateTxnRef() {
+        return String.format("%s%d", vnPayConfig.getTmnCode(), System.currentTimeMillis());
+    }
+
+    private Map<String, String> createIPNResponse(@NonNull String rspCode, @NonNull String message) {
+        Assert.hasText(rspCode, "Response code không được rỗng");
+        Assert.hasText(message, "Message không được rỗng");
+
+        return Map.of(
+                "RspCode", rspCode,
+                "Message", message
+        );
     }
 } 

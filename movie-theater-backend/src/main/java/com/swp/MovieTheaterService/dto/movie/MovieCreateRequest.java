@@ -52,13 +52,7 @@ public class MovieCreateRequest {
     @Pattern(regexp = "^(G|PG|PG-13|R|NC-17)$", message = "Xếp hạng phim không hợp lệ (G, PG, PG-13, R, NC-17)")
     private String rating;
 
-    @Pattern(regexp = "^(https?://).*\\.(jpg|jpeg|png|gif|webp)$", 
-             message = "URL poster phải là đường dẫn hợp lệ đến file ảnh")
-    private String posterUrl;
 
-    @Pattern(regexp = "^(https?://).*", 
-             message = "URL trailer phải là đường dẫn hợp lệ")
-    private String trailerUrl;
 
     @NotNull(message = "Giá vé không được để trống")
     @DecimalMin(value = "0.0", inclusive = false, message = "Giá vé phải lớn hơn 0")

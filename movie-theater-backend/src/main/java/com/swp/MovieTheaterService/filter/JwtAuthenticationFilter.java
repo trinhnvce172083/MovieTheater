@@ -60,7 +60,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/auth/resend-verification",
             "/api/auth/check-email",
             "/api/auth/check-username",
-            "/api/auth/test-registration",
             "/auth/**",
 
             // Test endpoints

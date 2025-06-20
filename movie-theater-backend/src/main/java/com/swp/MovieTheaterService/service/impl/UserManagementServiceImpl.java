@@ -25,6 +25,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -84,7 +85,7 @@ public class UserManagementServiceImpl implements UserManagementService {
                 .phoneNumber(request.getPhoneNumber())
                 .dateOfBirth(request.getDateOfBirth())
                 .address(request.getAddress())
-                .role(request.getRole() != null ? request.getRole() : Role.CUSTOMER)
+                .role(request.getRole() != null ? request.getRole() : Role.MEMBER)
                 .isActive(true)
                 .isVerified(true)
                 .emailVerified(true)
@@ -638,6 +639,38 @@ public class UserManagementServiceImpl implements UserManagementService {
                 (root, query, cb) -> cb.equal(root.get("acceptMarketing"), true)).size();
         Double marketingAcceptanceRate = totalUsers > 0 ? (double) marketingAcceptUsers / totalUsers : 0.0;
 
+        // Calculate average user age (if dateOfBirth is available)
+        Double averageUserAge = allAccounts.stream()
+                .filter(account -> account.getDateOfBirth() != null)
+                .mapToDouble(account -> {
+                    try {
+                        return java.time.Period.between(account.getDateOfBirth(), java.time.LocalDate.now()).getYears();
+                    } catch (Exception e) {
+                        return 0.0;
+                    }
+                })
+                .average()
+                .orElse(0.0);
+
+        // Calculate top cities (if address/city field is available)
+        Map<String, Long> topCities = allAccounts.stream()
+                .filter(account -> account.getAddress() != null && !account.getAddress().trim().isEmpty())
+                .collect(Collectors.groupingBy(
+                        account -> {
+                            // Extract city from address (simple approach - last part after comma)
+                            String[] parts = account.getAddress().split(",");
+                            return parts.length > 0 ? parts[parts.length - 1].trim() : "Unknown";
+                        },
+                        Collectors.counting()))
+                .entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(10) // Top 10 cities
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new));
+
         return UserStatisticsResponse.builder()
                 .totalUsers(totalUsers)
                 .activeUsers(activeUsers)
@@ -645,7 +678,7 @@ public class UserManagementServiceImpl implements UserManagementService {
                 .lockedAccounts(lockedAccounts)
                 .usersByRole(usersByRole)
                 .usersByMembershipLevel(usersByMembershipLevel)
-                .usersByDepartment(new HashMap<>())
+                .usersByDepartment(new HashMap<>()) // Keep empty as department is for employees only
                 .newUsersThisMonth(newUsersThisMonth)
                 .newUsersThisWeek(newUsersThisWeek)
                 .usersLoggedInToday(usersLoggedInToday)
@@ -654,8 +687,8 @@ public class UserManagementServiceImpl implements UserManagementService {
                 .totalMembershipPointsDistributed(totalMembershipPointsDistributed)
                 .oauthUsers(oauthUsers)
                 .marketingAcceptanceRate(marketingAcceptanceRate)
-                .averageUserAge(0.0)
-                .topCities(new HashMap<>())
+                .averageUserAge(averageUserAge)
+                .topCities(topCities)
                 .build();
     }
 

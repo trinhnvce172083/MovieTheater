@@ -7,7 +7,7 @@ import com.swp.MovieTheaterService.dto.booking.ConcessionOrderRequest;
 import com.swp.MovieTheaterService.dto.booking.BookingSummaryResponse;
 import com.swp.MovieTheaterService.service.BookingService;
 import com.swp.MovieTheaterService.service.SeatReservationService;
-import com.swp.MovieTheaterService.config.SwaggerExamples;
+import com.swp.MovieTheaterService.config.documentation.OpenApiExamples;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -130,9 +130,9 @@ public class BookingController {
 
     @PostMapping
     @Operation(summary = "Create booking", description = "Create new booking with seat selection and optional concessions", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = {
-            @ExampleObject(name = "Member Booking (Simple)", summary = "Booking đơn giản cho thành viên", value = SwaggerExamples.MEMBER_BOOKING_SIMPLE_EXAMPLE),
-            @ExampleObject(name = "Guest with Concessions", summary = "Guest booking với đồ ăn/uống", value = SwaggerExamples.GUEST_BOOKING_WITH_CONCESSIONS_EXAMPLE),
-            @ExampleObject(name = "Family Scenario", summary = "Scenario gia đình đầy đủ", value = SwaggerExamples.FAMILY_BOOKING_SCENARIO)
+                            @ExampleObject(name = "Member Booking (Simple)", summary = "Booking đơn giản cho thành viên", value = OpenApiExamples.MEMBER_BOOKING_SIMPLE_EXAMPLE),
+                @ExampleObject(name = "Guest with Concessions", summary = "Guest booking với đồ ăn/uống", value = OpenApiExamples.GUEST_BOOKING_WITH_CONCESSIONS_EXAMPLE),
+                @ExampleObject(name = "Family Scenario", summary = "Scenario gia đình đầy đủ", value = OpenApiExamples.FAMILY_BOOKING_SCENARIO)
     })))
     public ResponseEntity<BookingResponse> createBooking(
             @Valid @RequestBody BookingCreateRequest request,
@@ -157,10 +157,10 @@ public class BookingController {
 
     @PostMapping("/guest")
     @Operation(summary = "Create guest booking", description = "Create new guest booking without login - requires customer information", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = {
-            @ExampleObject(name = "Guest Booking with Concessions", summary = "Guest booking có đồ ăn/uống", value = SwaggerExamples.GUEST_BOOKING_WITH_CONCESSIONS_EXAMPLE),
-            @ExampleObject(name = "Guest Booking (Seats Only)", summary = "Guest booking chỉ có ghế", value = SwaggerExamples.GUEST_BOOKING_SEATS_ONLY_EXAMPLE),
-            @ExampleObject(name = "Couple Date Scenario", summary = "Scenario hẹn hò", value = SwaggerExamples.COUPLE_DATE_SCENARIO),
-            @ExampleObject(name = "Business Group", summary = "Scenario nhóm doanh nghiệp", value = SwaggerExamples.BUSINESS_GROUP_SCENARIO)
+                         @ExampleObject(name = "Guest Booking with Concessions", summary = "Guest booking có đồ ăn/uống", value = OpenApiExamples.GUEST_BOOKING_WITH_CONCESSIONS_EXAMPLE),
+              @ExampleObject(name = "Guest Booking (Seats Only)", summary = "Guest booking chỉ có ghế", value = OpenApiExamples.GUEST_BOOKING_SEATS_ONLY_EXAMPLE),
+              @ExampleObject(name = "Couple Date Scenario", summary = "Scenario hẹn hò", value = OpenApiExamples.COUPLE_DATE_SCENARIO),
+              @ExampleObject(name = "Business Group", summary = "Scenario nhóm doanh nghiệp", value = OpenApiExamples.BUSINESS_GROUP_SCENARIO)
     })))
     public ResponseEntity<BookingResponse> createGuestBooking(
             @Valid @RequestBody BookingCreateRequest request,
@@ -296,16 +296,43 @@ public class BookingController {
     }
 
     @GetMapping("/statistics")
-    @Operation(summary = "Get booking statistics", description = "Get booking statistics for analytics")
+    @Operation(summary = "Get booking statistics", description = "Get booking statistics for analytics with period filtering")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<BookingService.BookingStatistics> getBookingStatistics(
-            @RequestParam(required = false) String period) {
+            @RequestParam(required = false, defaultValue = "all") String period) {
 
         log.info("Getting booking statistics for period: {}", period);
 
-        // Use existing method - ignore period filter for now
-        BookingService.BookingStatistics statistics = bookingService.getBookingStatistics();
+        LocalDateTime startDate = null;
+        LocalDateTime endDate = LocalDateTime.now();
+
+        // Parse period parameter
+        switch (period.toLowerCase()) {
+            case "today":
+                startDate = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
+                break;
+            case "week":
+                startDate = LocalDateTime.now().minusDays(7);
+                break;
+            case "month":
+                startDate = LocalDateTime.now().minusMonths(1);
+                break;
+            case "quarter":
+                startDate = LocalDateTime.now().minusMonths(3);
+                break;
+            case "year":
+                startDate = LocalDateTime.now().minusYears(1);
+                break;
+            case "all":
+            default:
+                // Get all statistics without date filter
+                BookingService.BookingStatistics statistics = bookingService.getBookingStatistics();
+                return ResponseEntity.ok(statistics);
+        }
+
+        // Get statistics with date filter
+        BookingService.BookingStatistics statistics = bookingService.getBookingStatistics(startDate, endDate);
         return ResponseEntity.ok(statistics);
     }
 
@@ -459,9 +486,9 @@ public class BookingController {
      */
     @PostMapping("/{id}/concessions")
     @Operation(summary = "Thêm đồ ăn/uống vào booking", description = "Thêm đồ ăn/uống vào booking đang ở trạng thái PENDING", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = {
-            @ExampleObject(name = "Add Popcorn", summary = "Thêm bắp rang", value = SwaggerExamples.POPCORN_ORDER_EXAMPLE),
-            @ExampleObject(name = "Add Drink", summary = "Thêm nước uống", value = SwaggerExamples.DRINK_ORDER_EXAMPLE),
-            @ExampleObject(name = "General Add", summary = "Thêm tổng quát", value = SwaggerExamples.ADD_CONCESSION_EXAMPLE)
+                            @ExampleObject(name = "Add Popcorn", summary = "Thêm bắp rang", value = OpenApiExamples.POPCORN_ORDER_EXAMPLE),
+                @ExampleObject(name = "Add Drink", summary = "Thêm nước uống", value = OpenApiExamples.DRINK_ORDER_EXAMPLE),
+                @ExampleObject(name = "General Add", summary = "Thêm tổng quát", value = OpenApiExamples.ADD_CONCESSION_EXAMPLE)
     })))
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<BookingResponse> addConcessionToBooking(

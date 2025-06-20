@@ -6,6 +6,8 @@ import com.swp.MovieTheaterService.dto.movie.MovieListResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieSummaryResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieUpdateRequest;
+import com.swp.MovieTheaterService.exception.AppException;
+import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.service.MovieService;
 import com.swp.MovieTheaterService.service.MovieStatusScheduler;
 import com.swp.MovieTheaterService.enums.MovieStatus;
@@ -22,10 +24,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +62,45 @@ public class MovieController {
 
         MovieResponse response = movieService.createMovie(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping(value = "/with-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create movie with images", description = "Create a new movie with poster and backdrop images (Admin only)")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<MovieResponse> createMovieWithImages(
+            @RequestParam("movieData") String movieDataJson,
+            @RequestParam(value = "poster", required = false) MultipartFile posterFile,
+            @RequestParam(value = "backdrop", required = false) MultipartFile backdropFile) {
+        
+        log.info("Creating new movie with images");
+        
+        try {
+            // Parse JSON data với JSR310 module
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = createConfiguredObjectMapper();
+            MovieCreateRequest request = objectMapper.readValue(movieDataJson, MovieCreateRequest.class);
+            
+            // Create movie first
+            MovieResponse movieResponse = movieService.createMovie(request);
+            Long movieId = movieResponse.getMovieId();
+            
+            // Upload images if provided
+            if (posterFile != null && !posterFile.isEmpty()) {
+                movieService.updateMoviePoster(movieId, posterFile);
+            }
+            
+            if (backdropFile != null && !backdropFile.isEmpty()) {
+                movieService.updateMovieBackdrop(movieId, backdropFile);
+            }
+            
+            // Return updated movie data
+            MovieResponse finalResponse = movieService.getMovieById(movieId);
+            return ResponseEntity.status(HttpStatus.CREATED).body(finalResponse);
+            
+        } catch (Exception e) {
+            log.error("Error creating movie with images: {}", e.getMessage());
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
     }
 
     @PutMapping("/{id}")
@@ -95,6 +139,45 @@ public class MovieController {
 
         MovieResponse response = movieService.updateMovie(id, request);
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping(value = "/{id}/with-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update movie with images", description = "Update movie data and upload new images (Admin only)")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<MovieResponse> updateMovieWithImages(
+            @PathVariable Long id,
+            @RequestParam(value = "movieData", required = false) String movieDataJson,
+            @RequestParam(value = "poster", required = false) MultipartFile posterFile,
+            @RequestParam(value = "backdrop", required = false) MultipartFile backdropFile) {
+        
+        log.info("Updating movie ID: {} with images", id);
+        
+        try {
+            // Update movie data if provided
+            if (movieDataJson != null && !movieDataJson.trim().isEmpty()) {
+                com.fasterxml.jackson.databind.ObjectMapper objectMapper = createConfiguredObjectMapper();
+                MovieUpdateRequest request = objectMapper.readValue(movieDataJson, MovieUpdateRequest.class);
+                movieService.updateMovie(id, request);
+            }
+            
+            // Upload images if provided
+            if (posterFile != null && !posterFile.isEmpty()) {
+                movieService.updateMoviePoster(id, posterFile);
+            }
+            
+            if (backdropFile != null && !backdropFile.isEmpty()) {
+                movieService.updateMovieBackdrop(id, backdropFile);
+            }
+            
+            // Return updated movie data
+            MovieResponse finalResponse = movieService.getMovieById(id);
+            return ResponseEntity.ok(finalResponse);
+            
+        } catch (Exception e) {
+            log.error("Error updating movie with images: {}", e.getMessage());
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
     }
 
     @GetMapping("/{id}")
@@ -251,5 +334,67 @@ public class MovieController {
         }
 
         return ResponseEntity.ok(statusOptions);
+    }
+    
+    // =============== IMAGE MANAGEMENT ENDPOINTS ===============
+    
+    @PostMapping("/{id}/poster")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Upload movie poster", description = "Upload poster image for a movie (Admin only)")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<String> uploadMoviePoster(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        
+        log.info("Uploading poster for movie ID: {}", id);
+        MovieResponse response = movieService.updateMoviePoster(id, file);
+        return ResponseEntity.ok(response.getPosterUrl());
+    }
+    
+    @PostMapping("/{id}/backdrop")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Upload movie backdrop", description = "Upload backdrop image for a movie (Admin only)")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<String> uploadMovieBackdrop(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        
+        log.info("Uploading backdrop for movie ID: {}", id);
+        movieService.updateMovieBackdrop(id, file);
+        return ResponseEntity.ok("Upload backdrop thành công");
+    }
+    
+    @DeleteMapping("/{id}/poster")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete movie poster", description = "Delete poster image of a movie (Admin only)")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<String> deleteMoviePoster(@PathVariable Long id) {
+        
+        log.info("Deleting poster for movie ID: {}", id);
+        movieService.deleteMoviePoster(id);
+        return ResponseEntity.ok("Xóa poster thành công");
+    }
+    
+    @DeleteMapping("/{id}/backdrop")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete movie backdrop", description = "Delete backdrop image of a movie (Admin only)")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<String> deleteMovieBackdrop(@PathVariable Long id) {
+        
+        log.info("Deleting backdrop for movie ID: {}", id);
+        movieService.deleteMovieBackdrop(id);
+        return ResponseEntity.ok("Xóa backdrop thành công");
+    }
+    
+    // =============== UTILITY METHODS ===============
+    
+    /**
+     * Tạo ObjectMapper với JSR310 module cho xử lý LocalDate/LocalDateTime
+     */
+    private com.fasterxml.jackson.databind.ObjectMapper createConfiguredObjectMapper() {
+        com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        objectMapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return objectMapper;
     }
 }

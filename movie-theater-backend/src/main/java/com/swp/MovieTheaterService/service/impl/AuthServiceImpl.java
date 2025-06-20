@@ -1,10 +1,13 @@
 package com.swp.MovieTheaterService.service.impl;
 
-import com.swp.MovieTheaterService.dto.request.LoginRequest;
-import com.swp.MovieTheaterService.dto.request.RegisterRequest;
 import com.swp.MovieTheaterService.dto.request.ForgotPasswordRequest;
+import com.swp.MovieTheaterService.dto.request.LoginRequest;
+import com.swp.MovieTheaterService.dto.request.RefreshTokenRequest;
+import com.swp.MovieTheaterService.dto.request.RegisterRequest;
 import com.swp.MovieTheaterService.dto.request.ResetPasswordRequest;
+import com.swp.MovieTheaterService.dto.request.UserProfileUpdateRequest;
 import com.swp.MovieTheaterService.dto.response.AuthResponse;
+import com.swp.MovieTheaterService.dto.response.UserProfileResponse;
 import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.enums.Role;
 import com.swp.MovieTheaterService.exception.AppException;
@@ -12,8 +15,10 @@ import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.repository.AccountRepository;
 import com.swp.MovieTheaterService.service.AuthService;
 import com.swp.MovieTheaterService.service.EmailService;
+import com.swp.MovieTheaterService.service.ImageManagementService;
 import com.swp.MovieTheaterService.service.JwtService;
 import com.swp.MovieTheaterService.service.TokenBlacklistService;
+import com.swp.MovieTheaterService.utils.ImageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,8 +30,15 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -41,6 +53,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserDetailsService userDetailsService;
     private final EmailService emailService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final ImageManagementService imageManagementService;
 
     @PostConstruct
     private void validateDependencies() {
@@ -86,6 +99,13 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalStateException("TokenBlacklistService dependency is null");
         }
         log.info("✅ TokenBlacklistService initialized");
+
+        if (imageManagementService == null) {
+            log.error("❌ ImageManagementService is null");
+            throw new IllegalStateException("ImageManagementService dependency is null");
+        }
+        log.info("✅ ImageManagementService initialized");
+
         log.info("=== ALL DEPENDENCIES VALIDATED ===");
     }
 
@@ -211,15 +231,15 @@ public class AuthServiceImpl implements AuthService {
         try {
             log.info("Building Account object...");
             account = Account.builder()
-                    .username(request.getUsername())
-                    .email(request.getEmail())
-                    .password(encodedPassword)
-                    .fullName(request.getFullName())
-                    .phoneNumber(request.getPhoneNumber())
-                    .dateOfBirth(request.getDateOfBirth())
-                    .address(request.getAddress())
-                    .role(Role.CUSTOMER)
-                    .isActive(true)
+                                    .username(request.getUsername())
+                .email(request.getEmail())
+                .password(encodedPassword)
+                .fullName(request.getFullName())
+                .phoneNumber(request.getPhoneNumber())
+                .dateOfBirth(request.getDateOfBirth())
+                .address(request.getAddress())
+                .role(Role.MEMBER)
+                .isActive(true)
                     .isVerified(false)
                     .emailVerified(false)
                     .emailVerificationToken(UUID.randomUUID().toString())
@@ -593,4 +613,189 @@ public class AuthServiceImpl implements AuthService {
         return !accountRepository.existsByEmail(email);
     }
 
+    // ==================== PROFILE MANAGEMENT ====================
+
+    @Override
+    public UserProfileResponse getUserProfile(String username) {
+        log.info("Getting profile for user: {}", username);
+        
+        Account account = accountRepository.findByUsername(username)
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        return convertToUserProfileResponse(account);
+    }
+
+    @Override
+    @Transactional
+    public UserProfileResponse updateUserProfile(String username, UserProfileUpdateRequest request) {
+        log.info("Updating profile for user: {}", username);
+        
+        Account account = accountRepository.findByUsername(username)
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        // Validate email uniqueness nếu user muốn đổi email
+        if (request.getEmail() != null && !request.getEmail().equals(account.getEmail())) {
+            if (accountRepository.existsByEmail(request.getEmail())) {
+                throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
+            }
+            account.setEmail(request.getEmail());
+            account.setEmailVerified(false); // Cần verify lại email mới
+        }
+        
+        // Cập nhật các field khác
+        if (request.getFullName() != null) {
+            account.setFullName(request.getFullName());
+        }
+        if (request.getPhoneNumber() != null) {
+            account.setPhoneNumber(request.getPhoneNumber());
+        }
+        if (request.getDateOfBirth() != null) {
+            account.setDateOfBirth(request.getDateOfBirth());
+        }
+        if (request.getAddress() != null) {
+            account.setAddress(request.getAddress());
+        }
+        if (request.getAcceptMarketing() != null) {
+            account.setAcceptMarketing(request.getAcceptMarketing());
+        }
+        
+        account.setUpdatedAt(LocalDateTime.now());
+        Account updatedAccount = accountRepository.save(account);
+        
+        log.info("Profile updated successfully for user: {}", username);
+        return convertToUserProfileResponse(updatedAccount);
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> uploadUserAvatar(String username, MultipartFile file) {
+        log.info("Uploading avatar for user: {}", username);
+        
+        Account account = accountRepository.findByUsername(username)
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            // Validate file
+            if (!ImageUtils.isValidImageFile(file)) {
+                response.put("success", false);
+                response.put("message", ImageUtils.getValidationMessage(file));
+                return response;
+            }
+            
+            // Upload avatar
+            String newAvatarUrl = imageManagementService.updateAccountAvatar(account.getAccountId(), file);
+            
+            response.put("success", true);
+            response.put("message", "Upload avatar thành công");
+            response.put("avatarUrl", newAvatarUrl);
+            
+            return response;
+            
+        } catch (Exception e) {
+            log.error("Failed to upload avatar for user: {}", username, e);
+            response.put("success", false);
+            response.put("message", "Upload avatar thất bại: " + e.getMessage());
+            return response;
+        }
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> deleteUserAvatar(String username) {
+        log.info("Deleting avatar for user: {}", username);
+        
+        Account account = accountRepository.findByUsername(username)
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            boolean deleted = imageManagementService.deleteAccountAvatar(account.getAccountId());
+            
+            if (deleted) {
+                response.put("success", true);
+                response.put("message", "Xóa avatar thành công");
+            } else {
+                response.put("success", false);
+                response.put("message", "Không thể xóa avatar");
+            }
+            
+            return response;
+            
+        } catch (Exception e) {
+            log.error("Failed to delete avatar for user: {}", username, e);
+            response.put("success", false);
+            response.put("message", "Xóa avatar thất bại: " + e.getMessage());
+            return response;
+        }
+    }
+
+    @Override
+    @Transactional
+    public UserProfileResponse updateProfileWithAvatar(String username, String profileDataJson, MultipartFile avatarFile) {
+        log.info("Updating profile with avatar for user: {}", username);
+        
+        Account account = accountRepository.findByUsername(username)
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        try {
+            // Update profile data if provided
+            if (profileDataJson != null && !profileDataJson.trim().isEmpty()) {
+                ObjectMapper objectMapper = createConfiguredObjectMapper();
+                UserProfileUpdateRequest request = objectMapper.readValue(profileDataJson, UserProfileUpdateRequest.class);
+                updateUserProfile(username, request);
+            }
+            
+            // Upload avatar if provided
+            if (avatarFile != null && !avatarFile.isEmpty()) {
+                uploadUserAvatar(username, avatarFile);
+            }
+            
+            // Return updated profile
+            Account updatedAccount = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+            
+            return convertToUserProfileResponse(updatedAccount);
+            
+        } catch (Exception e) {
+            log.error("Error updating profile with avatar for user: {}", username, e);
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
+    }
+
+    /**
+     * Convert Account entity to UserProfileResponse
+     */
+    private UserProfileResponse convertToUserProfileResponse(Account account) {
+        return UserProfileResponse.builder()
+            .accountId(account.getAccountId())
+            .username(account.getUsername())
+            .email(account.getEmail())
+            .fullName(account.getFullName())
+            .phoneNumber(account.getPhoneNumber())
+            .dateOfBirth(account.getDateOfBirth())
+            .address(account.getAddress())
+            .avatarUrl(account.getAvatarUrl())
+            .role(account.getRole())
+            .membershipLevel(account.getMembershipLevel())
+            .membershipPoints(account.getMembershipPoints())
+            .isActive(account.getIsActive())
+            .emailVerified(account.getEmailVerified())
+            .acceptMarketing(account.getAcceptMarketing())
+            .createdAt(account.getCreatedAt())
+            .updatedAt(account.getUpdatedAt())
+            .build();
+    }
+
+    /**
+     * Create configured ObjectMapper for JSON parsing
+     */
+    private ObjectMapper createConfiguredObjectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return objectMapper;
+    }
 }

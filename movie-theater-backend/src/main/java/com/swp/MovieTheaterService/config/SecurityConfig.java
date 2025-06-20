@@ -91,6 +91,12 @@ public class SecurityConfig {
                                         "/actuator/health",
                                         "/actuator/info",
 
+                                        // Payment public endpoints
+                                        "/api/payments/methods", // Get payment methods
+                                        "/api/payments/vnpay/callback", // VNPay callback
+                                        "/api/payments/vnpay/return", // VNPay return
+                                        "/api/payments/calculate-fee", // Calculate payment fee
+
                                         // Test endpoints
                                         "/api/test/**")
                                 .permitAll()
@@ -199,7 +205,12 @@ public class SecurityConfig {
                                         "/api/user/**", // General user operations
                                         "/api/auth/profile/**", // Auth profile
                                         "/api/auth/change-password/**", // Password change
-                                        "/api/auth/logout" // Logout endpoint
+                                        "/api/auth/logout", // Logout endpoint
+                                        
+                                        // Payment endpoints for authenticated users
+                                        "/api/payments/create", // Create payment
+                                        "/api/payments/verify/**", // Verify payment
+                                        "/api/payments/status/**" // Get payment status
                                 ).authenticated()
 
                                 // =================== DEFAULT ===================

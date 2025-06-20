@@ -5,7 +5,12 @@ import com.swp.MovieTheaterService.dto.request.LoginRequest;
 import com.swp.MovieTheaterService.dto.request.RefreshTokenRequest;
 import com.swp.MovieTheaterService.dto.request.RegisterRequest;
 import com.swp.MovieTheaterService.dto.request.ResetPasswordRequest;
+import com.swp.MovieTheaterService.dto.request.UserProfileUpdateRequest;
 import com.swp.MovieTheaterService.dto.response.AuthResponse;
+import com.swp.MovieTheaterService.dto.response.UserProfileResponse;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 /**
  * Authentication Service Interface
@@ -17,7 +22,7 @@ import com.swp.MovieTheaterService.dto.response.AuthResponse;
 public interface AuthService {
 
     /**
-     * Register a new customer account
+     * Register a new member account
      * 
      * @param registerRequest registration data
      * @return registration response with account details
@@ -93,4 +98,50 @@ public interface AuthService {
      * @return true if available, false if taken
      */
     boolean isEmailAvailable(String email);
+
+    // ==================== PROFILE MANAGEMENT ====================
+
+    /**
+     * Lấy thông tin profile của user
+     * 
+     * @param username username của user hiện tại
+     * @return thông tin profile đầy đủ
+     */
+    UserProfileResponse getUserProfile(String username);
+
+    /**
+     * Cập nhật thông tin profile của user
+     * 
+     * @param username username của user hiện tại
+     * @param request thông tin cần cập nhật
+     * @return thông tin profile đã cập nhật
+     */
+    UserProfileResponse updateUserProfile(String username, UserProfileUpdateRequest request);
+
+    /**
+     * Upload avatar cho user hiện tại
+     * 
+     * @param username username của user hiện tại
+     * @param file file avatar cần upload
+     * @return thông tin kết quả upload
+     */
+    Map<String, Object> uploadUserAvatar(String username, MultipartFile file);
+
+    /**
+     * Xóa avatar của user hiện tại
+     * 
+     * @param username username của user hiện tại
+     * @return thông tin kết quả xóa
+     */
+    Map<String, Object> deleteUserAvatar(String username);
+
+    /**
+     * Cập nhật profile và avatar cùng lúc
+     * 
+     * @param username username của user hiện tại
+     * @param profileDataJson JSON string của profile data
+     * @param avatarFile file avatar (optional)
+     * @return thông tin profile đã cập nhật
+     */
+    UserProfileResponse updateProfileWithAvatar(String username, String profileDataJson, MultipartFile avatarFile);
 } 

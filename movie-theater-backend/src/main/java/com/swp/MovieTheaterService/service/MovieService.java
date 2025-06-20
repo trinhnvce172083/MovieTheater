@@ -8,6 +8,8 @@ import com.swp.MovieTheaterService.dto.movie.MovieSummaryResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
+
 
 import java.time.LocalDate;
 import java.util.List;
@@ -135,6 +137,28 @@ public interface MovieService {
      * Get movie statistics
      */
     MovieStatistics getMovieStatistics();
+    
+    // =============== IMAGE MANAGEMENT METHODS ===============
+    
+    /**
+     * Upload poster cho movie
+     */
+    MovieResponse updateMoviePoster(Long movieId, MultipartFile posterFile);
+    
+    /**
+     * Upload backdrop cho movie
+     */
+    MovieResponse updateMovieBackdrop(Long movieId, MultipartFile backdropFile);
+    
+    /**
+     * Xóa poster của movie
+     */
+    MovieResponse deleteMoviePoster(Long movieId);
+    
+    /**
+     * Xóa backdrop của movie
+     */
+    MovieResponse deleteMovieBackdrop(Long movieId);
 
     /**
      * Inner class for movie statistics

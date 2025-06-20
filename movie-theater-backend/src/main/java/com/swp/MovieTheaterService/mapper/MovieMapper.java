@@ -75,8 +75,7 @@ public class MovieMapper {
         movie.setCountry(request.getCountry());
         movie.setReleaseDate(request.getReleaseDate());
         movie.setRating(request.getRating());
-        movie.setPosterUrl(request.getPosterUrl());
-        movie.setTrailerUrl(request.getTrailerUrl());
+
         movie.setPrice(request.getPrice());
         movie.setStatus(request.getStatus() != null ? request.getStatus() : "COMING_SOON");
         movie.setIsFeatured(request.getIsFeatured() != null ? request.getIsFeatured() : false);

@@ -115,28 +115,40 @@ public enum ErrorCode {
     LOGIN_RATE_LIMIT(1902, "Quá nhiều yêu cầu đăng nhập từ IP này", HttpStatus.TOO_MANY_REQUESTS),
     EMAIL_RATE_LIMIT(1903, "Quá nhiều yêu cầu gửi email từ địa chỉ này", HttpStatus.TOO_MANY_REQUESTS),
 
-    // ==================== AUTO SCHEDULE MANAGEMENT (2000-2099)
+    // ==================== FILE UPLOAD MANAGEMENT (2000-2099) ====================
+    FILE_UPLOAD_FAILED(2000, "Upload file thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
+    FILE_TYPE_NOT_SUPPORTED(2001, "Định dạng file không được hỗ trợ", HttpStatus.BAD_REQUEST),
+    FILE_TOO_LARGE(2002, "Kích thước file vượt quá giới hạn cho phép (5MB)", HttpStatus.BAD_REQUEST),
+    FILE_EMPTY(2003, "File không được để trống", HttpStatus.BAD_REQUEST),
+    FILE_NOT_FOUND(2004, "File không tồn tại", HttpStatus.NOT_FOUND),
+    FILE_DELETE_FAILED(2005, "Xóa file thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
+    FILE_STORAGE_SERVICE_ERROR(2006, "Lỗi dịch vụ lưu trữ file", HttpStatus.SERVICE_UNAVAILABLE),
+    INVALID_FILE_URL(2007, "URL file không hợp lệ", HttpStatus.BAD_REQUEST),
+    FILE_ALREADY_EXISTS(2008, "File đã tồn tại", HttpStatus.CONFLICT),
+    STORAGE_QUOTA_EXCEEDED(2009, "Vượt quá dung lượng lưu trữ cho phép", HttpStatus.INSUFFICIENT_STORAGE),
+
+    // ==================== AUTO SCHEDULE MANAGEMENT (2100-2199)
     // ====================
-    AUTO_SCHEDULE_FAILED(2000, "Tạo lịch chiếu tự động thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
-    AUTO_SCHEDULE_NO_MOVIES(2001, "Không có phim nào để tạo lịch chiếu", HttpStatus.BAD_REQUEST),
-    AUTO_SCHEDULE_NO_ROOMS(2002, "Không có phòng chiếu nào khả dụng", HttpStatus.BAD_REQUEST),
-    AUTO_SCHEDULE_INVALID_DATE_RANGE(2003, "Khoảng thời gian không hợp lệ", HttpStatus.BAD_REQUEST),
-    AUTO_SCHEDULE_DATE_TOO_FAR(2004, "Ngày tạo lịch quá xa trong tương lai (tối đa 30 ngày)", HttpStatus.BAD_REQUEST),
-    AUTO_SCHEDULE_PAST_DATE(2005, "Không thể tạo lịch chiếu cho ngày trong quá khứ", HttpStatus.BAD_REQUEST),
-    AUTO_SCHEDULE_MOVIE_NOT_FOUND(2006, "Một hoặc nhiều phim không tồn tại", HttpStatus.NOT_FOUND),
-    AUTO_SCHEDULE_MOVIE_NOT_SHOWING(2007, "Phim không ở trạng thái NOW_SHOWING", HttpStatus.BAD_REQUEST),
-    AUTO_SCHEDULE_ROOM_CONFLICT(2008, "Xung đột phòng chiếu trong khoảng thời gian", HttpStatus.CONFLICT),
-    AUTO_SCHEDULE_TIME_CONFLICT(2009, "Xung đột thời gian chiếu", HttpStatus.CONFLICT),
-    AUTO_SCHEDULE_INVALID_SHOWS_COUNT(2010, "Số suất chiếu không hợp lệ", HttpStatus.BAD_REQUEST),
-    AUTO_SCHEDULE_TRANSACTION_FAILED(2011, "Lỗi transaction khi tạo lịch chiếu", HttpStatus.INTERNAL_SERVER_ERROR),
-    AUTO_SCHEDULE_PARTIAL_SUCCESS(2012, "Tạo lịch chiếu thành công một phần", HttpStatus.PARTIAL_CONTENT),
-    AUTO_SCHEDULE_VALIDATION_FAILED(2013, "Validation request thất bại", HttpStatus.BAD_REQUEST),
-    AUTO_SCHEDULE_DATABASE_ERROR(2014, "Lỗi cơ sở dữ liệu khi tạo lịch chiếu", HttpStatus.INTERNAL_SERVER_ERROR),
-    AUTO_SCHEDULE_PROCESSING_TIMEOUT(2015, "Timeout khi xử lý tạo lịch chiếu", HttpStatus.REQUEST_TIMEOUT),
-    AUTO_SCHEDULE_CONCURRENT_MODIFICATION(2016, "Dữ liệu đã bị thay đổi bởi tiến trình khác", HttpStatus.CONFLICT),
-    AUTO_SCHEDULE_INSUFFICIENT_TIME_SLOTS(2017, "Không đủ khung giờ chiếu khả dụng", HttpStatus.BAD_REQUEST),
-    AUTO_SCHEDULE_MOVIE_DURATION_CONFLICT(2018, "Thời lượng phim xung đột với khung giờ", HttpStatus.BAD_REQUEST),
-    AUTO_SCHEDULE_ROOM_CAPACITY_INSUFFICIENT(2019, "Sức chứa phòng chiếu không đủ", HttpStatus.BAD_REQUEST);
+    AUTO_SCHEDULE_FAILED(2100, "Tạo lịch chiếu tự động thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
+    AUTO_SCHEDULE_NO_MOVIES(2101, "Không có phim nào để tạo lịch chiếu", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_NO_ROOMS(2102, "Không có phòng chiếu nào khả dụng", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_INVALID_DATE_RANGE(2103, "Khoảng thời gian không hợp lệ", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_DATE_TOO_FAR(2104, "Ngày tạo lịch quá xa trong tương lai (tối đa 30 ngày)", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_PAST_DATE(2105, "Không thể tạo lịch chiếu cho ngày trong quá khứ", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_MOVIE_NOT_FOUND(2106, "Một hoặc nhiều phim không tồn tại", HttpStatus.NOT_FOUND),
+    AUTO_SCHEDULE_MOVIE_NOT_SHOWING(2107, "Phim không ở trạng thái NOW_SHOWING", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_ROOM_CONFLICT(2108, "Xung đột phòng chiếu trong khoảng thời gian", HttpStatus.CONFLICT),
+    AUTO_SCHEDULE_TIME_CONFLICT(2109, "Xung đột thời gian chiếu", HttpStatus.CONFLICT),
+    AUTO_SCHEDULE_INVALID_SHOWS_COUNT(2110, "Số suất chiếu không hợp lệ", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_TRANSACTION_FAILED(2111, "Lỗi transaction khi tạo lịch chiếu", HttpStatus.INTERNAL_SERVER_ERROR),
+    AUTO_SCHEDULE_PARTIAL_SUCCESS(2112, "Tạo lịch chiếu thành công một phần", HttpStatus.PARTIAL_CONTENT),
+    AUTO_SCHEDULE_VALIDATION_FAILED(2113, "Validation request thất bại", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_DATABASE_ERROR(2114, "Lỗi cơ sở dữ liệu khi tạo lịch chiếu", HttpStatus.INTERNAL_SERVER_ERROR),
+    AUTO_SCHEDULE_PROCESSING_TIMEOUT(2115, "Timeout khi xử lý tạo lịch chiếu", HttpStatus.REQUEST_TIMEOUT),
+    AUTO_SCHEDULE_CONCURRENT_MODIFICATION(2116, "Dữ liệu đã bị thay đổi bởi tiến trình khác", HttpStatus.CONFLICT),
+    AUTO_SCHEDULE_INSUFFICIENT_TIME_SLOTS(2117, "Không đủ khung giờ chiếu khả dụng", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_MOVIE_DURATION_CONFLICT(2118, "Thời lượng phim xung đột với khung giờ", HttpStatus.BAD_REQUEST),
+    AUTO_SCHEDULE_ROOM_CAPACITY_INSUFFICIENT(2119, "Sức chứa phòng chiếu không đủ", HttpStatus.BAD_REQUEST);
 
     int code;
     String message;

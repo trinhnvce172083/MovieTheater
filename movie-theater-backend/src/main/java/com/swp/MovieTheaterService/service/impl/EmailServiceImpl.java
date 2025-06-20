@@ -41,7 +41,7 @@ public class EmailServiceImpl implements EmailService {
     @Value("${app.email.support-email:lumierecinema25@gmail.com}")
     private String supportEmail;
 
-    @Value("${app.email.website-url:http://localhost:8080}")
+    @Value("${app.email.website-url:http://localhost:8080   }")
     private String websiteUrl;
 
     @Override

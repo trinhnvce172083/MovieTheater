@@ -22,7 +22,7 @@ public class PaymentRequest {
     @NotNull(message = "Booking ID không được để trống")
     private Long bookingId;
     
-    @NotNull(message = "Số tiền thanh toán không được để trống")
+    // Amount will be retrieved from booking - optional in request
     @DecimalMin(value = "1000.0", message = "Số tiền thanh toán tối thiểu là 1,000 VND")
     @DecimalMax(value = "50000000.0", message = "Số tiền thanh toán tối đa là 50,000,000 VND")
     private Double amount;
@@ -35,7 +35,7 @@ public class PaymentRequest {
              message = "Phương thức thanh toán không hợp lệ")
     private String paymentMethod;
     
-    @NotBlank(message = "URL return không được để trống")
+    // Return URL is optional - will use default if not provided
     @Pattern(regexp = "^https?://.*", message = "URL return phải là HTTP/HTTPS hợp lệ")
     private String returnUrl;
     
