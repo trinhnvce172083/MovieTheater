@@ -32,8 +32,6 @@ import {
   SearchOutlined,
   MoreOutlined,
   EyeOutlined,
-  ExportOutlined,
-  ImportOutlined,
   ReloadOutlined,
   CalendarOutlined,
   VideoCameraOutlined,
@@ -51,62 +49,77 @@ const movieData = [
   {
     key: "1",
     id: "MV001",
-    eng: "Doctor Strange",
-    vn: "Doctor Strange: Phù Thủy Tối Thượng",
-    date: "2016-11-18",
-    company: "Marvel Studios",
-    duration: 116,
-    version: ["2D", "3D", "IMAX"],
+    eng: "Avatar: The Way of Water",
+    vn: "Avatar: Dòng Chảy Của Nước",
+    date: "2024-05-01",
+    company: "20th Century Studios",
+    duration: 192,
+    version: ["2D"],
     genre: ["Action", "Adventure", "Fantasy"],
     rating: "PG-13",
-    status: "active",
-    revenue: 677718395,
-    poster: "/api/placeholder/150/225",
+    status: "inactive",
+    revenue: 0,
+    poster: "/posters/Avatar.jpg",
   },
   {
     key: "2",
     id: "MV002",
-    eng: "Avengers: Infinity War",
-    vn: "Avengers: Cuộc Chiến Vô Cực",
-    date: "2018-04-25",
+    eng: "Avengers: Endgame",
+    vn: "Avengers: Hồi Kết",
+    date: "2024-01-15",
     company: "Marvel Studios",
-    duration: 149,
-    version: ["2D", "3D", "IMAX", "4DX"],
+    duration: 181,
+    version: ["2D"],
     genre: ["Action", "Adventure", "Sci-Fi"],
     rating: "PG-13",
-    status: "active",
-    revenue: 2048359754,
-    poster: "/api/placeholder/150/225",
+    status: "inactive",
+    revenue: 0,
+    poster: "/posters/Avenger.jpg",
   },
   {
     key: "3",
     id: "MV003",
-    eng: "Spider-Man: No Way Home",
-    vn: "Spider-Man: Không Còn Nhà",
-    date: "2021-12-15",
-    company: "Sony Pictures",
-    duration: 148,
-    version: ["2D", "3D", "IMAX"],
-    genre: ["Action", "Adventure", "Sci-Fi"],
-    rating: "PG-13",
-    status: "active",
-    revenue: 1921847111,
-    poster: "/api/placeholder/150/225",
+    eng: "Everything Everywhere All at Once",
+    vn: "Mọi Thứ Mọi Nơi Tất Cả Một Lúc",
+    date: "2024-04-01",
+    company: "A24",
+    duration: 139,
+    version: ["2D"],
+    genre: ["Action", "Adventure", "Fantasy"],
+    rating: "R",
+    status: "inactive",
+    revenue: 0,
+    poster: "/posters/EEAAO.jpg",
   },
   {
     key: "4",
     id: "MV004",
-    eng: "The Batman",
-    vn: "Người Dơi",
-    date: "2022-03-01",
-    company: "Warner Bros.",
-    duration: 176,
-    version: ["2D", "IMAX"],
-    genre: ["Action", "Crime", "Drama"],
+    eng: "Spider-Man: No Way Home",
+    vn: "Người Nhện: Không Còn Nhà",
+    date: "2024-02-01",
+    company: "Sony Pictures",
+    duration: 148,
+    version: ["2D"],
+    genre: ["Action", "Adventure", "Sci-Fi"],
     rating: "PG-13",
     status: "inactive",
-    revenue: 771326348,
-    poster: "/api/placeholder/150/225",
+    revenue: 0,
+    poster: "/posters/Spider-man.jpg",
+  },
+  {
+    key: "5",
+    id: "MV005",
+    eng: "Top Gun: Maverick",
+    vn: "Phi Công Siêu Đẳng Maverick",
+    date: "2024-03-01",
+    company: "Paramount Pictures",
+    duration: 131,
+    version: ["2D"],
+    genre: ["Action", "Drama"],
+    rating: "PG-13",
+    status: "inactive",
+    revenue: 0,
+    poster: "/posters/Topgun.jpeg",
   },
 ];
 
@@ -284,7 +297,7 @@ export default function ProfessionalMovieManagement() {
       ),
     },
     {
-      title: "Company",
+      title: "Release date",
       key: "company",
       width: 120,
       render: (_: any, record: any) => (
@@ -473,7 +486,7 @@ export default function ProfessionalMovieManagement() {
         {/* Main Content Card */}
         <Card
           className="shadow-sm border-0"
-          bodyStyle={{ padding: 0 }}
+          styles={{ body: { padding: 0 } }} // <-- updated line
           style={{ borderRadius: 16 }}
         >
           {/* Header Section */}
@@ -488,59 +501,6 @@ export default function ProfessionalMovieManagement() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button
-                icon={<ImportOutlined />}
-                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
-                size="middle"
-                onClick={async () => {
-                  try {
-                    setLoading(true);
-                    const data = await getMovies({
-                      page: 0,
-                      size: 100,
-                      sortBy: "title",
-                      sortDirection: "asc",
-                    });
-                    
-                    if (data.content && Array.isArray(data.content)) {
-                      // Transform API data to match our expected format
-                      const transformedData = data.content.map((movie, index) => ({
-                        key: String(index + 1),
-                        id: movie.id || `MV${String(index + 1).padStart(3, '0')}`,
-                        eng: movie.title || "",
-                        vn: movie.vietnameseTitle || "",
-                        date: movie.releaseDate || "",
-                        company: movie.company || "",
-                        duration: movie.duration || 0,
-                        version: movie.versions || ["2D"],
-                        genre: movie.genres || ["Action"],
-                        rating: movie.rating || "PG",
-                        status: movie.status || "active",
-                        revenue: movie.revenue || 0,
-                        poster: movie.posterUrl || "/api/placeholder/150/225",
-                      }));
-                      
-                      setApiMovies(transformedData);
-                      setTotalElements(data.totalElements || data.content.length);
-                      message.success("Movies imported successfully");
-                    }
-                  } catch (error) {
-                    console.error("Error importing movies:", error);
-                    message.error("Failed to import movies");
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-              >
-                Import
-              </Button>
-              <Button
-                icon={<ExportOutlined />}
-                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
-                size="middle"
-              >
-                Export
-              </Button>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
