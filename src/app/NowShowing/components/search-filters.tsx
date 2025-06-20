@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import type { MovieFilters } from "@/types/NowShowing/movie";
 import { MovieApiService } from "@/api/movie-api";
-import axiosClient from "@/api/axiosClient";
+// import axiosClient from "@/api/axiosClient";
 import { useState, useEffect, useRef } from "react";
 
 interface SearchFiltersProps {
