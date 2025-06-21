@@ -20,7 +20,7 @@ import {
 import "antd/dist/reset.css";
 import dayjs from "dayjs";
 import { cn } from "@/lib/utils";
-import { authApi, RegisterRequest } from "@/api/auth";
+import { authApi, RegisterRequest } from "@/api/auth/Register_API";
 import { useRouter } from "next/navigation";
 import { AxiosError } from 'axios';
 

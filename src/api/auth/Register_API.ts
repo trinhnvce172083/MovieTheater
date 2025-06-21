@@ -1,6 +1,5 @@
-import axios, { AxiosError } from 'axios';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/cinema';
+import { AxiosError } from 'axios';
+import axiosClient from '../axiosClient';
 
 export interface RegisterRequest {
   username: string;
@@ -18,12 +17,8 @@ export interface RegisterRequest {
 export const authApi = {
   register: async (data: RegisterRequest) => {
     try {
-      console.log('Making register request to:', `${API_URL}/api/auth/register`);
-      const response = await axios.post(`${API_URL}/api/auth/register`, data, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      console.log('Making register request to: /auth/register');
+      const response = await axiosClient.post('/auth/register', data);
       console.log('Register API response:', response.data);
       return response.data;
     } catch (error) {
@@ -37,4 +32,4 @@ export const authApi = {
       throw error;
     }
   }
-}; 
+};

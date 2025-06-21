@@ -59,7 +59,7 @@ export class MovieApiService {
     try {
       const response = await axiosClient.get("/movies/search", {
         params: { 
-          keyword: query, // Sử dụng keyword thay vì q theo API
+          keyword: query,
           page,
           size
         },

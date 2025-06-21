@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { useVerifyEmail } from "@/hooks/VerifyEmail/use-verify-email";
 
-export default function VerifyEmailPage() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+export default function VerifyEmailPage({
+  params
+}: {
+  params: { token: string }
+}) {
+  const token = params.token;
   const { verify } = useVerifyEmail();
   const [status, setStatus] = useState<"pending" | "success" | "error">("pending");
 

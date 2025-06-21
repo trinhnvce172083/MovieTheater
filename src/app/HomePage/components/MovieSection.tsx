@@ -10,8 +10,8 @@ export default function MovieSection({
   movies,
   scrollRef,
   loading,
-  onScrollLeft,
-  onScrollRight,
+  onScrollLeft: propOnScrollLeft,
+  onScrollRight: propOnScrollRight,
   isUpcoming = false,
 }: {
   title: string;
@@ -21,9 +21,61 @@ export default function MovieSection({
   onScrollLeft: () => void;
   onScrollRight: () => void;
   isUpcoming?: boolean;
-}) {
-  const [showLeftShadow, setShowLeftShadow] = useState(false);
+}) {  const [showLeftShadow, setShowLeftShadow] = useState(false);
   const [showRightShadow, setShowRightShadow] = useState(true);
+  const [cardWidth, setCardWidth] = useState(0);
+  
+  // Custom scroll handlers that use cardWidth to scroll by exactly one card
+  const onScrollLeft = () => {
+    if (!scrollRef.current || cardWidth === 0) return;
+    
+    // Scroll left by one card width
+    scrollRef.current.scrollBy({
+      left: -cardWidth,
+      behavior: 'smooth'
+    });
+    
+    // Also call the original scroll handler if provided
+    propOnScrollLeft();
+  };
+    const onScrollRight = () => {
+    if (!scrollRef.current || cardWidth === 0) return;
+    
+    // Scroll right by one card width
+    scrollRef.current.scrollBy({
+      left: cardWidth,
+      behavior: 'smooth'
+    });
+    
+    // Also call the original scroll handler if provided
+    propOnScrollRight();
+  };
+  
+  // Calculate card width including gap
+  useEffect(() => {
+    const calculateCardWidth = () => {
+      // Try to measure an actual card if available
+      const container = scrollRef.current;
+      if (container && container.firstElementChild && container.children.length > 1) {
+        // Get the first card and measure its width + the gap
+        const firstCard = container.firstElementChild as HTMLElement;
+        const secondCard = container.children[1] as HTMLElement;
+        if (firstCard && secondCard) {
+          // Calculate width including gap (distance from left edge of first card to left edge of second card)
+          const fullWidth = secondCard.offsetLeft - firstCard.offsetLeft;
+          setCardWidth(fullWidth);
+        } else if (firstCard) {
+          // Fallback if only one card
+          setCardWidth(firstCard.offsetWidth + 32); // 32px = 2rem (gap-8)
+        }
+      }
+    };
+    
+    calculateCardWidth();
+    window.addEventListener('resize', calculateCardWidth);
+    
+    return () => window.removeEventListener('resize', calculateCardWidth);
+  }, [scrollRef, movies, propOnScrollLeft, propOnScrollRight]);
 
   // Update shadows on scroll and window resize
   useEffect(() => {
@@ -82,8 +134,7 @@ export default function MovieSection({
         {/* Navigation buttons */}
         <NavButton direction="left" onClick={onScrollLeft} disabled={!showLeftShadow} />
         <NavButton direction="right" onClick={onScrollRight} disabled={!showRightShadow} />
-          {/* Movie cards container - improved scroll handling */}
-        <div
+          {/* Movie cards container - improved scroll handling */}        <div
           ref={scrollRef}
           className="flex gap-8 overflow-x-auto scrollbar-hide py-4 px-1"
           style={{ 
@@ -98,8 +149,15 @@ export default function MovieSection({
             </div>
           ) : movies.length === 0 ? (
             <div className="text-center py-8 w-full text-gray-400">No movies found.</div>
-          ) : (
-            movies.map((movie) => <MovieCard key={movie.movieId || movie.title} movie={movie} />)
+          ) : (            movies.map((movie) => (
+              <div 
+                key={movie.movieId || movie.title} 
+                className="flex-shrink-0"
+                style={{ width: 'calc(25% - 24px)', minWidth: '280px' }} // 25% for 4 cards per row, with min-width to ensure visibility
+              >
+                <MovieCard movie={movie} />
+              </div>
+            ))
           )}
         </div>
       </div>

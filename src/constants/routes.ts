@@ -2,17 +2,16 @@ const ROUTES = {
   // Public Routes
   HOME: "/HomePage",
   NOW_SHOWING: "/NowShowing",
-  COMING_SOON: "/Coming-soon",
+  COMING_SOON: "/movies-api",
   LOGIN: "/auth/Login",
   REGISTER: "/auth/Register",
   ACCOUNT: "/auth/Account",
+  ACCESS_DENIED: "/access-denied",
 
-  //Booking Routes
-  //   BOOKING: "/booking",
-  // BOOKING_SELECT_MOVIE: "/booking/select-movie",
-  // BOOKING_SELECT_DATE: "/booking/select-date",
-  // BOOKING_SELECT_TIME: "/booking/select-time",
+  // Booking Routes
+  BOOKING: "/booking",
   BOOKING_SELECT_SEAT: "/booking/seat-selection",
+  PAYMENT: "/payment",
 
   // Movie Routes
   MOVIES: "/movies",
@@ -28,13 +27,11 @@ const ROUTES = {
 
   // Admin Routes
   ADMIN_DASHBOARD: "/admin",
-  ADMIN_USERS: "/admin/users",
   ADMIN_MOVIES: "/admin/movies",
   ADMIN_MEMBERS: "/admin/members",
+  ADMIN_BOOKINGS: "/admin/bookings",
   ADMIN_ROOMS: "/admin/rooms",
-  ADMIN_SHOWTIMES: "/admin/showtimes",
-  ADMIN_TICKETS: "/admin/tickets",
-  ADMIN_REVENUE: "/admin/revenue",
+  ADMIN_PROMOTIONS: "/admin/promotions",
 } as const;
 
 export default ROUTES;

@@ -36,8 +36,7 @@ const nextConfig: NextConfig = {
 
     // Các tùy chọn khác nếu cần
     moduleIds: "named", // hoặc "deterministic"
-  },
-  images: {
+  },  images: {
     remotePatterns: [
       {
         protocol: "https",
@@ -51,6 +50,18 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "supabase.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "cuzwjjseeohnyrbfcngs.supabase.co",
+        port: "",
+        pathname: "/**",
+      }
     ],
   },
 };

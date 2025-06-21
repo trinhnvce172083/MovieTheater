@@ -4,12 +4,23 @@ import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MovieCard } from "./movie-card";
 import type { Movie } from "@/types/NowShowing/movie";
+import { useState } from "react";
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 interface MovieGridProps {
   movies: Movie[];
   loading?: boolean;
   onBookNow?: (movieId: string) => void;
   onClearFilters?: () => void;
+  itemsPerPage?: number;
 }
 
 export function MovieGrid({
@@ -17,7 +28,10 @@ export function MovieGrid({
   loading,
   onBookNow,
   onClearFilters,
+  itemsPerPage = 9,
 }: MovieGridProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+
   if (loading) {
     return <MovieGridSkeleton />;
   }
@@ -42,20 +56,112 @@ export function MovieGrid({
       </div>
     );
   }
+  
+  // Pagination logic
+  const totalPages = Math.ceil(movies.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentMovies = movies.slice(startIndex, endIndex);
+  
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages = [];
+    // Always show first page
+    pages.push(1);
+    
+    // Current page and surrounding pages
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+      pages.push(i);
+    }
+    
+    // Always show last page
+    if (totalPages > 1) {
+      pages.push(totalPages);
+    }
+    
+    // Add ellipsis indicators
+    const result = [];
+    let prev = 0;
+    
+    for (const page of pages) {
+      if (page - prev > 1) {
+        result.push(-prev); // Negative values represent ellipsis after page `abs(value)`
+      }
+      result.push(page);
+      prev = page;
+    }
+    
+    return result;
+  };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {movies.map((movie) => (
-        <MovieCard key={movie.movieId} movie={movie} onBookNow={onBookNow} />
-      ))}
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {currentMovies.map((movie) => (
+          <MovieCard key={movie.movieId} movie={movie} onBookNow={onBookNow} />
+        ))}
+      </div>
+      
+      {totalPages > 1 && (
+        <Pagination className="mt-8">
+          <PaginationContent>
+            {currentPage > 1 && (
+              <PaginationItem>
+                <PaginationPrevious href="#" onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(currentPage - 1);
+                  window.scrollTo(0, 0);
+                }} />
+              </PaginationItem>
+            )}
+            
+            {getPageNumbers().map((pageNum, index) => {
+              if (pageNum < 0) {
+                // This is an ellipsis
+                return (
+                  <PaginationItem key={`ellipsis-${index}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                );
+              }
+              
+              return (
+                <PaginationItem key={pageNum}>
+                  <PaginationLink 
+                    href="#" 
+                    isActive={pageNum === currentPage}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentPage(pageNum);
+                      window.scrollTo(0, 0);
+                    }}
+                  >
+                    {pageNum}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            })}
+            
+            {currentPage < totalPages && (
+              <PaginationItem>
+                <PaginationNext href="#" onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(currentPage + 1);
+                  window.scrollTo(0, 0);
+                }} />
+              </PaginationItem>
+            )}
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   );
 }
 
 function MovieGridSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {Array.from({ length: 8 }).map((_, index) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {Array.from({ length: 9 }).map((_, index) => (
         <div
           key={index}
           className="bg-gray-900/80 border border-orange-500/20 rounded-lg overflow-hidden animate-pulse"

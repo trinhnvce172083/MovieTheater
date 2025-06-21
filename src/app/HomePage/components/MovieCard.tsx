@@ -13,10 +13,14 @@ const BLUR_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAY
 
 interface MovieCardProps {
   movie: Movie;
-  onBookNow?: (movieId: string) => void;
+  onViewDetails?: (movieId: string) => void;
 }
 
-export function MovieCard({ movie, onBookNow }: MovieCardProps) {
+export function MovieCard({ movie, onViewDetails }: MovieCardProps) {
+  // Ensure the card takes full width of its container
+  const cardStyle = {
+    width: '100%'
+  };
   const getRatingColor = (rating: string) => {
     switch (rating) {
       case "G":
@@ -32,8 +36,9 @@ export function MovieCard({ movie, onBookNow }: MovieCardProps) {
     }
   };
 
-  const handleBookNow = () => {
-    onBookNow?.(movie.movieId);
+  const handleViewDetails = () => {
+    onViewDetails?.(movie.movieId);
+
   };
 
   // Format the price properly
@@ -54,12 +59,11 @@ export function MovieCard({ movie, onBookNow }: MovieCardProps) {
         .filter(Boolean);
 
   const imageUrl = movie.posterUrl || ""; // or movie.imageUrl
-  const movieDetailsUrl = `/movies/MovieDetails?movieId=${movie.movieId || ''}`;
-  return (
-    <Card className="w-[300px] min-h-[480px] flex-shrink-0 rounded-xl overflow-hidden bg-black border border-orange-500/20 shadow-lg hover:shadow-orange-900/20 hover:border-orange-500/40 transition-all duration-300 transform hover:-translate-y-1 group">
+  const movieDetailsUrl = `/movies/MovieDetails?movieId=${movie.movieId || ''}`;  return (
+    <Card className="w-full min-h-[480px] flex-shrink-0 rounded-xl overflow-hidden bg-black border border-orange-500/20 shadow-lg hover:shadow-orange-900/20 hover:border-orange-500/40 transition-all duration-300 transform hover:-translate-y-1 group" style={cardStyle}>
       <Link href={movieDetailsUrl} className="block">
         {/* Movie Poster */}
-        <div className="relative w-full h-[320px] overflow-hidden">
+        <div className="relative w-full h-[480px] overflow-hidden">
           <Image
             src={imageUrl || "/default-image.png"}
             alt={movie.title}
@@ -146,7 +150,7 @@ export function MovieCard({ movie, onBookNow }: MovieCardProps) {
             <Button
               size="sm"
               className="h-8 px-3 bg-orange-500 hover:bg-orange-600 text-black text-xs font-semibold"
-              onClick={handleBookNow}
+              onClick={handleViewDetails}
             >
               View Details
             </Button>
