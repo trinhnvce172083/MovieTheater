@@ -23,6 +23,8 @@ public class PromotionResponse {
     private String promotionCode;
     private String promotionName;
     private String description;
+    private String promotionType; // PUBLIC or POINT_BASED
+    private String promotionTypeDisplay;
     private String discountType;
     private Double discountValue;
     private Double maxDiscountAmount;
@@ -39,7 +41,7 @@ public class PromotionResponse {
     private String applicableRooms;
     private Boolean memberOnly;
     private String membershipLevels;
-    private String bannerImageUrl;
+    private String bannerUrl; // Updated field name
     private Boolean isFeatured;
     private Integer displayOrder;
     private LocalDateTime createdAt;
@@ -49,6 +51,10 @@ public class PromotionResponse {
     private Boolean isPointsPromotion;
     private Integer pointsRequired;
     private Integer pointsValue;
+    
+    // Code generation settings for POINT_BASED promotions
+    private Integer codeValidityHours;
+    private Integer maxCodesPerUser;
 
     // Computed fields
     private String statusDisplay;
@@ -71,11 +77,11 @@ public class PromotionResponse {
 
     // Display methods
     public String getStatusDisplay() {
-        if (!isActive) return "Không hoạt động";
-        if (isExpired) return "Đã hết hạn";
-        if (isNotStarted) return "Chưa bắt đầu";
-        if (isUsageLimitReached) return "Đã hết lượt";
-        if (isValid) return "Đang hoạt động";
+        if (isActive == null || !isActive) return "Không hoạt động";
+        if (Boolean.TRUE.equals(isExpired)) return "Đã hết hạn";
+        if (Boolean.TRUE.equals(isNotStarted)) return "Chưa bắt đầu";
+        if (Boolean.TRUE.equals(isUsageLimitReached)) return "Đã hết lượt";
+        if (Boolean.TRUE.equals(isValid)) return "Đang hoạt động";
         return "Không xác định";
     }
 
@@ -91,7 +97,7 @@ public class PromotionResponse {
     }
 
     public String getPointsDisplay() {
-        if (isPointsPromotion && pointsRequired != null) {
+        if (Boolean.TRUE.equals(isPointsPromotion) && pointsRequired != null) {
             return pointsRequired + " điểm";
         }
         return "Không áp dụng";
@@ -109,7 +115,7 @@ public class PromotionResponse {
     }
 
     public String getMembershipDisplay() {
-        if (!memberOnly) {
+        if (memberOnly == null || !memberOnly) {
             return "Tất cả khách hàng";
         }
         if (membershipLevels == null || membershipLevels.isEmpty()) {
@@ -121,11 +127,11 @@ public class PromotionResponse {
     public String getApplicabilityDisplay() {
         StringBuilder sb = new StringBuilder();
         
-        if (!"ALL".equals(applicableDays)) {
+        if (applicableDays != null && !"ALL".equals(applicableDays)) {
             sb.append("Ngày: ").append(getApplicableDaysDisplay()).append("; ");
         }
         
-        if (!"ALL".equals(applicableTimes)) {
+        if (applicableTimes != null && !"ALL".equals(applicableTimes)) {
             sb.append("Giờ: ").append(getApplicableTimesDisplay()).append("; ");
         }
         
@@ -145,6 +151,7 @@ public class PromotionResponse {
     }
 
     private String getApplicableDaysDisplay() {
+        if (applicableDays == null) return "Tất cả";
         switch (applicableDays) {
             case "WEEKDAYS": return "Thứ 2-6";
             case "WEEKENDS": return "Cuối tuần";
@@ -153,6 +160,7 @@ public class PromotionResponse {
     }
 
     private String getApplicableTimesDisplay() {
+        if (applicableTimes == null) return "Tất cả";
         switch (applicableTimes) {
             case "MORNING": return "Sáng";
             case "AFTERNOON": return "Chiều";

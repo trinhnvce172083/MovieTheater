@@ -137,69 +137,44 @@ public class PaymentController {
     }
 
     // ==================== PAYMENT CALLBACK ENDPOINTS ====================
+    // Note: VNPay specific endpoints are handled by VNPayController
+    // Other payment providers are disabled for now
 
-    @PostMapping("/vnpay/callback")
-    @Operation(summary = "VNPay callback", description = "Handle VNPay payment callback")
-    public ResponseEntity<String> vnpayCallback(
+    /*
+    @PostMapping("/momo/callback")
+    @Operation(summary = "MoMo callback", description = "Handle MoMo payment callback")
+    public ResponseEntity<String> momoCallback(
             @RequestParam Map<String, String> params,
             HttpServletRequest request) {
         
         try {
-            log.info("Received VNPay callback: {}", params);
-            
-            PaymentCallbackRequest callbackRequest = PaymentCallbackRequest.builder()
-                    .provider("VNPAY")
-                    .transactionId(params.get("vnp_TxnRef"))
-                    .providerTransactionId(params.get("vnp_TransactionNo"))
-                    .status(params.get("vnp_TransactionStatus"))
-                    .responseCode(params.get("vnp_ResponseCode"))
-                    .amount(Double.valueOf(params.get("vnp_Amount")) / 100) // Convert xu to VND
-                    .currency("VND")
-                    .rawData(params)
-                    .build();
-            
-            PaymentResponse response = vnpayService.processCallback(callbackRequest);
-            
-            if (response.isSuccess()) {
-                log.info("VNPay payment successful: {}", callbackRequest.getTransactionId());
-                // Booking status update and notifications are handled by VNPay service
-                return ResponseEntity.ok("SUCCESS");
-            } else {
-                log.warn("VNPay payment failed: {}", response.getMessage());
-                return ResponseEntity.ok("FAILED");
-            }
+            log.info("Received MoMo callback: {}", params);
+            // TODO: Implement MoMo callback processing
+            return ResponseEntity.ok("SUCCESS");
             
         } catch (Exception e) {
-            log.error("Error processing VNPay callback: {}", e.getMessage(), e);
+            log.error("Error processing MoMo callback: {}", e.getMessage(), e);
             return ResponseEntity.ok("ERROR");
         }
     }
 
-    @GetMapping("/vnpay/return")
-    @Operation(summary = "VNPay return", description = "Handle VNPay payment return")
-    public void vnpayReturn(
+    @PostMapping("/zalopay/callback")
+    @Operation(summary = "ZaloPay callback", description = "Handle ZaloPay payment callback")
+    public ResponseEntity<String> zalopayCallback(
             @RequestParam Map<String, String> params,
-            HttpServletResponse response) throws IOException {
+            HttpServletRequest request) {
         
         try {
-            log.info("VNPay return: {}", params);
-            
-            String responseCode = params.get("vnp_ResponseCode");
-            String transactionId = params.get("vnp_TxnRef");
-            
-            if ("00".equals(responseCode)) {
-                // Payment successful - redirect to success page
-                response.sendRedirect("/payment/success?transaction=" + transactionId);
-            } else {
-                // Payment failed - redirect to failure page
-                response.sendRedirect("/payment/failure?transaction=" + transactionId + "&error=" + responseCode);
-            }
+            log.info("Received ZaloPay callback: {}", params);
+            // TODO: Implement ZaloPay callback processing
+            return ResponseEntity.ok("SUCCESS");
             
         } catch (Exception e) {
-            log.error("Error handling VNPay return: {}", e.getMessage(), e);
-            response.sendRedirect("/payment/error");
+            log.error("Error processing ZaloPay callback: {}", e.getMessage(), e);
+            return ResponseEntity.ok("ERROR");
         }
     }
+    */
 
     // ==================== PAYMENT VERIFICATION ENDPOINTS ====================
 

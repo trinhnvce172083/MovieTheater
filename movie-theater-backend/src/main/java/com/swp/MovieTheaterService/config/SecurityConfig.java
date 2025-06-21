@@ -94,8 +94,13 @@ public class SecurityConfig {
                                         // Payment public endpoints
                                         "/api/payments/methods", // Get payment methods
                                         "/api/payments/vnpay/callback", // VNPay callback
-                                        "/api/payments/vnpay/return", // VNPay return
+                                        "/api/payment/vnpay/return", // VNPay return (correct URL)
+                                        "/api/payment/vnpay/ipn", // VNPay IPN
                                         "/api/payments/calculate-fee", // Calculate payment fee
+
+                                        // Promotion validation (public access)
+                                        "/api/promotions/validate", // POST - Validate promotion code
+                                        "/api/promotions/validate-code", // POST - Validate unique code
 
                                         // Test endpoints
                                         "/api/test/**")
@@ -104,9 +109,18 @@ public class SecurityConfig {
                                 // =================== PUBLIC READ ACCESS ===================
                                 // GET operations for movies, schedules, cinema-rooms (public read)
                                 .requestMatchers(HttpMethod.GET,
-                                        "/movies/**", // GET movies (public read)
-                                        "/schedules/**", // GET schedules (public read)
-                                        "/cinema-rooms/**" // GET cinema-rooms (public read)
+                                        "/api/movies/**", // GET movies (public read)
+                                        "/api/schedules/**", // GET schedules (public read)
+                                        "/api/cinema-rooms/**", // GET cinema-rooms (public read)
+                                        "/api/concessions/**", // GET concessions (public read)
+                                        "/api/promotions/**", // GET promotions (public read)
+                                        "/api/promotions/active", // GET active promotions
+                                        "/api/promotions/code/*", // GET promotion by code
+                                        "/api/promotions/type/*", // GET promotions by type
+                                        "/api/promotions/movie/*", // GET movie promotions
+                                        "/api/promotions/point-based", // GET point-based promotions
+                                        "/api/promotions/*/banner", // GET promotion banner URL (public)
+                                        "/api/promotions/*/banner/exists" // GET check if banner exists (public)
                                 ).permitAll()
 
                                 // =================== ADMIN ENDPOINTS ===================
@@ -136,6 +150,13 @@ public class SecurityConfig {
                                         "/api/admin/promotions/**", // Promotion CRUD
                                         "/api/promotions/admin/**", // Promotion management
 
+                                        // Concession Management (Admin CRUD)
+                                        "/api/concessions", // POST - Create concession
+                                        "/api/concessions/*", // PUT/DELETE - Update/Delete concession
+                                        "/api/concessions/*/image", // POST/PUT/DELETE - Image management
+                                        "/api/concessions/with-image", // POST - Create with image
+                                        "/api/concessions/*/with-image", // PUT - Update with image
+
                                         // User Management
                                         "/api/admin/users/**", // User management
                                         "/api/users/admin/**", // User administration
@@ -144,6 +165,30 @@ public class SecurityConfig {
                                         "/api/admin/analytics/**", // System analytics
                                         "/api/reports/**", // Business reports
                                         "/api/analytics/**" // Analytics dashboard
+                                ).hasRole("ADMIN")
+
+                                // =================== ADMIN PROMOTION & IMAGE MANAGEMENT ===================
+                                // Promotion CRUD và Image Management theo HTTP Method (Admin only)
+                                .requestMatchers(HttpMethod.POST,
+                                        "/api/promotions", // POST - Create promotion
+                                        "/api/promotions/*/activate", // POST - Activate promotion
+                                        "/api/promotions/*/deactivate", // POST - Deactivate promotion
+                                        "/api/promotions/*/banner" // POST - Upload promotion banner
+                                ).hasRole("ADMIN")
+                                
+                                .requestMatchers(HttpMethod.PUT,
+                                        "/api/promotions/*", // PUT - Update promotion
+                                        "/api/promotions/*/banner" // PUT - Update promotion banner
+                                ).hasRole("ADMIN")
+                                
+                                .requestMatchers(HttpMethod.DELETE,
+                                        "/api/promotions/*", // DELETE - Delete promotion
+                                        "/api/promotions/*/banner" // DELETE - Delete promotion banner
+                                ).hasRole("ADMIN")
+                                
+                                .requestMatchers(HttpMethod.GET,
+                                        "/api/promotions/usage/*", // GET - Promotion usage stats (Admin only)
+                                        "/api/promotions/expiring" // GET - Expiring promotions (Admin only)
                                 ).hasRole("ADMIN")
 
                                 // =================== EMPLOYEE ENDPOINTS ===================
@@ -169,17 +214,16 @@ public class SecurityConfig {
 
                                         // Payment Processing
                                         "/api/staff/payment/**", // Payment handling
-                                        "/api/payment/staff/**" // Staff payment ops
+                                        "/api/payment/staff/**", // Staff payment ops
+                                        
+                                        // Concession Stock Management
+                                        "/api/concessions/*/stock" // PATCH - Update stock
                                 ).hasAnyRole("EMPLOYEE", "ADMIN")
 
                                 // =================== MEMBER ENDPOINTS ===================
                                 // Theo SRS: Member có tất cả quyền Customer + booking, account
                                 // management
                                 .requestMatchers(
-                                        // Booking Ticket (SRS 3.1.4)
-                                        "/api/bookings/**", // Ticket booking
-                                        "/api/members/bookings/**", // Member booking
-
                                         // Account Management (SRS 3.1.3)
                                         "/api/members/account/**", // Account management
                                         "/api/members/profile/**", // Profile management
@@ -195,7 +239,11 @@ public class SecurityConfig {
 
                                         // Payment for Members
                                         "/api/payment/members/**", // Member payments
-                                        "/api/members/payment/**" // Payment history
+                                        "/api/members/payment/**", // Payment history
+                                        
+                                        // Promotion for Members
+                                        "/api/promotions/apply", // Apply promotion to booking
+                                        "/api/promotions/user-eligible" // Get eligible promotions
                                 ).hasAnyRole("MEMBER", "ADMIN")
 
                                 // =================== GENERAL AUTHENTICATED ENDPOINTS
@@ -207,10 +255,18 @@ public class SecurityConfig {
                                         "/api/auth/change-password/**", // Password change
                                         "/api/auth/logout", // Logout endpoint
                                         
+                                        // Booking Ticket (SRS 3.1.4) - Allow all authenticated users
+                                        "/api/bookings/**", // Ticket booking for all authenticated users
+                                        "/api/members/bookings/**", // Member booking
+                                        
                                         // Payment endpoints for authenticated users
                                         "/api/payments/create", // Create payment
                                         "/api/payments/verify/**", // Verify payment
-                                        "/api/payments/status/**" // Get payment status
+                                        "/api/payments/status/**", // Get payment status
+                                        
+                                        // Promotion endpoints for authenticated users
+                                        "/api/promotions/purchase", // POST - Purchase point-based promotion
+                                        "/api/promotions/my-codes" // GET - Get user's promotion codes
                                 ).authenticated()
 
                                 // =================== DEFAULT ===================

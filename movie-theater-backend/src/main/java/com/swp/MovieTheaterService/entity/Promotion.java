@@ -1,7 +1,9 @@
 package com.swp.MovieTheaterService.entity;
 
+import com.swp.MovieTheaterService.enums.PromotionType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -16,11 +18,12 @@ import java.math.BigDecimal;
  * Represents promotions and discounts in the system
  * 
  * @author Dũng_Solo
- * @version 1.0.0
+ * @version 2.0.0 - Added PromotionType and UserPromotionCode support
  */
 @Entity
 @Table(name = "movietheater_promotion")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
@@ -39,6 +42,10 @@ public class Promotion extends BaseEntity {
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "promotion_type", nullable = false)
+    private PromotionType promotionType = PromotionType.PUBLIC;
 
     @Column(name = "discount_type", nullable = false, length = 20)
     private String discountType; // PERCENTAGE, FIXED_AMOUNT, BUY_ONE_GET_ONE
@@ -91,8 +98,8 @@ public class Promotion extends BaseEntity {
     private String membershipLevels; // BRONZE,SILVER,GOLD,PLATINUM or null = all levels
 
     // Display settings
-    @Column(name = "banner_image_url")
-    private String bannerImageUrl;
+    @Column(name = "banner_url")
+    private String bannerUrl; // Updated field name for consistency
 
     @Column(name = "is_featured", nullable = false)
     private Boolean isFeatured = false;
@@ -104,11 +111,15 @@ public class Promotion extends BaseEntity {
     @Column(name = "points_required")
     private Integer pointsRequired; // Points needed to redeem this promotion
 
-    @Column(name = "is_points_promotion", nullable = false)
-    private Boolean isPointsPromotion = false; // Can be redeemed with points
-
     @Column(name = "points_value")
     private Integer pointsValue; // Points equivalent value for this promotion
+
+    // Code generation settings for POINT_BASED promotions
+    @Column(name = "code_validity_hours")
+    private Integer codeValidityHours = 72; // Default 3 days validity for user codes
+
+    @Column(name = "max_codes_per_user")
+    private Integer maxCodesPerUser = 1; // Max codes a user can have for this promotion
 
     // Relationships
     @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -116,6 +127,9 @@ public class Promotion extends BaseEntity {
 
     @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<LoyaltyTransaction> loyaltyTransactions;
+
+    @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<UserPromotionCode> userPromotionCodes;
 
     // Business methods
     public boolean isValid() {
@@ -248,14 +262,14 @@ public class Promotion extends BaseEntity {
 
     // Points-related methods
     public boolean canBeRedeemedWithPoints() {
-        return isPointsPromotion && pointsRequired != null && pointsRequired > 0;
+        return isPointBasedPromotion() && pointsRequired != null && pointsRequired > 0;
     }
 
     public boolean canBeRedeemedBy(Account account) {
         if (!canBeRedeemedWithPoints()) {
             return false;
         }
-        return account.getMembershipPoints() >= pointsRequired;
+        return account.getMembershipPoints() != null && account.getMembershipPoints() >= pointsRequired;
     }
 
     public String getPointsDisplayText() {
@@ -268,5 +282,22 @@ public class Promotion extends BaseEntity {
     // Thêm phương thức để tương thích với mã cũ
     public BigDecimal getDiscountAmount() {
         return BigDecimal.valueOf(discountValue);
+    }
+
+    // PromotionType business methods
+    public boolean isPublicPromotion() {
+        return PromotionType.PUBLIC.equals(promotionType);
+    }
+
+    public boolean isPointBasedPromotion() {
+        return PromotionType.POINT_BASED.equals(promotionType);
+    }
+
+    public boolean requiresPointPurchase() {
+        return isPointBasedPromotion() && pointsRequired != null && pointsRequired > 0;
+    }
+
+    public String getPromotionTypeDisplay() {
+        return promotionType != null ? promotionType.getDisplayName() : "Không xác định";
     }
 } 

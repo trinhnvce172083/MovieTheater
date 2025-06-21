@@ -1,20 +1,33 @@
 package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.promotion.PromotionCreateRequest;
+import com.swp.MovieTheaterService.dto.promotion.PromotionPurchaseRequest;
+import com.swp.MovieTheaterService.dto.promotion.PromotionPurchaseResponse;
 import com.swp.MovieTheaterService.dto.promotion.PromotionResponse;
+import com.swp.MovieTheaterService.dto.promotion.UserPromotionCodeResponse;
+import com.swp.MovieTheaterService.dto.response.FileUploadResponse;
 import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.entity.Promotion;
+import com.swp.MovieTheaterService.entity.UserPromotionCode;
+import com.swp.MovieTheaterService.enums.PromotionType;
+import com.swp.MovieTheaterService.exception.ErrorCode;
+import com.swp.MovieTheaterService.exception.AppException;
 import com.swp.MovieTheaterService.repository.PromotionRepository;
+import com.swp.MovieTheaterService.repository.UserPromotionCodeRepository;
+import com.swp.MovieTheaterService.repository.AccountRepository;
+import com.swp.MovieTheaterService.service.SupabaseStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -31,6 +44,9 @@ import java.util.stream.Collectors;
 public class PromotionService {
 
     private final PromotionRepository promotionRepository;
+    private final UserPromotionCodeRepository userPromotionCodeRepository;
+    private final AccountRepository accountRepository;
+    private final SupabaseStorageService supabaseStorageService;
 
     // Create promotion
     public PromotionResponse createPromotion(PromotionCreateRequest request) {
@@ -165,8 +181,6 @@ public class PromotionService {
                 promotionCode, promotion.getCurrentUsageCount(), promotion.getMaxUsageCount());
     }
 
-
-
     // Private helper methods
     private boolean isPromotionApplicable(Promotion promotion, Account account, 
                                         Long movieId, Long roomId, LocalDate bookingDate, 
@@ -225,12 +239,16 @@ public class PromotionService {
         promotion.setApplicableRooms(request.getApplicableRooms());
         promotion.setMemberOnly(request.getMemberOnly());
         promotion.setMembershipLevels(request.getMembershipLevels());
-        promotion.setBannerImageUrl(request.getBannerImageUrl());
+        promotion.setBannerUrl(request.getBannerImageUrl());
         promotion.setIsFeatured(request.getIsFeatured());
         promotion.setDisplayOrder(request.getDisplayOrder());
-        promotion.setIsPointsPromotion(request.getIsPointsPromotion());
         promotion.setPointsRequired(request.getPointsRequired());
         promotion.setPointsValue(request.getPointsValue());
+        if (request.getPointsRequired() != null && request.getPointsRequired() > 0) {
+            promotion.setPromotionType(PromotionType.POINT_BASED);
+        } else {
+            promotion.setPromotionType(PromotionType.PUBLIC);
+        }
         return promotion;
     }
 
@@ -256,14 +274,20 @@ public class PromotionService {
         response.setApplicableRooms(promotion.getApplicableRooms());
         response.setMemberOnly(promotion.getMemberOnly());
         response.setMembershipLevels(promotion.getMembershipLevels());
-        response.setBannerImageUrl(promotion.getBannerImageUrl());
+        response.setBannerUrl(promotion.getBannerUrl());
         response.setIsFeatured(promotion.getIsFeatured());
         response.setDisplayOrder(promotion.getDisplayOrder());
         response.setCreatedAt(promotion.getCreatedAt());
         response.setUpdatedAt(promotion.getUpdatedAt());
-        response.setIsPointsPromotion(promotion.getIsPointsPromotion());
+        response.setPromotionType(promotion.getPromotionType().name());
+        response.setPromotionTypeDisplay(promotion.getPromotionTypeDisplay());
         response.setPointsRequired(promotion.getPointsRequired());
         response.setPointsValue(promotion.getPointsValue());
+        response.setCodeValidityHours(promotion.getCodeValidityHours());
+        response.setMaxCodesPerUser(promotion.getMaxCodesPerUser());
+
+        // Set points promotion flag - FIX for NullPointerException
+        response.setIsPointsPromotion(promotion.isPointBasedPromotion());
 
         // Set computed fields
         response.setIsValid(promotion.isValid());
@@ -403,5 +427,195 @@ public class PromotionService {
     @Transactional(readOnly = true)
     public List<Object> getUserEligiblePromotions() {
         return getAllActivePromotions().stream().map(p -> (Object) p).collect(Collectors.toList());
+    }
+
+    // === NEW POINT-BASED PROMOTION METHODS ===
+    
+    /**
+     * Purchase point-based promotion
+     * User đổi điểm để nhận unique promotion code
+     */
+    public PromotionPurchaseResponse purchasePointBasedPromotion(Long userId, PromotionPurchaseRequest request) {
+        // Get user account
+        Account account = accountRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        // Get promotion
+        Promotion promotion = promotionRepository.findById(request.getPromotionId())
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
+        
+        // Validate promotion type
+        if (!promotion.isPointBasedPromotion()) {
+            throw new AppException(ErrorCode.INVALID_PROMOTION_TYPE);
+        }
+        
+        // Check if promotion is active and valid
+        if (!promotion.isValid()) {
+            throw new AppException(ErrorCode.PROMOTION_EXPIRED);
+        }
+        
+        // Check user points - fix method name
+        Integer userPoints = account.getMembershipPoints();
+        if (userPoints == null || userPoints < promotion.getPointsRequired()) {
+            throw new AppException(ErrorCode.INSUFFICIENT_POINTS);
+        }
+        
+        // Check if user already has max codes for this promotion
+        Long existingCodes = userPromotionCodeRepository.countValidCodesByAccountAndPromotion(account, promotion);
+        if (existingCodes >= promotion.getMaxCodesPerUser()) {
+            throw new AppException(ErrorCode.MAX_CODES_REACHED);
+        }
+        
+        // Generate unique code
+        String uniqueCode = generateUniqueCode(promotion);
+        
+        // Calculate expiry time
+        LocalDateTime expiresAt = LocalDateTime.now().plusHours(promotion.getCodeValidityHours());
+        
+        // Create user promotion code
+        UserPromotionCode userPromotionCode = UserPromotionCode.builder()
+                .uniqueCode(uniqueCode)
+                .account(account)
+                .promotion(promotion)
+                .pointsSpent(promotion.getPointsRequired())
+                .expiresAt(expiresAt)
+                .build();
+        
+        userPromotionCodeRepository.save(userPromotionCode);
+        
+        // Deduct points from user
+        account.setMembershipPoints(userPoints - promotion.getPointsRequired());
+        accountRepository.save(account);
+        
+        // Create response
+        return PromotionPurchaseResponse.builder()
+                .uniqueCode(uniqueCode)
+                .promotionName(promotion.getPromotionName())
+                .promotionDescription(promotion.getDescription())
+                .pointsSpent(promotion.getPointsRequired())
+                .remainingPoints(account.getMembershipPoints())
+                .expiresAt(expiresAt)
+                .purchasedAt(LocalDateTime.now())
+                .discountDisplayText(promotion.getDiscountDisplayText())
+                .statusMessage("Mua khuyến mãi thành công! Mã của bạn: " + uniqueCode)
+                .build();
+    }
+    
+    /**
+     * Get user's promotion codes
+     */
+    @Transactional(readOnly = true)
+    public List<UserPromotionCodeResponse> getUserPromotionCodes(Long userId) {
+        Account account = accountRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        List<UserPromotionCode> codes = userPromotionCodeRepository.findValidCodesByAccount(account, LocalDateTime.now());
+        
+        return codes.stream()
+                .map(this::mapToUserPromotionCodeResponse)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Validate and use promotion code
+     */
+    public boolean usePromotionCode(String uniqueCode, Long bookingId) {
+        UserPromotionCode userCode = userPromotionCodeRepository.findByUniqueCode(uniqueCode)
+                .orElse(null);
+        
+        if (userCode == null || !userCode.isValid()) {
+            return false;
+        }
+        
+        // Mark as used (will be set in booking process)
+        return true;
+    }
+    
+    // === HELPER METHODS ===
+    
+    private String generateUniqueCode(Promotion promotion) {
+        String prefix = promotion.getPromotionCode().substring(0, Math.min(3, promotion.getPromotionCode().length()));
+        String uniquePart = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+        String uniqueCode = prefix + uniquePart;
+        
+        // Ensure uniqueness
+        while (userPromotionCodeRepository.existsByUniqueCode(uniqueCode)) {
+            uniquePart = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+            uniqueCode = prefix + uniquePart;
+        }
+        
+        return uniqueCode;
+    }
+    
+    private UserPromotionCodeResponse mapToUserPromotionCodeResponse(UserPromotionCode userCode) {
+        return UserPromotionCodeResponse.builder()
+                .userPromotionCodeId(userCode.getUserPromotionCodeId())
+                .promotionName(userCode.getPromotion().getPromotionName())
+                .uniqueCode(userCode.getUniqueCode())
+                .pointsSpent(userCode.getPointsSpent())
+                .movieTitle(userCode.getBooking() != null ? userCode.getBooking().getSchedule().getMovie().getTitle() : null)
+                .showTime(userCode.getBooking() != null ? userCode.getBooking().getSchedule().getShowDate().toString() : null)
+                .isUsed(userCode.getIsUsed())
+                .expiresAt(userCode.getExpiresAt())
+                .build();
+    }
+
+    // ==================== BANNER MANAGEMENT METHODS ====================
+    
+    /**
+     * Update promotion banner
+     */
+    @Transactional
+    public FileUploadResponse updatePromotionBanner(Long promotionId, MultipartFile bannerFile) {
+        log.info("Updating banner for promotion ID: {}", promotionId);
+        
+        Promotion promotion = promotionRepository.findById(promotionId)
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
+        
+        String newBannerUrl = supabaseStorageService.replaceFile(
+            promotion.getBannerUrl(), 
+            bannerFile, 
+            "promotions/banners"
+        );
+        
+        promotion.setBannerUrl(newBannerUrl);
+        promotion.setUpdatedAt(LocalDateTime.now());
+        promotionRepository.save(promotion);
+        
+        log.info("Updated banner for promotion: {} - new URL: {}", promotion.getPromotionName(), newBannerUrl);
+        
+        return FileUploadResponse.builder()
+                .fileName(bannerFile.getOriginalFilename())
+                .url(newBannerUrl)
+                .fileSize(bannerFile.getSize())
+                .message("Banner promotion đã được cập nhật thành công")
+                .build();
+    }
+    
+    /**
+     * Delete promotion banner
+     */
+    @Transactional
+    public void deletePromotionBanner(Long promotionId) {
+        log.info("Deleting banner for promotion ID: {}", promotionId);
+        
+        Promotion promotion = promotionRepository.findById(promotionId)
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
+        
+        if (promotion.getBannerUrl() != null) {
+            String filePath = supabaseStorageService.extractFilePathFromUrl(promotion.getBannerUrl());
+            boolean deleted = supabaseStorageService.deleteFile(filePath);
+            
+            if (deleted) {
+                promotion.setBannerUrl(null);
+                promotion.setUpdatedAt(LocalDateTime.now());
+                promotionRepository.save(promotion);
+                log.info("Deleted banner for promotion: {}", promotion.getPromotionName());
+            } else {
+                throw new AppException(ErrorCode.FILE_DELETE_FAILED);
+            }
+        } else {
+            log.info("No banner to delete for promotion: {}", promotion.getPromotionName());
+        }
     }
 } 

@@ -9,6 +9,7 @@ import com.swp.MovieTheaterService.mapper.BookingMapper;
 import com.swp.MovieTheaterService.repository.*;
 import com.swp.MovieTheaterService.service.BookingService;
 import com.swp.MovieTheaterService.service.ConcessionService;
+import com.swp.MovieTheaterService.service.PromotionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -43,8 +44,10 @@ public class BookingServiceImpl implements BookingService {
     private final ScheduleRepository scheduleRepository;
     private final SeatRepository seatRepository;
     private final AccountRepository accountRepository;
+    private final PromotionRepository promotionRepository;
     private final BookingMapper bookingMapper;
     private final ConcessionService concessionService;
+    private final PromotionService promotionService;
 
     // Booking expiration time in minutes
     private static final int BOOKING_EXPIRATION_MINUTES = 15;
@@ -199,19 +202,28 @@ public class BookingServiceImpl implements BookingService {
             // 17. Generate QR code for the booking
             generateQRCode(savedBooking.getBookingId());
 
+            // 18. Apply promotion usage if promotion was applied successfully
+            if (request.hasPromotionCode() && discountAmount > 0) {
+                try {
+                    promotionService.applyPromotion(request.getPromotionCode());
+                    log.info("Applied promotion usage for code: {} on booking: {}", 
+                            request.getPromotionCode(), savedBooking.getBookingId());
+                } catch (Exception e) {
+                    log.warn("Could not apply promotion usage for code: {} - {}", 
+                            request.getPromotionCode(), e.getMessage());
+                }
+            }
 
+            log.info("Booking created successfully with ID: {} and final amount: {}", 
+                    savedBooking.getBookingId(), finalAmount);
 
-            log.info(
-                    "Booking creation completed successfully - ID: {}, Code: {}, Seats: {}, Concessions: {}, Final Amount: {}",
-                    savedBooking.getBookingId(), savedBooking.getBookingCode(),
-                    seatIds.size(), request.getConcessionOrders().size(), finalAmount);
-
+            // 19. Return booking response
             return bookingMapper.toResponse(savedBooking);
 
         } catch (Exception e) {
-            // If anything fails, release the locked seats
-            log.error("Booking creation failed, releasing locked seats: {}", seatIds, e);
+            // Release seats if something goes wrong
             releaseSeatLocks(request.getScheduleId(), seatIds);
+            log.error("Error creating booking: {}", e.getMessage(), e);
             throw e;
         }
     }
@@ -270,43 +282,42 @@ public class BookingServiceImpl implements BookingService {
      */
     private Booking createBookingEntity(BookingCreateRequest request, Account account,
             Schedule schedule, Double totalAmount, Double discountAmount, Double finalAmount) {
+        Booking booking = Booking.builder()
+                .bookingCode(generateBookingCode())
+                .bookingDate(LocalDateTime.now())
+                .totalAmount(totalAmount)
+                .discountAmount(discountAmount)
+                .finalAmount(finalAmount)
+                .bookingStatus(BookingStatus.PENDING)
+                .paymentMethod(request.getPaymentMethod())
+                .customerName(request.getCustomerName())
+                .customerEmail(request.getCustomerEmail())
+                .customerPhone(request.getCustomerPhone())
+                .seatCount(request.getSeatIds().size())
+                .notes(request.getNotes())
+                .qrCode(generateQRCodeInternal())
+                .isCheckedIn(false)
+                .account(account)
+                .schedule(schedule)
+                .isActive(true)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
 
-        Booking booking = new Booking();
-
-        // Basic info
-        booking.setBookingCode(generateBookingCode());
-        booking.setBookingDate(LocalDateTime.now());
-        booking.setSeatCount(request.getSeatIds().size());
-
-        // Amounts
-        booking.setTotalAmount(totalAmount);
-        booking.setDiscountAmount(discountAmount);
-        booking.setFinalAmount(finalAmount);
-
-        // Status and relationships
-        booking.setBookingStatus(BookingStatus.PENDING);
-        booking.setAccount(account); // null for guest bookings
-        booking.setSchedule(schedule);
-
-        // Customer information (for guest bookings or override)
-        if (account == null || request.getIsGuestBooking()) {
-            booking.setCustomerName(request.getCustomerName());
-            booking.setCustomerEmail(request.getCustomerEmail());
-            booking.setCustomerPhone(request.getCustomerPhone());
-        } else {
-            // Use account info as default, but allow override
-            booking.setCustomerName(account.getFullName());
-            booking.setCustomerEmail(account.getEmail());
-            booking.setCustomerPhone(account.getPhoneNumber());
+        // Set promotion if applicable
+        if (request.hasPromotionCode() && discountAmount > 0) {
+            try {
+                Promotion promotion = promotionRepository.findByPromotionCodeAndIsActiveTrue(request.getPromotionCode())
+                        .orElse(null);
+                if (promotion != null) {
+                    booking.setPromotion(promotion);
+                    log.info("Applied promotion {} to booking with discount {}", 
+                            promotion.getPromotionCode(), discountAmount);
+                }
+            } catch (Exception e) {
+                log.warn("Could not set promotion reference for booking: {}", e.getMessage());
+            }
         }
-
-        // Additional info
-        booking.setNotes(request.getNotes());
-        booking.setIsActive(true);
-
-        // Timestamps
-        booking.setCreatedAt(LocalDateTime.now());
-        booking.setUpdatedAt(LocalDateTime.now());
 
         return booking;
     }
@@ -529,14 +540,33 @@ public class BookingServiceImpl implements BookingService {
         log.info("Confirming booking with ID: {}", bookingId);
         Booking booking = findBookingById(bookingId);
 
+        // Validate booking status
         if (!booking.isPending()) {
-            throw new AppException(ErrorCode.BOOKING_PAYMENT_REQUIRED);
+            log.warn("❌ Cannot confirm booking - current status: {}", booking.getBookingStatus());
+            throw new AppException(ErrorCode.BOOKING_INVALID_STATUS);
         }
 
+        // Update booking status
+        BookingStatus oldStatus = booking.getBookingStatus();
         booking.setBookingStatus(BookingStatus.CONFIRMED);
+        
+        // Update timestamps
+        booking.setUpdatedAt(LocalDateTime.now());
+        
         Booking updatedBooking = bookingRepository.save(booking);
 
-        log.info("Booking confirmed successfully with ID: {}", bookingId);
+        // Enhanced logging with status tracking
+        log.info("📋 Booking status changed: {} → {} for booking ID: {}", 
+                oldStatus.getDisplayName(), 
+                BookingStatus.CONFIRMED.getDisplayName(), 
+                bookingId);
+        
+        // Send notification (if customer has account)
+        if (booking.getAccount() != null) {
+            sendBookingConfirmationNotification(booking);
+        }
+
+        log.info("✅ Booking confirmed successfully with ID: {}", bookingId);
         return bookingMapper.toResponse(updatedBooking);
     }
 
@@ -574,11 +604,18 @@ public class BookingServiceImpl implements BookingService {
         log.info("Cancelling booking with ID: {}", bookingId);
         Booking booking = findBookingById(bookingId);
 
+        // Validate if booking can be cancelled
         if (!booking.canBeCancelled()) {
-            throw new AppException(ErrorCode.BOOKING_CANCELLED);
+            log.warn("❌ Cannot cancel booking - current status: {}, show time: {}", 
+                    booking.getBookingStatus(), 
+                    booking.getSchedule().getShowDateTime());
+            throw new AppException(ErrorCode.BOOKING_CANNOT_BE_CANCELLED);
         }
 
-        // Cancel booking
+        // Store old status for logging
+        BookingStatus oldStatus = booking.getBookingStatus();
+        
+        // Cancel booking (includes refund calculation)
         booking.cancel(cancellationReason);
 
         // Release seats
@@ -587,8 +624,46 @@ public class BookingServiceImpl implements BookingService {
 
         Booking updatedBooking = bookingRepository.save(booking);
 
-        log.info("Booking cancelled successfully with ID: {}", bookingId);
+        // Enhanced logging with status tracking
+        log.info("📋 Booking status changed: {} → {} for booking ID: {}", 
+                oldStatus.getDisplayName(), 
+                BookingStatus.CANCELLED.getDisplayName(), 
+                bookingId);
+        
+        log.info("💰 Refund calculated: {}/{} ({}%)", 
+                booking.getRefundAmount(), 
+                booking.getFinalAmount(),
+                booking.getRefundAmount() / booking.getFinalAmount() * 100);
+
+        // Send notification (if customer has account)
+        if (booking.getAccount() != null) {
+            sendBookingCancellationNotification(booking);
+        }
+
+        log.info("✅ Booking cancelled successfully with ID: {}, refund: {}", 
+                bookingId, booking.getRefundAmount());
         return bookingMapper.toResponse(updatedBooking);
+    }
+
+    // Notification methods
+    private void sendBookingConfirmationNotification(Booking booking) {
+        try {
+            log.info("📧 Sending confirmation notification to: {}", booking.getAccount().getEmail());
+            // TODO: Implement email/SMS notification
+            // emailService.sendBookingConfirmation(booking);
+        } catch (Exception e) {
+            log.error("❌ Failed to send confirmation notification: {}", e.getMessage());
+        }
+    }
+
+    private void sendBookingCancellationNotification(Booking booking) {
+        try {
+            log.info("📧 Sending cancellation notification to: {}", booking.getAccount().getEmail());
+            // TODO: Implement email/SMS notification with refund info
+            // emailService.sendBookingCancellation(booking);
+        } catch (Exception e) {
+            log.error("❌ Failed to send cancellation notification: {}", e.getMessage());
+        }
     }
 
     @Override
@@ -624,36 +699,112 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse applyPromotion(Long bookingId, String promotionCode) {
         log.info("Applying promotion {} to booking ID: {}", promotionCode, bookingId);
+        
         Booking booking = findBookingById(bookingId);
 
+        // Check if booking is in valid state for promotion
         if (!booking.isPending() && !booking.isConfirmed()) {
             throw new AppException(ErrorCode.PROMOTION_NOT_APPLICABLE);
         }
 
-        // TODO: Implement promotion logic when Promotion service is available
-        // For now, just return the booking as is
-        log.warn("Promotion service not implemented yet");
-        return bookingMapper.toResponse(booking);
+        try {
+            // Get account for member validation (can be null for guest bookings)
+            Account account = booking.getAccount();
+            
+            // Get schedule information for validation
+            Schedule schedule = booking.getSchedule();
+            
+            // Validate promotion for this booking
+            boolean isValid = promotionService.validatePromotionForBooking(
+                promotionCode, 
+                account, 
+                schedule.getMovie().getMovieId(),
+                schedule.getCinemaRoom().getCinemaRoomId(), 
+                schedule.getShowDate(), 
+                booking.getTotalAmount()
+            );
+
+            if (!isValid) {
+                log.warn("Promotion validation failed for code: {} on booking: {}", promotionCode, bookingId);
+                throw new AppException(ErrorCode.PROMOTION_NOT_APPLICABLE);
+            }
+
+            // Calculate discount amount
+            Double discountAmount = promotionService.calculateDiscount(promotionCode, booking.getTotalAmount());
+            
+            if (discountAmount <= 0) {
+                log.warn("No discount calculated for promotion: {} on booking: {}", promotionCode, bookingId);
+                throw new AppException(ErrorCode.PROMOTION_NOT_APPLICABLE);
+            }
+
+            // Get promotion entity to save reference
+            Promotion promotion = promotionRepository.findByPromotionCodeAndIsActiveTrue(promotionCode)
+                    .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
+
+            // Apply promotion to booking
+            booking.setPromotion(promotion);
+            booking.setDiscountAmount(discountAmount);
+            booking.setFinalAmount(booking.getTotalAmount() - discountAmount);
+            booking.setUpdatedAt(LocalDateTime.now());
+
+            // Save booking with promotion
+            Booking updatedBooking = bookingRepository.save(booking);
+
+            // Apply promotion usage (increment usage count)
+            promotionService.applyPromotion(promotionCode);
+
+            log.info("Promotion {} applied successfully to booking {}. Discount: {}", 
+                    promotionCode, bookingId, discountAmount);
+            
+            return bookingMapper.toResponse(updatedBooking);
+
+        } catch (AppException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error applying promotion {} to booking {}: {}", promotionCode, bookingId, e.getMessage(), e);
+            throw new AppException(ErrorCode.PROMOTION_APPLICATION_FAILED);
+        }
     }
 
     @Override
     public BookingResponse removePromotion(Long bookingId) {
         log.info("Removing promotion from booking ID: {}", bookingId);
+        
         Booking booking = findBookingById(bookingId);
 
+        // Check if booking is in valid state for promotion removal
         if (!booking.isPending() && !booking.isConfirmed()) {
             throw new AppException(ErrorCode.PROMOTION_NOT_APPLICABLE);
         }
 
-        // Remove promotion
-        booking.setPromotion(null);
-        booking.setDiscountAmount(0.0);
-        booking.setFinalAmount(booking.getTotalAmount());
+        // Check if booking has promotion to remove
+        if (booking.getPromotion() == null) {
+            log.warn("No promotion found on booking ID: {}", bookingId);
+            throw new AppException(ErrorCode.PROMOTION_NOT_FOUND);
+        }
 
-        Booking updatedBooking = bookingRepository.save(booking);
+        try {
+            String promotionCode = booking.getPromotion().getPromotionCode();
+            Double discountAmount = booking.getDiscountAmount();
 
-        log.info("Promotion removed successfully from booking ID: {}", bookingId);
-        return bookingMapper.toResponse(updatedBooking);
+            // Remove promotion from booking
+            booking.setPromotion(null);
+            booking.setDiscountAmount(0.0);
+            booking.setFinalAmount(booking.getTotalAmount());
+            booking.setUpdatedAt(LocalDateTime.now());
+
+            // Save updated booking
+            Booking updatedBooking = bookingRepository.save(booking);
+
+            log.info("Promotion {} removed successfully from booking {}. Discount removed: {}", 
+                    promotionCode, bookingId, discountAmount);
+            
+            return bookingMapper.toResponse(updatedBooking);
+
+        } catch (Exception e) {
+            log.error("Error removing promotion from booking {}: {}", bookingId, e.getMessage(), e);
+            throw new AppException(ErrorCode.PROMOTION_REMOVAL_FAILED);
+        }
     }
 
     @Override
@@ -1270,15 +1421,32 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private Double calculatePromotionDiscount(BookingCreateRequest request, Double totalAmount) {
-        // TODO: Implement promotion logic based on promotion code or ID
-        // For now, return 0 - this should be implemented with PromotionService
-        if (request.hasPromotionCode()) {
-            log.info("Promotion code '{}' will be processed later", request.getPromotionCode());
+        try {
+            if (!request.hasPromotionCode()) {
+                return 0.0;
+            }
+
+            String promotionCode = request.getPromotionCode();
+            log.info("Calculating discount for promotion code: {} with total amount: {}", 
+                    promotionCode, totalAmount);
+
+            // Validate promotion exists and is active
+            if (!promotionService.validatePromotionForBooking(promotionCode, null, 
+                    request.getScheduleId(), null, null, totalAmount)) {
+                log.warn("Promotion validation failed for code: {}", promotionCode);
+                return 0.0;
+            }
+
+            // Calculate discount amount
+            Double discountAmount = promotionService.calculateDiscount(promotionCode, totalAmount);
+            log.info("Calculated discount amount: {} for promotion: {}", discountAmount, promotionCode);
+            
+            return discountAmount;
+            
+        } catch (Exception e) {
+            log.error("Error calculating promotion discount: {}", e.getMessage(), e);
+            return 0.0;
         }
-        if (request.hasPromotionCode()) {
-            log.info("Promotion ID {} will be processed later", request.getPromotionCode());
-        }
-        return 0.0;
     }
 
     private void applyRewardPointsDiscount(Booking booking, Account account, Integer rewardPointsToUse) {

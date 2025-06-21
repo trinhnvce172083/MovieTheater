@@ -3,16 +3,21 @@ package com.swp.MovieTheaterService.service.impl;
 import com.swp.MovieTheaterService.config.VNPayConfig;
 import com.swp.MovieTheaterService.dto.payment.VNPayPaymentRequestDTO;
 import com.swp.MovieTheaterService.entity.Booking;
+import com.swp.MovieTheaterService.entity.Account;
+import com.swp.MovieTheaterService.entity.LoyaltyTransaction;
 import com.swp.MovieTheaterService.enums.BookingStatus;
 import com.swp.MovieTheaterService.exception.AppException;
 import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.repository.BookingRepository;
 import com.swp.MovieTheaterService.service.VNPayService;
+import com.swp.MovieTheaterService.service.LoyaltyService;
+import com.swp.MovieTheaterService.service.EmailService;
 import com.swp.MovieTheaterService.utils.VNPayHashUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -34,6 +39,8 @@ public class VNPayServiceImpl implements VNPayService {
 
     private final VNPayConfig vnPayConfig;
     private final BookingRepository bookingRepository;
+    private final LoyaltyService loyaltyService;
+    private final EmailService emailService;
 
     @Override
     public String createPaymentUrl(@NonNull VNPayPaymentRequestDTO requestDTO, @NonNull String ipAddress) {
@@ -178,6 +185,7 @@ public class VNPayServiceImpl implements VNPayService {
         }
     }
 
+    @Transactional
     private String buildPaymentResultUpdate(Map<String, String> response) {
         String responseCode = response.getOrDefault("vnp_ResponseCode", "99");
         String transactionStatus = response.getOrDefault("vnp_TransactionStatus", "99");
@@ -201,16 +209,64 @@ public class VNPayServiceImpl implements VNPayService {
                 Booking booking = bookingRepository.findById(bookingId)
                         .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
 
+                // Kiểm tra booking đã được thanh toán chưa (tránh duplicate processing)
+                if (booking.getBookingStatus() == BookingStatus.PAID) {
+                    log.warn("Booking {} đã được thanh toán trước đó", bookingId);
+                    redirectUrl += "success?bookingId=" + bookingId;
+                    return redirectUrl;
+                }
+
+                // Update booking status
                 booking.setBookingStatus(BookingStatus.PAID);
                 booking.setUpdatedAt(LocalDateTime.now());
-                bookingRepository.save(booking);
+                
+                // Set payment info
+                booking.setPaymentMethod("VNPAY");
+                booking.setPaymentReference(transactionNo);
+                
+                Booking savedBooking = bookingRepository.save(booking);
+                log.info("✅ Cập nhật booking status thành công: {} -> PAID", bookingId);
+
+                // Process member points earning
+                try {
+                    Account account = savedBooking.getAccount();
+                    if (account != null) {
+                        LoyaltyTransaction loyaltyTransaction = loyaltyService.earnPointsFromBooking(account, savedBooking);
+                        
+                        if (loyaltyTransaction != null) {
+                            log.info("✅ Tích điểm thành công: {} points cho account: {}", 
+                                    loyaltyTransaction.getPoints(), account.getEmail());
+                            
+                            // Send notification email about points earned (async)
+                            try {
+                                emailService.sendPointsEarnedNotification(account, loyaltyTransaction);
+                            } catch (Exception emailEx) {
+                                log.warn("Không thể gửi email thông báo tích điểm: {}", emailEx.getMessage());
+                            }
+                        } else {
+                            log.info("Không đủ điều kiện tích điểm cho booking: {}", bookingId);
+                        }
+                    } else {
+                        log.warn("Không tìm thấy account cho booking: {}", bookingId);
+                    }
+                } catch (Exception loyaltyEx) {
+                    log.error("Lỗi xử lý tích điểm cho booking {}: {}", bookingId, loyaltyEx.getMessage());
+                    // Không throw exception để không ảnh hưởng đến payment processing
+                }
+
+                // Send payment success notification (async)
+                try {
+                    emailService.sendPaymentSuccessNotification(savedBooking);
+                } catch (Exception emailEx) {
+                    log.warn("Không thể gửi email xác nhận thanh toán: {}", emailEx.getMessage());
+                }
 
                 redirectUrl += "success?bookingId=" + bookingId;
-                log.info("Thanh toán thành công cho booking: {}", bookingId);
+                log.info("🎉 Thanh toán hoàn tất cho booking: {} - Amount: {} VND", bookingId, amount);
                 
             } catch (Exception e) {
-                log.error("Lỗi cập nhật booking sau thanh toán: {}", e.getMessage());
-                redirectUrl += "error";
+                log.error("❌ Lỗi xử lý thanh toán thành công cho booking: {}", e.getMessage(), e);
+                redirectUrl += "error?message=" + e.getMessage();
             }
         } else {
             try {
@@ -224,12 +280,19 @@ public class VNPayServiceImpl implements VNPayService {
                 booking.setUpdatedAt(LocalDateTime.now());
                 bookingRepository.save(booking);
 
-                redirectUrl += "failed?bookingId=" + bookingId;
-                log.info("Thanh toán thất bại cho booking: {}", bookingId);
+                // Send payment failed notification (async)
+                try {
+                    emailService.sendPaymentFailedNotification(booking, responseCode);
+                } catch (Exception emailEx) {
+                    log.warn("Không thể gửi email thông báo thanh toán thất bại: {}", emailEx.getMessage());
+                }
+
+                redirectUrl += "failed?bookingId=" + bookingId + "&reason=" + responseCode;
+                log.info("❌ Thanh toán thất bại cho booking: {} - Code: {}", bookingId, responseCode);
                 
             } catch (Exception e) {
-                log.error("Lỗi cập nhật booking sau thanh toán thất bại: {}", e.getMessage());
-                redirectUrl += "error";
+                log.error("❌ Lỗi xử lý thanh toán thất bại: {}", e.getMessage(), e);
+                redirectUrl += "error?message=" + e.getMessage();
             }
         }
 

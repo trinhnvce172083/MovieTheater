@@ -124,7 +124,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/payments/create",
             "/api/payments/methods",
             "/api/payments/vnpay/callback",
-            "/api/payments/vnpay/return",
+            "/api/payment/vnpay/return",
+            "/api/payment/vnpay/ipn",
             "/api/payments/calculate-fee",
 
             // Documentation & API

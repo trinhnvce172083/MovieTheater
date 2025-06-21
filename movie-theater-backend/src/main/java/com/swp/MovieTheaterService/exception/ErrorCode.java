@@ -92,6 +92,8 @@ public enum ErrorCode {
     BOOKING_CANCELLED(1605, "Đặt vé đã bị hủy", HttpStatus.CONFLICT),
     BOOKING_EXPIRED(1606, "Đặt vé đã hết hạn", HttpStatus.CONFLICT),
     BOOKING_SESSION_EXPIRED(1607, "Phiên đặt vé đã hết hạn", HttpStatus.CONFLICT),
+    BOOKING_INVALID_STATUS(1608, "Trạng thái booking không hợp lệ để thực hiện thao tác này", HttpStatus.BAD_REQUEST),
+    BOOKING_CANNOT_BE_CANCELLED(1609, "Booking không thể hủy (quá gần giờ chiếu hoặc đã thanh toán)", HttpStatus.BAD_REQUEST),
 
     // ==================== PAYMENT MANAGEMENT (1700-1799) ====================
     PAYMENT_NOT_FOUND(1700, "Thanh toán không tồn tại", HttpStatus.NOT_FOUND),
@@ -108,6 +110,16 @@ public enum ErrorCode {
     PROMOTION_NOT_APPLICABLE(1802, "Khuyến mãi không áp dụng được", HttpStatus.BAD_REQUEST),
     PROMOTION_USAGE_LIMIT_EXCEEDED(1803, "Đã vượt quá giới hạn sử dụng khuyến mãi", HttpStatus.BAD_REQUEST),
     PROMOTION_MINIMUM_AMOUNT_NOT_MET(1804, "Chưa đạt số tiền tối thiểu để sử dụng khuyến mãi", HttpStatus.BAD_REQUEST),
+    
+    // Point-based promotion errors
+    INVALID_PROMOTION_TYPE(1805, "Loại khuyến mãi không hợp lệ", HttpStatus.BAD_REQUEST),
+    INSUFFICIENT_POINTS(1806, "Điểm thưởng không đủ để mua khuyến mãi", HttpStatus.BAD_REQUEST),
+    MAX_CODES_REACHED(1807, "Đã đạt giới hạn số mã khuyến mãi cho promotion này", HttpStatus.BAD_REQUEST),
+    PROMOTION_CODE_USED(1808, "Mã khuyến mãi đã được sử dụng", HttpStatus.BAD_REQUEST),
+    PROMOTION_CODE_EXPIRED(1809, "Mã khuyến mãi đã hết hạn", HttpStatus.BAD_REQUEST),
+    PROMOTION_CODE_INVALID(1810, "Mã khuyến mãi không hợp lệ", HttpStatus.BAD_REQUEST),
+    PROMOTION_APPLICATION_FAILED(1806, "Áp dụng khuyến mãi thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
+    PROMOTION_REMOVAL_FAILED(1807, "Xóa khuyến mãi thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // ==================== RATE LIMITING (1900-1999) ====================
     RATE_LIMIT_EXCEEDED(1900, "Quá nhiều yêu cầu, vui lòng thử lại sau", HttpStatus.TOO_MANY_REQUESTS),

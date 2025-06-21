@@ -1,6 +1,7 @@
 package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.Promotion;
+import com.swp.MovieTheaterService.enums.PromotionType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -54,15 +55,15 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
     // Featured promotions
     List<Promotion> findByIsActiveTrueAndIsFeaturedTrueOrderByDisplayOrderAscCreatedAtDesc();
 
-    // Points-based promotions
+    // Points-based promotions - FIXED: Use promotionType instead of isPointsPromotion
     @Query("SELECT p FROM Promotion p WHERE p.isActive = true AND " +
-           "p.isPointsPromotion = true AND " +
+           "p.promotionType = com.swp.MovieTheaterService.enums.PromotionType.POINT_BASED AND " +
            "CURRENT_DATE >= p.startDate AND CURRENT_DATE <= p.endDate " +
            "ORDER BY p.pointsRequired ASC")
     List<Promotion> findPointsPromotions();
 
     @Query("SELECT p FROM Promotion p WHERE p.isActive = true AND " +
-           "p.isPointsPromotion = true AND " +
+           "p.promotionType = com.swp.MovieTheaterService.enums.PromotionType.POINT_BASED AND " +
            "p.pointsRequired <= :availablePoints AND " +
            "CURRENT_DATE >= p.startDate AND CURRENT_DATE <= p.endDate " +
            "ORDER BY p.pointsRequired ASC")
@@ -117,7 +118,7 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
     Long countCurrentPromotions();
 
     @Query("SELECT COUNT(p) FROM Promotion p WHERE p.isActive = true AND " +
-           "p.isPointsPromotion = true")
+           "p.promotionType = com.swp.MovieTheaterService.enums.PromotionType.POINT_BASED")
     Long countPointsPromotions();
 
     // Validation queries

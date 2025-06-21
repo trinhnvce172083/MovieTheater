@@ -193,23 +193,39 @@ public class BookingController {
     }
 
     @PostMapping("/{bookingId}/confirm")
-    @Operation(summary = "Confirm booking", description = "Confirm booking and process payment")
+    @Operation(summary = "Confirm booking", description = "Confirm booking - change status from PENDING to CONFIRMED")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<BookingResponse> confirmBooking(
             @PathVariable Long bookingId,
-            @RequestBody Map<String, String> paymentInfo,
             Authentication authentication) {
 
         Long userId = authentication != null ? extractUserId(authentication) : null;
-        String paymentMethod = paymentInfo.get("paymentMethod");
-        String paymentReference = paymentInfo.get("paymentReference");
+        log.info("Confirming booking - booking: {}, user: {}", bookingId, userId);
 
-        log.info("Confirming booking - booking: {}, user: {}, payment: {}",
-                bookingId, userId, paymentMethod);
-
-        // Use existing method - TODO: Update to handle payment details
-        BookingResponse response = bookingService.confirmBooking(bookingId);
-        return ResponseEntity.ok(response);
+        try {
+            BookingResponse response = bookingService.confirmBooking(bookingId);
+            
+            // Success notification
+            log.info("✅ Booking confirmed successfully - ID: {}, Status: {}", 
+                    response.getBookingId(), response.getBookingStatus());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            // Error notification
+            log.error("❌ Failed to confirm booking - ID: {}, Error: {}", bookingId, e.getMessage());
+            
+            // Return structured error response for frontend
+            Map<String, Object> errorResponse = Map.of(
+                "success", false,
+                "message", "Không thể xác nhận booking",
+                "error", e.getMessage(),
+                "bookingId", bookingId,
+                "timestamp", LocalDateTime.now()
+            );
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
     }
 
     @PostMapping("/{bookingId}/cancel")
@@ -217,17 +233,36 @@ public class BookingController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<BookingResponse> cancelBooking(
             @PathVariable Long bookingId,
-            @RequestBody Map<String, String> cancellationInfo,
+            @RequestParam(required = false, defaultValue = "User cancelled") String reason,
             Authentication authentication) {
 
         Long userId = authentication != null ? extractUserId(authentication) : null;
-        String reason = cancellationInfo.get("reason");
+        log.info("Cancelling booking - booking: {}, user: {}, reason: {}", bookingId, userId, reason);
 
-        log.info("Cancelling booking - booking: {}, user: {}, reason: {}",
-                bookingId, userId, reason);
-
-        BookingResponse response = bookingService.cancelBooking(bookingId, reason);
-        return ResponseEntity.ok(response);
+        try {
+            BookingResponse response = bookingService.cancelBooking(bookingId, reason);
+            
+            // Success notification
+            log.info("✅ Booking cancelled successfully - ID: {}, Status: {}, Refund: {}", 
+                    response.getBookingId(), response.getBookingStatus(), response.getRefundAmount());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            // Error notification
+            log.error("❌ Failed to cancel booking - ID: {}, Error: {}", bookingId, e.getMessage());
+            
+            // Return structured error response for frontend
+            Map<String, Object> errorResponse = Map.of(
+                "success", false,
+                "message", "Không thể hủy booking",
+                "error", e.getMessage(),
+                "bookingId", bookingId,
+                "timestamp", LocalDateTime.now()
+            );
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
     }
 
     @PostMapping("/{bookingId}/checkin")

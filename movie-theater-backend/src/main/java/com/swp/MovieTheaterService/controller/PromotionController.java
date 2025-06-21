@@ -1,7 +1,10 @@
 package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.promotion.*;
+import com.swp.MovieTheaterService.dto.response.ApiResponse;
+import com.swp.MovieTheaterService.dto.response.FileUploadResponse;
 import com.swp.MovieTheaterService.service.PromotionService;
+import com.swp.MovieTheaterService.service.ImageManagementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -12,13 +15,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.format.annotation.DateTimeFormat;
+
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
+
 import java.util.List;
 
 /**
@@ -36,6 +41,7 @@ import java.util.List;
 public class PromotionController {
 
     private final PromotionService promotionService;
+    private final ImageManagementService imageManagementService;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -129,7 +135,7 @@ public class PromotionController {
     }
 
     @PostMapping("/apply")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MEMBER') or hasRole('ADMIN')")
     @Operation(summary = "Apply promotion", description = "Apply a promotion to a booking")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Object> applyPromotion(
@@ -206,7 +212,7 @@ public class PromotionController {
     }
 
     @GetMapping("/user-eligible")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MEMBER') or hasRole('ADMIN')")
     @Operation(summary = "Get user eligible promotions", description = "Get promotions eligible for current user")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<List<Object>> getUserEligiblePromotions() {
@@ -216,5 +222,86 @@ public class PromotionController {
         return ResponseEntity.ok(promotions);
     }
 
+    // ==================== PROMOTION IMAGEMANAGEMENT ====================
+
+    @PostMapping(value = "/{id}/banner", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Upload promotion banner", description = "Upload or update banner image for a promotion (Admin only)")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<FileUploadResponse> uploadPromotionBanner(
+            @PathVariable Long id,
+            @Parameter(description = "Banner image file (JPG, PNG, GIF - Max 5MB)")
+            @RequestParam("banner") MultipartFile bannerFile) {
+        
+        log.info("Uploading banner for promotion ID: {}", id);
+        
+        FileUploadResponse response = imageManagementService.updatePromotionBanner(id, bannerFile);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping(value = "/{id}/banner", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update promotion banner", description = "Replace existing banner image for a promotion (Admin only)")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<FileUploadResponse> updatePromotionBanner(
+            @PathVariable Long id,
+            @Parameter(description = "New banner image file (JPG, PNG, GIF - Max 5MB)")
+            @RequestParam("banner") MultipartFile bannerFile) {
+        
+        log.info("Updating banner for promotion ID: {}", id);
+        
+        FileUploadResponse response = imageManagementService.updatePromotionBanner(id, bannerFile);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/banner")
+    @Operation(summary = "Get promotion banner URL", description = "Get the banner image URL for a promotion")
+    public ResponseEntity<ApiResponse<String>> getPromotionBannerUrl(@PathVariable Long id) {
+        log.info("Getting banner URL for promotion ID: {}", id);
+        
+        String bannerUrl = imageManagementService.getPromotionBannerUrl(id);
+        
+        ApiResponse<String> response = ApiResponse.<String>builder()
+                .code(200)
+                .message("Banner URL retrieved successfully")
+                .data(bannerUrl)
+                .build();
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}/banner")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete promotion banner", description = "Remove banner image from a promotion (Admin only)")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponse<Boolean>> deletePromotionBanner(@PathVariable Long id) {
+        log.info("Deleting banner for promotion ID: {}", id);
+        
+        boolean deleted = imageManagementService.deletePromotionBanner(id);
+        
+        ApiResponse<Boolean> response = ApiResponse.<Boolean>builder()
+                .code(deleted ? 200 : 500)
+                .message(deleted ? "Banner deleted successfully" : "Failed to delete banner")
+                .data(deleted)
+                .build();
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/banner/exists")
+    @Operation(summary = "Check if promotion has banner", description = "Check if a promotion has a banner image")
+    public ResponseEntity<ApiResponse<Boolean>> hasPromotionBanner(@PathVariable Long id) {
+        log.info("Checking if promotion {} has banner", id);
+        
+        boolean hasBanner = imageManagementService.hasPromotionBanner(id);
+        
+        ApiResponse<Boolean> response = ApiResponse.<Boolean>builder()
+                .code(200)
+                .message("Banner status checked successfully")
+                .data(hasBanner)
+                .build();
+        
+        return ResponseEntity.ok(response);
+    }
 
 } 

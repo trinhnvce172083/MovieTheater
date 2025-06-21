@@ -3,6 +3,7 @@ package com.swp.MovieTheaterService.entity;
 import com.swp.MovieTheaterService.enums.BookingStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.Set;
 @Entity
 @Table(name = "movietheater_booking")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)

@@ -136,6 +136,33 @@ public interface EmailService {
     boolean sendHtmlEmail(String to, String subject, String htmlContent);
 
     /**
+     * Send payment success notification email
+     * 
+     * @param booking booking details with payment info
+     * @return true if email sent successfully
+     */
+    boolean sendPaymentSuccessNotification(com.swp.MovieTheaterService.entity.Booking booking);
+
+    /**
+     * Send payment failed notification email
+     * 
+     * @param booking booking details
+     * @param errorCode error code from payment provider
+     * @return true if email sent successfully
+     */
+    boolean sendPaymentFailedNotification(com.swp.MovieTheaterService.entity.Booking booking, String errorCode);
+
+    /**
+     * Send points earned notification email
+     * 
+     * @param account account that earned points
+     * @param loyaltyTransaction loyalty transaction details
+     * @return true if email sent successfully
+     */
+    boolean sendPointsEarnedNotification(com.swp.MovieTheaterService.entity.Account account, 
+                                       com.swp.MovieTheaterService.entity.LoyaltyTransaction loyaltyTransaction);
+
+    /**
      * Email Template Types
      */
     enum EmailTemplate {

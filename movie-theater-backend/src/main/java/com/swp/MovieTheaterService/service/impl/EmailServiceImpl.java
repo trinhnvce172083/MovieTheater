@@ -338,6 +338,94 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    public boolean sendPaymentSuccessNotification(com.swp.MovieTheaterService.entity.Booking booking) {
+        try {
+            log.info("Sending payment success notification for booking: {}", booking.getBookingCode());
+
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("customerName", booking.getAccount().getFullName());
+            variables.put("bookingCode", booking.getBookingCode());
+            variables.put("movieTitle", booking.getSchedule().getMovie().getTitle());
+            variables.put("showTime", booking.getSchedule().getShowDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            variables.put("totalAmount", String.format("%,.0f VND", booking.getFinalAmount()));
+            variables.put("paymentMethod", booking.getPaymentMethod());
+            variables.put("paymentReference", booking.getPaymentReference());
+            variables.put("companyName", companyName);
+            variables.put("supportEmail", supportEmail);
+
+            String subject = String.format("[%s] Thanh toán thành công - %s", companyName, booking.getBookingCode());
+
+            return sendTemplateEmail(
+                    booking.getAccount().getEmail(),
+                    subject,
+                    "email/payment-success",
+                    variables);
+
+        } catch (Exception e) {
+            log.error("Error sending payment success notification: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean sendPaymentFailedNotification(com.swp.MovieTheaterService.entity.Booking booking, String errorCode) {
+        try {
+            log.info("Sending payment failed notification for booking: {}", booking.getBookingCode());
+
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("customerName", booking.getAccount().getFullName());
+            variables.put("bookingCode", booking.getBookingCode());
+            variables.put("movieTitle", booking.getSchedule().getMovie().getTitle());
+            variables.put("showTime", booking.getSchedule().getShowDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            variables.put("totalAmount", String.format("%,.0f VND", booking.getFinalAmount()));
+            variables.put("errorCode", errorCode);
+            variables.put("companyName", companyName);
+            variables.put("supportEmail", supportEmail);
+
+            String subject = String.format("[%s] Thanh toán thất bại - %s", companyName, booking.getBookingCode());
+
+            return sendTemplateEmail(
+                    booking.getAccount().getEmail(),
+                    subject,
+                    "email/payment-failed",
+                    variables);
+
+        } catch (Exception e) {
+            log.error("Error sending payment failed notification: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean sendPointsEarnedNotification(com.swp.MovieTheaterService.entity.Account account, 
+                                              com.swp.MovieTheaterService.entity.LoyaltyTransaction loyaltyTransaction) {
+        try {
+            log.info("Sending points earned notification to: {}", account.getEmail());
+
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("customerName", account.getFullName());
+            variables.put("pointsEarned", loyaltyTransaction.getPoints());
+            variables.put("totalPoints", account.getMembershipPoints());
+            variables.put("bookingCode", loyaltyTransaction.getBooking().getBookingCode());
+            variables.put("movieTitle", loyaltyTransaction.getBooking().getSchedule().getMovie().getTitle());
+            variables.put("companyName", companyName);
+            variables.put("websiteUrl", websiteUrl);
+
+            String subject = String.format("[%s] Bạn vừa nhận được %d điểm thưởng!", companyName, loyaltyTransaction.getPoints());
+
+            return sendTemplateEmail(
+                    account.getEmail(),
+                    subject,
+                    "email/points-earned",
+                    variables);
+
+        } catch (Exception e) {
+            log.error("Error sending points earned notification: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    @Override
     public boolean sendTemplateEmail(String to, String subject, String templateName, Map<String, Object> variables) {
         try {
             log.info("🔄 Starting sendTemplateEmail process...");
