@@ -32,6 +32,10 @@ const ROUTES = {
   ADMIN_BOOKINGS: "/admin/bookings",
   ADMIN_ROOMS: "/admin/rooms",
   ADMIN_PROMOTIONS: "/admin/promotions",
+
+  // Email Verification Routes
+  VERIFY_EMAIL: (token: string) => `/auth/verify-email/${token}`,
+  VERIFY_EMAIL_ERROR: "/auth/verify-email/invalid",
 } as const;
 
 export default ROUTES;

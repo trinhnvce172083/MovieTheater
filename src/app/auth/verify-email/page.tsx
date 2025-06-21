@@ -11,10 +11,10 @@ export default function VerifyEmailRedirectPage() {
   useEffect(() => {
     if (token) {
       // Redirect to dynamic route
-      router.replace(`/verify-email/${token}`);
+      router.replace(`/auth/verify-email/${token}`);
     } else {
       // If no token, show error on dynamic route
-      router.replace('/verify-email/invalid');
+      router.replace('/auth/verify-email/invalid');
     }
   }, [token, router]);
 
