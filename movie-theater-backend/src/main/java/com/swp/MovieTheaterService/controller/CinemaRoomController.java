@@ -30,7 +30,7 @@ import java.util.List;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/cinema-rooms")
+@RequestMapping("/api/cinema-rooms")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Cinema Room Management", description = "APIs for managing cinema rooms")

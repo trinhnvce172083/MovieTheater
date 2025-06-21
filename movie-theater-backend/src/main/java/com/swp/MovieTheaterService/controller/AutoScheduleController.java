@@ -34,7 +34,7 @@ import java.util.HashMap;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/auto-schedule")
+@RequestMapping("/api/auto-schedule")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Tự động tạo lịch chiếu", description = "APIs cho hệ thống tự động tạo lịch chiếu phim")

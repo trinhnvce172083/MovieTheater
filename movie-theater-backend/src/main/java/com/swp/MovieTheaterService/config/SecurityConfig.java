@@ -130,33 +130,6 @@ public class SecurityConfig {
                                         "/api/admin/employees/**", // Employee CRUD
                                         "/api/employees/management/**", // Employee management
 
-                                        // Movie Management (SRS 3.1.9)
-                                        "/api/admin/movies/**", // Movie CRUD
-                                        "/api/movies/admin/**", // Movie management
-                                        "/movies/**", // Movie Controller - all operations
-
-                                        // Cinema Room Management (SRS 3.1.8)
-                                        "/api/admin/cinema-rooms/**", // Room CRUD
-                                        "/api/cinema-rooms/admin/**", // Room management
-                                        "/cinema-rooms/**", // Cinema Room Controller - all
-                                        // operations
-
-                                        // Schedule Management (SRS 3.1.8)
-                                        "/api/admin/schedules/**", // Schedule CRUD
-                                        "/api/schedules/admin/**", // Schedule management
-                                        "/schedules/**", // Schedule Controller - all operations
-
-                                        // Promotion Management (SRS 3.1.10)
-                                        "/api/admin/promotions/**", // Promotion CRUD
-                                        "/api/promotions/admin/**", // Promotion management
-
-                                        // Concession Management (Admin CRUD)
-                                        "/api/concessions", // POST - Create concession
-                                        "/api/concessions/*", // PUT/DELETE - Update/Delete concession
-                                        "/api/concessions/*/image", // POST/PUT/DELETE - Image management
-                                        "/api/concessions/with-image", // POST - Create with image
-                                        "/api/concessions/*/with-image", // PUT - Update with image
-
                                         // User Management
                                         "/api/admin/users/**", // User management
                                         "/api/users/admin/**", // User administration
@@ -164,11 +137,40 @@ public class SecurityConfig {
                                         // System Analytics & Reports
                                         "/api/admin/analytics/**", // System analytics
                                         "/api/reports/**", // Business reports
-                                        "/api/analytics/**" // Analytics dashboard
+                                        "/api/analytics/**", // Analytics dashboard
+                                        
+                                        // Auto Schedule Management (Admin only)
+                                        "/api/auto-schedule/**", // Auto Schedule Controller - all operations
+
+                                        // Concession Management (Admin CRUD)
+                                        "/api/concessions", // POST - Create concession
+                                        "/api/concessions/*", // PUT/DELETE - Update/Delete concession
+                                        "/api/concessions/*/image", // POST/PUT/DELETE - Image management
+                                        "/api/concessions/with-image", // POST - Create with image
+                                        "/api/concessions/*/with-image" // PUT - Update with image
                                 ).hasRole("ADMIN")
 
-                                // =================== ADMIN PROMOTION & IMAGE MANAGEMENT ===================
-                                // Promotion CRUD và Image Management theo HTTP Method (Admin only)
+                                // =================== ADMIN MOVIE MANAGEMENT ===================
+                                .requestMatchers(HttpMethod.POST, "/api/movies/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/movies/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/api/movies/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/movies/statistics").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/movies/status-update-stats").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/api/movies/auto-update-status").hasRole("ADMIN")
+
+                                // =================== ADMIN SCHEDULE MANAGEMENT ===================
+                                .requestMatchers(HttpMethod.POST, "/api/schedules/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/schedules/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/api/schedules/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/schedules/statistics").hasRole("ADMIN")
+
+                                // =================== ADMIN CINEMA ROOM MANAGEMENT ===================
+                                .requestMatchers(HttpMethod.POST, "/api/cinema-rooms/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/cinema-rooms/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/api/cinema-rooms/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/cinema-rooms/statistics").hasRole("ADMIN")
+
+                                // =================== ADMIN PROMOTION MANAGEMENT ===================
                                 .requestMatchers(HttpMethod.POST,
                                         "/api/promotions", // POST - Create promotion
                                         "/api/promotions/*/activate", // POST - Activate promotion

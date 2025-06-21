@@ -31,7 +31,7 @@ import java.util.List;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/schedules")
+@RequestMapping("/api/schedules")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Schedule Management", description = "APIs for managing movie schedules")

@@ -44,7 +44,7 @@ import java.util.HashMap;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/movies")
+@RequestMapping("/api/movies")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Movie Management", description = "APIs for managing movies")
