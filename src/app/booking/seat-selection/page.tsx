@@ -251,6 +251,7 @@ export default function SeatSelectionPage() {
       return;
     }
     messageApi.success("Seats selected successfully!");
+    router.push("/booking/corn-chip");
   };
 
   const totalAmount = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);

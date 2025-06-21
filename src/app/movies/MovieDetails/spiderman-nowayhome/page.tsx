@@ -1,8 +1,13 @@
 "use client";
+import { Row } from "antd";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import ShowtimePickerModal from "@/components/ShowtimePickerModal";
+
+// //import { Typography, Card, Button, Tag, QRCode, Modal, Empty, Divider } from "antd";
+// //import { CalendarOutlined, EnvironmentOutlined, ClockCircleOutlined, QrcodeOutlined } from "@ant-design/icons";
+ 
+
 
 export default function MovieDetailsPage() {
   const [showModal, setShowModal] = useState(false);
@@ -10,23 +15,22 @@ export default function MovieDetailsPage() {
 
   const handleContinue = (date: string, time: string) => {
     setShowModal(false);
-    router.push(`/booking/seat-selection?movie=1&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}`);
+    // Chuyển sang trang seat-selection, truyền params (có thể dùng query hoặc state)
+    router.push(`/booking/seat-selection?movie=spiderman-nowayhome&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}`);
   };
 
   return (
     <div className="min-h-screen bg-[#0D062D] text-white flex flex-col items-center p-10">
-      <h1 className="text-3xl font-bold mb-8">DORAEMON: NOBITA&apos;S ART WORLD TALES</h1>
+      <h1 className="text-3xl font-bold mb-8">SPIDER-MAN: NO WAY HOME</h1>
 
       <div className="flex flex-col md:flex-row items-center justify-center bg-[#1E1B3A] p-6 rounded-xl shadow-xl max-w-7xl gap-10">
         {/* Poster bên trái */}
         <div className="relative">
-          <Image
-            src="https://res.cloudinary.com/dltuc4zjz/image/upload/v1749560503/Doraemon_Nobita_Art_World_Tales_t405ur.jpg"
-            alt="Doraemon Poster"
-            width={280}
-            height={420}
-            className="w-[280px] h-[420px] rounded-lg shadow-md"
-            ></Image>
+          <img
+            src="https://image.tmdb.org/t/p/original/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg"
+            alt="Spider-Man Poster"
+            className="w-[280px] rounded-lg shadow-md"
+          />
           <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded font-semibold">
             RECOMMENDED
           </span>
@@ -37,14 +41,14 @@ export default function MovieDetailsPage() {
           <div>
             <p className="font-bold text-2xl">CONTENT</p>
             <p className="text-sm max-w-xl tẽt  text-gray-300">
-              The magnificent world of medieval Europe is depicted in paintings. Doraemon and his friends jump into the &quot;world of paintings&quot; with Claire and her friends Milo and Chai as they embark on a wonderful adventure.
+              After Quentin Beck frames Peter Parker for his murder and reveals that Peter is Spider-Man, the Department of Damage Control arrests Peter; his girlfriend, Michelle "MJ" Jones-Watson; his best friend, Ned Leeds; and his aunt, May Parker. Lawyer Matt Murdock gets Peter's charges dropped, but the group grapples with negative publicity. After Peter's, MJ's, and Ned's MIT applications are rejected, Peter goes to the New York Sanctum to ask Dr. Stephen Strange for help. Strange starts casting a spell that would make everyone forget Peter is Spider-Man, but it is corrupted when Peter repeatedly requests alterations to let his loved ones retain their memories.
 
             </p>
           </div>
-          <p><strong>Genre:</strong> Family</p>
-          <p><strong>Director:</strong> Yukiyo Teramoto</p>
-          <p><strong>Cast:</strong> Megumi Ohara, Wasabi Mizuta</p>
-          <p><strong>Time:</strong> 105 minutes</p>
+          <p><strong>Genre:</strong> Action</p>
+          <p><strong>Director:</strong> Jonathan Watts</p>
+          <p><strong>Cast:</strong> Tom Holland, Zendaya, Benedict Cumberbatch</p>
+          <p><strong>Time:</strong> 176 minutes</p>
 
           {/* Nút hành động */}
           <div className="mt-4 flex gap-4">
@@ -57,13 +61,14 @@ export default function MovieDetailsPage() {
           </div>
         </div>
       </div>
-      {/* Video Trailer */}
+  
+  
   <div className="mt-8 w-full flex justify-center">
         <iframe
           width="1280"
           height="720"
-          src="https://www.youtube.com/embed/Qs-yOanuK9c"
-          title="Doraemon: Nobita's Art World Tales Trailer"
+          src="https://www.youtube.com/embed/JfVOs4VSpmA"
+          title="Avengers: Endgame Trailer"
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
@@ -74,9 +79,9 @@ export default function MovieDetailsPage() {
         open={showModal}
         onClose={() => setShowModal(false)}
         onContinue={handleContinue}
-        movieTitle="DORAEMON: NOBITA'S ART WORLD TALES"
+        movieTitle="SPIDER-MAN: NO WAY HOME"
       />
-    </div>
+        </div>
 );
 
 }

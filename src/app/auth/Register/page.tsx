@@ -93,6 +93,7 @@ export default function RegisterPage() {
         address: values.address || "",
         agreeToTerms: values.agreeToTerms || false,
         acceptMarketing: values.acceptMarketing || false,
+        role: "MEMBER",
       };
 
       console.log("Sending register data:", registerData);
