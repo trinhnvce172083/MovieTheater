@@ -78,7 +78,7 @@ export default function AccountInformation() {
       return;
     }
 
-      await axiosClient.put("/api/auth/profile", payload);
+      await axiosClient.put("/auth/profile", payload);
 
       setUserProfile(payload);
       setHasChanges(false);
