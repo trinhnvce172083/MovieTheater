@@ -12,6 +12,7 @@ export interface RegisterRequest {
   address: string;
   agreeToTerms: boolean;
   acceptMarketing: boolean;
+  role?: string;
 }
 
 export const authApi = {

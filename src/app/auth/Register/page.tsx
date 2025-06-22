@@ -6,7 +6,6 @@ import {
   Input,
   DatePicker,
   Typography,
-  message,
   Checkbox,
 } from "antd";
 import { Card } from "@/components/ui/card";
@@ -22,7 +21,8 @@ import dayjs from "dayjs";
 import { cn } from "@/lib/utils";
 import { authApi, RegisterRequest } from "@/api/auth/Register_API";
 import { useRouter } from "next/navigation";
-import { AxiosError } from 'axios';
+import { AxiosError } from "axios";
+import { toast } from "react-toastify";
 
 type TabsProps = {
   tabs: string[];
@@ -32,15 +32,15 @@ type TabsProps = {
 
 function Tabs({ tabs, current, onChange }: TabsProps) {
   return (
-    <div className="mb-3">
-      <div className="flex gap-2 mb-4">
+    <div className="mb-0">
+      <div className="flex gap-2 mb-0">
         {tabs.map((tab, idx) => (
           <button
             key={tab}
             className={`px-4 py-2 rounded-t-lg font-medium transition-all duration-200 ${
-              current === idx 
-                ? 'bg-white !text-[#000000] shadow-sm' 
-                : 'bg-gray-100 !text-[#000000] hover:bg-gray-200'
+              current === idx
+                ? "bg-white !text-[#000000] shadow-sm"
+                : "bg-gray-100 !text-[#000000] hover:bg-gray-200"
             }`}
             onClick={() => onChange(idx as 0 | 1)}
             type="button"
@@ -78,7 +78,7 @@ export default function RegisterPage() {
   };
 
   const onFinish = async (values: RegisterFormValues) => {
-    console.log('Values received in onFinish:', values);
+    console.log("Values received in onFinish:", values);
     try {
       setLoading(true);
 
@@ -89,31 +89,40 @@ export default function RegisterPage() {
         password: values.password,
         confirmPassword: values.confirm,
         phoneNumber: values.phone,
-        dateOfBirth: dayjs(values.dob).format('YYYY-MM-DD'),
-        address: values.address || '',
+        dateOfBirth: dayjs(values.dob).format("YYYY-MM-DD"),
+        address: values.address || "",
         agreeToTerms: values.agreeToTerms || false,
-        acceptMarketing: values.acceptMarketing || false
+        acceptMarketing: values.acceptMarketing || false,
+        role: "MEMBER",
       };
 
-      console.log('Sending register data:', registerData);
+      console.log("Sending register data:", registerData);
       const response = await authApi.register(registerData);
-      console.log('Register response:', response);
-      
+      console.log("Register response:", response);
+
       if (response) {
-        message.success("Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.");
+        toast.success("Registration successful! Please log in to continue.");
         setTimeout(() => {
-          router.push('/auth/Login');
-        }, 1500); 
+          router.push("/auth/Login");
+        }, 1500);
       }
     } catch (errorInfo: unknown) {
-      console.error('Register error:', errorInfo);
-      if (typeof errorInfo === 'object' && errorInfo !== null && 'errorFields' in errorInfo) {
-        message.error("Vui lòng điền đầy đủ thông tin!");
-      } else if (errorInfo instanceof AxiosError) {
-        const errorMessage = errorInfo.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại!";
-        message.error(errorMessage);
+      console.error("Register error:", errorInfo);
+      if (errorInfo instanceof AxiosError) {
+        const errorMessage =
+          errorInfo.response?.data?.message ||
+          "Registration failed. Please try again!";
+        toast.error(errorMessage);
+      } else if (
+        typeof errorInfo === "object" &&
+        errorInfo !== null &&
+        "errorFields" in errorInfo
+      ) {
+        (errorInfo as { errorFields: { errors: string[] }[] }).errorFields.forEach(field => {
+          field.errors.forEach(err => toast.error(err));
+        });
       } else {
-        message.error("Đăng ký thất bại. Vui lòng thử lại!");
+        toast.error("Registration failed. Please try again!");
       }
     } finally {
       setLoading(false);
@@ -127,8 +136,8 @@ export default function RegisterPage() {
           "w-full max-w-md shadow-lg p-8 bg-white/60 backdrop-blur-sm rounded-2xl"
         )}
       >
-        <div className="flex flex-col items-center mb-6">
-          <Typography.Title level={4} className="text-white mb-2">
+        <div className="flex flex-col items-center mb-0">
+          <Typography.Title level={4} className="text-white mb-0">
             Register
           </Typography.Title>
         </div>
@@ -146,12 +155,23 @@ export default function RegisterPage() {
           className="flex-grow"
         >
           <div className="relative">
-            <div className={cn(
-              "w-full transition-all duration-300",
-              tab === 0 ? "opacity-100 relative translate-x-0" : "opacity-0 absolute top-0 left-0 -translate-x-full pointer-events-none"
-            )}>
+            <div
+              className={cn(
+                "w-full transition-all duration-300",
+                tab === 0
+                  ? "opacity-100 relative translate-x-0"
+                  : "opacity-0 absolute top-0 left-0 -translate-x-full pointer-events-none"
+              )}
+            >
               <div className="flex gap-4">
-                <Form.Item label="Full Name" name="fullname" className="flex-1" rules={[{ required: true, message: "Please enter your full name!" }]}>
+                <Form.Item
+                  label="Full Name"
+                  name="fullname"
+                  className="flex-1 !mb-0"
+                  rules={[
+                    { required: true, message: "Please enter your full name!" },
+                  ]}
+                >
                   <Input
                     prefix={<UserOutlined />}
                     placeholder="Full Name"
@@ -161,7 +181,17 @@ export default function RegisterPage() {
                 </Form.Item>
               </div>
               <div className="flex gap-4">
-                <Form.Item label="Date of Birth" name="dob" className="flex-1" rules={[{ required: true, message: "Please select your date of birth!" }]}>
+                <Form.Item
+                  label="Date of Birth"
+                  name="dob"
+                  className="flex-1 !mb-0"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please select your date of birth!",
+                    },
+                  ]}
+                >
                   <DatePicker
                     format="DD-MM-YYYY"
                     placeholder="DD-MM-YYYY"
@@ -170,7 +200,17 @@ export default function RegisterPage() {
                     disabledDate={(d) => d && d > dayjs()}
                   />
                 </Form.Item>
-                <Form.Item label="ID Card" name="identity" className="flex-1" rules={[{ required: true, message: "Please enter your ID card number!" }]}>
+                <Form.Item
+                  label="ID Card"
+                  name="identity"
+                  className="flex-1 !mb-0"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please enter your ID card number!",
+                    },
+                  ]}
+                >
                   <Input
                     prefix={<IdcardOutlined />}
                     placeholder="ID Card"
@@ -179,7 +219,17 @@ export default function RegisterPage() {
                   />
                 </Form.Item>
               </div>
-              <Form.Item label="Phone Number" name="phone" rules={[{ required: true, message: "Please enter your phone number!" }]}>
+              <Form.Item
+                label="Phone Number"
+                name="phone"
+                className="!mb-0"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please enter your phone number!",
+                  },
+                ]}
+              >
                 <Input
                   prefix={<PhoneOutlined />}
                   placeholder="Phone Number"
@@ -187,7 +237,15 @@ export default function RegisterPage() {
                   className="border-2 border-white focus:border-purple-500"
                 />
               </Form.Item>
-              <Form.Item label="Email" name="email" rules={[{ required: true, message: "Please enter your email!" }, { type: "email", message: "Invalid email!" }]}>
+              <Form.Item
+                label="Email"
+                name="email"
+                className="!mb-0"
+                rules={[
+                  { required: true, message: "Please enter your email!" },
+                  { type: "email", message: "Invalid email!" },
+                ]}
+              >
                 <Input
                   prefix={<MailOutlined />}
                   placeholder="Email"
@@ -195,19 +253,13 @@ export default function RegisterPage() {
                   className="border-2 border-white focus:border-purple-500"
                 />
               </Form.Item>
-              <Form.Item label="Address" name="address">
+              <Form.Item label="Address" name="address" className="!mb-0">
                 <Input.TextArea
                   placeholder="Enter your address"
                   size="large"
                   className="border-2 border-white focus:border-purple-500"
                   rows={3}
                 />
-              </Form.Item>
-              <Form.Item name="agreeToTerms" valuePropName="checked" rules={[{ validator: (_, value) => value ? Promise.resolve() : Promise.reject(new Error('Bạn phải đồng ý với điều khoản dịch vụ!')) }]}>
-                <Checkbox>I agree to the Terms of Service</Checkbox>
-              </Form.Item>
-              <Form.Item name="acceptMarketing" valuePropName="checked">
-                <Checkbox>I want to receive marketing emails</Checkbox>
               </Form.Item>
               <Form.Item className="mt-4">
                 <Button
@@ -221,11 +273,22 @@ export default function RegisterPage() {
                 </Button>
               </Form.Item>
             </div>
-            <div className={cn(
-              "w-full transition-all duration-300",
-              tab === 1 ? "opacity-100 relative translate-x-0" : "opacity-0 absolute top-0 left-0 translate-x-full pointer-events-none"
-            )}>
-              <Form.Item label="Username" name="username" rules={[{ required: true, message: "Please enter your username!" }]}>
+            <div
+              className={cn(
+                "w-full transition-all duration-300",
+                tab === 1
+                  ? "opacity-100 relative translate-x-0"
+                  : "opacity-0 absolute top-0 left-0 translate-x-full pointer-events-none"
+              )}
+            >
+              <Form.Item
+                label="Username"
+                name="username"
+                className="!mb-0"
+                rules={[
+                  { required: true, message: "Please enter your username!" },
+                ]}
+              >
                 <Input
                   prefix={<UserOutlined />}
                   placeholder="Username"
@@ -233,7 +296,23 @@ export default function RegisterPage() {
                   className="border-2 border-white focus:border-purple-500"
                 />
               </Form.Item>
-              <Form.Item label="Password" name="password" rules={[{ required: true, message: "Please enter your password!" }, { min: 6, message: "Password must be at least 6 characters!" }]} extra={<span className="text-xs text-gray-400">Minimum length is 6 characters.</span>}>
+              <Form.Item
+                label="Password"
+                name="password"
+                className="!mb-0"
+                rules={[
+                  { required: true, message: "Please enter your password!" },
+                  {
+                    min: 6,
+                    message: "Password must be at least 6 characters!",
+                  },
+                ]}
+                extra={
+                  <span className="text-xs text-gray-400">
+                    Minimum length is 6 characters.
+                  </span>
+                }
+              >
                 <Input.Password
                   prefix={<LockOutlined />}
                   placeholder="Password"
@@ -241,13 +320,51 @@ export default function RegisterPage() {
                   className="border-2 border-white focus:border-purple-500"
                 />
               </Form.Item>
-              <Form.Item label="Confirm Password" name="confirm" dependencies={["password"]} rules={[{ required: true, message: "Please confirm your password!" }, ({ getFieldValue }) => ({ validator(_, value) { if (!value || getFieldValue("password") === value) { return Promise.resolve(); } return Promise.reject(new Error("Passwords do not match!")); }, }), ]}>
+              <Form.Item
+                label="Confirm Password"
+                name="confirm"
+                className="!mb-0"
+                dependencies={["password"]}
+                rules={[
+                  { required: true, message: "Please confirm your password!" },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue("password") === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(
+                        new Error("Passwords do not match!")
+                      );
+                    },
+                  }),
+                ]}
+              >
                 <Input.Password
                   prefix={<LockOutlined />}
                   placeholder="Confirm Password"
                   size="large"
                   className="border-2 border-white focus:border-purple-600"
                 />
+              </Form.Item>
+              <Form.Item
+                name="agreeToTerms"
+                valuePropName="checked"
+                className="!mb-0"
+                rules={[
+                  {
+                    validator: (_, value) =>
+                      value
+                        ? Promise.resolve()
+                        : Promise.reject(
+                            new Error("Bạn phải đồng ý với điều khoản dịch vụ!")
+                          ),
+                  },
+                ]}
+              >
+                <Checkbox>I agree to the Terms of Service</Checkbox>
+              </Form.Item>
+              <Form.Item name="acceptMarketing" valuePropName="checked" className="!mb-0">
+                <Checkbox>I want to receive marketing emails</Checkbox>
               </Form.Item>
               <Form.Item className="mt-4">
                 <Button
