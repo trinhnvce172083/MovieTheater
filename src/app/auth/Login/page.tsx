@@ -52,9 +52,9 @@ const LoginPage: React.FC = () => {
           router.push(decodeURIComponent(returnUrl));
         } else {
           // Default redirects based on role
-          if (userInfo?.role === "admin") {
+          if (userInfo?.role === "ADMIN") {
             router.push(ROUTES.ADMIN_DASHBOARD);
-          } else if (userInfo?.role === "staff") {
+          } else if (userInfo?.role === "STAFF") {
             router.push(ROUTES.ADMIN_DASHBOARD); // Or staff dashboard if available
           } else {
             // Default for members or any other role
