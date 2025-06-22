@@ -30,8 +30,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* <BackTop duration={100} visibilityHeight={50} /> */}
-        <Provider store={store}>
+        {/* <BackTop duration={100} visibilityHeight={50} /> */}        <Provider store={store}>
           <AntdRegistry>
           <ThemeProvider 
             attribute="class" 

@@ -6,6 +6,10 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+  crossOrigin: "anonymous", // Thiết lập crossOrigin cho các tài nguyên
+  poweredByHeader: false, // Tắt header "X-Powered-By" của Next.js
+  // Cấu hình CORS cho phép các nguồn gốc phát triển
+  allowedDevOrigins: ["http://localhost:3000"],
   typescript: {
     // Bật chế độ strict để kiểm tra lỗi TypeScript
     ignoreBuildErrors: false,
@@ -36,7 +40,8 @@ const nextConfig: NextConfig = {
 
     // Các tùy chọn khác nếu cần
     moduleIds: "named", // hoặc "deterministic"
-  },  images: {
+  },
+  images: {
     remotePatterns: [
       {
         protocol: "https",
@@ -61,8 +66,32 @@ const nextConfig: NextConfig = {
         hostname: "cuzwjjseeohnyrbfcngs.supabase.co",
         port: "",
         pathname: "/**",
-      }
+      },
     ],
+    
+    // Image formats
+    formats: ["image/webp", "image/avif"],
+
+    // Device sizes
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+
+    // Image sizes
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+
+    // Cache TTL
+    minimumCacheTTL: 31536000,
+
+    // Disable static imports
+    disableStaticImages: false,
+
+    // Allow SVG
+    dangerouslyAllowSVG: false,
+
+    // Content Security Policy for SVG
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+
+    // Unoptimized images
+    unoptimized: false,
   },
 };
 
