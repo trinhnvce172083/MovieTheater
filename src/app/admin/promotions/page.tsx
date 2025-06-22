@@ -577,11 +577,18 @@ export default function ProfessionalPromotionManagement() {
     },    {
       title: "Discount",
       key: "discount",
-      width: 120,      render: (_: any, record: PromotionDto) => {
-        // Use the pre-calculated discountDisplay from backend
-        const displayValue = record.discountDisplay || 
-          (record.discountType?.toLowerCase().includes('percentage') ? `${record.discountValue}%` : 
-           record.discountType === 'BUY_ONE_GET_ONE' ? 'BOGO' : `${record.discountValue.toLocaleString()}₫`);
+      width: 120,
+      render: (_: any, record: PromotionDto) => {
+        let displayValue;
+        
+        if (record.discountType === 'BUY_ONE_GET_ONE') {
+          displayValue = 'BOGO';
+        } else if (record.discountType?.toLowerCase().includes('percentage')) {
+          displayValue = `${record.discountValue}%`;
+        } else {
+          // For FIXED_AMOUNT, format as VND
+          displayValue = Number(record.discountValue).toLocaleString('vi-VN') + ' ₫';
+        }
         
         const colorMap = {
           'PERCENTAGE': 'blue',
@@ -604,10 +611,9 @@ export default function ProfessionalPromotionManagement() {
               className="text-xs"
             >
               {labelMap[record.discountType] || record.discountType}
-            </Tag>
-            {record.maxDiscountAmount && (
+            </Tag>            {record.maxDiscountAmount && record.maxDiscountAmount > 0 && (
               <div className="text-xs text-gray-500 mt-1">
-                Max: {record.maxDiscountAmount.toLocaleString()}₫
+                Max: {Number(record.maxDiscountAmount).toLocaleString('vi-VN')} ₫
               </div>
             )}
           </div>
@@ -684,12 +690,11 @@ export default function ProfessionalPromotionManagement() {
       key: "minPurchaseAmount",
       width: 100,
       align: "right" as const,      render: (value: number) => (
-        <div className="text-right">
-          <span className="font-mono text-sm">
-            {value && value > 0 ? `${value.toLocaleString()}₫` : "None"}
+        <div className="text-right">          <span className="font-mono text-sm">
+            {value && value > 0 ? `${Number(value).toLocaleString('vi-VN')} ₫` : "None"}
           </span>
         </div>
-      ),    },    {
+      ),},    {
       title: "Membership",
       key: "membership",
       width: 120,
