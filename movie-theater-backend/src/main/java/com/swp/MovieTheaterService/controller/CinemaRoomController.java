@@ -87,10 +87,16 @@ public class CinemaRoomController {
     public ResponseEntity<Page<CinemaRoomResponse>> getAllCinemaRooms(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "roomName") String sortBy,
+            @RequestParam(defaultValue = "cinemaRoomName") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDirection) {
         
         log.info("Fetching cinema rooms - page: {}, size: {}", page, size);
+        
+        // Handle backward compatibility: map "roomName" to "cinemaRoomName"
+        if ("roomName".equals(sortBy)) {
+            sortBy = "cinemaRoomName";
+            log.info("Mapped deprecated sortBy 'roomName' to 'cinemaRoomName'");
+        }
         
         Sort sort = Sort.by(sortDirection.equals("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);

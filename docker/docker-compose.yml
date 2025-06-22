@@ -54,7 +54,7 @@ services:
       MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
       MAIL_PORT: ${MAIL_PORT:-587}
       MAIL_USERNAME: ${MAIL_USERNAME:-lumierecinema25@gmail.com}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:-jstdgruqurruswtc}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-juvcrzwuvuwknpqj}
       EMAIL_FROM: ${EMAIL_FROM:-lumierecinema25@gmail.com}
       EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Lumiere Cinema}
       EMAIL_VERIFICATION_BASE_URL: ${EMAIL_VERIFICATION_BASE_URL:-http://localhost:8080}

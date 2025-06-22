@@ -23,7 +23,7 @@ import jakarta.validation.constraints.Positive;
 public class CinemaRoomUpdateRequest {
     
     @NotBlank(message = "Room name is required")
-    private String roomName;
+    private String cinemaRoomName;
     
     @NotNull(message = "Room type is required")
     private RoomType roomType;
@@ -42,7 +42,7 @@ public class CinemaRoomUpdateRequest {
     
     // Compatibility methods for mapper and service calls
     public String getCinemaRoomName() {
-        return roomName;
+        return cinemaRoomName;
     }
     
     public Boolean getHas3D() {

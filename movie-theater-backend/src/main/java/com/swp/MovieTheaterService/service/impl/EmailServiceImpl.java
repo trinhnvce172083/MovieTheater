@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * Email Service Implementation
  * Handles email notifications using Gmail SMTP and Thymeleaf templates
- * 
+ *
  * @author Dũng_Solo
  * @version 1.0.0
  */
@@ -41,8 +41,11 @@ public class EmailServiceImpl implements EmailService {
     @Value("${app.email.support-email:lumierecinema25@gmail.com}")
     private String supportEmail;
 
-    @Value("${app.email.website-url:http://localhost:8080   }")
+    @Value("${app.email.website-url:http://localhost:8080}")
     private String websiteUrl;
+
+    @Value("${app.email.frontend-url:http://localhost:3000}")
+    private String frontendUrl;
 
     @Override
     public boolean sendBookingConfirmation(BookingResponse booking) {
@@ -258,7 +261,7 @@ public class EmailServiceImpl implements EmailService {
 
             Map<String, Object> variables = new HashMap<>();
             variables.put("fullName", customerName);
-            variables.put("verificationLink", websiteUrl + "/cinema/api/auth/verify-email?token=" + verificationToken);
+            variables.put("verificationLink", frontendUrl + "/auth/verify-email/" + verificationToken);
             variables.put("expirationHours", 24);
             variables.put("supportEmail", supportEmail);
             variables.put("appName", companyName);
@@ -312,7 +315,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public boolean sendPromotionalEmail(String email, String customerName, String promotionTitle,
-            String promotionContent) {
+                                        String promotionContent) {
         try {
             log.info("Sending promotional email to: {}", email);
 
@@ -397,8 +400,8 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public boolean sendPointsEarnedNotification(com.swp.MovieTheaterService.entity.Account account, 
-                                              com.swp.MovieTheaterService.entity.LoyaltyTransaction loyaltyTransaction) {
+    public boolean sendPointsEarnedNotification(com.swp.MovieTheaterService.entity.Account account,
+                                                com.swp.MovieTheaterService.entity.LoyaltyTransaction loyaltyTransaction) {
         try {
             log.info("Sending points earned notification to: {}", account.getEmail());
 

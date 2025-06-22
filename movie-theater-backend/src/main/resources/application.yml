@@ -9,7 +9,7 @@ server:
 spring:
   application:
     name: movie-theater-service
-    
+
   datasource:
     url: "jdbc:mysql://localhost:3306/cinema_db?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true"
     username: cinema_user
@@ -224,18 +224,19 @@ app:
     company-name: Lumiere Cinema
     support-email: lumierecinema25@gmail.com
     website-url: http://localhost:8080
-  
+    frontend-url: http://localhost:3000
+
   # File storage configuration
   file:
     upload-dir: uploads/
     max-size: 10MB
     allowed-types: jpg,jpeg,png,gif,pdf
-    
+
   # Business rules
   booking:
     max-seats-per-booking: 8
     booking-deadline-hours: 2 # Hours before showtime
-    
+
   # Pagination defaults
   pagination:
     default-page-size: 20
