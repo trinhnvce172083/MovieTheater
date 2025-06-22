@@ -114,12 +114,7 @@ export function ErrorStateApi({ error, onRetry }: ErrorStateApiProps) {
           </ul>
         </div>
 
-        {/* API Status */}
-        
-        
-        
-        
-        
+        {/* API Status */}  
         
       </div>
     </div>

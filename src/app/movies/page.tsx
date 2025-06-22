@@ -17,7 +17,11 @@ export default function MoviesPage() {
         
         if (response.success) {
           // Kiểm tra xem response.data có phải là array không
-          const moviesData = Array.isArray(response.data) ? response.data : response.data?.movies || [];
+          const moviesData = Array.isArray(response.data)
+            ? response.data
+            : (response.data && typeof response.data === "object" && "movies" in response.data && Array.isArray((response.data as any).movies))
+              ? (response.data as { movies: MovieDetails[] }).movies
+              : [];
           setMovies(moviesData);
           console.log("Movies data:", moviesData);
         } else {

@@ -1,10 +1,10 @@
 "use client";
 
 import { useMoviesApi, useMovieFiltersApi } from "@/hooks/MoviesApi/use-movies-api";
-import { SearchFiltersApi } from "@/components/Coming-soon/search-filters-api";
-import { MovieGridApi } from "@/components/Coming-soon/movie-grid-api";
-import { ErrorStateApi } from "@/components/Coming-soon/error-state-api";
-import { LoadingStateApi } from "@/components/Coming-soon/loading-state-api";
+import { SearchFiltersApi } from "@/api/Coming-soon/search-filters-api";
+import { MovieGridApi } from "@/api/Coming-soon/movie-grid-api";
+import { ErrorStateApi } from "@/api/Coming-soon/error-state-api";
+import { LoadingStateApi } from "@/api/Coming-soon/loading-state-api";
 
 export default function MoviesApiPage() {
   const { movies, loading, error, refetch } = useMoviesApi();
