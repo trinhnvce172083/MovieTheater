@@ -24,13 +24,10 @@ import {
 } from "antd";
 import type { ColumnsType } from 'antd/es/table';
 import {
-  PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   SearchOutlined,
   EyeOutlined,
-  ExportOutlined,
-  ImportOutlined,
   ReloadOutlined,
   CalendarOutlined,
   DollarOutlined,
@@ -410,32 +407,6 @@ export default function ProfessionalBookingManagement() {
                 Manage and track all cinema bookings and reservations
               </Text>
             </div>
-
-            <div className="flex items-center gap-3">
-              <Button
-                icon={<ImportOutlined />}
-                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
-                size="middle"
-              >
-                Import
-              </Button>
-              <Button
-                icon={<ExportOutlined />}
-                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
-                size="middle"
-              >
-                Export
-              </Button>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                size="middle"
-                className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
-                onClick={() => setIsModalVisible(true)}
-              >
-                Add New Booking
-              </Button>
-            </div>
           </div>
 
           {/* Filters Section */}
@@ -683,4 +654,4 @@ export default function ProfessionalBookingManagement() {
       `}</style>
     </div>
   );
-} 
+}

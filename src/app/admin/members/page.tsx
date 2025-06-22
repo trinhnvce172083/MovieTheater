@@ -27,8 +27,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   SearchOutlined,
-  ExportOutlined,
-  ImportOutlined,
   ReloadOutlined,
   UserOutlined,
   UserAddOutlined,
@@ -371,22 +369,7 @@ export default function AdminMemberManagement() {
               <Text type="secondary" className="text-sm xl:text-base">
                 Manage and organize your cinema's member list
               </Text>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                icon={<ImportOutlined />}
-                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
-                size="middle"
-              >
-                Import
-              </Button>
-              <Button
-                icon={<ExportOutlined />}
-                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
-                size="middle"
-              >
-                Export
-              </Button>
+            </div>            <div className="flex items-center gap-3">
               <Button
                 type="primary"
                 icon={<PlusOutlined />}

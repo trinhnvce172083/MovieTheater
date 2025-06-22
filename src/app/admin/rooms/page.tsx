@@ -30,8 +30,6 @@ import {
   SearchOutlined,
   MoreOutlined,
   EyeOutlined,
-  ExportOutlined,
-  ImportOutlined,
   ReloadOutlined,
   CalendarOutlined,
   VideoCameraOutlined,
@@ -381,23 +379,7 @@ export default function ProfessionalRoomManagement() {
               <Text type="secondary" className="text-sm xl:text-base">
                 Manage and organize your cinema's room facilities
               </Text>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Button
-                icon={<ImportOutlined />}
-                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
-                size="middle"
-              >
-                Import
-              </Button>
-              <Button
-                icon={<ExportOutlined />}
-                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
-                size="middle"
-              >
-                Export
-              </Button>
+            </div>            <div className="flex items-center gap-3">
               <Button
                 type="primary"
                 icon={<PlusOutlined />}

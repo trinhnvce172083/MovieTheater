@@ -130,7 +130,6 @@ export default function ProfessionalMovieManagement() {
   const [filterVersion, setFilterVersion] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterGenre, setFilterGenre] = useState("");
-  const [dateRange, setDateRange] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -209,7 +208,7 @@ export default function ProfessionalMovieManagement() {
 
       return matchesSearch && matchesVersion && matchesStatus && matchesGenre;
     });
-  }, [searchTerm, filterVersion, filterStatus, filterGenre, dateRange, displayData]);
+  }, [searchTerm, filterVersion, filterStatus, filterGenre, displayData]);
 
   // Statistics calculations
   const statistics = useMemo(() => {
@@ -581,7 +580,6 @@ export default function ProfessionalMovieManagement() {
                     setFilterVersion("");
                     setFilterStatus("");
                     setFilterGenre("");
-                    setDateRange(null);
                   }}
                 >
                   Reset
@@ -793,3 +791,4 @@ export default function ProfessionalMovieManagement() {
       `}</style>
     </div>
   );
+}

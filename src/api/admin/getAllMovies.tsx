@@ -19,6 +19,6 @@ export interface GetMoviesParams {
 }
 
 export const getMovies = async (params: GetMoviesParams) => {
-  const response = await axiosClient.get("/movies", { params });
+  const response = await axiosClient.get("/api/movies", { params });
   return response.data;
 };
