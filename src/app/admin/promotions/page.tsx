@@ -574,10 +574,12 @@ export default function ProfessionalPromotionManagement() {
           </div>
         </div>
       ),
-    },    {
+    },    
+    {
       title: "Discount",
       key: "discount",
-      width: 120,      render: (_: any, record: PromotionDto) => {
+      width: 120,      
+      render: (_: any, record: PromotionDto) => {
         // Use the pre-calculated discountDisplay from backend
         const displayValue = record.discountDisplay || 
           (record.discountType?.toLowerCase().includes('percentage') ? `${record.discountValue}%` : 
@@ -775,7 +777,8 @@ export default function ProfessionalPromotionManagement() {
                 valueStyle={{ color: "#52c41a", fontSize: "1.5rem" }}
               />
             </Card>
-          </Col>          <Col xs={12} sm={12} lg={6}>
+          </Col>          
+          <Col xs={12} sm={12} lg={6}>
             <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center" size="small">
               <Statistic
                 title="Points Promotions"
@@ -812,7 +815,9 @@ export default function ProfessionalPromotionManagement() {
               <Text type="secondary" className="text-sm xl:text-base">
                 Manage and organize your cinema's promotional campaigns
               </Text>
-            </div>            <div className="flex items-center gap-3">              {selectedRowKeys.length > 0 && (
+            </div>            
+            <div className="flex items-center gap-3">              
+            {selectedRowKeys.length > 0 && (
                 <Space>
                   <Popconfirm
                     title="Bulk Delete"
@@ -853,7 +858,8 @@ export default function ProfessionalPromotionManagement() {
                 Add New Promotion
               </Button>
             </div>
-          </div>          {/* Filters Section */}
+          </div>          
+          {/* Filters Section */}
           <div className="px-6 py-5 bg-gray-50 border-b border-gray-100">
             <Row gutter={[12, 12]}>
               <Col xs={24} sm={12} lg={10} xl={8}>
@@ -882,7 +888,8 @@ export default function ProfessionalPromotionManagement() {
           </div>
 
           {/* Table Section */}
-          <div className="bg-white">            <Table
+          <div className="bg-white">            
+          <Table
               dataSource={filteredData}
               columns={columns}
               pagination={false}

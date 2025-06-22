@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Card,
   Table,
@@ -34,68 +34,56 @@ import {
   UsergroupAddOutlined,
   CheckCircleOutlined,
 } from "@ant-design/icons";
+import { getAllUsers } from "@/api/admin/getAllUsers";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
-const memberData = [
-  {
-    key: "1",
-    id: "MB001",
-    name: "John Doe",
-    email: "john.doe@email.com",
-    phone: "123-456-7890",
-    joinDate: "2023-01-15",
-    status: "active",
-    type: "Gold",
-    avatar: "https://randomuser.me/api/portraits/men/1.jpg",
-  },
-  {
-    key: "2",
-    id: "MB002",
-    name: "Jane Smith",
-    email: "jane.smith@email.com",
-    phone: "987-654-3210",
-    joinDate: "2023-03-22",
-    status: "inactive",
-    type: "Silver",
-    avatar: "https://randomuser.me/api/portraits/women/2.jpg",
-  },
-  {
-    key: "3",
-    id: "MB003",
-    name: "Alice Johnson",
-    email: "alice.j@email.com",
-    phone: "555-123-4567",
-    joinDate: "2024-02-10",
-    status: "active",
-    type: "Platinum",
-    avatar: "https://randomuser.me/api/portraits/women/3.jpg",
-  },
-  {
-    key: "4",
-    id: "MB004",
-    name: "Bob Brown",
-    email: "bob.brown@email.com",
-    phone: "444-555-6666",
-    joinDate: "2024-04-01",
-    status: "active",
-    type: "Gold",
-    avatar: "https://randomuser.me/api/portraits/men/4.jpg",
-  },
-];
-
 export default function AdminMemberManagement() {
+  const [memberData, setMemberData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterType, setFilterType] = useState("");
   const [dateRange, setDateRange] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingMember, setEditingMember] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);  const [editingMember, setEditingMember] = useState(null);
   const [form] = Form.useForm();
+
+  // Fetch users from API
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await getAllUsers();
+      
+      // Transform API data to match our table structure
+      const transformedData = response.content?.map((user, index) => ({
+        key: user.accountId || index.toString(),
+        id: user.accountId || `MB${String(index + 1).padStart(3, '0')}`,
+        name: user.username || 'N/A',
+        email: user.email || 'N/A',
+        phone: user.phoneNumber || 'N/A',
+        joinDate: user.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        status: user.isActive !== false ? 'active' : 'inactive',
+        type: user.membershipType || 'Standard',
+        avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'User')}&background=random`,
+      })) || [];
+      
+      setMemberData(transformedData);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      message.error('Failed to fetch users');
+      setMemberData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter and search logic
   const filteredData = useMemo(() => {
@@ -116,7 +104,7 @@ export default function AdminMemberManagement() {
       }
       return matchesSearch && matchesStatus && matchesType && matchesDate;
     });
-  }, [searchTerm, filterStatus, filterType, dateRange]);
+  }, [searchTerm, filterStatus, filterType, dateRange, memberData]);
 
   // Statistics calculations
   const statistics = useMemo(() => {
@@ -137,7 +125,7 @@ export default function AdminMemberManagement() {
       return acc;
     }, {});
     return { totalMembers, activeMembers, newMembers, types };
-  }, []);
+  }, [memberData]);
 
   const handleEdit = (record) => {
     setEditingMember(record);
@@ -224,11 +212,13 @@ export default function AdminMemberManagement() {
       title: "Type",
       dataIndex: "type",
       key: "type",
-      width: 100,
-      render: (type: any) => (
+      width: 100,      render: (type: any) => (
         <Tag
           color={
-            type === "Platinum" ? "purple" : type === "Gold" ? "gold" : "silver"
+            type === "Platinum" ? "purple" : 
+            type === "Gold" ? "gold" : 
+            type === "Silver" ? "default" : 
+            "blue"
           }
           className="text-xs m-0"
         >
@@ -371,6 +361,14 @@ export default function AdminMemberManagement() {
               </Text>
             </div>            <div className="flex items-center gap-3">
               <Button
+                icon={<ReloadOutlined />}
+                size="middle"
+                className="h-10 px-3"
+                onClick={fetchUsers}
+                loading={loading}
+                title="Refresh members list"
+              />
+              <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 size="middle"
@@ -408,8 +406,7 @@ export default function AdminMemberManagement() {
                   <Option value="inactive">Inactive</Option>
                 </Select>
               </Col>
-              <Col xs={12} sm={6} lg={4} xl={3}>
-                <Select
+              <Col xs={12} sm={6} lg={4} xl={3}>                <Select
                   placeholder="Type"
                   value={filterType}
                   onChange={setFilterType}
@@ -420,13 +417,13 @@ export default function AdminMemberManagement() {
                   <Option value="Platinum">Platinum</Option>
                   <Option value="Gold">Gold</Option>
                   <Option value="Silver">Silver</Option>
+                  <Option value="Standard">Standard</Option>
                 </Select>
               </Col>
               <Col xs={24} sm={12} lg={6} xl={6}>
                 <RangePicker className="w-full h-10" onChange={setDateRange} />
               </Col>
-              <Col xs={12} sm={6} lg={4} xl={3}>
-                <Button
+              <Col xs={12} sm={6} lg={4} xl={3}>                <Button
                   icon={<ReloadOutlined />}
                   className="w-full h-10"
                   size="middle"
@@ -435,6 +432,7 @@ export default function AdminMemberManagement() {
                     setFilterStatus("");
                     setFilterType("");
                     setDateRange(null);
+                    fetchUsers();
                   }}
                 >
                   Reset
@@ -443,8 +441,7 @@ export default function AdminMemberManagement() {
             </Row>
           </div>
 
-          {/* Table Section */}
-          <div className="bg-white">
+          {/* Table Section */}          <div className="bg-white">
             <Table
               dataSource={filteredData}
               columns={columns}
@@ -453,6 +450,7 @@ export default function AdminMemberManagement() {
               rowClassName="hover:bg-gray-50 transition-colors"
               className="professional-table"
               size="small"
+              loading={loading}
             />
             {/* Pagination */}
             <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
