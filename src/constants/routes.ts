@@ -2,7 +2,7 @@ const ROUTES = {
   // Public Routes
   HOME: "/HomePage",
   NOW_SHOWING: "/NowShowing",
-  COMING_SOON: "/movies-api",
+  COMING_SOON: "/ComingSoon",
   LOGIN: "/auth/Login",
   REGISTER: "/auth/Register",
   ACCOUNT: "/auth/Account",
