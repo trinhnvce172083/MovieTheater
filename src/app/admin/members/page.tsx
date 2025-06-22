@@ -27,8 +27,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   SearchOutlined,
-  ExportOutlined,
-  ImportOutlined,
   ReloadOutlined,
   UserOutlined,
   UserAddOutlined,
@@ -176,6 +174,7 @@ export default function AdminMemberManagement() {
       dataIndex: "id",
       key: "id",
       width: 60,
+      align: "center" as const,
       render: (_: any, record: any, index: any) => (
         <div className="text-center">
           <span className="font-mono text-sm text-gray-500">
@@ -370,22 +369,7 @@ export default function AdminMemberManagement() {
               <Text type="secondary" className="text-sm xl:text-base">
                 Manage and organize your cinema's member list
               </Text>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                icon={<ImportOutlined />}
-                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
-                size="middle"
-              >
-                Import
-              </Button>
-              <Button
-                icon={<ExportOutlined />}
-                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
-                size="middle"
-              >
-                Export
-              </Button>
+            </div>            <div className="flex items-center gap-3">
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -515,18 +499,27 @@ export default function AdminMemberManagement() {
                 label="Full Name"
                 rules={[{ required: true, message: "Please enter full name" }]}
               >
-                {" "}
-                <Input placeholder="Enter full name" className="h-10" />{" "}
+                <Input placeholder="Enter full name" className="h-10" />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
                 name="email"
                 label="Email"
-                rules={[{ required: true, message: "Please enter email" }]}
+                rules={[{ required: true, message: "Please enter email" }, { type: "email", message: "Invalid email!" }]}
               >
-                {" "}
-                <Input placeholder="Enter email" className="h-10" />{" "}
+                <Input placeholder="Enter email" className="h-10" type="email" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col xs={24}>
+              <Form.Item
+                name="address"
+                label="Address"
+                rules={[{ required: true, message: "Please enter address" }]}
+              >
+                <Input.TextArea placeholder="Enter address" className="h-10" rows={2} />
               </Form.Item>
             </Col>
           </Row>
@@ -535,55 +528,80 @@ export default function AdminMemberManagement() {
               <Form.Item
                 name="phone"
                 label="Phone"
-                rules={[
-                  { required: true, message: "Please enter phone number" },
-                ]}
+                rules={[{ required: true, message: "Please enter phone number" }]}
               >
-                {" "}
-                <Input placeholder="Enter phone number" className="h-10" />{" "}
+                <Input placeholder="Enter phone number" className="h-10" type="tel" />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
-                name="type"
-                label="Membership Type"
-                rules={[
-                  { required: true, message: "Please select membership type" },
-                ]}
+                name="dob"
+                label="Date of Birth"
+                rules={[{ required: true, message: "Please select date of birth" }]}
               >
-                {" "}
-                <Select placeholder="Select type" className="h-10">
-                  {" "}
-                  <Option value="Platinum">Platinum</Option>{" "}
-                  <Option value="Gold">Gold</Option>{" "}
-                  <Option value="Silver">Silver</Option>{" "}
-                </Select>{" "}
+                <DatePicker className="w-full h-10" format="DD-MM-YYYY" />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
+                name="gender"
+                label="Gender"
+                rules={[{ required: true, message: "Please select gender" }]}
+              >
+                <Select placeholder="Select gender" className="h-10">
+                  <Option value="M">Male</Option>
+                  <Option value="F">Female</Option>
+                  <Option value="O">Other</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="idNumber"
+                label="ID Number"
+                rules={[{ required: true, message: "Please enter ID number" }]}
+              >
+                <Input placeholder="Enter ID number" className="h-10" type="number" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="type"
+                label="Membership Type"
+                rules={[{ required: true, message: "Please select membership type" }]}
+              >
+                <Select placeholder="Select type" className="h-10">
+                  <Option value="Platinum">Platinum</Option>
+                  <Option value="Gold">Gold</Option>
+                  <Option value="Silver">Silver</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
                 name="status"
                 label="Status"
                 rules={[{ required: true, message: "Please select status" }]}
               >
-                {" "}
                 <Select placeholder="Select status" className="h-10">
-                  {" "}
-                  <Option value="active">Active</Option>{" "}
-                  <Option value="inactive">Inactive</Option>{" "}
-                </Select>{" "}
+                  <Option value="active">Active</Option>
+                  <Option value="inactive">Inactive</Option>
+                </Select>
               </Form.Item>
             </Col>
+          </Row>
+          <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 name="joinDate"
                 label="Join Date"
                 rules={[{ required: true, message: "Please select join date" }]}
               >
-                {" "}
-                <DatePicker className="w-full h-10" />{" "}
+                <DatePicker className="w-full h-10" format="DD-MM-YYYY" />
               </Form.Item>
             </Col>
           </Row>
