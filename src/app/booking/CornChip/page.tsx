@@ -1,36 +1,23 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Minus, Plus, ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header/Header';
+import concessionApi from '@/api/concessionApi';
 
 interface Concession {
   id: number;
   name: string;
   description?: string;
   price: number;
+  imageUrl?: string; // Optional: if your API provides images for concessions
 }
 
-// Mock data based on the screenshot, waiting for backend API
-const mockConcessions: Concession[] = [
-  { id: 1, name: 'Combo Bear', description: '1 Coke 32oz + 1 Bắp 2 Ngăn 64OZ Phô Mai+Caramel', price: 119000 },
-  { id: 2, name: 'Poca Chips 54gr', price: 28000 },
-  { id: 3, name: 'Poca Wavy 54gr', price: 28000 },
-  { id: 4, name: 'Fanta 32oz', price: 37000 },
-  { id: 5, name: 'Coke Zero 32oz', price: 37000 },
-  { id: 6, name: 'Coke 32oz', price: 37000 },
-  { id: 7, name: 'Tappy Orange Juice 327ml', price: 28000 },
-  { id: 8, name: 'Combo C6 Bear', description: '2 Coke 32oz + 1 Bắp 2 Ngăn 64OZ Cheese + Caramel', price: 129000 },
-  { id: 9, name: 'Dasani Spring Water 500/510ml', price: 20000 },
-  { id: 10, name: 'Sprite 32oz', price: 37000 },
-  { id: 11, name: 'Nutriboost 297ml', price: 28000 },
-  { id: 12, name: 'Lay\'s Stax Potato Chips 100g', price: 59000 },
-];
-
+// Mock data for movie details, you might want to fetch this from an API as well
 const mockMovieDetails = {
     title: 'SPIDER-MAN: NO WAY HOME',
     date: '10:00 28/05/2025',
@@ -43,9 +30,32 @@ const formatPrice = (price: number) => {
 };
 
 export default function CornChipPage() {
-  const [quantities, setQuantities] = useState<{[key: number]: number}>(
-    mockConcessions.reduce((acc, item) => ({ ...acc, [item.id]: 0 }), {})
-  );
+  const [concessions, setConcessions] = useState<Concession[]>([]);
+  const [quantities, setQuantities] = useState<{[key: number]: number}>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchConcessions = async () => {
+      try {
+        setLoading(true);
+        const response = await concessionApi.getAll();
+        // Assuming the data is nested under a `data` property
+        const fetchedConcessions = response.data.data || response.data;
+        setConcessions(fetchedConcessions);
+        const initialQuantities = fetchedConcessions.reduce((acc: any, item: Concession) => ({ ...acc, [item.id]: 0 }), {});
+        setQuantities(initialQuantities);
+        setError(null);
+      } catch (error) {
+        console.error("Failed to fetch concessions:", error);
+        setError("Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchConcessions();
+  }, []);
 
   const handleQuantityChange = (id: number, delta: number) => {
     setQuantities(prev => ({
@@ -54,7 +64,7 @@ export default function CornChipPage() {
     }));
   };
 
-  const totalOrder = mockConcessions.reduce((total, item) => {
+  const totalOrder = concessions.reduce((total, item) => {
     return total + (quantities[item.id] || 0) * item.price;
   }, 0);
 
@@ -71,31 +81,37 @@ export default function CornChipPage() {
               <div className="text-right">PRICE</div>
               <div className="text-center">QUANTITY</div>
             </div>
-            <div className="space-y-4">
-              {mockConcessions.map((item) => (
-                <div key={item.id}>
-                  <div className="grid grid-cols-3 gap-x-4 items-center">
-                    <div>
-                      <h3 className="font-bold">{item.name}</h3>
-                      {item.description && <p className="text-sm text-gray-400">{item.description}</p>}
+            {loading ? (
+              <p>Loading...</p>
+            ) : error ? (
+              <p className="text-red-500">{error}</p>
+            ) : (
+              <div className="space-y-4">
+                {concessions.map((item) => (
+                  <div key={item.id}>
+                    <div className="grid grid-cols-3 gap-x-4 items-center">
+                      <div>
+                        <h3 className="font-bold">{item.name}</h3>
+                        {item.description && <p className="text-sm text-gray-400">{item.description}</p>}
+                      </div>
+                      <div className="text-right font-semibold">
+                        {formatPrice(item.price).replace('₫', 'VND')}
+                      </div>
+                      <div className="flex items-center justify-center gap-4">
+                        <Button variant="outline" size="icon" className="bg-gray-700 hover:bg-gray-600 border-gray-600" onClick={() => handleQuantityChange(item.id, -1)} disabled={(quantities[item.id] || 0) <= 0}>
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="font-bold text-lg w-8 text-center">{quantities[item.id] || 0}</span>
+                        <Button variant="outline" size="icon" className="bg-gray-700 hover:bg-gray-600 border-gray-600" onClick={() => handleQuantityChange(item.id, 1)}>
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="text-right font-semibold">
-                      {formatPrice(item.price).replace('₫', 'VND')}
-                    </div>
-                    <div className="flex items-center justify-center gap-4">
-                      <Button variant="outline" size="icon" className="bg-gray-700 hover:bg-gray-600 border-gray-600" onClick={() => handleQuantityChange(item.id, -1)}>
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="font-bold text-lg w-8 text-center">{quantities[item.id]}</span>
-                      <Button variant="outline" size="icon" className="bg-gray-700 hover:bg-gray-600 border-gray-600" onClick={() => handleQuantityChange(item.id, 1)}>
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Separator className="mt-4 bg-gray-700" />
                   </div>
-                  <Separator className="mt-4 bg-gray-700" />
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right Column: Order Summary */}
@@ -130,4 +146,4 @@ export default function CornChipPage() {
       </div>
     </>
   );
-} 
+}

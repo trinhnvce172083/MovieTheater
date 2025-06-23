@@ -12,6 +12,7 @@ import {
   BankOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  ShoppingOutlined,
 } from "@ant-design/icons";
 import { usePathname, useRouter } from "next/navigation";
 import ROUTES from "@/constants/routes";
@@ -60,6 +61,11 @@ export default function AdminLayout({
       key: "/admin/bookings",
       icon: <CalendarOutlined />,
       label: "Bookings",
+    },
+    {
+      key: "/admin/concessions",
+      icon: <ShoppingOutlined />,
+      label: "Concessions",
     },
   ];
 
