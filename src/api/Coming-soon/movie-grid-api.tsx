@@ -8,14 +8,12 @@ import type { Movie } from "@/types/NowShowing/movie";
 interface MovieGridApiProps {
   movies: Movie[];
   onBookNow?: (movieId: string) => void;
-  onViewDetails?: (movieId: string) => void;
   onClearFilters?: () => void;
 }
 
 export function MovieGridApi({
   movies,
   onBookNow,
-  onViewDetails,
   onClearFilters,
 }: MovieGridApiProps) {
   if (movies.length === 0) {
@@ -77,7 +75,6 @@ export function MovieGridApi({
                 key={movie.movieId} 
                 movie={movie} 
                 onBookNow={onBookNow}
-                onViewDetails={onViewDetails}
                 isFeatured={true}
               />
             ))}
@@ -108,7 +105,6 @@ export function MovieGridApi({
                 key={movie.movieId} 
                 movie={movie} 
                 onBookNow={onBookNow}
-                onViewDetails={onViewDetails}
                 isFeatured={false}
               />
             ))}

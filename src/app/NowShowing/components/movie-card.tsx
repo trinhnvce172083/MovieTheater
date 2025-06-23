@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Star, Clock, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -131,13 +132,14 @@ function MovieCardComponent({ movie, onBookNow }: MovieCardProps) {
                 ? `$${movie.price.toFixed(2)}`
                 : "Đang cập nhật"}
             </div>
-            <Button
-              size="sm"
-              className="bg-orange-500 hover:bg-orange-600 text-black font-semibold"
-              onClick={handleBookNow}
-            >
-              View Details
-            </Button>
+            <Link href={`/movies/${movie.movieId}`}>
+              <Button
+                size="sm"
+                className="bg-orange-500 hover:bg-orange-600 text-black font-semibold"
+              >
+                View Details
+              </Button>
+            </Link>
           </div>
         </div>
       </CardContent>    </Card>

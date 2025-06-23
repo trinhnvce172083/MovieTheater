@@ -13,14 +13,7 @@ export default function MoviesApiPage() {
 
   const handleBookNow = (movieId: string) => {
     console.log("Booking movie:", movieId);
-    // Navigate to booking page
-    // router.push(`/booking/${movieId}`)
-  };
-
-  const handleViewDetails = (movieId: string) => {
-    console.log("View movie details:", movieId);
-    // Navigate to movie details page
-    // router.push(`/movies/${movieId}`)
+    // Navigate to booking page - có thể implement sau
   };
 
   if (error) {
@@ -77,7 +70,6 @@ export default function MoviesApiPage() {
           <MovieGridApi
             movies={filteredMovies}
             onBookNow={handleBookNow}
-            onViewDetails={handleViewDetails}
             onClearFilters={clearFilters}
           />
         )}
