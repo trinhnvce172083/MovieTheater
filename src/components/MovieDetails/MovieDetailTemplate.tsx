@@ -4,9 +4,11 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { MovieDetailsApiService, type MovieDetails } from "@/api/movie-details-api";
-import ROUTES from "@/constants/routes";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer";
+import ShowtimePickerModal from "@/components/ShowtimePickerModal";
+import { useRouter } from "next/navigation";
+import type { Schedule } from "@/types/schedule";
 
 // Shadcn components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,8 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface MovieDetailTemplateProps {
   movieId: string | number;
@@ -26,12 +26,16 @@ export default function MovieDetailTemplate({ movieId }: MovieDetailTemplateProp
   const [movie, setMovie] = useState<MovieDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchMovieDetails = async () => {
       try {
         setLoading(true);
+        console.log(`Fetching movie details for ID: ${movieId}`);
         const response = await MovieDetailsApiService.getMovieDetails(movieId);
+        console.log("Movie details received:", response.data);
         
         if (response.success) {
           setMovie(response.data);
@@ -202,14 +206,14 @@ export default function MovieDetailTemplate({ movieId }: MovieDetailTemplateProp
                       }}
                     />
                     
-                    {/* Badges */}
+                    {/* Badges
                     <div className="absolute top-3 left-3 space-y-2">
                       {movie.isFeatured && (
                         <Badge variant="default" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white animate-pulse">
                           ⭐ NỔI BẬT
                         </Badge>
                       )}
-                    </div>
+                    </div> */}
                     
                     <div className="absolute top-3 right-3">
                       <Badge variant="secondary" className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold">
@@ -394,13 +398,11 @@ export default function MovieDetailTemplate({ movieId }: MovieDetailTemplateProp
                   {/* Nút hành động */}
                   <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
                     <Button 
-                      asChild 
                       size="lg" 
                       className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
+                      onClick={() => setIsModalOpen(true)}
                     >
-                      <Link href={`/booking/showtime?movieId=${movieId}`}>
-                        🎟 ĐẶT VÉ NGAY
-                      </Link>
+                      🎟 ĐẶT VÉ NGAY
                     </Button>
                     
 
@@ -449,6 +451,18 @@ export default function MovieDetailTemplate({ movieId }: MovieDetailTemplateProp
             </Card>
           </div>
         </div>
+        <ShowtimePickerModal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          movieTitle={movie.title}
+          movieId={movieId}
+          onContinue={(schedule: Schedule) => {
+            setIsModalOpen(false);
+            router.push(
+              `/booking/seat-selection?scheduleId=${schedule.scheduleId}`
+            );
+          }}
+        />
         <Footer />
       </>
     );
