@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 
 export default function RegisterLayout({children}: {children: React.ReactNode}) {
   return (
-    <section className="flex flex-col min-h-screen">
+    <section className="flex flex-col min-h-screen" suppressHydrationWarning>
       {/* Header section */}
       <header className="fixed top-0 left-0 right-0 z-50">
         <Header />

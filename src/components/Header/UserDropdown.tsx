@@ -1,23 +1,35 @@
 "use client";
+
 import React, { useState } from "react";
 import { Dropdown, Avatar } from "antd";
 import {
-  // SettingOutlined,
   UserOutlined,
-  LogoutOutlined } from "@ant-design/icons";
+  LogoutOutlined,
+} from "@ant-design/icons";
 import Link from "next/link";
-import nookies from "nookies";
 import ROUTES from "@/constants/routes";
-import router from "next/router";
+import { useRouter } from "next/navigation";
 import { Logout_API } from "@/api/auth/Logout_API";
+import { useDispatch } from "react-redux";
+import { logout } from "@/store/slices/authSlice";
+import { clearAuthCookies } from "@/utils/authCookies";
 
 type User = {
-  name: string;
+  name?: string;
+  fullName?: string;
+  username?: string;
+  email?: string;
   avatar?: string | null;
+  [key: string]: unknown;
 };
 
 export default function UserDropdown({ user }: { user: User }) {
   const [open, setOpen] = useState(false);
+  const dispatch = useDispatch();
+  const router = useRouter();
+
+  // Ưu tiên hiển thị fullName, sau đó đến name, username, email
+  const displayName = user.fullName || user.name || user.username || user.email || "User";
 
   return (
     <Dropdown
@@ -25,11 +37,6 @@ export default function UserDropdown({ user }: { user: User }) {
       onOpenChange={() => setOpen((prev) => !prev)}
       menu={{
         items: [
-          // {
-          //   key: "settings",
-          //   icon: <SettingOutlined />,
-          //   label: <Link href={ROUTES.MEMBER_DASHBOARD}>Settings</Link>,
-          // },
           {
             key: "profile",
             icon: <UserOutlined />,
@@ -39,16 +46,25 @@ export default function UserDropdown({ user }: { user: User }) {
           {
             key: "logout",
             icon: <LogoutOutlined />,
-            label: "Logout",
-            //Thực hiện logic logout
-            onClick: () => {
-              Logout_API().then(() => {
-                nookies.destroy(null, "accessToken");
-                localStorage.removeItem("userInfo");
-                router.push(ROUTES.HOME);
-              }).catch((error) => {
-                console.error("Logout failed:", error);
-              });
+            label: "Logout",            onClick: () => {
+              Logout_API()
+                .then(() => {
+                  // Clear localStorage
+                  localStorage.removeItem("accessToken");
+                  localStorage.removeItem("userInfo");
+                  
+                  // Clear cookies for middleware-based protection
+                  clearAuthCookies();
+                  
+                  // Update Redux store
+                  dispatch(logout());
+                  
+                  // Redirect to home page
+                  router.push(ROUTES.HOME);
+                })
+                .catch((error) => {
+                  console.error("Logout failed:", error);
+                });
             },
           },
         ],
@@ -64,7 +80,7 @@ export default function UserDropdown({ user }: { user: User }) {
           style={{ backgroundColor: "#87d068" }}
           icon={!user.avatar && <UserOutlined />}
         />
-        <span className="ml-2">{user.name}</span>
+        <span className="ml-2">{displayName}</span>
       </div>
     </Dropdown>
   );

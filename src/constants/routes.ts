@@ -1,20 +1,21 @@
 const ROUTES = {
   // Public Routes
   HOME: "/HomePage",
-  NOW_SHOWING: "/now_showing",
+  NOW_SHOWING: "/NowShowing",
+  COMING_SOON: "/ComingSoon",
   LOGIN: "/auth/Login",
   REGISTER: "/auth/Register",
   ACCOUNT: "/auth/Account",
+  ACCESS_DENIED: "/access-denied",
 
-  //Booking Routes
-  //   BOOKING: "/booking",
-  // BOOKING_SELECT_MOVIE: "/booking/select-movie",
-  // BOOKING_SELECT_DATE: "/booking/select-date",
-  // BOOKING_SELECT_TIME: "/booking/select-time",
+  // Booking Routes
+  BOOKING: "/booking",
   BOOKING_SELECT_SEAT: "/booking/seat-selection",
+  PAYMENT: "/payment",
 
   // Movie Routes
   MOVIES: "/movies",
+  MOVIES_API: "/movies-api",
   MOVIE_DETAILS: (id: string) => `/movies/MovieDetails/${id}`,
 
   // Member Routes
@@ -26,13 +27,15 @@ const ROUTES = {
 
   // Admin Routes
   ADMIN_DASHBOARD: "/admin",
-  ADMIN_USERS: "/admin/users",
   ADMIN_MOVIES: "/admin/movies",
   ADMIN_MEMBERS: "/admin/members",
+  ADMIN_BOOKINGS: "/admin/bookings",
   ADMIN_ROOMS: "/admin/rooms",
-  ADMIN_SHOWTIMES: "/admin/showtimes",
-  ADMIN_TICKETS: "/admin/tickets",
-  ADMIN_REVENUE: "/admin/revenue",
+  ADMIN_PROMOTIONS: "/admin/promotions",
+
+  // Email Verification Routes
+  VERIFY_EMAIL: (token: string) => `/auth/verify-email/${token}`,
+  VERIFY_EMAIL_ERROR: "/auth/verify-email/invalid",
 } as const;
 
 export default ROUTES;
