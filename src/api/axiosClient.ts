@@ -2,7 +2,7 @@ import axios from "axios";
 import nookies from "nookies";
 
 const axiosClient = axios.create({
-  baseURL: "http://localhost:8080/cinema",
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/cinema",
   headers: {
     "Content-Type": "application/json",
   },

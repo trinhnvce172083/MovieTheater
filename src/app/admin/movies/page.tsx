@@ -144,6 +144,13 @@ export default function ProfessionalMovieManagement() {
   const fetchMovies = useCallback(async () => {
     setLoading(true);
     try {
+      console.log("Fetching movies with params:", {
+        page: currentPage - 1,
+        size: pageSize,
+        sortBy: "title",
+        sortDirection: "asc",
+      });
+      
       const data = await getMovies({
         page: currentPage - 1, // API uses 0-based indexing
         size: pageSize,
@@ -151,10 +158,14 @@ export default function ProfessionalMovieManagement() {
         sortDirection: "asc",
       });
       
+      console.log("API Response:", data);
+      
       if (data.content && Array.isArray(data.content)) {
         setApiMovies(data.content);
         setTotalElements(data.totalElements || data.content.length);
+        console.log("API movies set:", data.content);
       } else {
+        console.log("API returned no content, using fallback data");
         // Fallback to local data if API returns empty
         setApiMovies(movieData);
         setTotalElements(movieData.length);
@@ -177,13 +188,18 @@ export default function ProfessionalMovieManagement() {
       setStatistics(stats);
     } catch (error) {
       console.error("Error fetching statistics:", error);
-      // Use fallback statistics
+      // Use fallback statistics with better error handling
       const totalMovies = apiMovies.length || movieData.length;
       const activeMovies = (apiMovies.length > 0 ? apiMovies : movieData).filter(m => m.status === "NOW_SHOWING").length;
       const totalRevenue = (apiMovies.length > 0 ? apiMovies : movieData).reduce((sum, m) => sum + (m.revenue || 0), 0);
       const avgDuration = Math.round((apiMovies.length > 0 ? apiMovies : movieData).reduce((sum, m) => sum + (m.duration || 0), 0) / (apiMovies.length || movieData.length || 1));
       
       setStatistics({ totalMovies, activeMovies, totalRevenue, avgDuration });
+      
+      // Only show error message for non-403 errors to avoid spam
+      if (error && typeof error === 'object' && 'status' in error && error.status !== 403) {
+        message.warning('Unable to fetch live statistics. Showing calculated data.');
+      }
     }
   }, [apiMovies]);
 
@@ -327,13 +343,13 @@ export default function ProfessionalMovieManagement() {
       ),
     },
     {
-      title: "Release date",
-      key: "company",
-      width: 120,
+      title: "Company & Release",
+      key: "company_release",
+      width: 150,
       render: (value: unknown, record: Movie) => (
         <div className="text-sm">
-          <div className="font-medium text-gray-900 truncate">
-            {record.company}
+          <div className="font-medium text-gray-900 truncate mb-1">
+            {record.company || "Unknown Studio"}
           </div>
           <div className="text-xs text-gray-500">
             {new Date(record.releaseDate).toLocaleDateString()}

@@ -66,6 +66,27 @@ export interface GetMoviesParams {
   genre?: string;
 }
 
+export interface ApiMovieResponse {
+  movieId: number;
+  title: string;
+  genre?: string;
+  duration: number;
+  formattedDuration?: string;
+  releaseDate: string;
+  rating: string;
+  posterUrl?: string;
+  price?: number;
+  status: string;
+  imdbRating?: number;
+  isFeatured?: boolean;
+  isAdultContent?: boolean;
+  originalTitle?: string;
+  description?: string;
+  productionCompany?: string;
+  boxOffice?: number;
+  versions?: string[];
+}
+
 export interface MoviesResponse {
   content: Movie[];
   totalElements: number;
@@ -77,15 +98,19 @@ export interface MoviesResponse {
 }
 
 // Flag để chuyển đổi giữa real API và mock API
-const USE_MOCK_API = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';
+const USE_MOCK_API = false; // Force to use real API for now
 
 export const getMovies = async (params: GetMoviesParams = {}): Promise<MoviesResponse> => {
+  console.log("getMovies called with USE_MOCK_API:", USE_MOCK_API);
+  console.log("getMovies params:", params);
+  
   if (USE_MOCK_API) {
     return mockGetMovies(params);
   }
 
   try {
     // Sử dụng Spring Boot API endpoints
+    console.log("Making API call to /api/movies");
     const response = await axiosClient.get("/api/movies", { 
       params: {
         page: params.page || 0,
@@ -95,17 +120,47 @@ export const getMovies = async (params: GetMoviesParams = {}): Promise<MoviesRes
       }
     });
 
+    console.log("API Response received:", response.data);
+
     // Transform Spring Boot response to match our expected format
     const springData = response.data;
-    return {
-      content: springData.content || [],
-      totalElements: springData.totalElements || 0,
-      totalPages: springData.totalPages || 0,
-      size: springData.size || params.size || 10,
-      number: springData.number || params.page || 0,
-      first: springData.first || true,
-      last: springData.last || true,
+    
+    // Transform each movie to match our interface
+    const transformedMovies = springData.content?.map((movie: ApiMovieResponse) => ({
+      movieId: movie.movieId,
+      title: movie.title,
+      vietnameseTitle: movie.originalTitle,
+      description: movie.description,
+      releaseDate: movie.releaseDate,
+      company: movie.productionCompany,
+      duration: movie.duration,
+      versions: movie.versions || ["2D"], // Default version if not provided
+      genres: movie.genre, // API uses 'genre' instead of 'genres'
+      rating: movie.rating,
+      status: movie.status,
+      revenue: movie.boxOffice || 0,
+      posterUrl: movie.posterUrl,
+      price: movie.price,
+      imdbRating: movie.imdbRating,
+      isFeatured: movie.isFeatured,
+      isAdultContent: movie.isAdultContent,
+      formattedDuration: movie.formattedDuration,
+    })) || [];
+
+    console.log("Transformed movies:", transformedMovies);
+
+    const result = {
+      content: transformedMovies,
+      totalElements: springData.page?.totalElements || springData.totalElements || 0,
+      totalPages: springData.page?.totalPages || springData.totalPages || 0,
+      size: springData.page?.size || springData.size || params.size || 10,
+      number: springData.page?.number || springData.number || params.page || 0,
+      first: springData.page?.number === 0 || springData.first || true,
+      last: springData.page ? (springData.page.number >= springData.page.totalPages - 1) : springData.last || true,
     };
+    
+    console.log("Final result:", result);
+    return result;
   } catch (error) {
     console.error("Error fetching movies:", error);
     // Fallback to mock API if real API fails

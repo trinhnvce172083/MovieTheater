@@ -53,6 +53,19 @@ interface MemberData {
   avatar: string;
 }
 
+// Interface for API User Response
+interface ApiUser {
+  accountId?: number;
+  fullName?: string;
+  username?: string;
+  email?: string;
+  phoneNumber?: string;
+  createdAt?: string;
+  isActive?: boolean;
+  role?: string;
+  avatar?: string;
+}
+
 // Interface for Member Statistics
 interface MemberStatistics {
   totalMembers: number;
@@ -72,42 +85,54 @@ export default function AdminMemberManagement() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMember, setEditingMember] = useState<MemberData | null>(null);
   const [form] = Form.useForm();
-
   // Fetch users from API
-  useEffect(() => {
-    fetchUsers();
-  }, []);  const fetchUsers = async () => {
+  const fetchUsers = async () => {
     try {
       setLoading(true);
       console.log('Fetching users...');
       const response = await getAllUsers();
       console.log('API Response:', response);
       
-      // Check if response and response.content exist
-      if (!response || !response.content) {
-        console.warn('No content in API response:', response);
+      // Check if response and response.content exist and is an array
+      if (!response || !response.content || !Array.isArray(response.content)) {
+        console.warn('Invalid API response structure:', response);
         setMemberData([]);
         return;
-      }
-      
-      // Transform API data to match our table structure
-      const transformedData = response.content.map((user, index) => {
+      }      // Transform API data to match our table structure
+      const transformedData: MemberData[] = response.content.map((user: unknown, index: number) => {
         console.log('Processing user:', user);
-        return {
-          key: user.accountId ? user.accountId.toString() : index.toString(),
-          id: user.accountId ? user.accountId.toString() : `MB${String(index + 1).padStart(3, '0')}`,
-          name: user.fullName || user.username || 'N/A',
-          email: user.email || 'N/A',
-          phone: user.phoneNumber || 'N/A',
-          joinDate: user.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          status: user.isActive !== false ? 'active' : 'inactive',
-          type: user.role || 'CUSTOMER',
-          avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || user.username || 'User')}&background=random`,
-        };
+        try {
+          const userObj = user as ApiUser; // Type assertion for API response
+          return {
+            key: userObj.accountId ? userObj.accountId.toString() : index.toString(),
+            id: userObj.accountId ? userObj.accountId.toString() : `MB${String(index + 1).padStart(3, '0')}`,
+            name: userObj.fullName || userObj.username || 'N/A',
+            email: userObj.email || 'N/A',
+            phone: userObj.phoneNumber || 'N/A',
+            joinDate: userObj.createdAt ? new Date(userObj.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            status: (userObj.isActive !== false ? 'active' : 'inactive') as 'active' | 'inactive',
+            type: userObj.role || 'CUSTOMER',
+            avatar: userObj.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userObj.fullName || userObj.username || 'User')}&background=random`,
+          };
+        } catch (error) {
+          console.error('Error processing user:', user, error);
+          const inactiveStatus = 'inactive' as const;
+          return {
+            key: index.toString(),
+            id: `MB${String(index + 1).padStart(3, '0')}`,
+            name: 'Error Loading User',
+            email: 'N/A',
+            phone: 'N/A',
+            joinDate: new Date().toISOString().split('T')[0],
+            status: inactiveStatus,
+            type: 'CUSTOMER',
+            avatar: 'https://ui-avatars.com/api/?name=Error&background=random',
+          };
+        }
       });
       
       console.log('Transformed data:', transformedData);
-      setMemberData(transformedData);
+      setMemberData(transformedData || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       message.error('Failed to fetch users');
@@ -115,7 +140,11 @@ export default function AdminMemberManagement() {
     } finally {
       setLoading(false);
     }
-  };  // Filter and search logic
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);  // Filter and search logic
   const filteredData = useMemo(() => {
     try {
       if (!memberData || !Array.isArray(memberData)) {
@@ -125,12 +154,16 @@ export default function AdminMemberManagement() {
       
       return memberData.filter((member) => {
         try {
-          const matchesSearch =
-            member?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            member?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            member?.id?.toLowerCase().includes(searchTerm.toLowerCase());
-          const matchesStatus = !filterStatus || member?.status === filterStatus;
-          const matchesType = !filterType || member?.type === filterType;
+          if (!member) return false;
+          
+          const matchesSearch = !searchTerm ||
+            (member.name && member.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (member.email && member.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (member.id && member.id.toLowerCase().includes(searchTerm.toLowerCase()));
+            
+          const matchesStatus = !filterStatus || member.status === filterStatus;
+          const matchesType = !filterType || member.type === filterType;
+          
           return matchesSearch && matchesStatus && matchesType;
         } catch (error) {
           console.error('Error filtering member:', member, error);
@@ -141,7 +174,18 @@ export default function AdminMemberManagement() {
       console.error('Error in filteredData calculation:', error);
       return [];
     }
-  }, [searchTerm, filterStatus, filterType, memberData]);// Statistics calculations
+  }, [searchTerm, filterStatus, filterType, memberData]);
+  // Paginated data for table display
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return filteredData.slice(startIndex, endIndex);
+  }, [filteredData, currentPage, pageSize]);
+
+  // Reset current page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterStatus, filterType]);// Statistics calculations
   const statistics: MemberStatistics = useMemo(() => {
     try {
       const totalMembers = memberData?.length || 0;
@@ -389,12 +433,10 @@ export default function AdminMemberManagement() {
               />
             </Card>
           </Col>
-        </Row>
-
-        {/* Main Content Card */}
+        </Row>        {/* Main Content Card */}
         <Card
           className="shadow-sm border-0"
-          bodyStyle={{ padding: 0 }}
+          styles={{ body: { padding: 0 } }}
           style={{ borderRadius: 16 }}
         >
           {/* Header Section */}
@@ -488,9 +530,8 @@ export default function AdminMemberManagement() {
           </div>
 
           {/* Table Section */}          
-          <div className="bg-white">
-            <Table
-              dataSource={filteredData}
+          <div className="bg-white">            <Table
+              dataSource={paginatedData}
               columns={columns}
               pagination={false}
               scroll={{ x: 950 }}
@@ -498,11 +539,11 @@ export default function AdminMemberManagement() {
               className="professional-table"
               size="small"
               loading={loading}
-            />
-            {/* Pagination */}
+              rowKey="key"
+            />{/* Pagination */}
             <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <Text type="secondary" className="text-sm">
-                Showing {(currentPage - 1) * pageSize + 1} to{" "}
+                Showing {Math.max(1, (currentPage - 1) * pageSize + 1)} to{" "}
                 {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
                 {filteredData.length} members
               </Text>
@@ -512,7 +553,7 @@ export default function AdminMemberManagement() {
                 total={filteredData.length}
                 onChange={(page, size) => {
                   setCurrentPage(page);
-                  setPageSize(size);
+                  if (size) setPageSize(size);
                 }}
                 showSizeChanger
                 showQuickJumper={false}
