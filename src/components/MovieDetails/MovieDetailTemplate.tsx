@@ -388,11 +388,7 @@ export default function MovieDetailTemplate({ movieId }: MovieDetailTemplateProp
                     >
                       {movie.isNowShowing ? '🎬 ĐANG CHIẾU' : movie.isComingSoon ? '⏰ SẮP CHIẾU' : '📼 KẾT THÚC'}
                     </Badge>
-                    {movie.isAdultContent && (
-                      <Badge variant="destructive" className="px-4 py-2 animate-bounce">
-                        🔞 18+
-                      </Badge>
-                    )}
+
                   </div>
 
                   {/* Nút hành động */}
@@ -402,44 +398,12 @@ export default function MovieDetailTemplate({ movieId }: MovieDetailTemplateProp
                       size="lg" 
                       className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
                     >
-                      <Link href={ROUTES.BOOKING_SELECT_SEAT}>
-                        🎟 MUA VÉ NGAY
+                      <Link href={`/booking/showtime?movieId=${movieId}`}>
+                        🎟 ĐẶT VÉ NGAY
                       </Link>
                     </Button>
                     
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          variant="secondary" 
-                          size="lg" 
-                          className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold transition-all duration-300 transform hover:scale-105"
-                        >
-                          📱 CHIA SẺ
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="bg-[#1E1B3A] border-gray-700">
-                        <DialogHeader>
-                          <DialogTitle className="text-white">Chia sẻ phim</DialogTitle>
-                          <DialogDescription className="text-gray-400">
-                            Chia sẻ thông tin phim "{movie.title}" với bạn bè
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid grid-cols-2 gap-4 py-4">
-                          <Button variant="outline" className="flex items-center gap-2">
-                            📘 Facebook
-                          </Button>
-                          <Button variant="outline" className="flex items-center gap-2">
-                            🐦 Twitter
-                          </Button>
-                          <Button variant="outline" className="flex items-center gap-2">
-                            📧 Email
-                          </Button>
-                          <Button variant="outline" className="flex items-center gap-2">
-                            📋 Copy Link
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+
                     
                     <Button 
                       asChild 
@@ -447,7 +411,7 @@ export default function MovieDetailTemplate({ movieId }: MovieDetailTemplateProp
                       size="lg" 
                       className="border-gray-600 text-black-300 hover:bg-gray-700 hover:text-white transition-all duration-300"
                     >
-                      <Link href="/movies">
+                      <Link href="/">
                         ← QUAY LẠI
                       </Link>
                     </Button>

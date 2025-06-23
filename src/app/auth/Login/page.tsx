@@ -31,13 +31,15 @@ const LoginPage: React.FC = () => {
         username: values.username,
         password: values.password,
         rememberMe: values.rememberMe || false,
-      });      const accessToken = data?.data?.accessToken;
+      });
+      const accessToken = data?.data?.accessToken;
+      const refreshToken = data?.data?.refreshToken;
       if (accessToken) {
         const userInfo = decodeJwt(accessToken);
         const userRole = userInfo?.role || 'customer';
         
-        // Store token in localStorage for client-side access
-        localStorage.setItem("accessToken", accessToken);
+        // Store refresh token in localStorage for client-side access
+        localStorage.setItem("refreshToken", refreshToken);
         localStorage.setItem("userInfo", JSON.stringify(userInfo));
         
         // Set cookies for middleware-based route protection

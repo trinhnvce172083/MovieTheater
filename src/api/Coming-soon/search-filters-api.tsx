@@ -59,8 +59,8 @@ export function SearchFiltersApi({
               </>
             ) : (
               <>
-                <Wifi className="h-4 w-4 text-green-400" />
-                <span className="text-green-400 text-sm">Connected</span>
+               
+                <span className="text-green-400 text-sm"></span>
               </>
             )}
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { getMovies } from "@/api/admin/getAllMovies";
 import {
   Card,
   Table,
@@ -31,8 +32,6 @@ import {
   SearchOutlined,
   MoreOutlined,
   EyeOutlined,
-  ExportOutlined,
-  ImportOutlined,
   ReloadOutlined,
   CalendarOutlined,
   VideoCameraOutlined,
@@ -52,83 +51,154 @@ const movieData = [
   {
     key: "1",
     id: "MV001",
-    eng: "Doctor Strange",
-    vn: "Doctor Strange: Phù Thủy Tối Thượng",
-    date: "2016-11-18",
-    company: "Marvel Studios",
-    duration: 116,
-    version: ["2D", "3D", "IMAX"],
+    eng: "Avatar: The Way of Water",
+    vn: "Avatar: Dòng Chảy Của Nước",
+    date: "2024-05-01",
+    company: "20th Century Studios",
+    duration: 192,
+    version: ["2D"],
     genre: ["Action", "Adventure", "Fantasy"],
     rating: "PG-13",
-    status: "active",
-    revenue: 677718395,
-    poster: "/api/placeholder/150/225",
+    status: "inactive",
+    revenue: 0,
+    poster: "/posters/Avatar.jpg",
   },
   {
     key: "2",
     id: "MV002",
-    eng: "Avengers: Infinity War",
-    vn: "Avengers: Cuộc Chiến Vô Cực",
-    date: "2018-04-25",
+    eng: "Avengers: Endgame",
+    vn: "Avengers: Hồi Kết",
+    date: "2024-01-15",
     company: "Marvel Studios",
-    duration: 149,
-    version: ["2D", "3D", "IMAX", "4DX"],
+    duration: 181,
+    version: ["2D"],
     genre: ["Action", "Adventure", "Sci-Fi"],
     rating: "PG-13",
-    status: "active",
-    revenue: 2048359754,
-    poster: "/api/placeholder/150/225",
+    status: "inactive",
+    revenue: 0,
+    poster: "/posters/Avenger.jpg",
   },
   {
     key: "3",
     id: "MV003",
-    eng: "Spider-Man: No Way Home",
-    vn: "Spider-Man: Không Còn Nhà",
-    date: "2021-12-15",
-    company: "Sony Pictures",
-    duration: 148,
-    version: ["2D", "3D", "IMAX"],
-    genre: ["Action", "Adventure", "Sci-Fi"],
-    rating: "PG-13",
-    status: "active",
-    revenue: 1921847111,
-    poster: "/api/placeholder/150/225",
+    eng: "Everything Everywhere All at Once",
+    vn: "Mọi Thứ Mọi Nơi Tất Cả Một Lúc",
+    date: "2024-04-01",
+    company: "A24",
+    duration: 139,
+    version: ["2D"],
+    genre: ["Action", "Adventure", "Fantasy"],
+    rating: "R",
+    status: "inactive",
+    revenue: 0,
+    poster: "/posters/EEAAO.jpg",
   },
   {
     key: "4",
     id: "MV004",
-    eng: "The Batman",
-    vn: "Người Dơi",
-    date: "2022-03-01",
-    company: "Warner Bros.",
-    duration: 176,
-    version: ["2D", "IMAX"],
-    genre: ["Action", "Crime", "Drama"],
+    eng: "Spider-Man: No Way Home",
+    vn: "Người Nhện: Không Còn Nhà",
+    date: "2024-02-01",
+    company: "Sony Pictures",
+    duration: 148,
+    version: ["2D"],
+    genre: ["Action", "Adventure", "Sci-Fi"],
     rating: "PG-13",
     status: "inactive",
-    revenue: 771326348,
-    poster: "/api/placeholder/150/225",
+    revenue: 0,
+    poster: "/posters/Spider-man.jpg",
+  },
+  {
+    key: "5",
+    id: "MV005",
+    eng: "Top Gun: Maverick",
+    vn: "Phi Công Siêu Đẳng Maverick",
+    date: "2024-03-01",
+    company: "Paramount Pictures",
+    duration: 131,
+    version: ["2D"],
+    genre: ["Action", "Drama"],
+    rating: "PG-13",
+    status: "inactive",
+    revenue: 0,
+    poster: "/posters/Topgun.jpeg",
   },
 ];
 
 // Movie Management Component
+// Inside the ProfessionalMovieManagement component
 export default function ProfessionalMovieManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterVersion, setFilterVersion] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterGenre, setFilterGenre] = useState("");
-  const [dateRange, setDateRange] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMovie, setEditingMovie] = useState(null);
   const [form] = Form.useForm();
-  const router = useRouter();
-  const [showModal, setShowModal] = useState(false);
+  const [apiMovies, setApiMovies] = useState([]);
+  const [totalElements, setTotalElements] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch movies from API
+  useEffect(() => {
+    async function fetchMovies() {
+      setLoading(true);
+      try {
+        const data = await getMovies({
+          page: currentPage - 1, // API uses 0-based indexing
+          size: pageSize,
+          sortBy: "title",
+          sortDirection: "asc",
+        });
+        
+        if (data.content && Array.isArray(data.content)) {
+          // Transform API data to match our expected format
+          const transformedData = data.content.map((movie, index) => ({
+            key: String(index + 1),
+            id: movie.id || `MV${String(index + 1).padStart(3, '0')}`,
+            eng: movie.title || "",
+            vn: movie.vietnameseTitle || "",
+            date: movie.releaseDate || "",
+            company: movie.company || "",
+            duration: movie.duration || 0,
+            version: movie.versions || ["2D"],
+            genre: movie.genres || ["Action"],
+            rating: movie.rating || "PG",
+            status: movie.status || "active",
+            revenue: movie.revenue || 0,
+            poster: movie.posterUrl || "/api/placeholder/150/225",
+          }));
+          
+          setApiMovies(transformedData);
+          setTotalElements(data.totalElements || data.content.length);
+        }
+      } catch (error) {
+        console.error("Error fetching movies:", error);
+        // Fallback to local data if API fails
+        setApiMovies(movieData);
+        setTotalElements(movieData.length);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchMovies();
+  }, [currentPage, pageSize]);
+
+  // Define the handlePaginationChange function
+  const handlePaginationChange = (page, size) => {
+    setCurrentPage(page);
+    setPageSize(size);
+  };
+
+  // Use API data if available, otherwise use local data
+  const displayData = apiMovies.length > 0 ? apiMovies : movieData;
 
   // Filter and search logic
   const filteredData = useMemo(() => {
-    return movieData.filter((movie) => {
+    return displayData.filter((movie) => {
       const matchesSearch =
         movie.eng.toLowerCase().includes(searchTerm.toLowerCase()) ||
         movie.vn.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -140,19 +210,19 @@ export default function ProfessionalMovieManagement() {
 
       return matchesSearch && matchesVersion && matchesStatus && matchesGenre;
     });
-  }, [searchTerm, filterVersion, filterStatus, filterGenre, dateRange]);
+  }, [searchTerm, filterVersion, filterStatus, filterGenre, displayData]);
 
   // Statistics calculations
   const statistics = useMemo(() => {
-    const totalMovies = movieData.length;
-    const activeMovies = movieData.filter((m) => m.status === "active").length;
-    const totalRevenue = movieData.reduce((sum, movie) => sum + movie.revenue, 0);
+    const totalMovies = totalElements || displayData.length;
+    const activeMovies = displayData.filter((m) => m.status === "active").length;
+    const totalRevenue = displayData.reduce((sum, movie) => sum + movie.revenue, 0);
     const avgDuration = Math.round(
-      movieData.reduce((sum, movie) => sum + movie.duration, 0) / totalMovies
+      displayData.reduce((sum, movie) => sum + movie.duration, 0) / (displayData.length || 1)
     );
 
     return { totalMovies, activeMovies, totalRevenue, avgDuration };
-  }, []);
+  }, [displayData, totalElements]);
 
   const handleEdit = (record) => {
     setEditingMovie(record);
@@ -190,6 +260,7 @@ export default function ProfessionalMovieManagement() {
       dataIndex: "id",
       key: "id",
       width: 60,
+      align: "center" as const,
       render: (_: any, record: any, index: any) => (
         <div className="text-center">
           <span className="font-mono text-sm text-gray-500">
@@ -227,7 +298,7 @@ export default function ProfessionalMovieManagement() {
       ),
     },
     {
-      title: "Company",
+      title: "Release date",
       key: "company",
       width: 120,
       render: (_: any, record: any) => (
@@ -242,8 +313,8 @@ export default function ProfessionalMovieManagement() {
       ),
     },
     {
-      title: "Details",
-      key: "details",
+      title: "Duration",
+      key: "duration",
       width: 80,
       align: "center",
       render: (_: any, record: any) => (
@@ -262,7 +333,7 @@ export default function ProfessionalMovieManagement() {
       align: "center" as const,
       width: 120,
       render: (versions: any) => (
-        <div className="flex flex-wrap gap-1">
+        <div className="items-center gap-1">
           {versions.slice(0, 2).map((version: any) => (
             <Tag
               key={version}
@@ -307,9 +378,9 @@ export default function ProfessionalMovieManagement() {
       dataIndex: "revenue",
       key: "revenue",
       width: 90,
-      align: "right" as const,
+      align: "center" as const,
       render: (revenue: any) => (
-        <div className="text-right">
+        <div className="text-center">
           <span className="font-mono text-sm font-semibold text-green-600">
             ${(revenue / 1000000).toFixed(1)}M
           </span>
@@ -416,7 +487,7 @@ export default function ProfessionalMovieManagement() {
         {/* Main Content Card */}
         <Card
           className="shadow-sm border-0"
-          bodyStyle={{ padding: 0 }}
+          styles={{ body: { padding: 0 } }} // <-- updated line
           style={{ borderRadius: 16 }}
         >
           {/* Header Section */}
@@ -431,20 +502,6 @@ export default function ProfessionalMovieManagement() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button
-                icon={<ImportOutlined />}
-                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
-                size="middle"
-              >
-                Import
-              </Button>
-              <Button
-                icon={<ExportOutlined />}
-                className="border-gray-300 text-xs xl:text-sm h-10 px-4"
-                size="middle"
-              >
-                Export
-              </Button>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -525,7 +582,6 @@ export default function ProfessionalMovieManagement() {
                     setFilterVersion("");
                     setFilterStatus("");
                     setFilterGenre("");
-                    setDateRange(null);
                   }}
                 >
                   Reset
@@ -544,23 +600,21 @@ export default function ProfessionalMovieManagement() {
               rowClassName="hover:bg-gray-50 transition-colors"
               className="professional-table"
               size="small"
+              loading={loading}
             />
 
             {/* Pagination */}
             <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <Text type="secondary" className="text-sm">
                 Showing {(currentPage - 1) * pageSize + 1} to{" "}
-                {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-                {filteredData.length} movies
+                {Math.min(currentPage * pageSize, totalElements)} of{" "}
+                {totalElements} movies
               </Text>
               <Pagination
                 current={currentPage}
                 pageSize={pageSize}
-                total={filteredData.length}
-                onChange={(page, size) => {
-                  setCurrentPage(page);
-                  setPageSize(size);
-                }}
+                total={totalElements || filteredData.length}
+                onChange={handlePaginationChange}
                 showSizeChanger
                 showQuickJumper={false}
                 pageSizeOptions={["5", "10", "20", "50"]}

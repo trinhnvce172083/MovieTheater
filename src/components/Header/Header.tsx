@@ -14,24 +14,9 @@ import LanguageDropdown from "./LanguageDropdown";
 // Dynamic import để tránh hydration mismatch
 const HeaderComponent = () => {
   const { isLoggedIn, user } = useAuth();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <header className="flex items-center justify-between px-6 bg-black py-0 text-white relative z-10">
-        <div className="flex items-center">
-          <div className="w-24 h-24 bg-gray-300 animate-pulse rounded"></div>
-        </div>
-      </header>
-    );
-  }
 
   return (
-    <header className="flex items-center justify-between px-6 bg-black py-0 text-white relative z-10" suppressHydrationWarning>
+    <header className="flex items-center justify-between px-6 bg-black py-0 text-white relative z-10">
       <div className="flex items-center">
         <Link href={ROUTES.HOME} className="mr-8">
           <Image

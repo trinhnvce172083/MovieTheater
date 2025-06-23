@@ -177,6 +177,9 @@ export default function AdminLayout({
               backdropFilter: 'blur(10px)',
               border: '2px solid rgba(255, 255, 255, 0.2)',
               transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}>
               <Image 
                 src="/Logo.png" 
@@ -235,6 +238,12 @@ export default function AdminLayout({
               color: "#fff", 
               border: "none",
               flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              alignItems: collapsed ? 'center' : 'stretch',
+              height: '100%',
+              minHeight: 0,
             }}
             inlineIndent={collapsed ? 0 : 24}
             theme="dark"
@@ -307,6 +316,7 @@ export default function AdminLayout({
           line-height: 38px !important;
           display: flex !important;
           align-items: center !important;
+          justify-content: flex-start !important;
         }
         
         .admin-sidebar-menu .ant-menu-item .ant-menu-title-content {
@@ -329,7 +339,8 @@ export default function AdminLayout({
         
         .admin-sidebar-menu .ant-menu-item .ant-menu-item-icon {
           transition: all 0.3s ease !important;
-          font-size: 14px !important;
+          font-size: 18px !important;
+          margin-right: 12px !important;
         }
         
         .admin-sidebar-menu .ant-menu-item:hover .ant-menu-item-icon {
@@ -341,15 +352,22 @@ export default function AdminLayout({
           padding-left: 24px !important;
         }
 
-        /* When collapsed, center the icons */
+        /* When collapsed, center the icons and hide text */
         .ant-layout-sider-collapsed .admin-sidebar-menu .ant-menu-item {
           text-align: center !important;
           padding-left: 0 !important;
           padding-right: 0 !important;
+          justify-content: center !important;
         }
-
         .ant-layout-sider-collapsed .admin-sidebar-menu .ant-menu-item .ant-menu-item-icon {
           margin-right: 0 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          width: 100%;
+        }
+        .ant-layout-sider-collapsed .admin-sidebar-menu .ant-menu-title-content {
+          display: none !important;
         }
       `}</style>
     </Layout>
