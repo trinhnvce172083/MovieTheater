@@ -203,13 +203,13 @@ export default function MovieDetailTemplate({ movieId }: MovieDetailTemplateProp
                     />
                     
                     {/* Badges */}
-                    <div className="absolute top-3 left-3 space-y-2">
+                    {/* <div className="absolute top-3 left-3 space-y-2">
                       {movie.isFeatured && (
                         <Badge variant="default" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white animate-pulse">
                           ⭐ NỔI BẬT
                         </Badge>
                       )}
-                    </div>
+                    </div> */}
                     
                     <div className="absolute top-3 right-3">
                       <Badge variant="secondary" className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold">
