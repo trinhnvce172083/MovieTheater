@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Card,
   Table,
@@ -14,13 +14,15 @@ import {
   message,
   Modal,
   Form,
-  DatePicker,
   Tag,
   Statistic,
   Row,
   Col,
   Typography,
   Avatar,
+  Checkbox,
+  InputNumber,
+  Spin,
 } from "antd";
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -28,149 +30,322 @@ import {
   EditOutlined,
   DeleteOutlined,
   SearchOutlined,
-  MoreOutlined,
   EyeOutlined,
-  ReloadOutlined,
-  CalendarOutlined,
-  VideoCameraOutlined,
+  ReloadOutlined,  VideoCameraOutlined,
   ClockCircleOutlined,
-  GlobalOutlined,
-  HomeOutlined,
-  SettingOutlined,
+  GlobalOutlined,  HomeOutlined,
 } from "@ant-design/icons";
+import { useRouter } from "next/navigation";
+import axiosClient from "@/api/axiosClient";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
-const { RangePicker } = DatePicker;
+const { TextArea } = Input;
 
-// Enhanced data with more realistic room information
-const roomData = [
-  {
-    key: "1",
-    id: "R001",
-    name: "Premium Cinema Hall A",
-    seats: 48,
-    type: "Premium",
-    status: "active",
-    layout: "6x8",
-    features: ["Dolby Atmos", "Recliner Seats", "4K Projection"],
-    lastMaintenance: "2024-05-15",
-    capacity: "48 seats",
-    location: "Floor 1",
-  },
-  {
-    key: "2",
-    id: "R002",
-    name: "Standard Cinema Hall B",
-    seats: 40,
-    type: "Standard",
-    status: "active",
-    layout: "5x8",
-    features: ["Surround Sound", "Standard Seats"],
-    lastMaintenance: "2024-05-10",
-    capacity: "40 seats",
-    location: "Floor 1",
-  },
-  {
-    key: "3",
-    id: "R003",
-    name: "VIP Cinema Hall C",
-    seats: 24,
-    type: "VIP",
-    status: "maintenance",
-    layout: "4x6",
-    features: ["Premium Leather", "In-seat Service", "Private Lounge"],
-    lastMaintenance: "2024-05-20",
-    capacity: "24 seats",
-    location: "Floor 2",
-  },
-  {
-    key: "4",
-    id: "R004",
-    name: "IMAX Cinema Hall D",
-    seats: 65,
-    type: "IMAX",
-    status: "active",
-    layout: "8x8+1",
-    features: ["IMAX Screen", "Enhanced Audio", "Stadium Seating"],
-    lastMaintenance: "2024-05-12",
-    capacity: "65 seats",
-    location: "Floor 2",
-  },
-];
+// Interface for Create/Update Room Request
+interface RoomCreateRequest {
+  cinemaRoomName: string;
+  roomType: string;
+  seatQuantity: number;
+  rows: number;
+  columns: number;
+  description?: string;
+  has3D?: boolean;
+  hasDolbyAtmos?: boolean;
+  hasReclinerSeats?: boolean;
+  priceMultiplier: number;
+  isActive?: boolean;
+}
+
+// Interface for Cinema Room Response
+interface CinemaRoomResponse {
+  cinemaRoomId: number;
+  cinemaRoomName: string;
+  seatQuantity: number;
+  roomType: string;
+  isActive: boolean;
+  description: string;
+  rows: number;
+  columns: number;
+  has3D: boolean;
+  hasDolbyAtmos: boolean;
+  hasReclinerSeats: boolean;
+  priceMultiplier: number;
+  createdAt: string;
+  updatedAt: string;
+  availableSeats?: number;
+  occupiedSeats?: number;
+  maintenanceSeats?: number;
+  scheduleCount?: number;
+}
 
 // Room Management Component
-export default function ProfessionalRoomManagement() {
+export default function CinemaRoomManagement() {
+  const [roomData, setRoomData] = useState<CinemaRoomResponse[]>([]);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [totalElements, setTotalElements] = useState(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingRoom, setEditingRoom] = useState(null);
+  const [editingRoom, setEditingRoom] = useState<CinemaRoomResponse | null>(null);
   const [form] = Form.useForm();
+  const router = useRouter();
+  // Sample data for testing (when API is not available)
+  const sampleRoomData = useMemo<CinemaRoomResponse[]>(() => [
+    {
+      cinemaRoomId: 1,
+      cinemaRoomName: "Premium Hall A",
+      seatQuantity: 48,
+      roomType: "VIP",
+      isActive: true,
+      description: "Premium cinema hall with luxury seating and enhanced viewing experience",
+      rows: 6,
+      columns: 8,
+      has3D: true,
+      hasDolbyAtmos: true,
+      hasReclinerSeats: true,
+      priceMultiplier: 1.5,
+      createdAt: "2024-01-15T10:00:00",
+      updatedAt: "2024-06-20T14:30:00",
+    },
+    {
+      cinemaRoomId: 2,
+      cinemaRoomName: "Standard Hall B",
+      seatQuantity: 40,
+      roomType: "STANDARD",
+      isActive: true,
+      description: "Standard cinema hall with comfortable seating for regular movie viewing",
+      rows: 5,
+      columns: 8,
+      has3D: false,
+      hasDolbyAtmos: false,
+      hasReclinerSeats: false,
+      priceMultiplier: 1.0,
+      createdAt: "2024-01-20T09:00:00",
+      updatedAt: "2024-06-18T11:15:00",
+    },    {
+      cinemaRoomId: 3,
+      cinemaRoomName: "VIP Theater",
+      seatQuantity: 32,
+      roomType: "VIP",
+      isActive: true,
+      description: "Exclusive VIP theater with premium amenities and personalized service",
+      rows: 4,
+      columns: 8,
+      has3D: true,
+      hasDolbyAtmos: true,
+      hasReclinerSeats: true,
+      priceMultiplier: 2.0,
+      createdAt: "2024-02-01T08:00:00",
+      updatedAt: "2024-06-22T16:45:00",
+    },
+    {
+      cinemaRoomId: 4,
+      cinemaRoomName: "Standard Hall C",
+      seatQuantity: 60,
+      roomType: "STANDARD",
+      isActive: false,
+      description: "Large standard cinema hall currently under maintenance",
+      rows: 6,
+      columns: 10,
+      has3D: false,
+      hasDolbyAtmos: false,
+      hasReclinerSeats: false,
+      priceMultiplier: 1.0,
+      createdAt: "2024-03-10T12:00:00",      updatedAt: "2024-06-21T09:30:00",
+    },
+  ], []);
+
+  // API Functions
+  const fetchRooms = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await axiosClient.get('/api/cinema-rooms', {
+        params: {
+          page: currentPage - 1, // Backend uses 0-based pagination
+          size: pageSize,
+          sortBy: 'cinemaRoomName',
+          sortDirection: 'asc'
+        }
+      });
+      setRoomData(response.data.content || []);
+      setTotalElements(response.data.totalElements || 0);
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+      message.warning('Using sample data - API not available');
+      // Use sample data as fallback
+      setRoomData(sampleRoomData);
+      setTotalElements(sampleRoomData.length);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, pageSize, sampleRoomData]);
+
+  const searchRooms = useCallback(async (keyword: string) => {
+    if (!keyword.trim()) {
+      fetchRooms();
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const response = await axiosClient.get('/api/cinema-rooms/search', {
+        params: {
+          keyword,
+          page: currentPage - 1,
+          size: pageSize
+        }
+      });
+      setRoomData(response.data.content || []);
+      setTotalElements(response.data.totalElements || 0);
+    } catch (error) {
+      console.error('Error searching rooms:', error);
+      message.error('Failed to search rooms');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, pageSize, fetchRooms]);
+  const createRoom = async (roomData: RoomCreateRequest) => {
+    try {
+      setLoading(true);
+      await axiosClient.post('/api/cinema-rooms', roomData);
+      message.success('Room created successfully');
+      fetchRooms();
+      return true;
+    } catch (error) {
+      console.error('Error creating room:', error);
+      message.error('Failed to create room');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateRoom = async (id: number, roomData: RoomCreateRequest) => {
+    try {
+      setLoading(true);
+      await axiosClient.put(`/api/cinema-rooms/${id}`, roomData);
+      message.success('Room updated successfully');
+      fetchRooms();
+      return true;
+    } catch (error) {
+      console.error('Error updating room:', error);
+      message.error('Failed to update room');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteRoom = async (id: number) => {
+    try {
+      setLoading(true);
+      await axiosClient.delete(`/api/cinema-rooms/${id}`);
+      message.success('Room deleted successfully');
+      fetchRooms();
+    } catch (error) {
+      console.error('Error deleting room:', error);
+      message.error('Failed to delete room');
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
+
+  useEffect(() => {
+    const delayedSearch = setTimeout(() => {
+      if (searchTerm) {
+        searchRooms(searchTerm);
+      } else {
+        fetchRooms();
+      }
+    }, 500);
+
+    return () => clearTimeout(delayedSearch);
+  }, [searchTerm, searchRooms, fetchRooms]);
 
   // Filter and search logic
   const filteredData = useMemo(() => {
     return roomData.filter((room) => {
-      const matchesSearch =
-        room.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        room.id.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = !filterType || room.roomType === filterType;
+      const matchesStatus = !filterStatus || 
+        (filterStatus === 'active' ? room.isActive : !room.isActive);
 
-      const matchesType = !filterType || room.type === filterType;
-      const matchesStatus = !filterStatus || room.status === filterStatus;
-
-      return matchesSearch && matchesType && matchesStatus;
+      return matchesType && matchesStatus;
     });
-  }, [searchTerm, filterType, filterStatus]);
+  }, [roomData, filterType, filterStatus]);
 
   // Statistics calculations
   const statistics = useMemo(() => {
     const totalRooms = roomData.length;
-    const activeRooms = roomData.filter((r) => r.status === "active").length;
-    const totalSeats = roomData.reduce((sum, room) => sum + room.seats, 0);
-    const avgSeats = Math.round(totalSeats / totalRooms);
+    const activeRooms = roomData.filter((r) => r.isActive).length;
+    const totalSeats = roomData.reduce((sum, room) => sum + room.seatQuantity, 0);
+    const avgSeats = totalRooms > 0 ? Math.round(totalSeats / totalRooms) : 0;
 
     return { totalRooms, activeRooms, totalSeats, avgSeats };
-  }, []);
+  }, [roomData]);
 
-  const handleEdit = (record) => {
+  const handleEdit = (record: CinemaRoomResponse) => {
     setEditingRoom(record);
     form.setFieldsValue({
-      ...record,
-      lastMaintenance: record.lastMaintenance,
+      cinemaRoomName: record.cinemaRoomName,
+      roomType: record.roomType,
+      seatQuantity: record.seatQuantity,
+      rows: record.rows,
+      columns: record.columns,
+      description: record.description,
+      has3D: record.has3D,
+      hasDolbyAtmos: record.hasDolbyAtmos,
+      hasReclinerSeats: record.hasReclinerSeats,
+      priceMultiplier: record.priceMultiplier,
+      isActive: record.isActive,
     });
     setIsModalVisible(true);
   };
 
-  const handleDelete = (record) => {
-    message.success(`Deleted "${record.name}" successfully`);
+  const handleDelete = (record: CinemaRoomResponse) => {
+    deleteRoom(record.cinemaRoomId);
   };
 
-  const handleModalOk = () => {
-    form.validateFields().then((values) => {
-      message.success(
-        editingRoom ? "Room updated successfully" : "Room added successfully"
-      );
-      setIsModalVisible(false);
-      setEditingRoom(null);
-      form.resetFields();
-    });
+  const handleModalOk = async () => {
+    try {
+      const values = await form.validateFields();
+      
+      if (editingRoom) {
+        const success = await updateRoom(editingRoom.cinemaRoomId, values);
+        if (success) {
+          setIsModalVisible(false);
+          setEditingRoom(null);
+          form.resetFields();
+        }
+      } else {
+        const success = await createRoom(values);
+        if (success) {
+          setIsModalVisible(false);
+          form.resetFields();
+        }
+      }
+    } catch (error) {
+      console.error('Form validation failed:', error);
+    }
   };
-
   const handleModalCancel = () => {
     setIsModalVisible(false);
     setEditingRoom(null);
     form.resetFields();
   };
 
-  const columns: ColumnsType<any> = [
-    {
+  const columns: ColumnsType<CinemaRoomResponse> = [{
       title: "#",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "cinemaRoomId",
+      key: "cinemaRoomId",
       width: 60,
-      render: (_: any, record: any, index: any) => (
+      render: (_: unknown, record: CinemaRoomResponse, index: number) => (
         <div className="text-center">
           <span className="font-mono text-sm text-gray-500">
             {(currentPage - 1) * pageSize + index + 1}
@@ -182,7 +357,7 @@ export default function ProfessionalRoomManagement() {
       title: "Room Information",
       key: "room_info",
       width: 280,
-      render: (_: any, record: any) => (
+      render: (_: unknown, record: CinemaRoomResponse) => (
         <div className="flex items-center gap-3">
           <Avatar
             icon={<HomeOutlined />}
@@ -191,14 +366,14 @@ export default function ProfessionalRoomManagement() {
           />
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-gray-900 mb-1 truncate text-sm">
-              {record.name}
+              {record.cinemaRoomName}
             </div>
             <div className="text-xs text-gray-600 mb-1 truncate">
-              {record.location}
+              {record.rows}x{record.columns} Layout
             </div>
             <div className="flex items-center gap-1 flex-wrap">
               <Tag color="blue" className="text-xs m-0">
-                {record.id}
+                ID: {record.cinemaRoomId}
               </Tag>
             </div>
           </div>
@@ -209,16 +384,16 @@ export default function ProfessionalRoomManagement() {
       title: "Type & Status",
       key: "type_status",
       width: 120,
-      render: (_: any, record: any) => (
+      render: (_: unknown, record: CinemaRoomResponse) => (
         <div className="text-sm">
           <div className="font-medium text-gray-900 truncate mb-1">
-            {record.type}
+            {record.roomType}
           </div>
           <Tag
-            color={record.status === "active" ? "success" : "warning"}
+            color={record.isActive ? "success" : "warning"}
             className="text-xs"
           >
-            {record.status === "active" ? "Active" : "Maintenance"}
+            {record.isActive ? "Active" : "Inactive"}
           </Tag>
         </div>
       ),
@@ -227,45 +402,35 @@ export default function ProfessionalRoomManagement() {
       title: "Capacity",
       key: "capacity",
       width: 80,
-      align: "center",
-      render: (_: any, record: any) => (
+      align: "center" as const,
+      render: (_: unknown, record: CinemaRoomResponse) => (
         <div className="text-center">
-          <div className="text-sm font-medium">{record.seats}</div>
+          <div className="text-sm font-medium">{record.seatQuantity}</div>
           <div className="text-xs text-gray-500">seats</div>
         </div>
-      ),
-    },
+      ),    },
     {
-      title: "Features",
-      dataIndex: "features",
-      key: "features",
-      align: "center" as const,
+      title: "Price Multiplier",
+      dataIndex: "priceMultiplier",
+      key: "priceMultiplier",
       width: 120,
-      render: (features: any) => (
-        <div className="flex flex-wrap gap-1">
-          {features.slice(0, 2).map((feature: any) => (
-            <Tag
-              key={feature}
-              color="blue"
-              className="text-xs m-0"
-            >
-              {feature}
-            </Tag>
-          ))}
-          {features.length > 2 && (
-            <Tag className="text-xs m-0">+{features.length - 2}</Tag>
-          )}
+      align: "center" as const,
+      render: (multiplier: number) => (
+        <div className="text-sm">
+          <div className=" font-medium">{multiplier}x</div>
         </div>
       ),
     },
     {
-      title: "Last Maintenance",
-      dataIndex: "lastMaintenance",
-      key: "lastMaintenance",
-      width: 120,
-      render: (date: any) => (
+      title: "Description",
+      key: "description",
+      align: "center" as const,
+      width: 200,
+      render: (_: unknown, record: CinemaRoomResponse) => (
         <div className="text-sm">
-          <div className="text-gray-900">{new Date(date).toLocaleDateString()}</div>
+          <div className="text-gray-900 line-clamp-2">
+            {record.description || "No description available"}
+          </div>
         </div>
       ),
     },
@@ -275,14 +440,14 @@ export default function ProfessionalRoomManagement() {
       width: 100,
       fixed: "right" as const,
       align: "center" as const,
-      render: (_: any, record: any) => (
-        <Space size="small">
-          <Tooltip title="View">
+      render: (_: unknown, record: CinemaRoomResponse) => (
+        <Space size="small">          <Tooltip title="View">
             <Button
               type="text"
               icon={<EyeOutlined />}
               size="small"
               className="text-blue-600 hover:bg-blue-50"
+              onClick={() => router.push(`/admin/rooms/RoomDetail?id=${record.cinemaRoomId}`)}
             />
           </Tooltip>
           <Tooltip title="Edit">
@@ -375,11 +540,12 @@ export default function ProfessionalRoomManagement() {
             <div>
               <Title level={2} className="m-0 text-gray-900 text-xl xl:text-2xl">
                 Room Management
-              </Title>
+              </Title>              
               <Text type="secondary" className="text-sm xl:text-base">
-                Manage and organize your cinema's room facilities
+                Manage and organize your cinema room facilities
               </Text>
-            </div>            <div className="flex items-center gap-3">
+            </div>            
+            <div className="flex items-center gap-3">
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -404,8 +570,7 @@ export default function ProfessionalRoomManagement() {
                   className="w-full h-10 px-4"
                   allowClear
                 />
-              </Col>
-              <Col xs={12} sm={6} lg={4} xl={3}>
+              </Col>              <Col xs={12} sm={6} lg={4} xl={3}>
                 <Select
                   placeholder="Type"
                   value={filterType}
@@ -414,10 +579,8 @@ export default function ProfessionalRoomManagement() {
                   allowClear
                   size="middle"
                 >
-                  <Option value="Standard">Standard</Option>
-                  <Option value="Premium">Premium</Option>
+                  <Option value="STANDARD">Standard</Option>
                   <Option value="VIP">VIP</Option>
-                  <Option value="IMAX">IMAX</Option>
                 </Select>
               </Col>
               <Col xs={12} sm={6} lg={3} xl={3}>
@@ -430,7 +593,7 @@ export default function ProfessionalRoomManagement() {
                   size="middle"
                 >
                   <Option value="active">Active</Option>
-                  <Option value="maintenance">Maintenance</Option>
+                  <Option value="inactive">Inactive</Option>
                 </Select>
               </Col>
               <Col xs={12} sm={6} lg={3} xl={3}>
@@ -442,40 +605,44 @@ export default function ProfessionalRoomManagement() {
                     setSearchTerm("");
                     setFilterType("");
                     setFilterStatus("");
+                    fetchRooms();
                   }}
                 >
                   Reset
                 </Button>
               </Col>
             </Row>
-          </div>
-
-          {/* Table Section */}
+          </div>          {/* Table Section */}
           <div className="bg-white">
-            <Table
-              dataSource={filteredData}
-              columns={columns}
-              pagination={false}
-              scroll={{ x: 950 }}
-              rowClassName="hover:bg-gray-50 transition-colors"
-              className="professional-table"
-              size="small"
-            />
+            <Spin spinning={loading}>
+              <Table
+                dataSource={filteredData}
+                columns={columns}
+                pagination={false}
+                scroll={{ x: 950 }}
+                rowClassName="hover:bg-gray-50 transition-colors"
+                className="professional-table"
+                size="small"
+                rowKey="cinemaRoomId"
+              />
+            </Spin>
 
             {/* Pagination */}
             <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <Text type="secondary" className="text-sm">
                 Showing {(currentPage - 1) * pageSize + 1} to{" "}
-                {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-                {filteredData.length} rooms
+                {Math.min(currentPage * pageSize, totalElements)} of{" "}
+                {totalElements} rooms
               </Text>
               <Pagination
                 current={currentPage}
                 pageSize={pageSize}
-                total={filteredData.length}
+                total={totalElements}
                 onChange={(page, size) => {
                   setCurrentPage(page);
-                  setPageSize(size);
+                  if (size !== pageSize) {
+                    setPageSize(size);
+                  }
                 }}
                 showSizeChanger
                 showQuickJumper={false}
@@ -486,9 +653,7 @@ export default function ProfessionalRoomManagement() {
             </div>
           </div>
         </Card>
-      </div>
-
-      {/* Add/Edit Room Modal */}
+      </div>      {/* Add/Edit Room Modal */}
       <Modal
         title={editingRoom ? "Edit Room" : "Add New Room"}
         open={isModalVisible}
@@ -498,6 +663,7 @@ export default function ProfessionalRoomManagement() {
         className="professional-modal"
         okText={editingRoom ? "Update Room" : "Add Room"}
         cancelText="Cancel"
+        confirmLoading={loading}
       >
         <Form
           form={form}
@@ -507,46 +673,96 @@ export default function ProfessionalRoomManagement() {
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
-                name="name"
+                name="cinemaRoomName"
                 label="Room Name"
-                rules={[{ required: true, message: "Please enter room name" }]}
+                rules={[
+                  { required: true, message: "Please enter room name" },
+                  { max: 50, message: "Room name cannot exceed 50 characters" }
+                ]}
               >
                 <Input placeholder="Enter room name" className="h-10" />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
-                name="id"
-                label="Room ID"
-                rules={[{ required: true, message: "Please enter room ID" }]}
-              >
-                <Input placeholder="Enter room ID" className="h-10" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="type"
+                name="roomType"
                 label="Room Type"
                 rules={[{ required: true, message: "Please select room type" }]}
-              >
-                <Select placeholder="Select room type" className="h-10">
-                  <Option value="Standard">Standard</Option>
-                  <Option value="Premium">Premium</Option>
+              >                <Select placeholder="Select room type" className="h-10">
+                  <Option value="STANDARD">Standard</Option>
                   <Option value="VIP">VIP</Option>
-                  <Option value="IMAX">IMAX</Option>
                 </Select>
               </Form.Item>
             </Col>
-            <Col xs={24} sm={12}>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={24} sm={8}>
               <Form.Item
-                name="seats"
-                label="Seat Capacity"
-                rules={[{ required: true, message: "Please enter seat capacity" }]}
+                name="seatQuantity"
+                label="Total Seats"
+                rules={[
+                  { required: true, message: "Please enter total seats" },
+                  { type: 'number', min: 1, max: 500, message: "Seats must be between 1 and 500" }
+                ]}
               >
-                <Input type="number" placeholder="Enter seat capacity" className="h-10" />
+                <InputNumber 
+                  placeholder="Enter total seats" 
+                  className="w-full h-10" 
+                  min={1}
+                  max={500}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="rows"
+                label="Rows"
+                rules={[
+                  { required: true, message: "Please enter number of rows" },
+                  { type: 'number', min: 1, max: 30, message: "Rows must be between 1 and 30" }
+                ]}
+              >
+                <InputNumber 
+                  placeholder="Enter rows" 
+                  className="w-full h-10" 
+                  min={1}
+                  max={30}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="columns"
+                label="Columns"
+                rules={[
+                  { required: true, message: "Please enter number of columns" },
+                  { type: 'number', min: 1, max: 50, message: "Columns must be between 1 and 50" }
+                ]}
+              >
+                <InputNumber 
+                  placeholder="Enter columns" 
+                  className="w-full h-10" 
+                  min={1}
+                  max={50}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={24}>
+              <Form.Item
+                name="description"
+                label="Description"
+                rules={[{ max: 1000, message: "Description cannot exceed 1000 characters" }]}
+              >
+                <TextArea 
+                  placeholder="Enter room description" 
+                  rows={3}
+                  showCount
+                  maxLength={1000}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -554,44 +770,57 @@ export default function ProfessionalRoomManagement() {
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
-                name="layout"
-                label="Seat Layout"
-                rules={[{ required: true, message: "Please enter seat layout" }]}
+                name="priceMultiplier"
+                label="Price Multiplier"
+                rules={[
+                  { required: true, message: "Please enter price multiplier" },
+                  { type: 'number', min: 0.1, max: 10, message: "Multiplier must be between 0.1 and 10" }
+                ]}
               >
-                <Input placeholder="e.g., 6x8" className="h-10" />
+                <InputNumber 
+                  placeholder="Enter price multiplier" 
+                  className="w-full h-10" 
+                  min={0.1}
+                  max={10}
+                  step={0.1}
+                />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
-                name="status"
+                name="isActive"
                 label="Status"
-                rules={[{ required: true, message: "Please select status" }]}
+                valuePropName="checked"
+                initialValue={true}
               >
-                <Select placeholder="Select status" className="h-10">
-                  <Option value="active">Active</Option>
-                  <Option value="maintenance">Maintenance</Option>
-                </Select>
+                <Checkbox>Active</Checkbox>
               </Form.Item>
             </Col>
           </Row>
 
           <Row gutter={16}>
-            <Col xs={24} sm={12}>
+            <Col xs={24} sm={8}>
               <Form.Item
-                name="lastMaintenance"
-                label="Last Maintenance Date"
-                rules={[{ required: true, message: "Please select maintenance date" }]}
+                name="has3D"
+                valuePropName="checked"
               >
-                <DatePicker className="w-full h-10" />
+                <Checkbox>3D Capability</Checkbox>
               </Form.Item>
             </Col>
-            <Col xs={24} sm={12}>
+            <Col xs={24} sm={8}>
               <Form.Item
-                name="location"
-                label="Location"
-                rules={[{ required: true, message: "Please enter location" }]}
+                name="hasDolbyAtmos"
+                valuePropName="checked"
               >
-                <Input placeholder="e.g., Floor 1" className="h-10" />
+                <Checkbox>Dolby Atmos</Checkbox>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="hasReclinerSeats"
+                valuePropName="checked"
+              >
+                <Checkbox>Recliner Seats</Checkbox>
               </Form.Item>
             </Col>
           </Row>
@@ -623,9 +852,15 @@ export default function ProfessionalRoomManagement() {
           border-bottom: 1px solid #f0f0f0;
           padding: 24px 24px 16px;
         }
-        
-        .professional-modal .ant-modal-body {
+          .professional-modal .ant-modal-body {
           padding: 24px;
+        }
+        
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
       `}</style>
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
-import { getMovies } from "@/api/admin/getAllMovies";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { getMovies, createMovie, updateMovie, deleteMovie, getMovieStatistics, type Movie } from "../../../api/admin/getAllMovies";
 import {
   Card,
   Table,
@@ -28,103 +28,98 @@ import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  FilterOutlined,
   SearchOutlined,
-  MoreOutlined,
   EyeOutlined,
   ReloadOutlined,
-  CalendarOutlined,
   VideoCameraOutlined,
   ClockCircleOutlined,
   GlobalOutlined,
 } from "@ant-design/icons";
-import Image from "next/image";
+import dayjs from "dayjs";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
-const { RangePicker } = DatePicker;
 
 // Enhanced data with more realistic movie information
-const movieData = [
+const movieData: Movie[] = [
   {
-    key: "1",
-    id: "MV001",
-    eng: "Avatar: The Way of Water",
-    vn: "Avatar: Dòng Chảy Của Nước",
-    date: "2024-05-01",
+    movieId: 1,
+    title: "Avatar: The Way of Water",
+    vietnameseTitle: "Avatar: Dòng Chảy Của Nước",
+    releaseDate: "2024-05-01",
     company: "20th Century Studios",
     duration: 192,
-    version: ["2D"],
-    genre: ["Action", "Adventure", "Fantasy"],
+    versions: ["2D", "3D", "IMAX"],
+    genres: "Action,Adventure,Fantasy",
     rating: "PG-13",
-    status: "inactive",
-    revenue: 0,
-    poster: "/posters/Avatar.jpg",
+    status: "NOW_SHOWING",
+    revenue: 2300000000,
+    posterUrl: "/posters/Avatar.jpg",
+    price: 150000,
   },
   {
-    key: "2",
-    id: "MV002",
-    eng: "Avengers: Endgame",
-    vn: "Avengers: Hồi Kết",
-    date: "2024-01-15",
+    movieId: 2,
+    title: "Avengers: Endgame",
+    vietnameseTitle: "Avengers: Hồi Kết",
+    releaseDate: "2024-01-15",
     company: "Marvel Studios",
     duration: 181,
-    version: ["2D"],
-    genre: ["Action", "Adventure", "Sci-Fi"],
+    versions: ["2D", "3D", "IMAX"],
+    genres: "Action,Adventure,Sci-Fi",
     rating: "PG-13",
-    status: "inactive",
-    revenue: 0,
-    poster: "/posters/Avenger.jpg",
+    status: "NOW_SHOWING",
+    revenue: 2797800564,
+    posterUrl: "/posters/Avenger.jpg",
+    price: 150000,
   },
   {
-    key: "3",
-    id: "MV003",
-    eng: "Everything Everywhere All at Once",
-    vn: "Mọi Thứ Mọi Nơi Tất Cả Một Lúc",
-    date: "2024-04-01",
+    movieId: 3,
+    title: "Everything Everywhere All at Once",
+    vietnameseTitle: "Mọi Thứ Mọi Nơi Tất Cả Một Lúc",
+    releaseDate: "2024-04-01",
     company: "A24",
     duration: 139,
-    version: ["2D"],
-    genre: ["Action", "Adventure", "Fantasy"],
+    versions: ["2D"],
+    genres: "Action,Adventure,Fantasy",
     rating: "R",
-    status: "inactive",
-    revenue: 0,
-    poster: "/posters/EEAAO.jpg",
+    status: "NOW_SHOWING",
+    revenue: 140000000,
+    posterUrl: "/posters/EEAAO.jpg",
+    price: 120000,
   },
   {
-    key: "4",
-    id: "MV004",
-    eng: "Spider-Man: No Way Home",
-    vn: "Người Nhện: Không Còn Nhà",
-    date: "2024-02-01",
+    movieId: 4,
+    title: "Spider-Man: No Way Home",
+    vietnameseTitle: "Người Nhện: Không Còn Nhà",
+    releaseDate: "2024-02-01",
     company: "Sony Pictures",
     duration: 148,
-    version: ["2D"],
-    genre: ["Action", "Adventure", "Sci-Fi"],
+    versions: ["2D", "3D", "IMAX"],
+    genres: "Action,Adventure,Sci-Fi",
     rating: "PG-13",
-    status: "inactive",
-    revenue: 0,
-    poster: "/posters/Spider-man.jpg",
+    status: "NOW_SHOWING",
+    revenue: 1921847111,
+    posterUrl: "/posters/Spider-man.jpg",
+    price: 150000,
   },
   {
-    key: "5",
-    id: "MV005",
-    eng: "Top Gun: Maverick",
-    vn: "Phi Công Siêu Đẳng Maverick",
-    date: "2024-03-01",
+    movieId: 5,
+    title: "Top Gun: Maverick",
+    vietnameseTitle: "Phi Công Siêu Đẳng Maverick",
+    releaseDate: "2024-03-01",
     company: "Paramount Pictures",
     duration: 131,
-    version: ["2D"],
-    genre: ["Action", "Drama"],
+    versions: ["2D", "IMAX"],
+    genres: "Action,Drama",
     rating: "PG-13",
-    status: "inactive",
-    revenue: 0,
-    poster: "/posters/Topgun.jpeg",
+    status: "NOW_SHOWING",
+    revenue: 1493454116,
+    posterUrl: "/posters/Topgun.jpeg",
+    price: 140000,
   },
 ];
 
 // Movie Management Component
-// Inside the ProfessionalMovieManagement component
 export default function ProfessionalMovieManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterVersion, setFilterVersion] = useState("");
@@ -133,60 +128,75 @@ export default function ProfessionalMovieManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingMovie, setEditingMovie] = useState(null);
+  const [editingMovie, setEditingMovie] = useState<Movie | null>(null);
   const [form] = Form.useForm();
-  const [apiMovies, setApiMovies] = useState([]);
+  const [apiMovies, setApiMovies] = useState<Movie[]>([]);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [statistics, setStatistics] = useState({
+    totalMovies: 0,
+    activeMovies: 0,
+    totalRevenue: 0,
+    avgDuration: 0,
+  });
 
   // Fetch movies from API
-  useEffect(() => {
-    async function fetchMovies() {
-      setLoading(true);
-      try {
-        const data = await getMovies({
-          page: currentPage - 1, // API uses 0-based indexing
-          size: pageSize,
-          sortBy: "title",
-          sortDirection: "asc",
-        });
-        
-        if (data.content && Array.isArray(data.content)) {
-          // Transform API data to match our expected format
-          const transformedData = data.content.map((movie, index) => ({
-            key: String(index + 1),
-            id: movie.id || `MV${String(index + 1).padStart(3, '0')}`,
-            eng: movie.title || "",
-            vn: movie.vietnameseTitle || "",
-            date: movie.releaseDate || "",
-            company: movie.company || "",
-            duration: movie.duration || 0,
-            version: movie.versions || ["2D"],
-            genre: movie.genres || ["Action"],
-            rating: movie.rating || "PG",
-            status: movie.status || "active",
-            revenue: movie.revenue || 0,
-            poster: movie.posterUrl || "/api/placeholder/150/225",
-          }));
-          
-          setApiMovies(transformedData);
-          setTotalElements(data.totalElements || data.content.length);
-        }
-      } catch (error) {
-        console.error("Error fetching movies:", error);
-        // Fallback to local data if API fails
+  const fetchMovies = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getMovies({
+        page: currentPage - 1, // API uses 0-based indexing
+        size: pageSize,
+        sortBy: "title",
+        sortDirection: "asc",
+      });
+      
+      if (data.content && Array.isArray(data.content)) {
+        setApiMovies(data.content);
+        setTotalElements(data.totalElements || data.content.length);
+      } else {
+        // Fallback to local data if API returns empty
         setApiMovies(movieData);
         setTotalElements(movieData.length);
-      } finally {
-        setLoading(false);
       }
+    } catch (error) {
+      console.error("Error fetching movies:", error);
+      message.error("Failed to fetch movies. Using sample data.");
+      // Fallback to local data if API fails
+      setApiMovies(movieData);
+      setTotalElements(movieData.length);
+    } finally {
+      setLoading(false);
     }
-    
-    fetchMovies();
   }, [currentPage, pageSize]);
 
+  // Fetch statistics
+  const fetchStatistics = useCallback(async () => {
+    try {
+      const stats = await getMovieStatistics();
+      setStatistics(stats);
+    } catch (error) {
+      console.error("Error fetching statistics:", error);
+      // Use fallback statistics
+      const totalMovies = apiMovies.length || movieData.length;
+      const activeMovies = (apiMovies.length > 0 ? apiMovies : movieData).filter(m => m.status === "NOW_SHOWING").length;
+      const totalRevenue = (apiMovies.length > 0 ? apiMovies : movieData).reduce((sum, m) => sum + (m.revenue || 0), 0);
+      const avgDuration = Math.round((apiMovies.length > 0 ? apiMovies : movieData).reduce((sum, m) => sum + (m.duration || 0), 0) / (apiMovies.length || movieData.length || 1));
+      
+      setStatistics({ totalMovies, activeMovies, totalRevenue, avgDuration });
+    }
+  }, [apiMovies]);
+
+  useEffect(() => {
+    fetchMovies();
+  }, [fetchMovies]);
+
+  useEffect(() => {
+    fetchStatistics();
+  }, [fetchStatistics]);
+
   // Define the handlePaginationChange function
-  const handlePaginationChange = (page, size) => {
+  const handlePaginationChange = (page: number, size: number) => {
     setCurrentPage(page);
     setPageSize(size);
   };
@@ -198,52 +208,73 @@ export default function ProfessionalMovieManagement() {
   const filteredData = useMemo(() => {
     return displayData.filter((movie) => {
       const matchesSearch =
-        movie.eng.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        movie.vn.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        movie.id.toLowerCase().includes(searchTerm.toLowerCase());
+        movie.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (movie.vietnameseTitle || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        movie.movieId.toString().includes(searchTerm);
 
-      const matchesVersion = !filterVersion || movie.version.includes(filterVersion);
+      const movieVersions = Array.isArray(movie.versions) ? movie.versions : [];
+      const matchesVersion = !filterVersion || movieVersions.includes(filterVersion);
+      
       const matchesStatus = !filterStatus || movie.status === filterStatus;
-      const matchesGenre = !filterGenre || movie.genre.includes(filterGenre);
+      
+      // Handle genres as comma-separated string or array
+      const movieGenres = Array.isArray(movie.genres) 
+        ? movie.genres 
+        : typeof movie.genres === 'string' 
+          ? movie.genres.split(',').map(g => g.trim())
+          : [];
+      const matchesGenre = !filterGenre || movieGenres.includes(filterGenre);
 
       return matchesSearch && matchesVersion && matchesStatus && matchesGenre;
     });
   }, [searchTerm, filterVersion, filterStatus, filterGenre, displayData]);
 
-  // Statistics calculations
-  const statistics = useMemo(() => {
-    const totalMovies = totalElements || displayData.length;
-    const activeMovies = displayData.filter((m) => m.status === "active").length;
-    const totalRevenue = displayData.reduce((sum, movie) => sum + movie.revenue, 0);
-    const avgDuration = Math.round(
-      displayData.reduce((sum, movie) => sum + movie.duration, 0) / (displayData.length || 1)
-    );
-
-    return { totalMovies, activeMovies, totalRevenue, avgDuration };
-  }, [displayData, totalElements]);
-
-  const handleEdit = (record) => {
+  const handleEdit = (record: Movie) => {
     setEditingMovie(record);
     form.setFieldsValue({
       ...record,
-      date: record.date,
+      releaseDate: record.releaseDate ? dayjs(record.releaseDate) : undefined,
     });
     setIsModalVisible(true);
   };
 
-  const handleDelete = (record) => {
-    message.success(`Deleted "${record.eng}" successfully`);
+  const handleDelete = async (record: Movie) => {
+    try {
+      await deleteMovie(record.movieId);
+      message.success(`Deleted "${record.title}" successfully`);
+      fetchMovies(); // Refresh the list
+    } catch (error) {
+      console.error("Error deleting movie:", error);
+      message.error("Failed to delete movie");
+    }
   };
 
-  const handleModalOk = () => {
-    form.validateFields().then((values) => {
-      message.success(
-        editingMovie ? "Movie updated successfully" : "Movie added successfully"
-      );
+  const handleModalOk = async () => {
+    try {
+      const values = await form.validateFields();
+      
+      if (editingMovie) {
+        await updateMovie(editingMovie.movieId, {
+          ...values,
+          releaseDate: values.releaseDate ? values.releaseDate.format('YYYY-MM-DD') : undefined,
+        });
+        message.success("Movie updated successfully");
+      } else {
+        await createMovie({
+          ...values,
+          releaseDate: values.releaseDate ? values.releaseDate.format('YYYY-MM-DD') : undefined,
+        });
+        message.success("Movie added successfully");
+      }
+      
       setIsModalVisible(false);
       setEditingMovie(null);
       form.resetFields();
-    });
+      fetchMovies(); // Refresh the list
+    } catch (error) {
+      console.error("Error saving movie:", error);
+      message.error("Failed to save movie");
+    }
   };
 
   const handleModalCancel = () => {
@@ -252,14 +283,14 @@ export default function ProfessionalMovieManagement() {
     form.resetFields();
   };
 
-  const columns: ColumnsType<any> = [
+  const columns: ColumnsType<Movie> = [
     {
       title: "#",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "movieId",
+      key: "movieId",
       width: 60,
       align: "center" as const,
-      render: (_: any, record: any, index: any) => (
+      render: (value: unknown, record: Movie, index: number) => (
         <div className="text-center">
           <span className="font-mono text-sm text-gray-500">
             {(currentPage - 1) * pageSize + index + 1}
@@ -271,24 +302,24 @@ export default function ProfessionalMovieManagement() {
       title: "Movie Information",
       key: "movie_info",
       width: 280,
-      render: (_: any, record: any) => (
+      render: (value: unknown, record: Movie) => (
         <div className="flex items-center gap-3">
           <Avatar
-            src={record.poster}
+            src={record.posterUrl}
             size={40}
             shape="square"
             className="border border-gray-200 flex-shrink-0"
           />
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-gray-900 mb-1 truncate text-sm">
-              {record.eng}
+              {record.title}
             </div>
             <div className="text-xs text-gray-600 mb-1 truncate">
-              {record.vn}
+              {record.vietnameseTitle}
             </div>
             <div className="flex items-center gap-1 flex-wrap">
               <Tag color="blue" className="text-xs m-0">
-                {record.id}
+                #{record.movieId}
               </Tag>
             </div>
           </div>
@@ -299,13 +330,13 @@ export default function ProfessionalMovieManagement() {
       title: "Release date",
       key: "company",
       width: 120,
-      render: (_: any, record: any) => (
+      render: (value: unknown, record: Movie) => (
         <div className="text-sm">
           <div className="font-medium text-gray-900 truncate">
             {record.company}
           </div>
           <div className="text-xs text-gray-500">
-            {new Date(record.date).toLocaleDateString()}
+            {new Date(record.releaseDate).toLocaleDateString()}
           </div>
         </div>
       ),
@@ -315,7 +346,7 @@ export default function ProfessionalMovieManagement() {
       key: "duration",
       width: 80,
       align: "center",
-      render: (_: any, record: any) => (
+      render: (value: unknown, record: Movie) => (
         <div className="text-center">
           <div className="text-sm font-medium">{record.duration}m</div>
           <Tag color="orange" className="text-xs mt-1">
@@ -326,29 +357,35 @@ export default function ProfessionalMovieManagement() {
     },
     {
       title: "Versions",
-      dataIndex: "version",
-      key: "version",
+      dataIndex: "versions",
+      key: "versions",
       align: "center" as const,
       width: 120,
-      render: (versions: any) => (
+      render: (versions: string[]) => (
         <div className="items-center gap-1">
-          {versions.slice(0, 2).map((version: any) => (
-            <Tag
-              key={version}
-              color={
-                version === "IMAX"
-                  ? "gold"
-                  : version === "4DX"
-                  ? "purple"
-                  : "blue"
-              }
-              className="text-xs m-0"
-            >
-              {version}
-            </Tag>
-          ))}
-          {versions.length > 2 && (
-            <Tag className="text-xs m-0">+{versions.length - 2}</Tag>
+          {versions && versions.length > 0 ? (
+            <>
+              {versions.slice(0, 2).map((version: string, index: number) => (
+                <Tag
+                  key={`${version}-${index}`}
+                  color={
+                    version === "IMAX"
+                      ? "gold"
+                      : version === "4DX"
+                      ? "purple"
+                      : "blue"
+                  }
+                  className="text-xs m-0"
+                >
+                  {version}
+                </Tag>
+              ))}
+              {versions.length > 2 && (
+                <Tag className="text-xs m-0">+{versions.length - 2}</Tag>
+              )}
+            </>
+          ) : (
+            <span className="text-gray-400 text-xs">N/A</span>
           )}
         </div>
       ),
@@ -359,13 +396,21 @@ export default function ProfessionalMovieManagement() {
       key: "status",
       width: 80,
       align: "center" as const,
-      render: (status: any) => (
+      render: (status: string) => (
         <div className="text-center">
           <Tag
-            color={status === "active" ? "success" : "default"}
+            color={
+              status === "NOW_SHOWING" 
+                ? "success" 
+                : status === "COMING_SOON" 
+                ? "processing" 
+                : "default"
+            }
             className="font-medium text-xs"
           >
-            {status === "active" ? "Active" : "Inactive"}
+            {status === "NOW_SHOWING" ? "Now Showing" : 
+             status === "COMING_SOON" ? "Coming Soon" : 
+             status === "ENDED" ? "Ended" : status}
           </Tag>
         </div>
         
@@ -377,11 +422,40 @@ export default function ProfessionalMovieManagement() {
       key: "revenue",
       width: 90,
       align: "center" as const,
-      render: (revenue: any) => (
+      render: (revenue: number) => (
         <div className="text-center">
           <span className="font-mono text-sm font-semibold text-green-600">
             ${(revenue / 1000000).toFixed(1)}M
           </span>
+        </div>
+      ),
+    },
+    {
+      title: "Genres",
+      dataIndex: "genres",
+      key: "genres",
+      width: 120,
+      align: "center" as const,
+      render: (genres: string) => (
+        <div className="items-center gap-1">
+          {genres ? (
+            <>
+              {genres.split(',').slice(0, 2).map((genre: string, index: number) => (
+                <Tag
+                  key={`${genre.trim()}-${index}`}
+                  color="blue"
+                  className="text-xs m-0"
+                >
+                  {genre.trim()}
+                </Tag>
+              ))}
+              {genres.split(',').length > 2 && (
+                <Tag className="text-xs m-0">+{genres.split(',').length - 2}</Tag>
+              )}
+            </>
+          ) : (
+            <span className="text-gray-400 text-xs">N/A</span>
+          )}
         </div>
       ),
     },
@@ -391,7 +465,7 @@ export default function ProfessionalMovieManagement() {
       width: 100,
       fixed: "right" as const,
       align: "center" as const,
-      render: (_: any, record: any) => (
+      render: (value: unknown, record: Movie) => (
         <Space size="small">
           <Tooltip title="View">
             <Button
@@ -450,7 +524,7 @@ export default function ProfessionalMovieManagement() {
           <Col xs={12} sm={12} lg={6}>
             <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center" size="small">
               <Statistic
-                title="Active Movies"
+                title="Now Showing"
                 value={statistics.activeMovies}
                 prefix={<GlobalOutlined className="text-green-600" />}
                 valueStyle={{ color: "#52c41a", fontSize: "1.5rem" }}
@@ -485,7 +559,7 @@ export default function ProfessionalMovieManagement() {
         {/* Main Content Card */}
         <Card
           className="shadow-sm border-0"
-          styles={{ body: { padding: 0 } }} // <-- updated line
+          styles={{ body: { padding: 0 } }}
           style={{ borderRadius: 16 }}
         >
           {/* Header Section */}
@@ -495,7 +569,7 @@ export default function ProfessionalMovieManagement() {
                 Movie Management
               </Title>
               <Text type="secondary" className="text-sm xl:text-base">
-                Manage and organize your cinema's movie collection
+                Manage and organize your cinema&apos;s movie collection
               </Text>
             </div>
 
@@ -549,8 +623,9 @@ export default function ProfessionalMovieManagement() {
                   allowClear
                   size="middle"
                 >
-                  <Option value="active">Active</Option>
-                  <Option value="inactive">Inactive</Option>
+                  <Option value="NOW_SHOWING">Now Showing</Option>
+                  <Option value="COMING_SOON">Coming Soon</Option>
+                  <Option value="ENDED">Ended</Option>
                 </Select>
               </Col>
               <Col xs={12} sm={6} lg={3} xl={3}>
@@ -599,6 +674,7 @@ export default function ProfessionalMovieManagement() {
               className="professional-table"
               size="small"
               loading={loading}
+              rowKey="movieId"
             />
 
             {/* Pagination */}
@@ -643,7 +719,7 @@ export default function ProfessionalMovieManagement() {
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
-                name="eng"
+                name="title"
                 label="English Title"
                 rules={[{ required: true, message: "Please enter English title" }]}
               >
@@ -652,7 +728,7 @@ export default function ProfessionalMovieManagement() {
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
-                name="vn"
+                name="vietnameseTitle"
                 label="Vietnamese Title"
                 rules={[{ required: true, message: "Please enter Vietnamese title" }]}
               >
@@ -673,7 +749,7 @@ export default function ProfessionalMovieManagement() {
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
-                name="date"
+                name="releaseDate"
                 label="Release Date"
                 rules={[{ required: true, message: "Please select release date" }]}
               >
@@ -714,8 +790,9 @@ export default function ProfessionalMovieManagement() {
                 rules={[{ required: true, message: "Please select status" }]}
               >
                 <Select placeholder="Select status" className="h-10">
-                  <Option value="active">Active</Option>
-                  <Option value="inactive">Inactive</Option>
+                  <Option value="NOW_SHOWING">Now Showing</Option>
+                  <Option value="COMING_SOON">Coming Soon</Option>
+                  <Option value="ENDED">Ended</Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -724,7 +801,7 @@ export default function ProfessionalMovieManagement() {
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
-                name="version"
+                name="versions"
                 label="Available Versions"
                 rules={[{ required: true, message: "Please select versions" }]}
               >
@@ -738,7 +815,7 @@ export default function ProfessionalMovieManagement() {
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
-                name="genre"
+                name="genres"
                 label="Genres"
                 rules={[{ required: true, message: "Please select genres" }]}
               >

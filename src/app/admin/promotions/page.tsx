@@ -40,6 +40,14 @@ import {
   PercentageOutlined,
 } from "@ant-design/icons";
 import { PromotionDto } from "@/types/Admin/promotion";
+import {
+  getAllPromotions,
+  deletePromotion,
+  activatePromotion,
+  deactivatePromotion,
+  getPromotionUsage
+} from '@/api/admin/getAllPromotions';
+import { toast } from 'react-toastify';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -49,11 +57,13 @@ const { RangePicker } = DatePicker;
 export default function ProfessionalPromotionManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
   const [viewingPromotion, setViewingPromotion] = useState<PromotionDto | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [selectedPromotions, setSelectedPromotions] = useState<PromotionDto[]>([]);const [editingPromotion, setEditingPromotion] = useState<PromotionDto | null>(null);
+  const [selectedPromotions, setSelectedPromotions] = useState<PromotionDto[]>([]);
+  const [editingPromotion, setEditingPromotion] = useState<PromotionDto | null>(null);
   const [form] = Form.useForm();
 
   // Thay thế dữ liệu tĩnh bằng API call
@@ -78,11 +88,12 @@ export default function ProfessionalPromotionManagement() {
       setTotalCount(data.totalElements || 0);
     } catch (error) {
       console.error("Error fetching promotions:", error);
-      message.error("Failed to load promotions");
+      toast.error("Không thể tải danh sách khuyến mãi");
     } finally {
       setLoading(false);
     }
   };
+
   // Gọi API khi component mount hoặc các tham số thay đổi
   useEffect(() => {
     fetchPromotions(currentPage - 1, pageSize, "startDate", "desc", null);
@@ -99,6 +110,7 @@ export default function ProfessionalPromotionManagement() {
       return matchesSearch;
     });
   }, [searchTerm, promotions]);
+
   // Statistics calculations
   const statistics = useMemo(() => {
     const totalPromotions = promotions.length;
@@ -107,7 +119,9 @@ export default function ProfessionalPromotionManagement() {
     const featuredPromotions = promotions.filter(p => p.isFeatured).length;
 
     return { totalPromotions, activePromotions, pointsPromotions, featuredPromotions };
-  }, [promotions]);  const handleAdd = () => {
+  }, [promotions]);
+
+  const handleAdd = () => {
     setEditingPromotion(null);
     form.resetFields();
     // Set some default values to prevent validation errors
@@ -122,7 +136,9 @@ export default function ProfessionalPromotionManagement() {
       maxDiscount: 100000, // Default maximum discount
     });
     setIsModalVisible(true);
-  };  const handleEdit = (record: PromotionDto) => {
+  };
+
+  const handleEdit = (record: PromotionDto) => {
     console.log("Editing promotion record:", record); // Debug log
     setEditingPromotion(record);
     
@@ -150,7 +166,9 @@ export default function ProfessionalPromotionManagement() {
     console.log("Form data being set:", formData); // Debug log
     form.setFieldsValue(formData);
     setIsModalVisible(true);
-  };const handleView = (record: PromotionDto) => {
+  };
+
+  const handleView = (record: PromotionDto) => {
     setViewingPromotion(record);
     setIsViewModalVisible(true);
   };
@@ -167,13 +185,13 @@ export default function ProfessionalPromotionManagement() {
       );
 
       await Promise.all(promises);
-      message.success(`Deleted ${selectedPromotions.length} promotions successfully`);
+      toast.success(`Deleted ${selectedPromotions.length} promotions successfully`);
       setSelectedRowKeys([]);
       setSelectedPromotions([]);
       fetchPromotions(currentPage - 1, pageSize);
     } catch (error) {
       console.error("Error bulk deleting:", error);
-      message.error("Failed to delete some promotions");
+      toast.error("Không thể xóa khuyến mãi");
     }
   };
 
@@ -209,30 +227,23 @@ export default function ProfessionalPromotionManagement() {
     link.click();
     document.body.removeChild(link);
     
-    message.success("Data exported successfully");
+    toast.success("Data exported successfully");
   };
+
   const handleDelete = async (record: PromotionDto) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa khuyến mãi này?')) return;
+    
     try {
-      const response = await fetch(`http://localhost:8080/cinema/api/promotions/${record.promotionId}`, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("accessToken")}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete promotion: ${response.status}`);
-      }
-
-      message.success(`Deleted "${record.promotionName}" successfully`);
-      
-      // Refresh the data
+      await deletePromotion(record.promotionId);
+      toast.success('Xóa khuyến mãi thành công');
       fetchPromotions(currentPage - 1, pageSize);
     } catch (error) {
-      console.error("Error deleting promotion:", error);
-      message.error(`Failed to delete promotion: ${error.message}`);
+      console.error('Error deleting promotion:', error);
+      toast.error('Không thể xóa khuyến mãi');
     }
-  };  const handleModalOk = async () => {
+  };
+
+  const handleModalOk = async () => {
     console.log("handleModalOk called"); // Debug log
     try {      console.log("Starting form validation..."); // Debug log
       const values = await form.validateFields();
@@ -479,7 +490,7 @@ export default function ProfessionalPromotionManagement() {
           },
           body: bannerFormData,
         });
-      }        message.success(editingPromotion 
+      }        toast.success(editingPromotion 
         ? `Cập nhật promotion thành công: ${result.promotionCode || result.promotionName}` 
         : `Tạo promotion mới thành công: ${result.promotionCode || result.promotionName}`);
       
@@ -500,11 +511,11 @@ export default function ProfessionalPromotionManagement() {
       }
       
       // Show user-friendly error message
-      message.error(errorMessage);
+      toast.error(errorMessage);
       
       // If it's a 401 error, might need to refresh token
       if (error.message && error.message.includes("401")) {
-        message.warning("Phiên đăng nhập có thể đã hết hạn. Vui lòng thử lại sau khi refresh trang.");
+        toast.warning("Phiên đăng nhập có thể đã hết hạn. Vui lòng thử lại sau khi refresh trang.");
       }
     }
   };
@@ -514,6 +525,7 @@ export default function ProfessionalPromotionManagement() {
     setEditingPromotion(null);
     form.resetFields();
   };
+
   const columns: ColumnsType<PromotionDto> = [
     {
       title: "#",
@@ -753,6 +765,7 @@ export default function ProfessionalPromotionManagement() {
       ),
     },
   ];
+
   return (
     <div className="min-h-screen transition-colors duration-200">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -1451,29 +1464,7 @@ export default function ProfessionalPromotionManagement() {
             )}
           </div>
         )}
-      </Modal><style jsx global>{`
-  .professional-table .ant-table-thead > tr > th {
-    font-weight: 600;
-    border-bottom: 2px solid var(--ant-color-border);
-  }
-  
-  .professional-pagination .ant-pagination-item-active {
-    background: var(--ant-color-primary);
-    border-color: var(--ant-color-primary);
-  }
-  
-  .professional-pagination .ant-pagination-item-active a {
-    color: white;
-  }
-  
-  .professional-modal .ant-modal-header {
-    border-bottom: 1px solid var(--ant-color-border);
-    padding: 24px 24px 16px;
-  }
-  
-  .professional-modal .ant-modal-body {
-    padding: 24px;
-  }
-`}</style></div>
+      </Modal>
+    </div>
   );
 }

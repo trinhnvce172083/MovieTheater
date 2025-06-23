@@ -22,6 +22,7 @@ import {
   Avatar,
   Statistic,
 } from "antd";
+import type { ColumnsType } from 'antd/es/table';
 import {
   PlusOutlined,
   EditOutlined,
@@ -38,43 +39,74 @@ import { getAllUsers } from "@/api/admin/getAllUsers";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
-const { RangePicker } = DatePicker;
+
+// Interface for Member Data
+interface MemberData {
+  key: string;
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  joinDate: string;
+  status: 'active' | 'inactive';
+  type: string;
+  avatar: string;
+}
+
+// Interface for Member Statistics
+interface MemberStatistics {
+  totalMembers: number;
+  activeMembers: number;
+  newMembers: number;
+  types: Record<string, number>;
+}
 
 export default function AdminMemberManagement() {
-  const [memberData, setMemberData] = useState([]);
+  const [memberData, setMemberData] = useState<MemberData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
-  const [filterType, setFilterType] = useState("");
-  const [dateRange, setDateRange] = useState(null);
+  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterType, setFilterType] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [isModalVisible, setIsModalVisible] = useState(false);  const [editingMember, setEditingMember] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingMember, setEditingMember] = useState<MemberData | null>(null);
   const [form] = Form.useForm();
 
   // Fetch users from API
   useEffect(() => {
     fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  }, []);  const fetchUsers = async () => {
     try {
       setLoading(true);
+      console.log('Fetching users...');
       const response = await getAllUsers();
+      console.log('API Response:', response);
+      
+      // Check if response and response.content exist
+      if (!response || !response.content) {
+        console.warn('No content in API response:', response);
+        setMemberData([]);
+        return;
+      }
       
       // Transform API data to match our table structure
-      const transformedData = response.content?.map((user, index) => ({
-        key: user.accountId || index.toString(),
-        id: user.accountId || `MB${String(index + 1).padStart(3, '0')}`,
-        name: user.username || 'N/A',
-        email: user.email || 'N/A',
-        phone: user.phoneNumber || 'N/A',
-        joinDate: user.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        status: user.isActive !== false ? 'active' : 'inactive',
-        type: user.membershipType || 'Standard',
-        avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'User')}&background=random`,
-      })) || [];
+      const transformedData = response.content.map((user, index) => {
+        console.log('Processing user:', user);
+        return {
+          key: user.accountId ? user.accountId.toString() : index.toString(),
+          id: user.accountId ? user.accountId.toString() : `MB${String(index + 1).padStart(3, '0')}`,
+          name: user.fullName || user.username || 'N/A',
+          email: user.email || 'N/A',
+          phone: user.phoneNumber || 'N/A',
+          joinDate: user.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          status: user.isActive !== false ? 'active' : 'inactive',
+          type: user.role || 'CUSTOMER',
+          avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || user.username || 'User')}&background=random`,
+        };
+      });
       
+      console.log('Transformed data:', transformedData);
       setMemberData(transformedData);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -83,62 +115,82 @@ export default function AdminMemberManagement() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Filter and search logic
+  };  // Filter and search logic
   const filteredData = useMemo(() => {
-    return memberData.filter((member) => {
-      const matchesSearch =
-        member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.id.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = !filterStatus || member.status === filterStatus;
-      const matchesType = !filterType || member.type === filterType;
-      // Date range filter (optional)
-      let matchesDate = true;
-      if (dateRange && dateRange.length === 2) {
-        const join = new Date(member.joinDate);
-        matchesDate =
-          join >= dateRange[0].startOf("day").toDate() &&
-          join <= dateRange[1].endOf("day").toDate();
+    try {
+      if (!memberData || !Array.isArray(memberData)) {
+        console.log('memberData is not an array:', memberData);
+        return [];
       }
-      return matchesSearch && matchesStatus && matchesType && matchesDate;
-    });
-  }, [searchTerm, filterStatus, filterType, dateRange, memberData]);
-
-  // Statistics calculations
-  const statistics = useMemo(() => {
-    const totalMembers = memberData.length;
-    const activeMembers = memberData.filter(
-      (m) => m.status === "active"
-    ).length;
-    const newMembers = memberData.filter((m) => {
-      const join = new Date(m.joinDate);
-      const now = new Date();
-      return (
-        join.getMonth() === now.getMonth() &&
-        join.getFullYear() === now.getFullYear()
-      );
-    }).length;
-    const types = memberData.reduce((acc, m) => {
-      acc[m.type] = (acc[m.type] || 0) + 1;
-      return acc;
-    }, {});
-    return { totalMembers, activeMembers, newMembers, types };
+      
+      return memberData.filter((member) => {
+        try {
+          const matchesSearch =
+            member?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            member?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            member?.id?.toLowerCase().includes(searchTerm.toLowerCase());
+          const matchesStatus = !filterStatus || member?.status === filterStatus;
+          const matchesType = !filterType || member?.type === filterType;
+          return matchesSearch && matchesStatus && matchesType;
+        } catch (error) {
+          console.error('Error filtering member:', member, error);
+          return false;
+        }
+      });
+    } catch (error) {
+      console.error('Error in filteredData calculation:', error);
+      return [];
+    }
+  }, [searchTerm, filterStatus, filterType, memberData]);// Statistics calculations
+  const statistics: MemberStatistics = useMemo(() => {
+    try {
+      const totalMembers = memberData?.length || 0;
+      const activeMembers = memberData?.filter(
+        (m) => m.status === "active"
+      )?.length || 0;
+      
+      const newMembers = memberData?.filter((m) => {
+        try {
+          const join = new Date(m.joinDate);
+          const now = new Date();
+          return (
+            join.getMonth() === now.getMonth() &&
+            join.getFullYear() === now.getFullYear()
+          );
+        } catch (error) {
+          console.error('Error processing date for member:', m, error);
+          return false;
+        }
+      })?.length || 0;
+      
+      const types = memberData?.reduce((acc: Record<string, number>, m) => {
+        try {
+          acc[m.type] = (acc[m.type] || 0) + 1;
+          return acc;
+        } catch (error) {
+          console.error('Error processing type for member:', m, error);
+          return acc;
+        }
+      }, {}) || {};
+      
+      return { totalMembers, activeMembers, newMembers, types };
+    } catch (error) {
+      console.error('Error calculating statistics:', error);
+      return { totalMembers: 0, activeMembers: 0, newMembers: 0, types: {} };
+    }
   }, [memberData]);
-
-  const handleEdit = (record) => {
+  const handleEdit = (record: MemberData) => {
     setEditingMember(record);
     form.setFieldsValue({ ...record, joinDate: record.joinDate });
     setIsModalVisible(true);
   };
 
-  const handleDelete = (record) => {
+  const handleDelete = (record: MemberData) => {
     message.success(`Deleted member "${record.name}" successfully`);
   };
 
   const handleModalOk = () => {
-    form.validateFields().then((values) => {
+    form.validateFields().then(() => {
       message.success(
         editingMember
           ? "Member updated successfully"
@@ -155,15 +207,14 @@ export default function AdminMemberManagement() {
     setEditingMember(null);
     form.resetFields();
   };
-
-  const columns = [
+  const columns: ColumnsType<MemberData> = [
     {
       title: "#",
       dataIndex: "id",
       key: "id",
       width: 60,
       align: "center" as const,
-      render: (_: any, record: any, index: any) => (
+      render: (_: unknown, record: MemberData, index: number) => (
         <div className="text-center">
           <span className="font-mono text-sm text-gray-500">
             {(currentPage - 1) * pageSize + index + 1}
@@ -175,7 +226,7 @@ export default function AdminMemberManagement() {
       title: "Member",
       key: "member_info",
       width: 220,
-      render: (_: any, record: any) => (
+      render: (_: unknown, record: MemberData) => (
         <div className="flex items-center gap-3">
           <Avatar src={record.avatar} size={40} icon={<UserOutlined />} />
           <div className="flex-1 min-w-0">
@@ -197,27 +248,27 @@ export default function AdminMemberManagement() {
       dataIndex: "phone",
       key: "phone",
       width: 120,
-      render: (phone: any) => <span className="text-sm">{phone}</span>,
+      render: (phone: string) => <span className="text-sm">{phone}</span>,
     },
     {
       title: "Join Date",
       dataIndex: "joinDate",
       key: "joinDate",
       width: 120,
-      render: (date: any) => (
+      render: (date: string) => (
         <span className="text-sm">{new Date(date).toLocaleDateString()}</span>
       ),
-    },
-    {
+    },    {
       title: "Type",
       dataIndex: "type",
       key: "type",
-      width: 100,      render: (type: any) => (
+      width: 100,
+      render: (type: string) => (
         <Tag
           color={
-            type === "Platinum" ? "purple" : 
-            type === "Gold" ? "gold" : 
-            type === "Silver" ? "default" : 
+            type === "ADMIN" ? "red" : 
+            type === "STAFF" ? "purple" : 
+            type === "EMPLOYEE" ? "orange" : 
             "blue"
           }
           className="text-xs m-0"
@@ -232,7 +283,7 @@ export default function AdminMemberManagement() {
       key: "status",
       width: 90,
       align: "center" as const,
-      render: (status: any) => (
+      render: (status: string) => (
         <Tag
           color={status === "active" ? "success" : "default"}
           className="font-medium text-xs"
@@ -247,7 +298,7 @@ export default function AdminMemberManagement() {
       width: 100,
       fixed: "right" as const,
       align: "center" as const,
-      render: (_: any, record: any) => (
+      render: (_: unknown, record: MemberData) => (
         <Space size="small">
           <Tooltip title="Edit">
             <Button
@@ -324,15 +375,14 @@ export default function AdminMemberManagement() {
               />
             </Card>
           </Col>
-          <Col xs={12} sm={12} lg={6}>
-            <Card
+          <Col xs={12} sm={12} lg={6}>            <Card
               className="text-center border-0 shadow-sm h-32 flex flex-col justify-center"
               size="small"
             >
               <Statistic
-                title="Gold/Platinum/Silver"
+                title="Admin/Staff/Employee"
                 value={Object.entries(statistics.types)
-                  .map(([type, count]) => `${type[0]}:${count}`)
+                  .map(([type, count]) => `${type}:${count}`)
                   .join(" ")}
                 prefix={<UserSwitchOutlined className="text-gold-600" />}
                 valueStyle={{ color: "#faad14", fontSize: "1.1rem" }}
@@ -355,9 +405,8 @@ export default function AdminMemberManagement() {
                 className="m-0 text-gray-900 text-xl xl:text-2xl"
               >
                 Member Management
-              </Title>
-              <Text type="secondary" className="text-sm xl:text-base">
-                Manage and organize your cinema's member list
+              </Title>              <Text type="secondary" className="text-sm xl:text-base">
+                Manage and organize your cinema&apos;s member list
               </Text>
             </div>            <div className="flex items-center gap-3">
               <Button
@@ -405,8 +454,8 @@ export default function AdminMemberManagement() {
                   <Option value="active">Active</Option>
                   <Option value="inactive">Inactive</Option>
                 </Select>
-              </Col>
-              <Col xs={12} sm={6} lg={4} xl={3}>                <Select
+              </Col>              <Col xs={12} sm={6} lg={4} xl={3}>
+                <Select
                   placeholder="Type"
                   value={filterType}
                   onChange={setFilterType}
@@ -414,16 +463,14 @@ export default function AdminMemberManagement() {
                   allowClear
                   size="middle"
                 >
-                  <Option value="Platinum">Platinum</Option>
-                  <Option value="Gold">Gold</Option>
-                  <Option value="Silver">Silver</Option>
-                  <Option value="Standard">Standard</Option>
+                  <Option value="ADMIN">Admin</Option>
+                  <Option value="STAFF">Staff</Option>
+                  <Option value="EMPLOYEE">Employee</Option>
+                  <Option value="CUSTOMER">Customer</Option>
                 </Select>
               </Col>
-              <Col xs={24} sm={12} lg={6} xl={6}>
-                <RangePicker className="w-full h-10" onChange={setDateRange} />
-              </Col>
-              <Col xs={12} sm={6} lg={4} xl={3}>                <Button
+              <Col xs={12} sm={6} lg={4} xl={3}>
+                <Button
                   icon={<ReloadOutlined />}
                   className="w-full h-10"
                   size="middle"
@@ -431,7 +478,6 @@ export default function AdminMemberManagement() {
                     setSearchTerm("");
                     setFilterStatus("");
                     setFilterType("");
-                    setDateRange(null);
                     fetchUsers();
                   }}
                 >
@@ -441,7 +487,8 @@ export default function AdminMemberManagement() {
             </Row>
           </div>
 
-          {/* Table Section */}          <div className="bg-white">
+          {/* Table Section */}          
+          <div className="bg-white">
             <Table
               dataSource={filteredData}
               columns={columns}
@@ -504,7 +551,8 @@ export default function AdminMemberManagement() {
               <Form.Item
                 name="email"
                 label="Email"
-                rules={[{ required: true, message: "Please enter email" }, { type: "email", message: "Invalid email!" }]}
+                rules={[{ required: true, message: "Please enter email" }, 
+                  { type: "email", message: "Invalid email!" }]}
               >
                 <Input placeholder="Enter email" className="h-10" type="email" />
               </Form.Item>
@@ -565,17 +613,17 @@ export default function AdminMemberManagement() {
               </Form.Item>
             </Col>
           </Row>
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
+          <Row gutter={16}>            <Col xs={24} sm={12}>
               <Form.Item
                 name="type"
-                label="Membership Type"
-                rules={[{ required: true, message: "Please select membership type" }]}
+                label="Role"
+                rules={[{ required: true, message: "Please select role" }]}
               >
-                <Select placeholder="Select type" className="h-10">
-                  <Option value="Platinum">Platinum</Option>
-                  <Option value="Gold">Gold</Option>
-                  <Option value="Silver">Silver</Option>
+                <Select placeholder="Select role" className="h-10">
+                  <Option value="ADMIN">Admin</Option>
+                  <Option value="STAFF">Staff</Option>
+                  <Option value="EMPLOYEE">Employee</Option>
+                  <Option value="CUSTOMER">Customer</Option>
                 </Select>
               </Form.Item>
             </Col>
