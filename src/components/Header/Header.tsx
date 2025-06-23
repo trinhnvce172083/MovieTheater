@@ -37,9 +37,11 @@ const HeaderComponent = () => {
           <Image
             src="/Logo.png"
             alt="Logo"
-            width={500}
-            height={500}
+            width={180}
+            height={72}
             className="w-auto h-24"
+            priority // Logo is important for First Contentful Paint
+            sizes="180px"
           />
         </Link>
         <nav className="flex space-x-8">
@@ -49,12 +51,6 @@ const HeaderComponent = () => {
           >
             Now Showing
           </Link>
-          {/* <Link
-            href={ROUTES.BOOKING}
-            className="hover:text-red-500 transition-colors"
-          >
-            Booking
-          </Link> */}
           <Link
             href={ROUTES.COMING_SOON}
             className="hover:text-red-500 transition-colors"

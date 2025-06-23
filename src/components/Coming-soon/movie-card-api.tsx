@@ -204,7 +204,7 @@ export function MovieCardApi({
                 className="bg-orange-500 hover:bg-orange-600 text-black font-semibold"
                 onClick={handleBookNow}
               >
-                Book Now
+                View Details
               </Button>
             </div>
           </div>

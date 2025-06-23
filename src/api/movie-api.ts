@@ -55,11 +55,14 @@ export class MovieApiService {
       };
     }
   }
-
-  static async searchMovies(query: string): Promise<ApiResponse<Movie[]>> {
+  static async searchMovies(query: string, page: number = 0, size: number = 10): Promise<ApiResponse<Movie[]>> {
     try {
       const response = await axiosClient.get("/movies/search", {
-        params: { q: query },
+        params: { 
+          keyword: query,
+          page,
+          size
+        },
       });
       const data = response.data;
       return {

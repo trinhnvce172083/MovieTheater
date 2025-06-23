@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { Logout_API } from "@/api/auth/Logout_API";
 import { useDispatch } from "react-redux";
 import { logout } from "@/store/slices/authSlice";
+import { clearAuthCookies } from "@/utils/authCookies";
 
 type User = {
   name?: string;
@@ -45,13 +46,20 @@ export default function UserDropdown({ user }: { user: User }) {
           {
             key: "logout",
             icon: <LogoutOutlined />,
-            label: "Logout",
-            onClick: () => {
+            label: "Logout",            onClick: () => {
               Logout_API()
                 .then(() => {
+                  // Clear localStorage
                   localStorage.removeItem("accessToken");
                   localStorage.removeItem("userInfo");
+                  
+                  // Clear cookies for middleware-based protection
+                  clearAuthCookies();
+                  
+                  // Update Redux store
                   dispatch(logout());
+                  
+                  // Redirect to home page
                   router.push(ROUTES.HOME);
                 })
                 .catch((error) => {

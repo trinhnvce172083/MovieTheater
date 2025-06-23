@@ -3,8 +3,8 @@
 import { useRef } from "react";
 import { useMovies } from "@/hooks/HomePage/useMovies";
 import Image from "next/image";
-import MovieSection from "@/components/HomePage/MovieSection";
-import ClientCarousel from "@/components/HomePage/ClientCarousel";
+import MovieSection from "@/app/HomePage/components/MovieSection";
+import ClientCarousel from "@/app/HomePage/components/ClientCarousel";
 import PROMOTIONS from "@/constants/HomePage/promotions";
 
 export default function Home() {
