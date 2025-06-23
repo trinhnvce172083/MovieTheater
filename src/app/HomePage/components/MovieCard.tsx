@@ -59,7 +59,9 @@ export function MovieCard({ movie, onViewDetails }: MovieCardProps) {
         .filter(Boolean);
 
   const imageUrl = movie.posterUrl || ""; // or movie.imageUrl
-  const movieDetailsUrl = `/movies/MovieDetails?movieId=${movie.movieId || ''}`;  return (
+  const movieDetailsUrl = `/movies/${movie.movieId || ''}`;
+
+  return (
     <Card className="w-full min-h-[480px] flex-shrink-0 rounded-xl overflow-hidden bg-black border border-orange-500/20 shadow-lg hover:shadow-orange-900/20 hover:border-orange-500/40 transition-all duration-300 transform hover:-translate-y-1 group" style={cardStyle}>
       <Link href={movieDetailsUrl} className="block">
         {/* Movie Poster */}

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Star, Clock, Calendar, Eye, ShoppingCart, Zap, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,14 +11,12 @@ import type { Movie } from "@/types/NowShowing/movie";
 interface MovieCardApiProps {
   movie: Movie;
   onBookNow?: (movieId: string) => void;
-  onViewDetails?: (movieId: string) => void;
   isFeatured?: boolean;
 }
 
 export function MovieCardApi({ 
   movie, 
   onBookNow, 
-  onViewDetails,
   isFeatured = false 
 }: MovieCardApiProps) {
   const getRatingColor = (rating: string) => {
@@ -41,9 +40,7 @@ export function MovieCardApi({
     onBookNow?.(movie.movieId);
   };
 
-  const handleViewDetails = () => {
-    onViewDetails?.(movie.movieId);
-  };
+
 
   // Ensure genre is array
   const genreArr = Array.isArray(movie.genre)
@@ -121,15 +118,16 @@ export function MovieCardApi({
 
           {/* Hover Actions */}
           <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleViewDetails}
-              className="bg-black/70 border-white/30 text-white hover:bg-white hover:text-black"
-            >
-              <Eye className="h-4 w-4 mr-1" />
-              View
-            </Button>
+            <Link href={`/movies/${movie.movieId}`}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-black/70 border-white/30 text-white hover:bg-white hover:text-black"
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                View
+              </Button>
+            </Link>
             <Button
               size="sm"
               onClick={handleBookNow}
@@ -191,32 +189,27 @@ export function MovieCardApi({
             </div>
             
             <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleViewDetails}
-                className="border-orange-500/30 text-orange-300 hover:bg-orange-500/10 hover:border-orange-500/50"
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-              <Button
-                size="sm"
-                className="bg-orange-500 hover:bg-orange-600 text-black font-semibold"
-                onClick={handleBookNow}
-              >
-                View Details
-              </Button>
+              <Link href={`/movies/${movie.movieId}`}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-orange-500/30 text-orange-300 hover:bg-orange-500/10 hover:border-orange-500/50"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href={`/movies/${movie.movieId}`}>
+                <Button
+                  size="sm"
+                  className="bg-orange-500 hover:bg-orange-600 text-black font-semibold"
+                >
+                  View Details
+                </Button>
+              </Link>
             </div>
           </div>
 
-          {/* Adult Content Warning */}
-          {movie.isAdultContent && (
-            <div className="mt-2 text-center">
-              <Badge variant="outline" className="border-red-500/50 text-red-400 bg-red-500/10 text-xs">
-                ⚠️ Adult Content
-              </Badge>
-            </div>
-          )}
+
         </div>
       </CardContent>
     </Card>

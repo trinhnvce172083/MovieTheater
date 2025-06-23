@@ -92,7 +92,7 @@ export default function MoviesPage() {
             {nowShowingMovies.map((movie, index) => (
               <Link 
                 key={movie.movieId} 
-                href={`/movies/MovieDetails/${getMovieSlug(movie.movieId)}`}
+                href={`/movies/${movie.movieId}`}
                 className="group bg-gradient-to-br from-[#1E1B3A] to-[#2A2654] rounded-xl p-6 hover:scale-105 transition-all duration-300 hover:shadow-2xl movie-card animate-scaleIn"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
@@ -146,7 +146,7 @@ export default function MoviesPage() {
             {comingSoonMovies.map((movie, index) => (
               <Link 
                 key={movie.movieId} 
-                href={`/movies/MovieDetails/${getMovieSlug(movie.movieId)}`}
+                href={`/movies/${movie.movieId}`}
                 className="group bg-gradient-to-br from-[#1E1B3A] to-[#2A2654] rounded-xl p-6 hover:scale-105 transition-all duration-300 hover:shadow-2xl movie-card animate-scaleIn"
                 style={{ animationDelay: `${(nowShowingMovies.length + index) * 0.1}s` }}
               >
@@ -217,22 +217,4 @@ export default function MoviesPage() {
   );
 }
 
-// Helper function để mapping movieId với slug
-function getMovieSlug(movieId: number): string {
-  const slugMap: { [key: number]: string } = {
-    1: "ballerina",
-    2: "howtotrainyourdragon", 
-    3: "materialists",
-    4: "28yearslater",
-    5: "elio",
-    6: "missionimpossible",
-    7: "f1",
-    8: "megan2",
-    9: "jurassicworld",
-    10: "superman",
-    11: "ikwydls",
-    12: "fantastic4"
-  };
-  
-  return slugMap[movieId] || `movie-${movieId}`;
-} 
+ 
