@@ -355,7 +355,7 @@ export default function AdminMemberManagement() {
         {/* Main Content Card */}
         <Card
           className="shadow-sm border-0"
-          bodyStyle={{ padding: 0 }}
+          styles={{ body: { padding: 0 } }}
           style={{ borderRadius: 16 }}
         >
           {/* Header Section */}

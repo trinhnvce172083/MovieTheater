@@ -30,7 +30,7 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({ open, onClose
       footer={null}
       centered
       width={500}
-      bodyStyle={{ background: "linear-gradient(135deg, #6B73FF 0%, #000DFF 100%)", borderRadius: 16 }}
+      styles={{ body: { background: "linear-gradient(135deg, #6B73FF 0%, #000DFF 100%)", borderRadius: 16 } }}
     >
       <Typography.Title level={4} style={{ color: "#fff", textAlign: "center" }}>BOOKING DATE</Typography.Title>
       <Typography.Text style={{ color: "#fff", display: "block", textAlign: "center", marginBottom: 16 }}>

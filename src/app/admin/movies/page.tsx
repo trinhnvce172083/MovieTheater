@@ -40,6 +40,8 @@ import {
   GlobalOutlined,
 } from "@ant-design/icons";
 import Image from "next/image";
+import ShowtimePickerModal from "@/components/ShowtimePickerModal";
+import { useRouter } from "next/navigation";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -121,6 +123,8 @@ export default function ProfessionalMovieManagement() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMovie, setEditingMovie] = useState(null);
   const [form] = Form.useForm();
+  const router = useRouter();
+  const [showModal, setShowModal] = useState(false);
 
   // Filter and search logic
   const filteredData = useMemo(() => {
@@ -702,6 +706,16 @@ export default function ProfessionalMovieManagement() {
           </Row>
         </Form>
       </Modal>
+
+      <ShowtimePickerModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        onContinue={(schedule) => {
+          setShowModal(false);
+          router.push(`/booking/seat-selection?scheduleId=${schedule.scheduleId}`);
+        }}
+        movieTitle="Tên phim"
+      />
 
       <style jsx global>{`
         .professional-table .ant-table-thead > tr > th {

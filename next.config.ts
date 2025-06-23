@@ -6,6 +6,14 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://localhost:8080/cinema/api/:path*",
+      },
+    ];
+  },
   crossOrigin: "anonymous", // Thiết lập crossOrigin cho các tài nguyên
   poweredByHeader: false, // Tắt header "X-Powered-By" của Next.js
   // Cấu hình CORS cho phép các nguồn gốc phát triển
