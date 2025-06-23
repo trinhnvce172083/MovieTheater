@@ -74,12 +74,7 @@ public class BookingCreateRequest {
     @Schema(description = "Có phải booking khách vãng lai", example = "false")
     private Boolean isGuestBooking = false;
 
-    // Special requirements
-    @Schema(description = "Cần hỗ trợ xe lăn", example = "false")
-    private Boolean needsWheelchairAccess = false;
-
-    @Schema(description = "Có trẻ em đi cùng", example = "false")
-    private Boolean hasChildren = false;
+   
 
     // Auto-calculated fields (will be set by service)
     @Schema(description = "Tổng tiền ghế (tự động tính)", example = "288000", accessMode = Schema.AccessMode.READ_ONLY)

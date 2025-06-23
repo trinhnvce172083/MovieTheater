@@ -240,7 +240,7 @@ public class AuthServiceImpl implements AuthService {
                 .address(request.getAddress())
                 .role(Role.MEMBER)
                 .isActive(true)
-                    .isVerified(false)
+                    .isVerified(true)
                     .emailVerified(false)
                     .emailVerificationToken(UUID.randomUUID().toString())
                     .emailVerificationExpiry(LocalDateTime.now().plusHours(24))

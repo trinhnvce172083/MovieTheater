@@ -21,11 +21,11 @@ import java.util.concurrent.ConcurrentMap;
 public class RateLimitServiceImpl implements RateLimitService {
     
     // Rate limit configurations
-    private static final int REGISTRATION_LIMIT_PER_IP = 5; // 5 registrations per hour
-    private static final int LOGIN_LIMIT_PER_IP = 10; // 10 login attempts per hour
-    private static final int EMAIL_LIMIT_PER_EMAIL = 3; // 3 emails per hour
+    private static final int REGISTRATION_LIMIT_PER_IP = 500; // 5 registrations per hour
+    private static final int LOGIN_LIMIT_PER_IP = 1000; // 10 login attempts per hour
+    private static final int EMAIL_LIMIT_PER_EMAIL = 300; // 3 emails per hour
     
-    private static final long RATE_LIMIT_WINDOW_HOURS = 1;
+    private static final long RATE_LIMIT_WINDOW_HOURS = 100;
     
     // In-memory storage for rate limiting
     private final ConcurrentMap<String, RateLimitData> registrationAttempts = new ConcurrentHashMap<>();
