@@ -1,35 +1,34 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { ArrowLeft } from 'lucide-react';
+import React from 'react';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
 
 export default function OrderSummary({ movieDetails, totalOrder }) {
   return (
-    <Card className="bg-gray-800 border-gray-700 text-white">
-      <CardHeader>
-        <Image src={movieDetails.image} alt={movieDetails.title} width={400} height={250} className="rounded-t-lg object-cover" />
-      </CardHeader>
-      <CardContent className="p-6 space-y-4">
-        <div className="space-y-2 text-center">
-          <CardTitle className="text-xl">{movieDetails.title}</CardTitle>
-          <p className="text-gray-300">{movieDetails.date}</p>
-          <p className="text-gray-300">{movieDetails.details}</p>
+    <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
+      {movieDetails.image && (
+        <div className="mb-4 flex justify-center">
+          <div className="w-full rounded-lg flex items-center justify-center overflow-hidden">
+            <Image
+              src={movieDetails.image}
+              alt={movieDetails.title}
+              width={400}
+              height={600}
+              style={{ width: '100%', height: 'auto', maxWidth: '100%', objectFit: 'cover', borderRadius: '0.5rem', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}
+              priority
+            />
+          </div>
         </div>
-        <Separator className="bg-gray-700"/>
-        <div className="space-y-2">
-          <h3 className="text-lg font-bold">Total Order</h3>
-          <p className="text-3xl font-extrabold">{totalOrder.toLocaleString('vi-VN')} VND</p>
-        </div>
-        <div className="flex items-center gap-3 pt-6 w-full">
-          <Button variant="outline" size="icon" className="border-purple-600 bg-gray-700 hover:bg-purple-100 hover:border-purple-700 rounded-full w-10 h-10 flex-shrink-0 flex items-center justify-center">
-            <ArrowLeft className="h-5 w-5 text-purple-600" />
-          </Button>
-          <Button className="flex-1 bg-gradient-to-r from-purple-500 to-purple-700 text-white font-bold shadow-lg hover:from-purple-600 hover:to-purple-800 border-0 rounded-lg px-6 py-2 text-base min-h-0 h-auto">
-            Continue
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      )}
+      <h2 className="text-xl font-bold mb-4">Order Summary</h2>
+      <div className="mb-4">
+        <div className="font-semibold">{movieDetails.title}</div>
+        <div className="text-sm text-gray-400">{movieDetails.date}</div>
+        <div className="text-sm text-gray-400">{movieDetails.details}</div>
+      </div>
+      <div className="flex justify-between items-center mt-6">
+        <span className="font-semibold">Total:</span>
+        <span className="text-lg font-bold text-yellow-400">{totalOrder.toLocaleString('vi-VN')} VND</span>
+      </div>
+      <button className="mt-6 w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded transition">Thanh toán</button>
+    </div>
   );
 } 

@@ -1,34 +1,25 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Minus, Plus, ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header/Header';
 import concessionApi from '@/api/concessionApi';
 import ConcessionsList from './ConcessionsList';
 import OrderSummary from './OrderSummary';
+import Image from 'next/image';
 
 interface Concession {
   id: number;
   name: string;
   description?: string;
   price: number;
-  imageUrl?: string; // Optional: if your API provides images for concessions
+  imageUrl?: string;
 }
 
-// Mock data for movie details, you might want to fetch this from an API as well
 const mockMovieDetails = {
-    title: 'SPIDER-MAN: NO WAY HOME',
-    date: '10:00 28/05/2025',
-    details: 'Screening room 02 - Seat H18',
-    image: '/popcorn.jpg' 
-};
-
-const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  title: 'SPIDER-MAN: NO WAY HOME',
+  date: '10:00 28/05/2025',
+  details: 'Screening room 02 - Seat H18',
+  image: '/popcorn.jpg'
 };
 
 export default function CornChipPage() {
@@ -42,10 +33,9 @@ export default function CornChipPage() {
       try {
         setLoading(true);
         const response = await concessionApi.getAll();
-        // Assuming the data is nested under a `data` property
         const fetchedConcessions = (response.data.data || response.data).map(item => ({
           ...item,
-          id: item.id ?? item.concessionId // Ưu tiên id, fallback concessionId
+          id: item.id ?? item.concessionId
         }));
         setConcessions(fetchedConcessions);
         const initialQuantities = fetchedConcessions.reduce(
@@ -54,15 +44,12 @@ export default function CornChipPage() {
         );
         setQuantities(initialQuantities);
         setError(null);
-        console.log('concessions:', fetchedConcessions);
       } catch (error) {
-        console.error("Failed to fetch concessions:", error);
         setError("Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.");
       } finally {
         setLoading(false);
       }
     };
-
     fetchConcessions();
   }, []);
 
