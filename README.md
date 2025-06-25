@@ -1,52 +1,106 @@
-# FE_Team_1
+# Lumiere Cinema Management System
 
+A modern cinema management system built with Next.js, TypeScript, and Ant Design.
 
+## Features
 
-## Getting started
+- **Admin Dashboard**: Comprehensive management interface for cinema operations
+- **Room Management**: Manage cinema rooms, seats, and configurations
+- **Movie Management**: Handle movie listings and details
+- **User Management**: Manage customer accounts and admin users
+- **Booking System**: Handle seat reservations and ticketing
+- **Modern UI**: Responsive design with glassmorphism effects
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Technology Stack
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **UI Library**: Ant Design (antd)
+- **Styling**: Tailwind CSS
+- **State Management**: Redux Toolkit
+- **Authentication**: JWT-based authentication
+- **HTTP Client**: Axios
 
-## Add your files
+## Getting Started
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+### Prerequisites
+
+- Node.js 18+ and npm
+- Backend API server running on `http://localhost:8080`
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone http://git.fa.edu.vn/hcm25_cpl_react_06/fe_team_1.git
+cd fe_team_1
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:3000` (or the next available port).
+
+### Backend Requirements
+
+This frontend application requires a backend API server to be running on `http://localhost:8080/cinema/api`. 
+
+**Expected API endpoints include:**
+- `GET /admin/cinema-rooms` - Get cinema rooms with pagination
+- `POST /admin/cinema-rooms` - Create new cinema room
+- `PUT /admin/cinema-rooms/:id` - Update cinema room
+- `DELETE /admin/cinema-rooms/:id` - Delete cinema room
+- `GET /admin/cinema-rooms/search` - Search cinema rooms
+
+If the backend is not available, the application will automatically switch to **Demo Mode** with sample data.
+
+### Demo Mode
+
+When the backend server is not available, the application will:
+- Display a warning banner indicating "Demo Mode Active"
+- Show sample data for demonstration purposes
+- Disable create, edit, and delete operations
+- Provide a "Retry Connection" button to attempt reconnecting
+
+## Available Scripts
+
+- `npm run dev` - Start development server with Turbopack
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
+
+## Project Structure
 
 ```
-cd existing_repo
-git remote add origin http://git.fa.edu.vn/hcm25_cpl_react_06/fe_team_1.git
-git branch -M main
-git push -uf origin main
+src/
+├── api/           # API client and endpoints
+├── app/           # Next.js app router pages
+├── components/    # Reusable UI components
+├── store/         # Redux store and slices
+├── types/         # TypeScript type definitions
+├── utils/         # Utility functions
+└── styles/        # Global styles and animations
 ```
 
-## Integrate with your tools
+## Authentication
 
-- [ ] [Set up project integrations](http://git.fa.edu.vn/hcm25_cpl_react_06/fe_team_1/-/settings/integrations)
+The application uses JWT-based authentication with the following storage locations:
+- LocalStorage (`accessToken`, `userInfo`)
+- Cookies (`authToken`, `userRole`)
 
-## Collaborate with your team
+## Development Notes
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+- The application uses **Turbopack** for faster development builds
+- **TypeScript** is configured with strict mode
+- **ESLint** is configured for code quality
+- All admin operations require proper authentication
+- The UI features modern glassmorphism design elements
 
 ## Suggestions for a good README
 Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.

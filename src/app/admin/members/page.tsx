@@ -21,6 +21,7 @@ import {
   Typography,
   Avatar,
   Statistic,
+  Alert,
 } from "antd";
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -34,8 +35,13 @@ import {
   UserSwitchOutlined,
   UsergroupAddOutlined,
   CheckCircleOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import { getAllUsers } from "@/api/admin/getAllUsers";
+import { debugAuthStatus } from "@/utils/authDebug";
+import { getAuthTokenFromCookies } from "@/utils/authCookies";
+import axiosClient from "@/api/axiosClient";
+import { useRouter } from "next/navigation";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -66,6 +72,27 @@ interface ApiUser {
   avatar?: string;
 }
 
+// Interface for creating/updating members
+interface MemberCreateRequest {
+  username: string;
+  password?: string; // Optional for updates
+  fullName: string;
+  email: string;
+  phoneNumber?: string;
+  address?: string;
+  dateOfBirth?: string;
+  role: string;
+  isActive: boolean;
+}
+
+// Interface for error responses
+interface ApiErrorResponse {
+  response: {
+    status: number;
+    data: unknown;
+  };
+}
+
 // Interface for Member Statistics
 interface MemberStatistics {
   totalMembers: number;
@@ -74,8 +101,7 @@ interface MemberStatistics {
   types: Record<string, number>;
 }
 
-export default function AdminMemberManagement() {
-  const [memberData, setMemberData] = useState<MemberData[]>([]);
+export default function AdminMemberManagement() {  const [memberData, setMemberData] = useState<MemberData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("");
@@ -83,8 +109,13 @@ export default function AdminMemberManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingMember, setEditingMember] = useState<MemberData | null>(null);
-  const [form] = Form.useForm();
+  const [editingMember, setEditingMember] = useState<MemberData | null>(null);  const [form] = Form.useForm();
+  const router = useRouter();
+  // Simple auth status check
+  const [showAuthWarning, setShowAuthWarning] = useState(false);
+  const [isUsingApiData, setIsUsingApiData] = useState(true);
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
+
   // Fetch users from API
   const fetchUsers = async () => {
     try {
@@ -130,17 +161,46 @@ export default function AdminMemberManagement() {
           };
         }
       });
-      
-      console.log('Transformed data:', transformedData);
+        console.log('Transformed data:', transformedData);
       setMemberData(transformedData || []);
+      setIsUsingApiData(true);
+      setBackendStatus('connected');
     } catch (error) {
       console.error('Error fetching users:', error);
-      message.error('Failed to fetch users');
+      // Since getAllUsers now returns mock data on error, this is less likely to happen
+      // But if it does, show a more informative message
+      console.log('Using fallback data due to API error');
+      message.warning('Using sample data - please check your connection or login status');
       setMemberData([]);
+      setIsUsingApiData(false);
+      setBackendStatus('disconnected');
     } finally {
       setLoading(false);
     }
-  };
+  };  useEffect(() => {
+    // Check multiple possible token locations including cookies
+    const token = localStorage.getItem('accessToken') || 
+                 localStorage.getItem('access_token') || 
+                 localStorage.getItem('authToken') ||
+                 sessionStorage.getItem('accessToken') ||
+                 getAuthTokenFromCookies(); // Add cookies check
+    
+    console.log('🔍 Auth check - Token found:', token ? 'YES' : 'NO');
+    if (token) {
+      console.log('Token source:', 
+        localStorage.getItem("accessToken") ? "localStorage(accessToken)" :
+        localStorage.getItem("access_token") ? "localStorage(access_token)" :
+        localStorage.getItem("authToken") ? "localStorage(authToken)" :
+        sessionStorage.getItem("accessToken") ? "sessionStorage(accessToken)" :
+        getAuthTokenFromCookies() ? "cookies(authToken)" : "unknown");
+      console.log('Token preview:', token.substring(0, 20) + '...');
+    }
+    
+    // Run debug function for detailed auth info
+    debugAuthStatus();
+    
+    setShowAuthWarning(!token);
+  }, []);
 
   useEffect(() => {
     fetchUsers();
@@ -221,37 +281,169 @@ export default function AdminMemberManagement() {
     } catch (error) {
       console.error('Error calculating statistics:', error);
       return { totalMembers: 0, activeMembers: 0, newMembers: 0, types: {} };
+    }  }, [memberData]);
+
+  // CRUD Operations
+  const createMember = async (memberData: MemberCreateRequest) => {
+    try {
+      setLoading(true);
+      console.log('Creating member with data:', memberData);
+        // Ensure all required fields are present and properly formatted
+      const payload = {
+        ...memberData,
+        // Ensure role is uppercase
+        role: memberData.role?.toUpperCase() || 'STAFF'
+      };
+      
+      console.log('Sending payload:', payload);
+      const response = await axiosClient.post('/admin/users', payload);
+      console.log('Create response:', response.data);
+      message.success('Member created successfully');
+      await fetchUsers(); // Refresh the list
+      return true;
+    } catch (error) {
+      console.error('Error creating member:', error);
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as ApiErrorResponse;
+        console.error('Backend error details:', axiosError.response.data);
+        if (axiosError.response.status === 400) {
+          message.error('Validation error. Please check all required fields are filled correctly.');
+        } else if (axiosError.response.status === 401) {
+          message.error('Authentication failed. Please login again.');
+        } else if (axiosError.response.status === 403) {
+          message.error('Access denied. You may not have admin permissions.');
+        } else {
+          message.error(`Failed to create member: ${axiosError.response.status}`);
+        }
+      } else {
+        message.error('Failed to create member');
+      }
+      return false;
+    } finally {
+      setLoading(false);
     }
-  }, [memberData]);
+  };
+
+  const updateMember = async (id: string, memberData: MemberCreateRequest) => {
+    try {
+      setLoading(true);
+      console.log('Updating member:', id, memberData);
+      const response = await axiosClient.put(`/admin/users/${id}`, memberData);
+      console.log('Update response:', response.data);
+      message.success('Member updated successfully');
+      await fetchUsers(); // Refresh the list
+      return true;
+    } catch (error) {
+      console.error('Error updating member:', error);
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as ApiErrorResponse;
+        if (axiosError.response.status === 401) {
+          message.error('Authentication failed. Please login again.');
+        } else if (axiosError.response.status === 403) {
+          message.error('Access denied. You may not have admin permissions.');
+        } else {
+          message.error(`Failed to update member: ${axiosError.response.status}`);
+        }
+      } else {
+        message.error('Failed to update member');
+      }
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteMember = async (id: string, name: string) => {
+    try {
+      setLoading(true);
+      console.log('Deleting member:', id);
+      const response = await axiosClient.delete(`/admin/users/${id}`);
+      console.log('Delete response:', response.data);
+      message.success(`Deleted member "${name}" successfully`);
+      await fetchUsers(); // Refresh the list
+      return true;
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as ApiErrorResponse;
+        if (axiosError.response.status === 401) {
+          message.error('Authentication failed. Please login again.');
+        } else if (axiosError.response.status === 403) {
+          message.error('Access denied. You may not have admin permissions.');
+        } else {
+          message.error(`Failed to delete member: ${axiosError.response.status}`);
+        }
+      } else {
+        message.error('Failed to delete member');
+      }
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleEdit = (record: MemberData) => {
     setEditingMember(record);
-    form.setFieldsValue({ ...record, joinDate: record.joinDate });
+    form.setFieldsValue({ 
+      name: record.name,
+      username: record.id, // Use the id as username for now, you might want to store actual username
+      email: record.email,
+      phone: record.phone,
+      type: record.type,
+      status: record.status,
+      joinDate: record.joinDate,
+    });
     setIsModalVisible(true);
   };
-
   const handleDelete = (record: MemberData) => {
-    message.success(`Deleted member "${record.name}" successfully`);
+    deleteMember(record.id, record.name);
   };
 
-  const handleModalOk = () => {
-    form.validateFields().then(() => {
-      message.success(
-        editingMember
-          ? "Member updated successfully"
-          : "Member added successfully"
-      );
-      setIsModalVisible(false);
-      setEditingMember(null);
-      form.resetFields();
-    });
+  const handleViewDetail = (record: MemberData) => {
+    router.push(`/admin/members/MemberDetail?id=${record.id}`);
+  };
+
+  const handleModalOk = async () => {
+    try {
+      const values = await form.validateFields();
+      console.log('Form values:', values);      // Transform form data to match API expectations
+      const memberData: MemberCreateRequest = {
+        username: values.username,
+        fullName: values.name,
+        email: values.email,
+        phoneNumber: values.phone || undefined,
+        address: values.address || undefined,
+        dateOfBirth: values.dob ? values.dob.format('YYYY-MM-DD') : undefined,
+        role: values.type,
+        isActive: values.status === 'active',
+      };
+
+      // Add password for create, or for update if provided
+      if (!editingMember || (editingMember && values.password)) {
+        memberData.password = values.password;
+      }
+
+      let success = false;
+      if (editingMember) {
+        success = await updateMember(editingMember.id, memberData);
+      } else {
+        success = await createMember(memberData);
+      }
+
+      if (success) {
+        setIsModalVisible(false);
+        setEditingMember(null);
+        form.resetFields();
+      }
+    } catch (error) {
+      console.error('Form validation failed:', error);
+    }
   };
 
   const handleModalCancel = () => {
     setIsModalVisible(false);
     setEditingMember(null);
     form.resetFields();
-  };
-  const columns: ColumnsType<MemberData> = [
+  };  const columns: ColumnsType<MemberData> = [
     {
       title: "#",
       dataIndex: "id",
@@ -280,9 +472,6 @@ export default function AdminMemberManagement() {
             <div className="text-xs text-gray-600 mb-1 truncate">
               {record.email}
             </div>
-            <Tag color="blue" className="text-xs m-0">
-              {record.id}
-            </Tag>
           </div>
         </div>
       ),
@@ -335,25 +524,36 @@ export default function AdminMemberManagement() {
           {status === "active" ? "Active" : "Inactive"}
         </Tag>
       ),
-    },
-    {
+    },    {
       title: "Actions",
       key: "actions",
-      width: 100,
+      width: 130,
       fixed: "right" as const,
-      align: "center" as const,
-      render: (_: unknown, record: MemberData) => (
+      align: "center" as const,      render: (_: unknown, record: MemberData) => (
         <Space size="small">
-          <Tooltip title="Edit">
+          {/* Only show View Details button for Staff and Employee, not for Admin */}
+          {record.type !== 'ADMIN' && (
+            <Tooltip title="View Details">
+              <Button
+                type="text"
+                icon={<EyeOutlined />}
+                size="small"
+                className="text-blue-600 hover:bg-blue-50"
+                onClick={() => handleViewDetail(record)}
+              />
+            </Tooltip>
+          )}
+          <Tooltip title={isUsingApiData ? "Edit" : "Edit disabled in demo mode"}>
             <Button
               type="text"
               icon={<EditOutlined />}
               size="small"
-              className="text-green-600 hover:bg-green-50"
+              className={isUsingApiData ? "text-green-600 hover:bg-green-50" : "text-gray-400"}
               onClick={() => handleEdit(record)}
+              disabled={!isUsingApiData}
             />
           </Tooltip>
-          <Tooltip title="Delete">
+          <Tooltip title={isUsingApiData ? "Delete" : "Delete disabled in demo mode"}>
             <Popconfirm
               title="Delete Member"
               description="Are you sure?"
@@ -361,12 +561,14 @@ export default function AdminMemberManagement() {
               okText="Delete"
               cancelText="Cancel"
               okButtonProps={{ danger: true }}
+              disabled={!isUsingApiData}
             >
               <Button
                 type="text"
                 icon={<DeleteOutlined />}
                 size="small"
-                className="text-red-600 hover:bg-red-50"
+                className={isUsingApiData ? "text-red-600 hover:bg-red-50" : "text-gray-400"}
+                disabled={!isUsingApiData}
               />
             </Popconfirm>
           </Tooltip>
@@ -374,10 +576,37 @@ export default function AdminMemberManagement() {
       ),
     },
   ];
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
+        {/* Demo Data Warning */}
+        {!isUsingApiData && (
+          <Alert
+            message="Demo Mode - Using Sample Data"
+            description="You are viewing sample data. Connect to the backend server to enable full CRUD operations."
+            type="warning"
+            showIcon
+            className="mb-6"
+            closable
+          />
+        )}
+        
+        {/* Authentication Warning */}
+        {showAuthWarning && (
+          <Card className="mb-6 border-orange-200 bg-orange-50">
+            <div className="flex items-center gap-3">
+              <UserOutlined className="text-orange-600" />
+              <div>
+                <strong>Authentication Notice</strong>
+                <p className="text-sm text-gray-600 mb-0">
+                  You are not logged in. Displaying sample data for demonstration. 
+                  <a href="/auth/Login" className="text-blue-600 ml-1">Log in here</a> to access real data.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+        
         {/* Statistics Cards */}
         <Row gutter={[16, 16]} className="mb-6">
           <Col xs={12} sm={12} lg={6}>
@@ -433,7 +662,8 @@ export default function AdminMemberManagement() {
               />
             </Card>
           </Col>
-        </Row>        {/* Main Content Card */}
+        </Row>        
+        {/* Main Content Card */}
         <Card
           className="shadow-sm border-0"
           styles={{ body: { padding: 0 } }}
@@ -447,10 +677,45 @@ export default function AdminMemberManagement() {
                 className="m-0 text-gray-900 text-xl xl:text-2xl"
               >
                 Member Management
-              </Title>              <Text type="secondary" className="text-sm xl:text-base">
+              </Title>              
+              <Text type="secondary" className="text-sm xl:text-base">
                 Manage and organize your cinema&apos;s member list
               </Text>
-            </div>            <div className="flex items-center gap-3">
+            </div>            
+            <div className="flex items-center gap-3">
+              {/* Backend Status Indicators */}
+              <div className="flex items-center gap-2">
+                {backendStatus === 'connected' && (
+                  <div className="flex items-center gap-1 text-green-600 text-xs">
+                    <CheckCircleOutlined />
+                    <span>Live Data</span>
+                  </div>
+                )}
+                {backendStatus === 'disconnected' && (
+                  <div className="flex items-center gap-1 text-orange-600 text-xs">
+                    <UserOutlined />
+                    <span>Demo Mode</span>
+                  </div>
+                )}
+                {backendStatus === 'checking' && (
+                  <div className="flex items-center gap-1 text-blue-600 text-xs">
+                    <ReloadOutlined spin />
+                    <span>Connecting...</span>
+                  </div>
+                )}
+              </div>
+              
+              {backendStatus === 'disconnected' && (
+                <Button
+                  icon={<ReloadOutlined />}
+                  size="small"
+                  onClick={fetchUsers}
+                  title="Retry connection"
+                >
+                  Retry
+                </Button>
+              )}
+              
               <Button
                 icon={<ReloadOutlined />}
                 size="middle"
@@ -465,6 +730,8 @@ export default function AdminMemberManagement() {
                 size="middle"
                 className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
                 onClick={() => setIsModalVisible(true)}
+                disabled={!isUsingApiData}
+                title={!isUsingApiData ? "Create/Edit functions require backend connection" : "Add new member"}
               >
                 Add New Member
               </Button>
@@ -576,8 +843,7 @@ export default function AdminMemberManagement() {
         className="professional-modal"
         okText={editingMember ? "Update Member" : "Add Member"}
         cancelText="Cancel"
-      >
-        <Form form={form} layout="vertical" className="mt-6">
+      >        <Form form={form} layout="vertical" className="mt-6">
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
@@ -590,6 +856,17 @@ export default function AdminMemberManagement() {
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
+                name="username"
+                label="Username"
+                rules={[{ required: true, message: "Please enter username" }]}
+              >
+                <Input placeholder="Enter username" className="h-10" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
                 name="email"
                 label="Email"
                 rules={[{ required: true, message: "Please enter email" }, 
@@ -597,6 +874,39 @@ export default function AdminMemberManagement() {
               >
                 <Input placeholder="Enter email" className="h-10" type="email" />
               </Form.Item>
+            </Col>            <Col xs={24} sm={12}>
+              <Form.Item
+                name="phone"
+                label="Phone"
+                rules={[{ required: true, message: "Please enter phone number" }]}
+              >
+                <Input placeholder="Enter phone number" className="h-10" type="tel" />
+              </Form.Item>
+            </Col>          </Row>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="password"
+                label="Password"
+                rules={[
+                  { 
+                    required: !editingMember, 
+                    message: "Please enter password" 
+                  },
+                  { 
+                    min: 6, 
+                    message: "Password must be at least 6 characters" 
+                  }
+                ]}
+              >
+                <Input.Password 
+                  placeholder={editingMember ? "Leave blank to keep current password" : "Enter password"} 
+                  className="h-10" 
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              {/* Empty space for layout */}
             </Col>
           </Row>
           <Row gutter={16}>
@@ -606,20 +916,11 @@ export default function AdminMemberManagement() {
                 label="Address"
                 rules={[{ required: true, message: "Please enter address" }]}
               >
-                <Input.TextArea placeholder="Enter address" className="h-10" rows={2} />
+                <Input.TextArea placeholder="Enter address" rows={2} />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="phone"
-                label="Phone"
-                rules={[{ required: true, message: "Please enter phone number" }]}
-              >
-                <Input placeholder="Enter phone number" className="h-10" type="tel" />
-              </Form.Item>
-            </Col>
             <Col xs={24} sm={12}>
               <Form.Item
                 name="dob"
@@ -629,8 +930,6 @@ export default function AdminMemberManagement() {
                 <DatePicker className="w-full h-10" format="DD-MM-YYYY" />
               </Form.Item>
             </Col>
-          </Row>
-          <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 name="gender"
@@ -644,6 +943,8 @@ export default function AdminMemberManagement() {
                 </Select>
               </Form.Item>
             </Col>
+          </Row>
+          <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 name="idNumber"
@@ -653,21 +954,19 @@ export default function AdminMemberManagement() {
                 <Input placeholder="Enter ID number" className="h-10" type="number" />
               </Form.Item>
             </Col>
-          </Row>
-          <Row gutter={16}>            <Col xs={24} sm={12}>
-              <Form.Item
+            <Col xs={24} sm={12}>              <Form.Item
                 name="type"
                 label="Role"
                 rules={[{ required: true, message: "Please select role" }]}
               >
                 <Select placeholder="Select role" className="h-10">
-                  <Option value="ADMIN">Admin</Option>
                   <Option value="STAFF">Staff</Option>
                   <Option value="EMPLOYEE">Employee</Option>
-                  <Option value="CUSTOMER">Customer</Option>
                 </Select>
               </Form.Item>
             </Col>
+          </Row>
+          <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 name="status"
@@ -680,8 +979,6 @@ export default function AdminMemberManagement() {
                 </Select>
               </Form.Item>
             </Col>
-          </Row>
-          <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 name="joinDate"

@@ -40,19 +40,19 @@ import {
   PercentageOutlined,
 } from "@ant-design/icons";
 import { PromotionDto } from "@/types/Admin/promotion";
-import {
-  getAllPromotions,
-  deletePromotion,
-  activatePromotion,
-  deactivatePromotion,
-  getPromotionUsage
-} from '@/api/admin/getAllPromotions';
+// API functions available but using direct fetch for now
+// import {
+//   getAllPromotions,
+//   deletePromotion,
+//   activatePromotion,
+//   deactivatePromotion,
+//   getPromotionUsage
+// } from '@/api/admin/getAllPromotions';
 import { toast } from 'react-toastify';
 import Image from "next/image";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
-const { RangePicker } = DatePicker;
 
 // Promotion Management Component
 export default function ProfessionalPromotionManagement() {
@@ -74,12 +74,9 @@ export default function ProfessionalPromotionManagement() {
   );
   const [form] = Form.useForm();
 
-  // Thay thế dữ liệu tĩnh bằng API call
+  // Replace dữ liệu tĩnh bằng API call
   const [promotions, setPromotions] = useState<PromotionDto[]>([]);
   const [loading, setLoading] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
-
-  // Fetch data from API
   const fetchPromotions = async (
     page = 0,
     pageSize = 10,
@@ -99,7 +96,7 @@ export default function ProfessionalPromotionManagement() {
       const data = await response.json();
 
       setPromotions(data.content || []);
-      setTotalCount(data.totalElements || 0);
+      // setTotalCount(data.totalElements || 0); // We'll use filtered data length instead
     } catch (error) {
       console.error("Error fetching promotions:", error);
       toast.error("Không thể tải danh sách khuyến mãi");
@@ -370,10 +367,38 @@ export default function ProfessionalPromotionManagement() {
         return;
       }
 
-      // Prepare data for backend - more careful validation
+      // Prepare data for backend with proper typing
       console.log("Form values before processing:", values);
 
-      const payload: any = {};
+      const payload: {
+        promotionCode: string;
+        promotionName: string;
+        description: string;
+        discountType: string;
+        discountValue: number;
+        isActive: boolean;
+        startDate?: string;
+        endDate?: string;
+        minPurchaseAmount?: number;
+        maxDiscountAmount?: number;
+        pointsRequired?: number;
+        maxUsageCount?: number;
+        maxUsagePerUser?: number;
+        memberOnly: boolean;
+        isFeatured: boolean;
+        promotionType: string;
+        membershipLevels?: string;
+      } = {
+        promotionCode: values.promoCode.toString().toUpperCase().trim(),
+        promotionName: values.name.toString().trim(),
+        description: values.description?.toString()?.trim() || "",
+        discountType: values.discountType || "PERCENTAGE",
+        discountValue: Number(values.discountValue) || 0,
+        isActive: values.status === "ACTIVE",
+        memberOnly: Boolean(values.memberOnly),
+        isFeatured: Boolean(values.isFeatured),
+        promotionType: values.promotionType || "PUBLIC",
+      };
 
       // Required fields with validation
       if (!values.promoCode?.trim()) {
@@ -384,13 +409,6 @@ export default function ProfessionalPromotionManagement() {
         message.error("Tên promotion là bắt buộc");
         return;
       }
-
-      payload.promotionCode = values.promoCode.toString().toUpperCase().trim();
-      payload.promotionName = values.name.toString().trim();
-      payload.description = values.description?.toString()?.trim() || "";
-      payload.discountType = values.discountType || "PERCENTAGE";
-      payload.discountValue = Number(values.discountValue) || 0;
-      payload.isActive = values.status === "ACTIVE";
 
       // Date fields
       if (values.startDate) {
@@ -448,11 +466,11 @@ export default function ProfessionalPromotionManagement() {
       }
 
       // Boolean fields
-      payload.memberOnly = Boolean(values.memberOnly);
-      payload.isFeatured = Boolean(values.isFeatured);
+      // payload.memberOnly = Boolean(values.memberOnly);
+      // payload.isFeatured = Boolean(values.isFeatured);
 
       // String fields
-      payload.promotionType = values.promotionType || "PUBLIC";
+      // payload.promotionType = values.promotionType || "PUBLIC";
 
       // Array field
       if (
@@ -534,7 +552,7 @@ export default function ProfessionalPromotionManagement() {
               } else if (typeof errorJson === "string") {
                 errorMessage = errorJson;
               }
-            } catch (e) {
+            } catch (_) {
               // If not JSON, use the raw text if it's meaningful
               if (errorData.length < 200) {
                 errorMessage = errorData;
@@ -579,16 +597,15 @@ export default function ProfessionalPromotionManagement() {
             promotionCode: payload.promotionCode,
             promotionName: payload.promotionName,
           };
+        }        } catch (_parseError) {
+          console.error("Error parsing response:", _parseError);
+          // If we can't parse but response was ok, assume success
+          result = {
+            promotionId: editingPromotion?.promotionId,
+            promotionCode: payload.promotionCode,
+            promotionName: payload.promotionName,
+          };
         }
-      } catch (e) {
-        console.error("Error parsing response:", e);
-        // If we can't parse but response was ok, assume success
-        result = {
-          promotionId: editingPromotion?.promotionId,
-          promotionCode: payload.promotionCode,
-          promotionName: payload.promotionName,
-        };
-      }
 
       console.log("Parsed result:", result);
 
@@ -659,7 +676,7 @@ export default function ProfessionalPromotionManagement() {
       dataIndex: "promotionId",
       key: "promotionId",
       width: 60,
-      render: (_: any, record: PromotionDto, index: number) => (
+      render: (_: unknown, record: PromotionDto, index: number) => (
         <div className="text-center">
           <span className="font-mono text-sm text-gray-500">
             {(currentPage - 1) * pageSize + index + 1}
@@ -671,7 +688,7 @@ export default function ProfessionalPromotionManagement() {
       title: "Promotion Information",
       key: "promotion_info",
       width: 280,
-      render: (_: any, record: PromotionDto) => (
+      render: (_: unknown, record: PromotionDto) => (
         <div className="flex items-center gap-3">
           {record.bannerUrl ? (
             <Avatar
@@ -721,7 +738,7 @@ export default function ProfessionalPromotionManagement() {
       key: "discount",
       width: 120,
       
-      render: (_: any, record: PromotionDto) => {
+      render: (_: unknown, record: PromotionDto) => {
         let displayValue;
 
         if (record.discountType === "BUY_ONE_GET_ONE") {
@@ -768,7 +785,7 @@ export default function ProfessionalPromotionManagement() {
       title: "Period",
       key: "period",
       width: 150,
-      render: (_: any, record: PromotionDto) => (
+      render: (_: unknown, record: PromotionDto) => (
         <div className="text-sm">
           <div className="text-gray-900 mb-1">
             {new Date(record.startDate).toLocaleDateString()}
@@ -789,7 +806,7 @@ export default function ProfessionalPromotionManagement() {
       key: "status",
       width: 100,
       align: "center" as const,
-      render: (_: any, record: PromotionDto) => {
+      render: (_: unknown, record: PromotionDto) => {
         // Use the pre-calculated statusDisplay from backend
         const status =
           record.statusDisplay ||
@@ -856,7 +873,7 @@ export default function ProfessionalPromotionManagement() {
       title: "Membership",
       key: "membership",
       width: 120,
-      render: (_: any, record: PromotionDto) => (
+      render: (_: unknown, record: PromotionDto) => (
         <div className="text-sm">
           <div className="text-gray-900 mb-1">
             {record.membershipDisplay ||
@@ -876,7 +893,7 @@ export default function ProfessionalPromotionManagement() {
       width: 120,
       fixed: "right" as const,
       align: "center" as const,
-      render: (_: any, record: PromotionDto) => (
+      render: (_: unknown, record: PromotionDto) => (
         <Space size="small">
           <Tooltip title="View Details">
             <Button
@@ -978,10 +995,10 @@ export default function ProfessionalPromotionManagement() {
           </Col>
         </Row>
 
-        {/* Main Content Card */}
+        {/* Main Content Card */}        
         <Card
           className="shadow-sm border-0"
-          bodyStyle={{ padding: 0 }}
+          styles={{ body: { padding: 0 } }}
           style={{ borderRadius: 16 }}
         >
           {/* Header Section */}
@@ -994,7 +1011,7 @@ export default function ProfessionalPromotionManagement() {
                 Promotion Management
               </Title>
               <Text type="secondary" className="text-sm xl:text-base">
-                Manage and organize your cinema's promotional campaigns
+                Manage and organize your cinema&apos;s promotional campaigns
               </Text>
             </div>{" "}
             

@@ -133,14 +133,15 @@ export default function ProfessionalMovieManagement() {
   const [editingMovie, setEditingMovie] = useState<Movie | null>(null);
   const [form] = Form.useForm();
   const [apiMovies, setApiMovies] = useState<Movie[]>([]);
-  const [totalElements, setTotalElements] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [statistics, setStatistics] = useState({
+  const [totalElements, setTotalElements] = useState(0);  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);  const [statistics, setStatistics] = useState({
     totalMovies: 0,
     activeMovies: 0,
     totalRevenue: 0,
     avgDuration: 0,
   });
+
+  const router = useRouter();
 
   // Fetch movies from API
   const fetchMovies = useCallback(async () => {
@@ -161,16 +162,20 @@ export default function ProfessionalMovieManagement() {
       });
       
       console.log("API Response:", data);
-      
-      if (data.content && Array.isArray(data.content)) {
+        if (data && data.content && Array.isArray(data.content) && data.content.length > 0) {
         setApiMovies(data.content);
-        setTotalElements(data.totalElements || data.content.length);
+        setTotalElements(data.page?.totalElements || data.totalElements || data.content.length);
         console.log("API movies set:", data.content);
+      } else if (data && Array.isArray(data)) {
+        // Handle case where API returns array directly
+        setApiMovies(data);
+        setTotalElements(data.length);
+        console.log("API movies set (direct array):", data);
       } else {
-        console.log("API returned no content, using fallback data");
-        // Fallback to local data if API returns empty
-        setApiMovies(movieData);
-        setTotalElements(movieData.length);
+        console.log("API returned no valid content, using fallback data");
+        // Fallback to local data if API returns empty or invalid data
+        setApiMovies([]);
+        setTotalElements(0);
       }
     } catch (error) {
       console.error("Error fetching movies:", error);
@@ -217,13 +222,11 @@ export default function ProfessionalMovieManagement() {
   const handlePaginationChange = (page: number, size: number) => {
     setCurrentPage(page);
     setPageSize(size);
-  };
-
-  // Use API data if available, otherwise use local data
-  const displayData = apiMovies.length > 0 ? apiMovies : movieData;
-
-  // Filter and search logic
+  };  // Filter and search logic
   const filteredData = useMemo(() => {
+    // Use API data if available, otherwise use empty array (no fallback to mock data)
+    const displayData = apiMovies.length > 0 ? apiMovies : [];
+    
     return displayData.filter((movie) => {
       const matchesSearch =
         movie.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -235,17 +238,17 @@ export default function ProfessionalMovieManagement() {
       
       const matchesStatus = !filterStatus || movie.status === filterStatus;
       
-      // Handle genres as comma-separated string or array
-      const movieGenres = Array.isArray(movie.genres) 
-        ? movie.genres 
-        : typeof movie.genres === 'string' 
-          ? movie.genres.split(',').map(g => g.trim())
+      // Handle genres - use genre field from API or genres field from mock data
+      const movieGenres = movie.genre 
+        ? movie.genre.split(',').map(g => g.trim())
+        : movie.genres 
+          ? (Array.isArray(movie.genres) ? movie.genres : movie.genres.split(',').map(g => g.trim()))
           : [];
       const matchesGenre = !filterGenre || movieGenres.includes(filterGenre);
 
       return matchesSearch && matchesVersion && matchesStatus && matchesGenre;
     });
-  }, [searchTerm, filterVersion, filterStatus, filterGenre, displayData]);
+  }, [searchTerm, filterVersion, filterStatus, filterGenre, apiMovies]);
 
   const handleEdit = (record: Movie) => {
     setEditingMovie(record);
@@ -300,7 +303,6 @@ export default function ProfessionalMovieManagement() {
     setEditingMovie(null);
     form.resetFields();
   };
-
   const columns: ColumnsType<Movie> = [
     {
       title: "#",
@@ -334,11 +336,6 @@ export default function ProfessionalMovieManagement() {
             </div>
             <div className="text-xs text-gray-600 mb-1 truncate">
               {record.vietnameseTitle}
-            </div>
-            <div className="flex items-center gap-1 flex-wrap">
-              <Tag color="blue" className="text-xs m-0">
-                #{record.movieId}
-              </Tag>
             </div>
           </div>
         </div>
@@ -852,9 +849,7 @@ export default function ProfessionalMovieManagement() {
             </Col>
           </Row>
         </Form>
-      </Modal>
-
-      <ShowtimePickerModal
+      </Modal>      <ShowtimePickerModal
         open={showModal}
         onClose={() => setShowModal(false)}
         onContinue={(schedule) => {
@@ -862,6 +857,7 @@ export default function ProfessionalMovieManagement() {
           router.push(`/booking/seat-selection?scheduleId=${schedule.scheduleId}`);
         }}
         movieTitle="Tên phim"
+        movieId={1}
       />
 
       <style jsx global>{`

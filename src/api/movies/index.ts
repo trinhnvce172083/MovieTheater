@@ -101,7 +101,7 @@ export const movieApi = {
   // Get all movies with pagination and filters
   async getMovies(params: GetMoviesParams = {}): Promise<MoviesResponse> {
     try {
-      const response = await axiosClient.get("/api/movies", {
+      const response = await axiosClient.get("/movies", {
         params: {
           page: params.page || 0,
           size: params.size || 10,
@@ -132,7 +132,7 @@ export const movieApi = {
   // Get movie by ID
   async getMovieById(id: number): Promise<Movie> {
     try {
-      const response = await axiosClient.get(`/api/movies/${id}`);
+      const response = await axiosClient.get(`/movies/${id}`);
       return response.data;
     } catch (error) {
       console.error("Error fetching movie by ID:", error);
@@ -143,7 +143,7 @@ export const movieApi = {
   // Create new movie
   async createMovie(movieData: MovieCreateRequest): Promise<Movie> {
     try {
-      const response = await axiosClient.post("/api/movies", movieData);
+      const response = await axiosClient.post("/movies", movieData);
       return response.data;
     } catch (error) {
       console.error("Error creating movie:", error);
@@ -154,7 +154,7 @@ export const movieApi = {
   // Update movie
   async updateMovie(id: number, movieData: MovieUpdateRequest): Promise<Movie> {
     try {
-      const response = await axiosClient.put(`/api/movies/${id}`, movieData);
+      const response = await axiosClient.put(`/movies/${id}`, movieData);
       return response.data;
     } catch (error) {
       console.error("Error updating movie:", error);
@@ -165,7 +165,7 @@ export const movieApi = {
   // Delete movie
   async deleteMovie(id: number): Promise<void> {
     try {
-      await axiosClient.delete(`/api/movies/${id}`);
+      await axiosClient.delete(`/movies/${id}`);
     } catch (error) {
       console.error("Error deleting movie:", error);
       throw error;
@@ -175,7 +175,7 @@ export const movieApi = {
   // Get now showing movies
   async getNowShowingMovies(): Promise<Movie[]> {
     try {
-      const response = await axiosClient.get("/api/movies/now-showing");
+      const response = await axiosClient.get("/movies/now-showing");
       return response.data;
     } catch (error) {
       console.error("Error fetching now showing movies:", error);
@@ -186,7 +186,7 @@ export const movieApi = {
   // Get coming soon movies
   async getComingSoonMovies(): Promise<Movie[]> {
     try {
-      const response = await axiosClient.get("/api/movies/coming-soon");
+      const response = await axiosClient.get("/movies/coming-soon");
       return response.data;
     } catch (error) {
       console.error("Error fetching coming soon movies:", error);
@@ -197,7 +197,7 @@ export const movieApi = {
   // Get popular movies
   async getPopularMovies(limit: number = 10): Promise<Movie[]> {
     try {
-      const response = await axiosClient.get("/api/movies/popular", {
+      const response = await axiosClient.get("/movies/popular", {
         params: { limit },
       });
       return response.data;
@@ -210,7 +210,7 @@ export const movieApi = {
   // Search movies
   async searchMovies(query: string, params: Omit<GetMoviesParams, 'search'> = {}): Promise<MoviesResponse> {
     try {
-      const response = await axiosClient.get("/api/movies", {
+      const response = await axiosClient.get("/movies", {
         params: {
           ...params,
           search: query,
@@ -236,7 +236,7 @@ export const movieApi = {
   // Get movies by status
   async getMoviesByStatus(status: string, params: Omit<GetMoviesParams, 'status'> = {}): Promise<MoviesResponse> {
     try {
-      const response = await axiosClient.get("/api/movies", {
+      const response = await axiosClient.get("/movies", {
         params: {
           ...params,
           status,
@@ -262,7 +262,7 @@ export const movieApi = {
   // Get movies by genre
   async getMoviesByGenre(genre: string, params: Omit<GetMoviesParams, 'genre'> = {}): Promise<MoviesResponse> {
     try {
-      const response = await axiosClient.get("/api/movies", {
+      const response = await axiosClient.get("/movies", {
         params: {
           ...params,
           genre,
@@ -288,7 +288,7 @@ export const movieApi = {
   // Get movie statistics
   async getMovieStatistics(): Promise<MovieStatistics> {
     try {
-      const response = await axiosClient.get("/api/movies/statistics");
+      const response = await axiosClient.get("/movies/statistics");
       return response.data;
     } catch (error) {
       console.error("Error fetching movie statistics:", error);
@@ -302,7 +302,7 @@ export const movieApi = {
       const formData = new FormData();
       formData.append("poster", file);
 
-      const response = await axiosClient.post(`/api/movies/${id}/poster`, formData, {
+      const response = await axiosClient.post(`/movies/${id}/poster`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -320,7 +320,7 @@ export const movieApi = {
       const formData = new FormData();
       formData.append("backdrop", file);
 
-      const response = await axiosClient.post(`/api/movies/${id}/backdrop`, formData, {
+      const response = await axiosClient.post(`/movies/${id}/backdrop`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -335,7 +335,7 @@ export const movieApi = {
   // Toggle movie status
   async toggleMovieStatus(id: number, status: string): Promise<Movie> {
     try {
-      const response = await axiosClient.patch(`/api/movies/${id}/status`, { status });
+      const response = await axiosClient.patch(`/movies/${id}/status`, { status });
       return response.data;
     } catch (error) {
       console.error("Error toggling movie status:", error);
@@ -346,7 +346,7 @@ export const movieApi = {
   // Toggle movie featured status
   async toggleFeaturedStatus(id: number, isFeatured: boolean): Promise<Movie> {
     try {
-      const response = await axiosClient.patch(`/api/movies/${id}/featured`, { isFeatured });
+      const response = await axiosClient.patch(`/movies/${id}/featured`, { isFeatured });
       return response.data;
     } catch (error) {
       console.error("Error toggling featured status:", error);

@@ -23,15 +23,16 @@ import {
   Checkbox,
   InputNumber,
   Spin,
+  Alert,
 } from "antd";
 import type { ColumnsType } from 'antd/es/table';
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  SearchOutlined,
-  EyeOutlined,
-  ReloadOutlined,  VideoCameraOutlined,
+  SearchOutlined,  EyeOutlined,
+  ReloadOutlined,
+  VideoCameraOutlined,
   ClockCircleOutlined,
   GlobalOutlined,  HomeOutlined,
 } from "@ant-design/icons";
@@ -91,6 +92,8 @@ export default function CinemaRoomManagement() {
   const [totalElements, setTotalElements] = useState(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingRoom, setEditingRoom] = useState<CinemaRoomResponse | null>(null);
+  const [isUsingApiData, setIsUsingApiData] = useState(true);
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
   const [form] = Form.useForm();
   const router = useRouter();
   // Sample data for testing (when API is not available)
@@ -157,28 +160,51 @@ export default function CinemaRoomManagement() {
       priceMultiplier: 1.0,
       createdAt: "2024-03-10T12:00:00",      updatedAt: "2024-06-21T09:30:00",
     },
-  ], []);
-
-  // API Functions
+  ], []);  // API Functions
   const fetchRooms = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axiosClient.get('/api/cinema-rooms', {
+      console.log('🔄 Fetching rooms from API...');
+      const response = await axiosClient.get('/cinema-rooms', {
         params: {
           page: currentPage - 1, // Backend uses 0-based pagination
           size: pageSize,
           sortBy: 'cinemaRoomName',
           sortDirection: 'asc'
         }
-      });
+      });      console.log('✅ Rooms fetched successfully:', response.data);
       setRoomData(response.data.content || []);
-      setTotalElements(response.data.totalElements || 0);
-    } catch (error) {
-      console.error('Error fetching rooms:', error);
-      message.warning('Using sample data - API not available');
+      setTotalElements(response.data.page?.totalElements || 0);
+      setIsUsingApiData(true);
+      setBackendStatus('connected');
+      message.success('Rooms loaded successfully from API');} catch (error) {
+      console.error('❌ Error fetching rooms:', error);
+      
+      // Provide detailed error information
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response: { status: number; data: unknown; statusText: string } };
+        console.error('Response error:', axiosError.response.status, axiosError.response.data);
+        if (axiosError.response.status === 500) {
+          message.error('Server error occurred. Please check if the backend server is running on localhost:8080');
+        } else if (axiosError.response.status === 401) {
+          message.error('Authentication failed. Please login again.');
+        } else if (axiosError.response.status === 403) {
+          message.error('Access denied. You may not have admin permissions.');
+        } else {
+          message.error(`API Error: ${axiosError.response.status} - ${axiosError.response.statusText}`);
+        }
+      } else if (error && typeof error === 'object' && 'request' in error) {
+        console.error('Network error:', error);
+        message.error('Cannot connect to backend server. Please ensure the server is running on localhost:8080');
+      } else {
+        console.error('Unknown error:', error);
+        message.error('An unexpected error occurred');
+      }      message.warning('Using sample data as fallback');
       // Use sample data as fallback
       setRoomData(sampleRoomData);
       setTotalElements(sampleRoomData.length);
+      setIsUsingApiData(false);
+      setBackendStatus('disconnected');
     } finally {
       setLoading(false);
     }
@@ -192,15 +218,14 @@ export default function CinemaRoomManagement() {
     
     try {
       setLoading(true);
-      const response = await axiosClient.get('/api/cinema-rooms/search', {
+      const response = await axiosClient.get('/cinema-rooms/search', {
         params: {
           keyword,
           page: currentPage - 1,
           size: pageSize
         }
-      });
-      setRoomData(response.data.content || []);
-      setTotalElements(response.data.totalElements || 0);
+      });      setRoomData(response.data.content || []);
+      setTotalElements(response.data.page?.totalElements || 0);
     } catch (error) {
       console.error('Error searching rooms:', error);
       message.error('Failed to search rooms');
@@ -211,7 +236,7 @@ export default function CinemaRoomManagement() {
   const createRoom = async (roomData: RoomCreateRequest) => {
     try {
       setLoading(true);
-      await axiosClient.post('/api/cinema-rooms', roomData);
+      await axiosClient.post('/cinema-rooms', roomData);
       message.success('Room created successfully');
       fetchRooms();
       return true;
@@ -227,7 +252,7 @@ export default function CinemaRoomManagement() {
   const updateRoom = async (id: number, roomData: RoomCreateRequest) => {
     try {
       setLoading(true);
-      await axiosClient.put(`/api/cinema-rooms/${id}`, roomData);
+      await axiosClient.put(`/cinema-rooms/${id}`, roomData);
       message.success('Room updated successfully');
       fetchRooms();
       return true;
@@ -243,7 +268,7 @@ export default function CinemaRoomManagement() {
   const deleteRoom = async (id: number) => {
     try {
       setLoading(true);
-      await axiosClient.delete(`/api/cinema-rooms/${id}`);
+      await axiosClient.delete(`/cinema-rooms/${id}`);
       message.success('Room deleted successfully');
       fetchRooms();
     } catch (error) {
@@ -449,17 +474,17 @@ export default function CinemaRoomManagement() {
               className="text-blue-600 hover:bg-blue-50"
               onClick={() => router.push(`/admin/rooms/RoomDetail?id=${record.cinemaRoomId}`)}
             />
-          </Tooltip>
-          <Tooltip title="Edit">
+          </Tooltip>          <Tooltip title={isUsingApiData ? "Edit" : "Edit disabled in demo mode"}>
             <Button
               type="text"
               icon={<EditOutlined />}
               size="small"
-              className="text-green-600 hover:bg-green-50"
+              className={isUsingApiData ? "text-green-600 hover:bg-green-50" : "text-gray-400"}
               onClick={() => handleEdit(record)}
+              disabled={!isUsingApiData}
             />
           </Tooltip>
-          <Tooltip title="Delete">
+          <Tooltip title={isUsingApiData ? "Delete" : "Delete disabled in demo mode"}>
             <Popconfirm
               title="Delete Room"
               description="Are you sure?"
@@ -467,12 +492,14 @@ export default function CinemaRoomManagement() {
               okText="Delete"
               cancelText="Cancel"
               okButtonProps={{ danger: true }}
+              disabled={!isUsingApiData}
             >
               <Button
                 type="text"
                 icon={<DeleteOutlined />}
                 size="small"
-                className="text-red-600 hover:bg-red-50"
+                className={isUsingApiData ? "text-red-600 hover:bg-red-50" : "text-gray-400"}
+                disabled={!isUsingApiData}
               />
             </Popconfirm>
           </Tooltip>
@@ -480,10 +507,30 @@ export default function CinemaRoomManagement() {
       ),
     },
   ];
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
+        {/* Backend Status Alert */}
+        {!isUsingApiData && (
+          <Alert
+            message="Demo Mode Active"
+            description="Backend server is not available. Currently showing sample data. To connect to real data, ensure the backend server is running on localhost:8080"
+            type="warning"
+            showIcon
+            closable
+            className="mb-4"
+            action={
+              <Button 
+                size="small" 
+                type="primary" 
+                onClick={() => window.location.reload()}
+              >
+                Retry Connection
+              </Button>
+            }
+          />
+        )}
+        
         {/* Statistics Cards */}
         <Row gutter={[16, 16]} className="mb-6">
           <Col xs={12} sm={12} lg={6}>
@@ -532,26 +579,55 @@ export default function CinemaRoomManagement() {
         {/* Main Content Card */}
         <Card
           className="shadow-sm border-0"
-          bodyStyle={{ padding: 0 }}
+          styles={{ body: { padding: 0 } }}
           style={{ borderRadius: 16 }}
         >
           {/* Header Section */}
-          <div className="px-6 py-5 border-b border-gray-100 bg-white flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-            <div>
-              <Title level={2} className="m-0 text-gray-900 text-xl xl:text-2xl">
-                Room Management
-              </Title>              
+          <div className="px-6 py-5 border-b border-gray-100 bg-white flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Title level={2} className="m-0 text-gray-900 text-xl xl:text-2xl">
+                  Room Management
+                </Title>
+                {backendStatus === 'connected' && (
+                  <Tag color="green" className="text-xs">
+                    API Connected
+                  </Tag>
+                )}
+                {backendStatus === 'disconnected' && (
+                  <Tag color="orange" className="text-xs">
+                    Demo Mode
+                  </Tag>
+                )}
+                {backendStatus === 'checking' && (
+                  <Tag color="blue" className="text-xs">
+                    Connecting...
+                  </Tag>
+                )}
+              </div>              
               <Text type="secondary" className="text-sm xl:text-base">
                 Manage and organize your cinema room facilities
               </Text>
-            </div>            
-            <div className="flex items-center gap-3">
+            </div>            <div className="flex items-center gap-3">
+              {backendStatus === 'disconnected' && (
+                <Button
+                  type="default"
+                  icon={<ReloadOutlined />}
+                  size="middle"
+                  className="text-xs xl:text-sm h-10 px-4"
+                  onClick={() => window.location.reload()}
+                  title="Retry connection to backend"
+                >
+                  Retry Connection
+                </Button>
+              )}
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 size="middle"
                 className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
                 onClick={() => setIsModalVisible(true)}
+                disabled={!isUsingApiData}
+                title={!isUsingApiData ? "Create/Edit functions require backend connection" : "Add new room"}
               >
                 Add New Room
               </Button>
