@@ -124,7 +124,6 @@ const movieData: Movie[] = [
 // Movie Management Component
 export default function ProfessionalMovieManagement() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterVersion, setFilterVersion] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterGenre, setFilterGenre] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -198,10 +197,10 @@ export default function ProfessionalMovieManagement() {
       // Use fallback statistics with better error handling
       const totalMovies = apiMovies.length || movieData.length;
       const activeMovies = (apiMovies.length > 0 ? apiMovies : movieData).filter(m => m.status === "NOW_SHOWING").length;
-      const totalRevenue = (apiMovies.length > 0 ? apiMovies : movieData).reduce((sum, m) => sum + (m.revenue || 0), 0);
+      const totalPrice = (apiMovies.length > 0 ? apiMovies : movieData).reduce((sum, m) => sum + (m.price || 0), 0);
       const avgDuration = Math.round((apiMovies.length > 0 ? apiMovies : movieData).reduce((sum, m) => sum + (m.duration || 0), 0) / (apiMovies.length || movieData.length || 1));
       
-      setStatistics({ totalMovies, activeMovies, totalRevenue, avgDuration });
+      setStatistics({ totalMovies, activeMovies, totalRevenue: totalPrice, avgDuration });
       
       // Only show error message for non-403 errors to avoid spam
       if (error && typeof error === 'object' && 'status' in error && error.status !== 403) {
@@ -230,25 +229,19 @@ export default function ProfessionalMovieManagement() {
     return displayData.filter((movie) => {
       const matchesSearch =
         movie.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (movie.vietnameseTitle || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         movie.movieId.toString().includes(searchTerm);
-
-      const movieVersions = Array.isArray(movie.versions) ? movie.versions : [];
-      const matchesVersion = !filterVersion || movieVersions.includes(filterVersion);
       
       const matchesStatus = !filterStatus || movie.status === filterStatus;
       
-      // Handle genres - use genre field from API or genres field from mock data
+      // Handle genres - use genre field from API
       const movieGenres = movie.genre 
         ? movie.genre.split(',').map(g => g.trim())
-        : movie.genres 
-          ? (Array.isArray(movie.genres) ? movie.genres : movie.genres.split(',').map(g => g.trim()))
-          : [];
+        : [];
       const matchesGenre = !filterGenre || movieGenres.includes(filterGenre);
 
-      return matchesSearch && matchesVersion && matchesStatus && matchesGenre;
+      return matchesSearch && matchesStatus && matchesGenre;
     });
-  }, [searchTerm, filterVersion, filterStatus, filterGenre, apiMovies]);
+  }, [searchTerm, filterStatus, filterGenre, apiMovies]);
 
   const handleEdit = (record: Movie) => {
     setEditingMovie(record);
@@ -334,24 +327,22 @@ export default function ProfessionalMovieManagement() {
             <div className="font-semibold text-gray-900 mb-1 truncate text-sm">
               {record.title}
             </div>
-            <div className="text-xs text-gray-600 mb-1 truncate">
-              {record.vietnameseTitle}
-            </div>
           </div>
         </div>
       ),
     },
     {
-      title: "Company & Release",
-      key: "company_release",
-      width: 150,
+      title: "Release Date",
+      key: "release_date",
+      width: 120,
       render: (value: unknown, record: Movie) => (
-        <div className="text-sm">
-          <div className="font-medium text-gray-900 truncate mb-1">
-            {record.company || "Unknown Studio"}
-          </div>
+        <div className="text-sm text-center">
           <div className="text-xs text-gray-500">
-            {new Date(record.releaseDate).toLocaleDateString()}
+            {new Date(record.releaseDate).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            })}
           </div>
         </div>
       ),
@@ -363,45 +354,23 @@ export default function ProfessionalMovieManagement() {
       align: "center",
       render: (value: unknown, record: Movie) => (
         <div className="text-center">
-          <div className="text-sm font-medium">{record.duration}m</div>
-          <Tag color="orange" className="text-xs mt-1">
-            {record.rating}
-          </Tag>
+          <div className="text-sm font-medium">
+            {record.formattedDuration || `${record.duration}m`}
+          </div>
         </div>
       ),
     },
     {
-      title: "Versions",
-      dataIndex: "versions",
-      key: "versions",
+      title: "Rating",
+      dataIndex: "rating",
+      key: "rating",
       align: "center" as const,
-      width: 120,
-      render: (versions: string[]) => (
-        <div className="items-center gap-1">
-          {versions && versions.length > 0 ? (
-            <>
-              {versions.slice(0, 2).map((version: string, index: number) => (
-                <Tag
-                  key={`${version}-${index}`}
-                  color={
-                    version === "IMAX"
-                      ? "gold"
-                      : version === "4DX"
-                      ? "purple"
-                      : "blue"
-                  }
-                  className="text-xs m-0"
-                >
-                  {version}
-                </Tag>
-              ))}
-              {versions.length > 2 && (
-                <Tag className="text-xs m-0">+{versions.length - 2}</Tag>
-              )}
-            </>
-          ) : (
-            <span className="text-gray-400 text-xs">N/A</span>
-          )}
+      width: 80,
+      render: (rating: string) => (
+        <div className="text-center">
+          <Tag color="orange" className="text-xs">
+            {rating}
+          </Tag>
         </div>
       ),
     },
@@ -432,30 +401,33 @@ export default function ProfessionalMovieManagement() {
       ),
     },
     {
-      title: "Revenue",
-      dataIndex: "revenue",
-      key: "revenue",
+      title: "Price",
+      dataIndex: "price",
+      key: "price",
       width: 90,
       align: "center" as const,
-      render: (revenue: number) => (
+      render: (price: number) => (
         <div className="text-center">
           <span className="font-mono text-sm font-semibold text-green-600">
-            ${(revenue / 1000000).toFixed(1)}M
+            {new Intl.NumberFormat('vi-VN', { 
+              style: 'currency', 
+              currency: 'VND',
+              minimumFractionDigits: 0 
+            }).format(price || 0)}
           </span>
         </div>
       ),
     },
     {
       title: "Genres",
-      dataIndex: "genres",
       key: "genres",
       width: 120,
       align: "center" as const,
-      render: (genres: string) => (
+      render: (value: unknown, record: Movie) => (
         <div className="items-center gap-1">
-          {genres ? (
+          {(record.genre || record.genres) ? (
             <>
-              {genres.split(',').slice(0, 2).map((genre: string, index: number) => (
+              {(record.genre || record.genres).split(',').slice(0, 2).map((genre: string, index: number) => (
                 <Tag
                   key={`${genre.trim()}-${index}`}
                   color="blue"
@@ -464,8 +436,8 @@ export default function ProfessionalMovieManagement() {
                   {genre.trim()}
                 </Tag>
               ))}
-              {genres.split(',').length > 2 && (
-                <Tag className="text-xs m-0">+{genres.split(',').length - 2}</Tag>
+              {(record.genre || record.genres).split(',').length > 2 && (
+                <Tag className="text-xs m-0">+{(record.genre || record.genres).split(',').length - 2}</Tag>
               )}
             </>
           ) : (
@@ -614,21 +586,6 @@ export default function ProfessionalMovieManagement() {
                   allowClear
                 />
               </Col>
-              <Col xs={12} sm={6} lg={4} xl={3}>
-                <Select
-                  placeholder="Version"
-                  value={filterVersion}
-                  onChange={setFilterVersion}
-                  className="w-full h-10 px-4"
-                  allowClear
-                  size="middle"
-                >
-                  <Option value="2D">2D</Option>
-                  <Option value="3D">3D</Option>
-                  <Option value="IMAX">IMAX</Option>
-                  <Option value="4DX">4DX</Option>
-                </Select>
-              </Col>
               <Col xs={12} sm={6} lg={3} xl={3}>
                 <Select
                   placeholder="Status"
@@ -667,7 +624,6 @@ export default function ProfessionalMovieManagement() {
                   size="middle"
                   onClick={() => {
                     setSearchTerm("");
-                    setFilterVersion("");
                     setFilterStatus("");
                     setFilterGenre("");
                   }}

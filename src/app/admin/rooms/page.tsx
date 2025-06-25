@@ -176,8 +176,7 @@ export default function CinemaRoomManagement() {
       setRoomData(response.data.content || []);
       setTotalElements(response.data.page?.totalElements || 0);
       setIsUsingApiData(true);
-      setBackendStatus('connected');
-      message.success('Rooms loaded successfully from API');} catch (error) {
+      setBackendStatus('connected');} catch (error) {
       console.error('❌ Error fetching rooms:', error);
       
       // Provide detailed error information
@@ -395,11 +394,6 @@ export default function CinemaRoomManagement() {
             </div>
             <div className="text-xs text-gray-600 mb-1 truncate">
               {record.rows}x{record.columns} Layout
-            </div>
-            <div className="flex items-center gap-1 flex-wrap">
-              <Tag color="blue" className="text-xs m-0">
-                ID: {record.cinemaRoomId}
-              </Tag>
             </div>
           </div>
         </div>

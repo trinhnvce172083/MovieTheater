@@ -127,8 +127,8 @@ export default function AdminConcessionsPage() {
       title: '#',
       key: 'index',
       width: 60,
-      render: (_: any, record: any, index: number) => (
-        <Text type="secondary">{index + 1}</Text>
+      render: (_: unknown, record: Concession, index: number) => (
+        <Text type="secondary" key={`index-${index}`}>{index + 1}</Text>
       ),
     },
     {
@@ -137,7 +137,7 @@ export default function AdminConcessionsPage() {
       key: 'name',
       sorter: (a: Concession, b: Concession) => a.name.localeCompare(b.name),
       render: (name: string, record: Concession) => (
-        <div>
+        <div key={`name-${record.id}`}>
           <Text strong>{name}</Text>
           <br/>
           <Text type="secondary" style={{fontSize: '12px'}}>{record.description}</Text>
@@ -158,7 +158,7 @@ export default function AdminConcessionsPage() {
       key: 'actions',
       width: 100,
       align: 'center' as const,
-      render: (_: any, record: Concession) => (
+      render: (_: unknown, record: Concession) => (
         <Space size="small">
           <Tooltip title="Edit">
             <Button type="text" icon={<EditOutlined />} className="text-blue-600 hover:bg-blue-50" onClick={() => showModal(record)} />
@@ -214,7 +214,7 @@ export default function AdminConcessionsPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
             <div>
               <Title level={4} style={{ margin: 0 }}>Concession Management</Title>
-              <Text type="secondary">Manage and organize your cinema's concession list</Text>
+              <Text type="secondary">Manage and organize your cinema&apos;s concession list</Text>
             </div>
             <Space>
                 <Tooltip title="Reload data">
@@ -248,11 +248,10 @@ export default function AdminConcessionsPage() {
       
       <Modal
         title={editingConcession ? "Edit Concession" : "Add New Concession"}
-        visible={isModalVisible}
+        open={isModalVisible}
         onCancel={handleCancel}
         onOk={() => form.submit()}
         okText="Save"
-        destroyOnClose
       >
         <Form form={form} layout="vertical" onFinish={handleFormSubmit} initialValues={{ name: '', description: '', price: 0 }}>
             <Form.Item name="name" label="Name" rules={[{ required: true, message: 'Please enter the concession name!' }]}>
