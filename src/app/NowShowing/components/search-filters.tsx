@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/select";
 import type { MovieFilters } from "@/types/NowShowing/movie";
 import { MovieApiService } from "@/api/movie-api";
-// import axiosClient from "@/api/axiosClient";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface SearchFiltersProps {
   filters: MovieFilters;
@@ -26,61 +26,67 @@ export function SearchFilters({
   onFiltersChange,
 }: SearchFiltersProps) {
   const [isSearching, setIsSearching] = useState(false);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);  // Handle search with debounce
-  const handleSearch = (term: string) => {
-    // Update the input value immediately
-    onFiltersChange({ searchTerm: term });
-    
-    // Clear any existing timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
+  const [searchTerm, setSearchTerm] = useState(filters.searchTerm || "");
+
+  // Execute search function
+  const executeSearch = async (term: string) => {
+    if (term.trim().length === 0) {
+      setIsSearching(false);
+      return;
     }
-    
-    // Only search if term has minimum length
-    if (term.trim().length > 2) {
-      setIsSearching(true);
-      
-      // Set a new timeout
-      searchTimeoutRef.current = setTimeout(async () => {
-        try {
-          // Sử dụng đúng cấu trúc API với các tham số keyword, page và size
-          const result = await MovieApiService.searchMovies(term, 0, 10); // page=0, size=10
-          if (result.success && result.data) {
-            // You can pass the search results to parent component if needed
-            // For example with a callback like onSearchResults(result.data)
-            console.log("Search results:", result.data);
-          }
-        } catch (error) {
-          console.error("Error searching movies:", error);
-        } finally {
-          setIsSearching(false);
-        }
-      }, 500); // 500ms debounce time
-    } else {
+    setIsSearching(true);
+    try {
+      const result = await MovieApiService.searchMoviesNowShowing(term, 0, 9);
+      if (result.success && result.data) {
+        onFiltersChange({ searchTerm: term });
+      }
+    } catch (error) {
+      console.error("Error searching movies:", error);
+    } finally {
       setIsSearching(false);
     }
   };
-  
-  // Clean up timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, []);
-  
+
+  // Handle input change without searching
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    if (term.trim().length === 0) {
+      onFiltersChange({ searchTerm: "" });
+    }
+  };
+
+  // Handle Enter key press
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      executeSearch(searchTerm);
+    }
+  };
+
   return (
     <div className="bg-black/50 backdrop-blur-sm rounded-lg p-6 mb-8 border border-orange-500/20">
-      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-8 justify-items-center">        {/* Search */}
-        <div className="relative">
+      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-8 justify-items-center">
+        {/* Search */}
+        <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-orange-300 h-4 w-4" />
-          <Input
-            placeholder="Search movies..."
-            value={filters.searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-10 bg-gray-800 border-orange-500/30 text-white placeholder:text-gray-400"
-          />
+          <div className="flex">
+            <Input
+              placeholder="Search movies..."
+              value={searchTerm}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              className="pl-10 bg-gray-800 border-orange-500/30 text-white placeholder:text-gray-400"
+            />
+            <Button
+              type="button"
+              className="ml-2 px-3 py-2 bg-orange-700 text-white rounded"
+              onClick={() => executeSearch(searchTerm)}
+              disabled={isSearching}
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
           {isSearching && (
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
               <div className="w-4 h-4 border-t-2 border-orange-500 rounded-full animate-spin"></div>
