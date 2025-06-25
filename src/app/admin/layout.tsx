@@ -8,7 +8,6 @@ import {
   VideoCameraOutlined,
   GiftOutlined,
   CalendarOutlined,
-  SettingOutlined,
   BankOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -240,7 +239,7 @@ export default function AdminLayout({
           </div>          
           {/* Enhanced Animated Divider */}
           <div 
-            className="mx-8 mb-6" 
+            className="mx-6 mb-6" 
             style={{
               height: '2px',
               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), rgba(255,255,255,0.3), rgba(255,255,255,0.6), transparent)',
@@ -275,39 +274,6 @@ export default function AdminLayout({
             inlineIndent={collapsed ? 0 : 24}
             theme="dark"
           />
-        </div>        
-        {/* Enhanced Floating Settings Button */}
-        <div style={{ 
-          position: "absolute", 
-          bottom: 32, 
-          left: collapsed ? '50%' : '32px',
-          transform: collapsed ? 'translateX(-50%)' : 'none',
-          transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
-        }}>
-          <Tooltip title="Settings" placement={collapsed ? "right" : "top"}>
-            <Button
-              type="text"
-              icon={<SettingOutlined />}              style={{
-                color: '#fff',
-                fontSize: '18px',
-                opacity: 0.9,
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%)',
-                borderRadius: '12px',
-                width: collapsed ? '48px' : 'auto',
-                height: '48px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.4s ease',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-              }}
-              className="hover:bg-white/30 hover:scale-105 hover:shadow-lg"
-            >
-              {!collapsed && <span style={{ marginLeft: 10, fontSize: '14px', fontWeight: '500' }}>Settings</span>}
-            </Button>
-          </Tooltip>
         </div>
       </Sider>
 
@@ -354,7 +320,7 @@ export default function AdminLayout({
         }
 
         .admin-sidebar-menu .ant-menu-item {
-          margin: 6px 12px !important;
+          margin: 6px 8px !important;
           border-radius: 12px !important;
           transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
           backdrop-filter: blur(20px);
@@ -447,7 +413,7 @@ export default function AdminLayout({
           padding-left: 0 !important;
           padding-right: 0 !important;
           justify-content: center !important;
-          margin: 8px 16px !important;
+          margin: 8px 12px !important;
           width: 48px !important;
           margin-left: auto !important;
           margin-right: auto !important;
