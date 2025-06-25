@@ -41,6 +41,6 @@ public class CinemaRoomResponse {
     private Boolean isPremium;
     private Integer availableSeats;
     private Integer occupiedSeats;
-    private Integer maintenanceSeats;
+    private Integer temporarilyReservedSeats;
     private Integer scheduleCount; // Number of schedules for this room
 } 

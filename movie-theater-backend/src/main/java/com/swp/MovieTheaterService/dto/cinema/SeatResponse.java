@@ -41,7 +41,7 @@ public class SeatResponse {
     private String displayName;
     private Boolean isAvailable;
     private Boolean isOccupied;
-    private Boolean isMaintenance;
+    private Boolean isTemporarilyReserved;
     private Boolean isVIP;
     private Boolean isCouple;
     private Boolean isWheelchair;

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Cinema Room Controller
@@ -241,5 +242,34 @@ public class CinemaRoomController {
         
         List<SeatResponse> seats = cinemaRoomService.resetSeatLayout(id);
         return ResponseEntity.ok(seats);
+    }
+
+    // ==================== SEAT STATUS ENDPOINTS ====================
+    
+    @GetMapping("/{id}/seats/booked")
+    @Operation(summary = "Get booked seats", description = "Get list of seats that are currently booked (OCCUPIED status)")
+    public ResponseEntity<List<SeatResponse>> getBookedSeats(@PathVariable Long id) {
+        log.info("Getting booked seats for cinema room ID: {}", id);
+        
+        List<SeatResponse> bookedSeats = cinemaRoomService.getBookedSeats(id);
+        return ResponseEntity.ok(bookedSeats);
+    }
+    
+    @GetMapping("/{id}/seats/available")
+    @Operation(summary = "Get available seats", description = "Get list of seats that are currently available")
+    public ResponseEntity<List<SeatResponse>> getAvailableSeats(@PathVariable Long id) {
+        log.info("Getting available seats for cinema room ID: {}", id);
+        
+        List<SeatResponse> availableSeats = cinemaRoomService.getAvailableSeats(id);
+        return ResponseEntity.ok(availableSeats);
+    }
+    
+    @GetMapping("/{id}/seats/status")
+    @Operation(summary = "Get seat status overview", description = "Get overview of seat statuses in cinema room")
+    public ResponseEntity<Map<String, Object>> getSeatStatusOverview(@PathVariable Long id) {
+        log.info("Getting seat status overview for cinema room ID: {}", id);
+        
+        Map<String, Object> overview = cinemaRoomService.getSeatStatusOverview(id);
+        return ResponseEntity.ok(overview);
     }
 } 

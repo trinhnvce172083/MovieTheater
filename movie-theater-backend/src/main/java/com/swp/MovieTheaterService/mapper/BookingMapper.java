@@ -3,6 +3,7 @@ package com.swp.MovieTheaterService.mapper;
 import com.swp.MovieTheaterService.dto.booking.*;
 import com.swp.MovieTheaterService.entity.*;
 import com.swp.MovieTheaterService.enums.BookingStatus;
+import com.swp.MovieTheaterService.enums.SeatStatus;
 import org.mapstruct.*;
 import org.springframework.stereotype.Component;
 
@@ -206,7 +207,7 @@ public class BookingMapper {
         bookingSeat.setSeatNumber(seat.getSeatNumber());
         bookingSeat.setSeatType(seat.getSeatType());
         bookingSeat.setSeatPrice(seat.getSeatPrice() != null ? seat.getSeatPrice() : 0.0);
-        bookingSeat.setStatus("BOOKED");
+        bookingSeat.setStatus(SeatStatus.TEMPORARILY_RESERVED);
         bookingSeat.setActive(true);
         bookingSeat.setCreatedAt(LocalDateTime.now());
         bookingSeat.setUpdatedAt(LocalDateTime.now());

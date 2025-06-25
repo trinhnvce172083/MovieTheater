@@ -124,6 +124,23 @@ public interface CinemaRoomService {
      */
     Page<SeatResponse> getSeatsByCinemaRoom(Long cinemaRoomId, Pageable pageable);
 
+    // ==================== SEAT STATUS METHODS ====================
+    
+    /**
+     * Get booked seats (OCCUPIED status) for cinema room
+     */
+    List<SeatResponse> getBookedSeats(Long cinemaRoomId);
+    
+    /**
+     * Get available seats for cinema room
+     */
+    List<SeatResponse> getAvailableSeats(Long cinemaRoomId);
+    
+    /**
+     * Get seat status overview for cinema room
+     */
+    java.util.Map<String, Object> getSeatStatusOverview(Long cinemaRoomId);
+
     /**
      * Inner class for cinema room statistics
      */

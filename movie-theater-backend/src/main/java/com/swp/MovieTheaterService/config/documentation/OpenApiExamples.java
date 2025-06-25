@@ -64,13 +64,11 @@ public class OpenApiExamples {
 
     public static final String BOOKING_CREATE_REQUEST_EXAMPLE = """
         {
-          "scheduleId": 1,
-          "seatIds": [15, 16],
-          "customerName": "Trần Thị Mai",
-          "customerEmail": "tranthimai@example.com",
-          "customerPhone": "0987654321",
-          "promotionId": null,
-          "notes": "Đặt vé cho 2 người, ghế đôi"
+          "scheduleId": 100,
+          "seatIds": [121, 122],
+          "customerName": "Nguyễn Văn A",
+          "customerEmail": "customer@example.com",
+          "customerPhone": "0901234567"
         }
         """;
 
@@ -361,58 +359,60 @@ public class OpenApiExamples {
 
     public static final String GUEST_BOOKING_WITH_CONCESSIONS_EXAMPLE = """
             {
-              "scheduleId": 1,
-              "seatIds": [1, 2],
-              "sessionId": "SESSION-20241212-143015",
-              "customerName": "Nguyễn Văn A",
-              "customerEmail": "customer@example.com",
-              "customerPhone": "0901234567",
-              "paymentMethod": "ONLINE",
-              "notes": "Booking cho gia đình có trẻ em",
+              "scheduleId": 100,
+              "seatIds": [125, 126],
+              "customerName": "Trần Thị B",
+              "customerEmail": "customer2@example.com",
+              "customerPhone": "0901234568",
               "concessionOrders": [
                 {
                   "concessionId": 1,
-                  "quantity": 2,
-                  "unitPrice": 45000,
-                  "notes": "Extra butter"
+                  "quantity": 1,
+                  "notes": "Bắp rang size L"
                 },
                 {
                   "concessionId": 3,
                   "quantity": 2,
-                  "unitPrice": 35000,
-                  "notes": "No ice"
+                  "notes": "2 ly Coca Cola"
                 }
-              ],
-              "isGuestBooking": true,
-              "needsWheelchairAccess": false,
-              "hasChildren": true
+              ]
             }
             """;
 
     public static final String MEMBER_BOOKING_SIMPLE_EXAMPLE = """
             {
-              "scheduleId": 1,
-              "seatIds": [5, 6],
-              "sessionId": "SESSION-20241212-143020",
-              "paymentMethod": "ONLINE",
-              "notes": "Member booking",
-              "isGuestBooking": false,
-              "useRewardPoints": true,
-              "rewardPointsToUse": 1000
+              "scheduleId": 100,
+              "seatIds": [121, 122]
             }
             """;
 
     public static final String GUEST_BOOKING_SEATS_ONLY_EXAMPLE = """
             {
-              "scheduleId": 1,
-              "seatIds": [10, 11],
-              "sessionId": "SESSION-20241212-143025",
-              "customerName": "Trần Thị B",
-              "customerEmail": "customer2@example.com",
-              "customerPhone": "0912345678",
+              "scheduleId": 100,
+              "seatIds": [123, 124],
+              "customerName": "Nguyễn Văn A",
+              "customerEmail": "customer@example.com",
+              "customerPhone": "0901234567"
+            }
+            """;
+
+    public static final String BOOKING_WITH_PROMOTION_EXAMPLE = """
+            {
+              "scheduleId": 100,
+              "seatIds": [127, 128],
+              "customerName": "Lê Văn C",
+              "customerEmail": "customer3@example.com",
+              "customerPhone": "0901234569",
+              "promotionCode": "WELCOME10"
+            }
+            """;
+
+    public static final String MEMBER_BOOKING_WITH_PAYMENT_METHOD_EXAMPLE = """
+            {
+              "scheduleId": 100,
+              "seatIds": [129, 130],
               "paymentMethod": "CASH",
-              "notes": "Chỉ đặt ghế, không có đồ ăn",
-              "isGuestBooking": true
+              "notes": "Thanh toán tiền mặt tại quầy"
             }
             """;
 
@@ -518,7 +518,6 @@ public class OpenApiExamples {
             {
               "concessionId": 2,
               "quantity": 1,
-              "unitPrice": 25000,
               "notes": "Thêm sau khi đã booking"
             }
             """;
@@ -527,7 +526,6 @@ public class OpenApiExamples {
             {
               "concessionId": 1,
               "quantity": 3,
-              "unitPrice": 45000,
               "notes": "Bắp rang bơ size lớn"
             }
             """;
@@ -536,7 +534,6 @@ public class OpenApiExamples {
             {
               "concessionId": 4,
               "quantity": 2,
-              "unitPrice": 30000,
               "notes": "Coca Cola không đá"
             }
             """;

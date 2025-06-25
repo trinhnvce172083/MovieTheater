@@ -1,5 +1,6 @@
 package com.swp.MovieTheaterService.entity;
 
+import com.swp.MovieTheaterService.enums.SeatStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -41,8 +42,9 @@ public class BookingSeat extends BaseEntity {
     @Column(name = "seat_number", length = 10)
     private String seatNumber; // Copy from seat for historical record
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
-    private String status = "BOOKED"; // BOOKED, RESERVED, CANCELLED
+    private SeatStatus status = SeatStatus.TEMPORARILY_RESERVED; // TEMPORARILY_RESERVED -> OCCUPIED when confirmed
 
     @Column(name = "seat_id_reference") 
     private Long seatId; // Reference to seat ID for direct access

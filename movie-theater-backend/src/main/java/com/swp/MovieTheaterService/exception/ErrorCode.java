@@ -74,6 +74,7 @@ public enum ErrorCode {
     SEAT_NOT_FOUND(1404, "Ghế không tồn tại", HttpStatus.NOT_FOUND),
     SEAT_ALREADY_BOOKED(1405, "Ghế đã được đặt", HttpStatus.CONFLICT),
     SEAT_NOT_AVAILABLE(1406, "Ghế không khả dụng", HttpStatus.CONFLICT),
+    SEATS_NOT_ADJACENT(1407, "Ghế phải liền nhau (cùng hàng và cạnh nhau) khi đặt từ 2 ghế trở lên", HttpStatus.BAD_REQUEST),
 
     // ==================== SCHEDULE MANAGEMENT (1500-1599) ====================
     SCHEDULE_NOT_FOUND(1500, "Lịch chiếu không tồn tại", HttpStatus.NOT_FOUND),

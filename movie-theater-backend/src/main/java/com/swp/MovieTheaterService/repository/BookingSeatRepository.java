@@ -97,6 +97,7 @@ public interface BookingSeatRepository extends JpaRepository<BookingSeat, Long> 
                      "JOIN bs.booking b " +
                      "JOIN b.schedule s " +
                      "WHERE s.scheduleId = :scheduleId " +
+                     "AND b.bookingStatus IN ('CONFIRMED', 'PAID', 'COMPLETED') " +
                      "AND b.isActive = true " +
                      "AND bs.active = true")
        List<Long> getBookedSeatIdsForSchedule(@Param("scheduleId") Long scheduleId);

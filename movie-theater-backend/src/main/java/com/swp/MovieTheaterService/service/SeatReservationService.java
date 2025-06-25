@@ -66,10 +66,13 @@ public interface SeatReservationService {
     boolean convertToPermanentReservation(String sessionId, Long bookingId);
     
     /**
-     * Get seat status for a schedule
+     * Lấy trạng thái tất cả ghế cho một lịch chiếu
      * 
-     * @param scheduleId schedule ID
-     * @return map of seat statuses
+     * @param scheduleId ID lịch chiếu
+     * @return danh sách trạng thái ghế bao gồm:
+     *         - AVAILABLE: ghế có thể đặt
+     *         - OCCUPIED: ghế đã được đặt vĩnh viễn
+     *         - TEMPORARILY_RESERVED: ghế đang được giữ chỗ tạm thời
      */
     SeatStatusResponse getSeatStatus(Long scheduleId);
     
@@ -88,11 +91,11 @@ public interface SeatReservationService {
     boolean extendReservation(String sessionId, int additionalMinutes);
     
     /**
-     * Data class for seat status response
+     * Response chứa trạng thái tất cả ghế của một lịch chiếu
      */
     class SeatStatusResponse {
-        private List<SeatStatus> seats;
-        private LocalDateTime lastUpdated;
+        private List<SeatStatus> seats; // Danh sách tất cả ghế với trạng thái
+        private LocalDateTime lastUpdated; // Thời gian cập nhật cuối
         
         public SeatStatusResponse(List<SeatStatus> seats, LocalDateTime lastUpdated) {
             this.seats = seats;
@@ -107,15 +110,15 @@ public interface SeatReservationService {
     }
     
     /**
-     * Data class for individual seat status
+     * Thông tin trạng thái của từng ghế cụ thể
      */
     class SeatStatus {
-        private Long seatId;
-        private String seatNumber;
-        private String seatRow;
-        private String status; // AVAILABLE, BOOKED, TEMPORARILY_RESERVED, MAINTENANCE
-        private String reservedBySession; // for temporarily reserved seats
-        private LocalDateTime reservationExpiry;
+        private Long seatId; // ID của ghế
+        private String seatNumber; // Số ghế (A1, B2, etc.)
+        private String seatRow; // Hàng ghế (1, 2, 3, etc.)
+        private String status; // Trạng thái: AVAILABLE, TEMPORARILY_RESERVED, OCCUPIED
+        private String reservedBySession; // Session ID nếu ghế đang được giữ chỗ tạm thời
+        private LocalDateTime reservationExpiry; // Thời gian hết hạn giữ chỗ tạm thời
         
         public SeatStatus(Long seatId, String seatNumber, String seatRow, String status) {
             this.seatId = seatId;

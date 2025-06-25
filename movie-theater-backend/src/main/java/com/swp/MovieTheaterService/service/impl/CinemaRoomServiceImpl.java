@@ -23,7 +23,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -402,11 +404,11 @@ public class CinemaRoomServiceImpl implements CinemaRoomService {
     private void setSeatCounts(CinemaRoomResponse response, Long cinemaRoomId) {
         Long availableSeats = seatRepository.countSeatsByStatus(cinemaRoomId, SeatStatus.AVAILABLE);
         Long occupiedSeats = seatRepository.countSeatsByStatus(cinemaRoomId, SeatStatus.OCCUPIED);
-        Long maintenanceSeats = seatRepository.countSeatsByStatus(cinemaRoomId, SeatStatus.MAINTENANCE);
+        Long temporarilyReservedSeats = seatRepository.countSeatsByStatus(cinemaRoomId, SeatStatus.TEMPORARILY_RESERVED);
         
         response.setAvailableSeats(availableSeats != null ? availableSeats.intValue() : 0);
         response.setOccupiedSeats(occupiedSeats != null ? occupiedSeats.intValue() : 0);
-        response.setMaintenanceSeats(maintenanceSeats != null ? maintenanceSeats.intValue() : 0);
+        response.setTemporarilyReservedSeats(temporarilyReservedSeats != null ? temporarilyReservedSeats.intValue() : 0);
     }
 
     private String generateSeatNumber(int row, int column) {
@@ -443,5 +445,96 @@ public class CinemaRoomServiceImpl implements CinemaRoomService {
             default:
                 return 1.0;
         }
+    }
+
+    // ==================== SEAT STATUS IMPLEMENTATIONS ====================
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<SeatResponse> getBookedSeats(Long cinemaRoomId) {
+        log.info("Getting booked seats for cinema room ID: {}", cinemaRoomId);
+        
+        // Validate cinema room exists
+        findCinemaRoomById(cinemaRoomId);
+        
+        List<Seat> bookedSeats = seatRepository.findByCinemaRoomCinemaRoomIdAndSeatStatusAndIsActiveTrue(
+                cinemaRoomId, com.swp.MovieTheaterService.enums.SeatStatus.OCCUPIED);
+        
+        List<SeatResponse> response = bookedSeats.stream()
+                .map(seatMapper::toResponse)
+                .collect(Collectors.toList());
+        
+        log.info("Found {} booked seats for cinema room {}", response.size(), cinemaRoomId);
+        return response;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<SeatResponse> getAvailableSeats(Long cinemaRoomId) {
+        log.info("Getting available seats for cinema room ID: {}", cinemaRoomId);
+        
+        // Validate cinema room exists
+        findCinemaRoomById(cinemaRoomId);
+        
+        List<Seat> availableSeats = seatRepository.findByCinemaRoomCinemaRoomIdAndSeatStatusAndIsActiveTrue(
+                cinemaRoomId, com.swp.MovieTheaterService.enums.SeatStatus.AVAILABLE);
+        
+        List<SeatResponse> response = availableSeats.stream()
+                .map(seatMapper::toResponse)
+                .collect(Collectors.toList());
+        
+        log.info("Found {} available seats for cinema room {}", response.size(), cinemaRoomId);
+        return response;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getSeatStatusOverview(Long cinemaRoomId) {
+        log.info("Getting seat status overview for cinema room ID: {}", cinemaRoomId);
+        
+        CinemaRoom cinemaRoom = findCinemaRoomById(cinemaRoomId);
+        
+        // Count seats by status
+        Long availableCount = seatRepository.countByCinemaRoomCinemaRoomIdAndSeatStatusAndIsActiveTrue(
+                cinemaRoomId, com.swp.MovieTheaterService.enums.SeatStatus.AVAILABLE);
+        Long occupiedCount = seatRepository.countByCinemaRoomCinemaRoomIdAndSeatStatusAndIsActiveTrue(
+                cinemaRoomId, com.swp.MovieTheaterService.enums.SeatStatus.OCCUPIED);
+        Long temporarilyReservedCount = seatRepository.countByCinemaRoomCinemaRoomIdAndSeatStatusAndIsActiveTrue(
+                cinemaRoomId, com.swp.MovieTheaterService.enums.SeatStatus.TEMPORARILY_RESERVED);
+        Long totalSeats = availableCount + occupiedCount + temporarilyReservedCount;
+        
+        // Calculate percentages
+        Double availablePercentage = totalSeats > 0 ? (availableCount.doubleValue() / totalSeats * 100) : 0.0;
+        Double occupiedPercentage = totalSeats > 0 ? (occupiedCount.doubleValue() / totalSeats * 100) : 0.0;
+        Double temporarilyReservedPercentage = totalSeats > 0 ? (temporarilyReservedCount.doubleValue() / totalSeats * 100) : 0.0;
+        
+        Map<String, Object> overview = new HashMap<>();
+        overview.put("cinemaRoomId", cinemaRoomId);
+        overview.put("cinemaRoomName", cinemaRoom.getCinemaRoomName());
+        overview.put("totalSeats", totalSeats);
+        
+        // Seat counts
+        Map<String, Long> seatCounts = new HashMap<>();
+        seatCounts.put("available", availableCount);
+        seatCounts.put("occupied", occupiedCount);
+        seatCounts.put("temporarilyReserved", temporarilyReservedCount);
+        overview.put("seatCounts", seatCounts);
+        
+        // Seat percentages
+        Map<String, Double> seatPercentages = new HashMap<>();
+        seatPercentages.put("available", Math.round(availablePercentage * 100.0) / 100.0);
+        seatPercentages.put("occupied", Math.round(occupiedPercentage * 100.0) / 100.0);
+        seatPercentages.put("temporarilyReserved", Math.round(temporarilyReservedPercentage * 100.0) / 100.0);
+        overview.put("seatPercentages", seatPercentages);
+        
+        // Status summary
+        String statusSummary = String.format("%d/%d available (%.1f%% occupied)", 
+                availableCount, totalSeats, occupiedPercentage);
+        overview.put("statusSummary", statusSummary);
+        
+        log.info("Seat status overview for cinema room {}: {} total, {} available, {} occupied, {} temporarily reserved", 
+                cinemaRoomId, totalSeats, availableCount, occupiedCount, temporarilyReservedCount);
+        
+        return overview;
     }
 } 

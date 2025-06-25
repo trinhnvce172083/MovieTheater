@@ -22,18 +22,17 @@ import java.math.BigDecimal;
 public class ConcessionOrderRequest {
 
     @NotNull(message = "Concession ID không được để trống")
-    @Schema(description = "ID món đồ ăn/uống", example = "1", required = true)
+    @Schema(description = "ID món đồ ăn/uống", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
     private Long concessionId;
 
     @NotNull(message = "Số lượng không được để trống")
     @Min(value = 1, message = "Số lượng phải ít nhất là 1")
     @Max(value = 20, message = "Số lượng không được vượt quá 20")
-    @Schema(description = "Số lượng", example = "2", required = true)
+    @Schema(description = "Số lượng", example = "2", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer quantity;
 
-    @NotNull(message = "Giá đơn vị không được để trống")
     @DecimalMin(value = "0.0", message = "Giá phải lớn hơn 0")
-    @Schema(description = "Giá đơn vị", example = "45000", required = true)
+    @Schema(description = "Giá đơn vị (tự động lấy từ database nếu không có)", example = "45000", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private BigDecimal unitPrice;
 
     @Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự")
@@ -62,7 +61,6 @@ public class ConcessionOrderRequest {
 
     public boolean isValidOrder() {
         return concessionId != null &&
-                quantity != null && quantity > 0 &&
-                unitPrice != null && unitPrice.compareTo(BigDecimal.ZERO) > 0;
+                quantity != null && quantity > 0;
     }
 }

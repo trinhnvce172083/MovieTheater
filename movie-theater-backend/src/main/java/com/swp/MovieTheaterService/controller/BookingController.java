@@ -53,17 +53,20 @@ public class BookingController {
     // ==================== SEAT SELECTION ENDPOINTS ====================
 
     @GetMapping("/schedules/{scheduleId}/seats")
-    @Operation(summary = "Get seat status", description = "Get real-time seat availability for a schedule")
+    @Operation(summary = "Lấy trạng thái tất cả ghế", 
+               description = "Lấy danh sách trạng thái của tất cả các ghế trong lịch chiếu bao gồm: AVAILABLE (có thể đặt), OCCUPIED (đã được đặt vĩnh viễn), TEMPORARILY_RESERVED (đang được giữ chỗ tạm thời)")
     public ResponseEntity<SeatReservationService.SeatStatusResponse> getSeatStatus(
             @PathVariable Long scheduleId) {
-        log.info("Getting seat status for schedule: {}", scheduleId);
+        log.info("Lấy trạng thái tất cả ghế cho lịch chiếu: {}", scheduleId);
 
         SeatReservationService.SeatStatusResponse response = seatReservationService.getSeatStatus(scheduleId);
+        log.info("Trả về {} ghế cho lịch chiếu: {}", response.getSeats().size(), scheduleId);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/schedules/{scheduleId}/seats/reserve")
     @Operation(summary = "Reserve seats temporarily", description = "Reserve seats temporarily for 15 minutes during booking process")
+    @SuppressWarnings("unchecked")
     public ResponseEntity<Map<String, Object>> reserveSeats(
             @PathVariable Long scheduleId,
             @RequestBody Map<String, Object> request,

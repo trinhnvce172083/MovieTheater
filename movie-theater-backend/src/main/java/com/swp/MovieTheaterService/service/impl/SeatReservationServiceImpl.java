@@ -3,6 +3,7 @@ package com.swp.MovieTheaterService.service.impl;
 import com.swp.MovieTheaterService.entity.BookingSeat;
 import com.swp.MovieTheaterService.entity.Schedule;
 import com.swp.MovieTheaterService.entity.Seat;
+import com.swp.MovieTheaterService.enums.SeatStatus;
 import com.swp.MovieTheaterService.exception.AppException;
 import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.repository.BookingSeatRepository;
@@ -87,22 +88,38 @@ public class SeatReservationServiceImpl implements SeatReservationService {
     public List<Long> getAvailableSeats(Long scheduleId) {
         log.debug("Getting available seats for schedule ID: {}", scheduleId);
         
-        // Get all seats for the cinema room of this schedule
-        // For now, return empty list as the seat-schedule relationship needs proper implementation
-        List<Seat> allSeats = new ArrayList<>();
-        
-        // Get permanently booked seats
-        List<Long> bookedSeatIds = new ArrayList<>();
-        
-        // Get temporarily reserved seats
-        List<Long> tempReservedSeatIds = getTemporaryReservedSeats(scheduleId);
-        
-        // Filter available seats
-        return allSeats.stream()
-                .map(Seat::getSeatId)
-                .filter(seatId -> !bookedSeatIds.contains(seatId))
-                .filter(seatId -> !tempReservedSeatIds.contains(seatId))
-                .collect(Collectors.toList());
+        try {
+            // Get schedule and cinema room
+            Schedule schedule = scheduleRepository.findById(scheduleId)
+                    .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
+            
+            Long cinemaRoomId = schedule.getCinemaRoom().getCinemaRoomId();
+            
+            // Get all seats for the cinema room
+            List<Seat> allSeats = seatRepository.findByCinemaRoomCinemaRoomIdAndIsActiveTrue(cinemaRoomId);
+            
+            // Get permanently booked seats (CONFIRMED, PAID, COMPLETED bookings only)
+            List<Long> bookedSeatIds = bookingSeatRepository.getBookedSeatIdsForSchedule(scheduleId);
+            
+            // Get temporarily reserved seats
+            List<Long> tempReservedSeatIds = getTemporaryReservedSeats(scheduleId);
+            
+            // Filter available seats
+            List<Long> availableSeats = allSeats.stream()
+                    .map(Seat::getSeatId)
+                    .filter(seatId -> !bookedSeatIds.contains(seatId))
+                    .filter(seatId -> !tempReservedSeatIds.contains(seatId))
+                    .collect(Collectors.toList());
+                    
+            log.debug("Schedule {}: Total seats: {}, Booked: {}, Temp reserved: {}, Available: {}", 
+                    scheduleId, allSeats.size(), bookedSeatIds.size(), tempReservedSeatIds.size(), availableSeats.size());
+                    
+            return availableSeats;
+            
+        } catch (Exception e) {
+            log.error("Error getting available seats for schedule {}: {}", scheduleId, e.getMessage(), e);
+            return new ArrayList<>();
+        }
     }
     
     @Override
@@ -167,13 +184,13 @@ public class SeatReservationServiceImpl implements SeatReservationService {
             // Xây dựng response trạng thái ghế
             List<SeatStatus> seatStatuses = allSeats.stream()
                     .map(seat -> {
-                        String status = "AVAILABLE";
+                        String status = com.swp.MovieTheaterService.enums.SeatStatus.AVAILABLE.name();
                         String reservedBySession = null;
                         LocalDateTime reservationExpiry = null;
                         
                         // Kiểm tra ghế đã được đặt vĩnh viễn
                         if (bookedSeatIds.contains(seat.getSeatId())) {
-                            status = "BOOKED";
+                            status = com.swp.MovieTheaterService.enums.SeatStatus.OCCUPIED.name();
                         } else {
                             // Kiểm tra đặt chỗ tạm thời
                             for (TempReservation tempReservation : temporaryReservations.values()) {
@@ -184,7 +201,7 @@ public class SeatReservationServiceImpl implements SeatReservationService {
                                         continue; // Bỏ qua đặt chỗ đã hết hạn
                                     }
                                     
-                                    status = "TEMPORARILY_RESERVED";
+                                    status = com.swp.MovieTheaterService.enums.SeatStatus.TEMPORARILY_RESERVED.name();
                                     reservedBySession = tempReservation.getSessionId();
                                     reservationExpiry = tempReservation.getExpiryTime();
                                     break;
@@ -195,7 +212,7 @@ public class SeatReservationServiceImpl implements SeatReservationService {
                         SeatStatus seatStatus = new SeatStatus(
                                 seat.getSeatId(),
                                 seat.getSeatNumber(),
-                                seat.getRowLetter(),
+                                String.valueOf(seat.getSeatRow()), // Convert integer row to string
                                 status
                         );
                         seatStatus.setReservedBySession(reservedBySession);

@@ -1,7 +1,6 @@
 package com.swp.MovieTheaterService.entity;
 
 import com.swp.MovieTheaterService.enums.SeatStatus;
-import com.swp.MovieTheaterService.enums.SeatType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -89,8 +88,8 @@ public class Seat extends BaseEntity {
         return seatStatus == SeatStatus.OCCUPIED;
     }
 
-    public boolean isMaintenance() {
-        return seatStatus == SeatStatus.MAINTENANCE;
+    public boolean isTemporarilyReserved() {
+        return seatStatus == SeatStatus.TEMPORARILY_RESERVED;
     }
 
     public boolean isVIP() {

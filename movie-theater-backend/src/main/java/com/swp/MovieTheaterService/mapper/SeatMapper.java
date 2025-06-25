@@ -47,7 +47,7 @@ public class SeatMapper {
         response.setDisplayName(seat.getDisplayName());
         response.setIsAvailable(seat.isAvailable());
         response.setIsOccupied(seat.isOccupied());
-        response.setIsMaintenance(seat.isMaintenance());
+        response.setIsTemporarilyReserved(seat.isTemporarilyReserved());
         response.setIsVIP(seat.isVIP());
         response.setIsCouple(seat.isCouple());
         response.setIsWheelchair(seat.isWheelchair());

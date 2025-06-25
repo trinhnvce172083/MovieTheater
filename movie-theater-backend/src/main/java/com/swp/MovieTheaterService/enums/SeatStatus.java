@@ -9,8 +9,8 @@ package com.swp.MovieTheaterService.enums;
  */
 public enum SeatStatus {
     AVAILABLE("Available"),
-    OCCUPIED("Occupied"),
-    MAINTENANCE("Maintenance");
+    TEMPORARILY_RESERVED("Temporarily Reserved"), 
+    OCCUPIED("Occupied");
 
     private final String displayName;
 
@@ -30,8 +30,8 @@ public enum SeatStatus {
         return this == OCCUPIED;
     }
 
-    public boolean isMaintenance() {
-        return this == MAINTENANCE;
+    public boolean isTemporarilyReserved() {
+        return this == TEMPORARILY_RESERVED;
     }
 
     public boolean isBookable() {

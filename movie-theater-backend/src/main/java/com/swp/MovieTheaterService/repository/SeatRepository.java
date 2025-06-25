@@ -73,6 +73,11 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
                      "s.seatStatus = :status AND s.isActive = true")
        Long countSeatsByStatus(@Param("cinemaRoomId") Long cinemaRoomId, @Param("status") SeatStatus status);
 
+       // Alias for consistent naming with other methods
+       default Long countByCinemaRoomCinemaRoomIdAndSeatStatusAndIsActiveTrue(Long cinemaRoomId, SeatStatus seatStatus) {
+              return countSeatsByStatus(cinemaRoomId, seatStatus);
+       }
+
        // Find VIP seats in cinema room
        @Query("SELECT s FROM Seat s WHERE s.cinemaRoom.cinemaRoomId = :cinemaRoomId AND " +
                      "s.seatType = 'VIP' AND s.isActive = true ORDER BY s.seatRow, s.seatColumn")

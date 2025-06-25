@@ -3,6 +3,7 @@ package com.swp.MovieTheaterService.service.impl;
 import com.swp.MovieTheaterService.dto.booking.*;
 import com.swp.MovieTheaterService.entity.*;
 import com.swp.MovieTheaterService.enums.BookingStatus;
+import com.swp.MovieTheaterService.enums.SeatStatus;
 import com.swp.MovieTheaterService.exception.AppException;
 import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.mapper.BookingMapper;
@@ -10,6 +11,7 @@ import com.swp.MovieTheaterService.repository.*;
 import com.swp.MovieTheaterService.service.BookingService;
 import com.swp.MovieTheaterService.service.ConcessionService;
 import com.swp.MovieTheaterService.service.PromotionService;
+import com.swp.MovieTheaterService.service.SeatReservationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -48,6 +50,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingMapper bookingMapper;
     private final ConcessionService concessionService;
     private final PromotionService promotionService;
+    private final SeatReservationService seatReservationService;
 
     // Booking expiration time in minutes
     private static final int BOOKING_EXPIRATION_MINUTES = 15;
@@ -93,12 +96,7 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalArgumentException("Không thể đặt quá 10 ghế trong một lần");
         }
 
-        // Check if any seat is already booked for this schedule
-        for (Long seatId : selectedSeatIds) {
-            if (!areSeatsAvailable(request.getScheduleId(), List.of(seatId))) {
-                throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED);
-            }
-        }
+        // Seat availability will be checked in the main booking flow via SeatReservationService
 
         // Create booking without account
         BookingResponse booking = createBookingInternal(request, null);
@@ -134,13 +132,23 @@ public class BookingServiceImpl implements BookingService {
             throw new AppException(ErrorCode.BOOKING_SEAT_LIMIT_EXCEEDED);
         }
 
-        // ===== ATOMIC SEAT BOOKING OPERATION =====
-        // This entire block needs to be atomic to prevent race conditions
+        // 6. Validate seats adjacency if booking multiple seats
+        if (seatIds.size() >= 2) {
+            validateSeatsAdjacency(seatIds);
+        }
 
-        // 6. Lock and validate seats atomically
-        if (!lockAndValidateSeats(request.getScheduleId(), seatIds)) {
+        // ===== TEMPORARY SEAT RESERVATION OPERATION =====
+        // Reserve seats temporarily for 15 minutes using SeatReservationService
+        
+        // 7. Create temporary reservation for seats using booking code as session
+        String sessionId = "BOOKING_" + generateBookingCode();
+        Long userId = account != null ? account.getAccountId() : null;
+        
+        if (!seatReservationService.reserveSeatsTemporarily(request.getScheduleId(), seatIds, sessionId, userId)) {
             throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED);
         }
+        
+        log.info("Successfully reserved {} seats temporarily for session: {}", seatIds.size(), sessionId);
 
         try {
             // 7. Calculate seat amount
@@ -593,9 +601,20 @@ public class BookingServiceImpl implements BookingService {
 
         // Process payment
         booking.confirmPayment(paymentRequest.getPaymentMethod(), paymentRequest.getPaymentReference());
+        
+        // Convert temporary reservations to permanent reservations
+        // Note: We'll use booking code as session identifier for now
+        String sessionId = "BOOKING_" + booking.getBookingCode();
+        seatReservationService.convertToPermanentReservation(sessionId, booking.getBookingId());
+        log.info("Converted temporary seat reservations to permanent for booking: {}", booking.getBookingId());
+        
+        // Update booking seat status from TEMPORARILY_RESERVED to OCCUPIED
+        List<BookingSeat> bookingSeats = bookingSeatRepository.findByBookingBookingIdAndActiveTrue(booking.getBookingId());
+        convertBookingSeatsToOccupied(bookingSeats);
+        
         Booking updatedBooking = bookingRepository.save(booking);
 
-        log.info("Payment processed successfully for booking ID: {}", booking.getBookingId());
+        log.info("Payment processed successfully for booking ID: {} - Seats converted to OCCUPIED", booking.getBookingId());
         return bookingMapper.toResponse(updatedBooking);
     }
 
@@ -618,8 +637,14 @@ public class BookingServiceImpl implements BookingService {
         // Cancel booking (includes refund calculation)
         booking.cancel(cancellationReason);
 
-        // Release seats
+        // Release temporary reservations if exists
+        String sessionId = "BOOKING_" + booking.getBookingCode();
+        seatReservationService.releaseTemporaryReservations(sessionId);
+        log.info("Released temporary seat reservations for cancelled booking: {}", bookingId);
+
+        // Release booking seats and update status back to AVAILABLE
         List<BookingSeat> bookingSeats = bookingSeatRepository.findByBookingBookingIdAndActiveTrue(bookingId);
+        releaseBookingSeatStatus(bookingSeats);
         updateScheduleSeatCounts(booking.getSchedule(), 0, bookingSeats.size());
 
         Booking updatedBooking = bookingRepository.save(booking);
@@ -1298,6 +1323,9 @@ public class BookingServiceImpl implements BookingService {
             Seat seat = seatRepository.findById(seatId)
                     .orElseThrow(() -> new AppException(ErrorCode.SEAT_NOT_FOUND));
 
+            // Note: Seats are already TEMPORARILY_RESERVED by SeatReservationService
+            // They will be converted to OCCUPIED only when payment is confirmed
+
             // Calculate correct seat price: schedule base price * seat price multiplier
             Double correctSeatPrice = basePrice * seat.getPriceMultiplier();
 
@@ -1313,12 +1341,14 @@ public class BookingServiceImpl implements BookingService {
 
             bookingSeats.add(bookingSeat);
 
-            log.debug("Created booking seat: {} - Base price: {}, Multiplier: {}, Final price: {}",
+            log.debug("Created booking seat: {} - Base price: {}, Multiplier: {}, Final price: {} | Seat remains TEMPORARILY_RESERVED",
                     seat.getSeatNumber(), basePrice, seat.getPriceMultiplier(), correctSeatPrice);
         }
 
+        // Save booking seats
         bookingSeatRepository.saveAll(bookingSeats);
-        log.info("Created {} booking seats with correct pricing", bookingSeats.size());
+        log.info("Created {} booking seats with correct pricing. Seats remain TEMPORARILY_RESERVED until payment confirmation.", 
+                bookingSeats.size());
     }
 
     /**
@@ -1362,6 +1392,58 @@ public class BookingServiceImpl implements BookingService {
         bookingConcessionRepository.saveAll(bookingConcessions);
         log.info("Saved {} concession orders for booking {}",
                 bookingConcessions.size(), booking.getBookingId());
+    }
+
+    /**
+     * Convert booking seats from TEMPORARILY_RESERVED to OCCUPIED when payment is confirmed
+     */
+    private void convertBookingSeatsToOccupied(List<BookingSeat> bookingSeats) {
+        List<BookingSeat> seatsToUpdate = new ArrayList<>();
+        
+        for (BookingSeat bookingSeat : bookingSeats) {
+            // Only update if booking seat is currently TEMPORARILY_RESERVED
+            if (bookingSeat.getStatus() == SeatStatus.TEMPORARILY_RESERVED) {
+                bookingSeat.setStatus(SeatStatus.OCCUPIED);
+                bookingSeat.setUpdatedAt(LocalDateTime.now());
+                seatsToUpdate.add(bookingSeat);
+                
+                log.debug("Converted booking seat {} status from TEMPORARILY_RESERVED to OCCUPIED", 
+                        bookingSeat.getSeatNumber());
+            }
+        }
+        
+        if (!seatsToUpdate.isEmpty()) {
+            bookingSeatRepository.saveAll(seatsToUpdate);
+            log.info("Converted {} booking seats status to OCCUPIED after payment confirmation", 
+                    seatsToUpdate.size());
+        }
+    }
+
+    /**
+     * Release booking seat status back to AVAILABLE when booking is cancelled
+     */
+    private void releaseBookingSeatStatus(List<BookingSeat> bookingSeats) {
+        List<BookingSeat> seatsToUpdate = new ArrayList<>();
+        
+        for (BookingSeat bookingSeat : bookingSeats) {
+            // Update booking seat status from either OCCUPIED or TEMPORARILY_RESERVED to AVAILABLE
+            if (bookingSeat.getStatus() == SeatStatus.OCCUPIED || 
+                bookingSeat.getStatus() == SeatStatus.TEMPORARILY_RESERVED) {
+                
+                SeatStatus oldStatus = bookingSeat.getStatus();
+                bookingSeat.setStatus(SeatStatus.AVAILABLE);
+                bookingSeat.setUpdatedAt(LocalDateTime.now());
+                seatsToUpdate.add(bookingSeat);
+                
+                log.debug("Released booking seat {} status from {} to AVAILABLE", 
+                        bookingSeat.getSeatNumber(), oldStatus);
+            }
+        }
+        
+        if (!seatsToUpdate.isEmpty()) {
+            bookingSeatRepository.saveAll(seatsToUpdate);
+            log.info("Released {} booking seats status to AVAILABLE", seatsToUpdate.size());
+        }
     }
 
     private void updateScheduleSeatCounts(Schedule schedule, int bookedSeatsToAdd, int bookedSeatsToRemove) {
@@ -1479,8 +1561,13 @@ public class BookingServiceImpl implements BookingService {
                             concession.getStockQuantity()));
         }
 
-        // Validate price consistency
-        if (order.getUnitPrice().compareTo(concession.getPrice()) != 0) {
+        // Set price from database if not provided or validate if provided
+        if (order.getUnitPrice() == null) {
+            // Auto-set price from database
+            order.setUnitPrice(concession.getPrice());
+            log.debug("Auto-set price for concession {}: {}", 
+                    concession.getFullName(), concession.getPrice());
+        } else if (order.getUnitPrice().compareTo(concession.getPrice()) != 0) {
             log.warn("Price mismatch for concession {}: expected {}, got {}",
                     concession.getFullName(), concession.getPrice(), order.getUnitPrice());
             // Update to correct price
@@ -1489,6 +1576,51 @@ public class BookingServiceImpl implements BookingService {
 
         log.debug("Validated concession order: {} x {} = {}",
                 concession.getFullName(), order.getQuantity(), order.getFormattedTotalPrice());
+    }
+
+    /**
+     * Validate that seats are adjacent (liền nhau) to avoid scattered seats
+     * Only applies when booking 2 or more seats
+     */
+    private void validateSeatsAdjacency(List<Long> seatIds) {
+        log.info("Validating adjacency for {} seats: {}", seatIds.size(), seatIds);
+        
+        // Get seat details
+        List<Seat> seats = seatRepository.findAllById(seatIds);
+        
+        if (seats.size() != seatIds.size()) {
+            throw new AppException(ErrorCode.SEAT_NOT_FOUND);
+        }
+        
+        // Sort seats by row and column for adjacency check
+        seats.sort((s1, s2) -> {
+            int rowCompare = s1.getSeatRow().compareTo(s2.getSeatRow());
+            if (rowCompare != 0) return rowCompare;
+            return s1.getSeatColumn().compareTo(s2.getSeatColumn());
+        });
+        
+        // Check if all seats are in the same row
+        Integer firstRow = seats.get(0).getSeatRow();
+        boolean allSameRow = seats.stream().allMatch(seat -> seat.getSeatRow().equals(firstRow));
+        
+        if (!allSameRow) {
+            throw new AppException(ErrorCode.SEATS_NOT_ADJACENT);
+        }
+        
+        // Check if seats are consecutive (liền nhau)
+        for (int i = 1; i < seats.size(); i++) {
+            Integer currentColumn = seats.get(i).getSeatColumn();
+            Integer previousColumn = seats.get(i-1).getSeatColumn();
+            
+            if (currentColumn - previousColumn != 1) {
+                log.warn("Seats not adjacent - gap between {} and {}", 
+                        seats.get(i-1).getSeatNumber(), seats.get(i).getSeatNumber());
+                throw new AppException(ErrorCode.SEATS_NOT_ADJACENT);
+            }
+        }
+        
+        log.info("Seat adjacency validation passed - all {} seats are consecutive in row {}", 
+                seats.size(), firstRow);
     }
 
     private BookingStatistics calculateStatistics(LocalDateTime startDate, LocalDateTime endDate) {
