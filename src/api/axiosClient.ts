@@ -2,6 +2,7 @@ import axios from "axios";
 import { store } from "@/store";
 import { logout } from "@/store/slices/authSlice";
 import { clearAuthCookies } from "@/utils/authCookies";
+import { getAuthTokenFromCookies } from "@/utils/authCookies";
 
 const axiosClient = axios.create({
   baseURL: "http://localhost:8080/cinema/api",
@@ -13,7 +14,8 @@ const axiosClient = axios.create({
 // Thêm interceptor để tự động gắn token vào header
 axiosClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("accessToken");
+    const token = getAuthTokenFromCookies() || localStorage.getItem("accessToken");
+    // Nếu có token, gắn vào header Authorization
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
