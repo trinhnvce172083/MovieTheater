@@ -1,8 +1,6 @@
 import axios from "axios";
 import { store } from "@/store";
 import { logout } from "@/store/slices/authSlice";
-import { clearAuthCookies } from "@/utils/authCookies";
-import { getAuthTokenFromCookies } from "@/utils/authCookies";
 
 const axiosClient = axios.create({
   baseURL: "http://localhost:8080/cinema/api",
@@ -14,7 +12,7 @@ const axiosClient = axios.create({
 // Thêm interceptor để tự động gắn token vào header
 axiosClient.interceptors.request.use(
   (config) => {
-    const token = getAuthTokenFromCookies() || localStorage.getItem("accessToken");
+    const token = localStorage.getItem("accessToken");
     // Nếu có token, gắn vào header Authorization
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -36,10 +34,9 @@ axiosClient.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // Xóa token từ localStorage
       localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
       localStorage.removeItem("userInfo");
-      
-      // Xóa cookies
-      clearAuthCookies();
+      localStorage.removeItem("isLoggedIn");
       
       // Đăng xuất khỏi Redux store
       store.dispatch(logout());

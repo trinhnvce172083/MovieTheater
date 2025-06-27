@@ -2,17 +2,13 @@
 
 import React, { useState } from "react";
 import { Dropdown, Avatar } from "antd";
-import {
-  UserOutlined,
-  LogoutOutlined,
-} from "@ant-design/icons";
+import { UserOutlined, LogoutOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import ROUTES from "@/constants/routes";
 import { useRouter } from "next/navigation";
 import { Logout_API } from "@/api/auth/Logout_API";
 import { useDispatch } from "react-redux";
 import { logout } from "@/store/slices/authSlice";
-import { clearAuthCookies } from "@/utils/authCookies";
 
 type User = {
   name?: string;
@@ -29,7 +25,8 @@ export default function UserDropdown({ user }: { user: User }) {
   const router = useRouter();
 
   // Ưu tiên hiển thị fullName, sau đó đến name, username, email
-  const displayName = user.fullName || user.name || user.username || user.email || "User";
+  const displayName =
+    user.fullName || user.name || user.username || user.email || "User";
 
   return (
     <Dropdown
@@ -46,19 +43,19 @@ export default function UserDropdown({ user }: { user: User }) {
           {
             key: "logout",
             icon: <LogoutOutlined />,
-            label: "Logout",            onClick: () => {
+            label: "Logout",
+            onClick: () => {
               Logout_API()
                 .then(() => {
                   // Clear localStorage
                   localStorage.removeItem("accessToken");
+                  localStorage.removeItem("refreshToken");
                   localStorage.removeItem("userInfo");
-                  
-                  // Clear cookies for middleware-based protection
-                  clearAuthCookies();
-                  
+                  localStorage.removeItem("isLoggedIn");
+
                   // Update Redux store
                   dispatch(logout());
-                  
+
                   // Redirect to home page
                   router.push(ROUTES.HOME);
                 })

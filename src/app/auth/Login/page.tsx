@@ -1,28 +1,23 @@
 "use client";
-import React, { useState } from "react";
-import { Typography, message, Form } from "antd";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { useRouter, useSearchParams } from "next/navigation";
-import ROUTES from "@/constants/routes";
 import { Login_API } from "@/api/auth/Login_API";
-import { useDispatch } from "react-redux";
-import { login } from "@/store/slices/authSlice";
+import { Card } from "@/components/ui/card";
+import ROUTES from "@/constants/routes";
 import { decodeJwt } from "@/hooks/decodeJwt";
+import { cn } from "@/lib/utils";
+import { login } from "@/store/slices/authSlice";
 import { LoginFormValues } from "@/types/Login/LoginFormValues";
-import LoginForm from "./components/LoginForm";
+import { Form, Typography, message } from "antd";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
 import LoginFooter from "./components/LoginFooter";
-import { setAuthCookies } from "@/utils/authCookies";
+import LoginForm from "./components/LoginForm";
 
 const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const dispatch = useDispatch();
-  
-  // Get return URL from query parameter
-  const returnUrl = searchParams.get('returnUrl');
 
   const onFinish = async (values: LoginFormValues) => {
     try {
@@ -33,38 +28,43 @@ const LoginPage: React.FC = () => {
         rememberMe: values.rememberMe || false,
       });
       const accessToken = data?.data?.accessToken;
-      const refreshToken = data?.data?.refreshToken;
       if (accessToken) {
         const userInfo = decodeJwt(accessToken);
-        const userRole = userInfo?.role || 'customer';
-        
+        const refreshToken = data?.data?.refreshToken;
+        const issuedAtMs = Date.now();
+        const expiresAtMs = userInfo?.exp ? Number(userInfo.exp) * 1000 : 0;
+        const expiryTimeInMinutes = Math.floor((expiresAtMs - Date.now()) / 60000);
+        const latestRefreshTime = new Date(expiresAtMs);
+        const userInfoObj = {
+          accountId: userInfo?.accountId || "",
+          userName: userInfo?.sub || "",
+          Role: userInfo?.role || "MEMBER",
+          issuedAt: new Date(issuedAtMs).toLocaleString(),
+          expiryTimeInMinutes: expiryTimeInMinutes.toString(),
+          latestRefreshTime: latestRefreshTime.toLocaleString(),
+        };
+
         // Store refresh token in localStorage for client-side access
+        localStorage.setItem("accessToken", accessToken);
         localStorage.setItem("refreshToken", refreshToken);
-        localStorage.setItem("userInfo", JSON.stringify(userInfo));
-        
-        // Set cookies for middleware-based route protection
-        setAuthCookies(accessToken, userRole);
-        
+        // Store user information in localStorage
+        localStorage.setItem("userInfo", JSON.stringify(userInfoObj));
+
+        // Set a flag for logged-in status
+        localStorage.setItem("isLoggedIn", "true");
+
         // Update Redux store
         dispatch(login({ token: accessToken }));
 
-        // Redirect based on returnUrl or user role
-        if (returnUrl) {
-          // Decode the returnUrl and navigate to it
-          router.push(decodeURIComponent(returnUrl));
+        if (userInfoObj?.Role === "ADMIN") {
+          router.push(ROUTES.ADMIN_DASHBOARD);
+        } else if (userInfo?.role === "MEMBER") {
+          router.push(ROUTES.HOME);
         } else {
-          // Default redirects based on role
-          if (userInfo?.role === "ADMIN") {
-            router.push(ROUTES.ADMIN_DASHBOARD);
-          } else if (userInfo?.role === "STAFF") {
-            router.push(ROUTES.ADMIN_DASHBOARD); // Or staff dashboard if available
-          } else {
-            // Default for members or any other role
-            router.push(ROUTES.HOME);
-          }
+          message.error(
+            "You do not have permission to access this application. Please contact your administrator."
+          );
         }
-      } else {
-        message.error(data?.message || "Login failed");
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -89,11 +89,6 @@ const LoginPage: React.FC = () => {
         <Typography.Title level={2} className="text-center mb-6">
           Login
         </Typography.Title>
-        {returnUrl && (
-          <div className="mb-4 p-2 bg-orange-50 dark:bg-orange-950/30 rounded text-sm text-orange-800 dark:text-orange-300">
-            You need to login to access the requested page
-          </div>
-        )}
         <LoginForm loading={loading} onFinish={onFinish} form={form} />
         <LoginFooter />
       </Card>
