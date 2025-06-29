@@ -29,7 +29,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   SearchOutlined,
-  ReloadOutlined,
   UserOutlined,
   UserAddOutlined,
   UserSwitchOutlined,
@@ -114,7 +113,6 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
   // Simple auth status check
   const [showAuthWarning, setShowAuthWarning] = useState(false);
   const [isUsingApiData, setIsUsingApiData] = useState(true);
-  const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
 
   // Fetch users from API
   const fetchUsers = async () => {
@@ -164,7 +162,6 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
         console.log('Transformed data:', transformedData);
       setMemberData(transformedData || []);
       setIsUsingApiData(true);
-      setBackendStatus('connected');
     } catch (error) {
       console.error('Error fetching users:', error);
       // Since getAllUsers now returns mock data on error, this is less likely to happen
@@ -173,7 +170,6 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
       message.warning('Using sample data - please check your connection or login status');
       setMemberData([]);
       setIsUsingApiData(false);
-      setBackendStatus('disconnected');
     } finally {
       setLoading(false);
     }
@@ -683,47 +679,6 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               </Text>
             </div>            
             <div className="flex items-center gap-3">
-              {/* Backend Status Indicators */}
-              <div className="flex items-center gap-2">
-                {backendStatus === 'connected' && (
-                  <div className="flex items-center gap-1 text-green-600 text-xs">
-                    <CheckCircleOutlined />
-                    <span>Live Data</span>
-                  </div>
-                )}
-                {backendStatus === 'disconnected' && (
-                  <div className="flex items-center gap-1 text-orange-600 text-xs">
-                    <UserOutlined />
-                    <span>Demo Mode</span>
-                  </div>
-                )}
-                {backendStatus === 'checking' && (
-                  <div className="flex items-center gap-1 text-blue-600 text-xs">
-                    <ReloadOutlined spin />
-                    <span>Connecting...</span>
-                  </div>
-                )}
-              </div>
-              
-              {backendStatus === 'disconnected' && (
-                <Button
-                  icon={<ReloadOutlined />}
-                  size="small"
-                  onClick={fetchUsers}
-                  title="Retry connection"
-                >
-                  Retry
-                </Button>
-              )}
-              
-              <Button
-                icon={<ReloadOutlined />}
-                size="middle"
-                className="h-10 px-3"
-                onClick={fetchUsers}
-                loading={loading}
-                title="Refresh members list"
-              />
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -777,21 +732,6 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
                   <Option value="EMPLOYEE">Employee</Option>
                   <Option value="CUSTOMER">Customer</Option>
                 </Select>
-              </Col>
-              <Col xs={12} sm={6} lg={4} xl={3}>
-                <Button
-                  icon={<ReloadOutlined />}
-                  className="w-full h-10"
-                  size="middle"
-                  onClick={() => {
-                    setSearchTerm("");
-                    setFilterStatus("");
-                    setFilterType("");
-                    fetchUsers();
-                  }}
-                >
-                  Reset
-                </Button>
               </Col>
             </Row>
           </div>

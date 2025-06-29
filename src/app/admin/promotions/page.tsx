@@ -151,52 +151,58 @@ export default function ProfessionalPromotionManagement() {
 
   const handleAdd = () => {
     setEditingPromotion(null);
-    form.resetFields();
-    // Set some default values to prevent validation errors
-    form.setFieldsValue({
-      status: "ACTIVE",
-      promotionType: "PUBLIC",
-      discountType: "PERCENTAGE",
-      discountValue: 10, // Default to 10%
-      memberOnly: false,
-      isFeatured: false,
-      minPurchase: 10000, // Default minimum purchase
-      maxDiscount: 100000, // Default maximum discount
-    });
     setIsModalVisible(true);
+    // Use setTimeout to ensure form is rendered before setting values
+    setTimeout(() => {
+      form.resetFields();
+      // Set some default values to prevent validation errors
+      form.setFieldsValue({
+        status: "ACTIVE",
+        promotionType: "PUBLIC",
+        discountType: "PERCENTAGE",
+        discountValue: 10, // Default to 10%
+        memberOnly: false,
+        isFeatured: false,
+        minPurchase: 10000, // Default minimum purchase
+        maxDiscount: 100000, // Default maximum discount
+      });
+    }, 0);
   };
 
 
   const handleEdit = (record: PromotionDto) => {
     console.log("Editing promotion record:", record); // Debug log
     setEditingPromotion(record);
-
-    // Convert backend data to form format
-    const formData = {
-      name: record.promotionName || "",
-      description: record.description || "",
-      discountType: record.discountType || "PERCENTAGE",
-      discountValue: record.discountValue || 0,
-      startDate: record.startDate ? dayjs(record.startDate) : null,
-      endDate: record.endDate ? dayjs(record.endDate) : null,
-      status: record.isActive ? "ACTIVE" : "INACTIVE",
-      minPurchase: record.minPurchaseAmount || 0,
-      maxDiscount: record.maxDiscountAmount || 0,
-      promoCode: record.promotionCode || "",
-      promotionType: record.promotionType || "PUBLIC",
-      memberOnly: Boolean(record.memberOnly),
-      pointsRequired: record.pointsRequired || "",
-      membershipLevels: record.membershipLevels
-        ? record.membershipLevels.split(",").filter(Boolean)
-        : [],
-      maxUsageCount: record.maxUsageCount || "",
-      maxUsagePerUser: record.maxUsagePerUser || "",
-      isFeatured: Boolean(record.isFeatured),
-    };
-
-    console.log("Form data being set:", formData); // Debug log
-    form.setFieldsValue(formData);
     setIsModalVisible(true);
+
+    // Use setTimeout to ensure form is rendered before setting values
+    setTimeout(() => {
+      // Convert backend data to form format
+      const formData = {
+        name: record.promotionName || "",
+        description: record.description || "",
+        discountType: record.discountType || "PERCENTAGE",
+        discountValue: record.discountValue || 0,
+        startDate: record.startDate ? dayjs(record.startDate) : null,
+        endDate: record.endDate ? dayjs(record.endDate) : null,
+        status: record.isActive ? "ACTIVE" : "INACTIVE",
+        minPurchase: record.minPurchaseAmount || 0,
+        maxDiscount: record.maxDiscountAmount || 0,
+        promoCode: record.promotionCode || "",
+        promotionType: record.promotionType || "PUBLIC",
+        memberOnly: Boolean(record.memberOnly),
+        pointsRequired: record.pointsRequired || "",
+        membershipLevels: record.membershipLevels
+          ? record.membershipLevels.split(",").filter(Boolean)
+          : [],
+        maxUsageCount: record.maxUsageCount || "",
+        maxUsagePerUser: record.maxUsagePerUser || "",
+        isFeatured: Boolean(record.isFeatured),
+      };
+
+      console.log("Form data being set:", formData); // Debug log
+      form.setFieldsValue(formData);
+    }, 0);
   };
 
   
@@ -552,7 +558,7 @@ export default function ProfessionalPromotionManagement() {
               } else if (typeof errorJson === "string") {
                 errorMessage = errorJson;
               }
-            } catch (_) {
+            } catch {
               // If not JSON, use the raw text if it's meaningful
               if (errorData.length < 200) {
                 errorMessage = errorData;

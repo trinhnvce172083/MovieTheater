@@ -19,7 +19,7 @@ export default function AdminHeader() {
     } finally {
       nookies.destroy(null, "accessToken");
       localStorage.removeItem("userInfo");
-      router.push(ROUTES.HOME);
+      router.push(ROUTES.LOGIN);
     }
   };
 

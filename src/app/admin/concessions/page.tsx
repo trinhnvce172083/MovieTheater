@@ -128,7 +128,7 @@ export default function AdminConcessionsPage() {
       key: 'index',
       width: 60,
       render: (_: unknown, record: Concession, index: number) => (
-        <Text type="secondary" key={`index-${index}`}>{index + 1}</Text>
+        <Text type="secondary">{index + 1}</Text>
       ),
     },
     {
@@ -137,7 +137,7 @@ export default function AdminConcessionsPage() {
       key: 'name',
       sorter: (a: Concession, b: Concession) => a.name.localeCompare(b.name),
       render: (name: string, record: Concession) => (
-        <div key={`name-${record.id}`}>
+        <div>
           <Text strong>{name}</Text>
           <br/>
           <Text type="secondary" style={{fontSize: '12px'}}>{record.description}</Text>

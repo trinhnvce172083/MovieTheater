@@ -146,19 +146,16 @@ export default function ProfessionalMovieManagement() {
   const fetchMovies = useCallback(async () => {
     setLoading(true);
     try {
-      console.log("Fetching movies with params:", {
-        page: currentPage - 1,
-        size: pageSize,
-        sortBy: "title",
-        sortDirection: "asc",
-      });
-      
-      const data = await getMovies({
+      const params = {
         page: currentPage - 1, // API uses 0-based indexing
         size: pageSize,
         sortBy: "title",
-        sortDirection: "asc",
-      });
+        sortDirection: "asc" as const,
+      };
+      
+      console.log("Fetching movies with params:", params);
+      
+      const data = await getMovies(params);
       
       console.log("API Response:", data);
         if (data && data.content && Array.isArray(data.content) && data.content.length > 0) {
@@ -424,25 +421,10 @@ export default function ProfessionalMovieManagement() {
       width: 120,
       align: "center" as const,
       render: (value: unknown, record: Movie) => (
-        <div className="items-center gap-1">
-          {(record.genre || record.genres) ? (
-            <>
-              {(record.genre || record.genres).split(',').slice(0, 2).map((genre: string, index: number) => (
-                <Tag
-                  key={`${genre.trim()}-${index}`}
-                  color="blue"
-                  className="text-xs m-0"
-                >
-                  {genre.trim()}
-                </Tag>
-              ))}
-              {(record.genre || record.genres).split(',').length > 2 && (
-                <Tag className="text-xs m-0">+{(record.genre || record.genres).split(',').length - 2}</Tag>
-              )}
-            </>
-          ) : (
-            <span className="text-gray-400 text-xs">N/A</span>
-          )}
+        <div className="text-center">
+          <span className="text-xs text-gray-700">
+            {(record.genre || record.genres) || "N/A"}
+          </span>
         </div>
       ),
     },
@@ -460,6 +442,7 @@ export default function ProfessionalMovieManagement() {
               icon={<EyeOutlined />}
               size="small"
               className="text-blue-600 hover:bg-blue-50"
+              onClick={() => router.push(`/admin/movies/${record.movieId}`)}
             />
           </Tooltip>
           <Tooltip title="Edit">
