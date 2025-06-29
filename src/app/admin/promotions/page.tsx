@@ -40,14 +40,21 @@ import {
   PercentageOutlined,
 } from "@ant-design/icons";
 import { PromotionDto } from "@/types/Admin/promotion";
-// API functions available but using direct fetch for now
-// import {
-//   getAllPromotions,
-//   deletePromotion,
-//   activatePromotion,
-//   deactivatePromotion,
-//   getPromotionUsage
-// } from '@/api/admin/getAllPromotions';
+import {
+  getAllPromotions,
+  deletePromotion,
+  activatePromotion,
+  deactivatePromotion,
+  getPromotionUsage,
+  createPromotion,
+  updatePromotion,
+  uploadPromotionBanner,
+  updatePromotionBanner,
+  deletePromotionBanner,
+  type PromotionCreateRequest,
+  type PromotionUpdateRequest,
+  type PromotionSearchParams
+} from '@/api/admin/getAllPromotions';
 import { toast } from 'react-toastify';
 import Image from "next/image";
 
@@ -74,29 +81,33 @@ export default function ProfessionalPromotionManagement() {
   );
   const [form] = Form.useForm();
 
-  // Replace dữ liệu tĩnh bằng API call
+  // Fetch promotions using the API
   const [promotions, setPromotions] = useState<PromotionDto[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  
   const fetchPromotions = async (
     page = 0,
-    pageSize = 10,
+    size = 10,
     sortBy = "startDate",
-    sortDirection = "desc",
-    isActive = null
+    sortDirection: "ASC" | "DESC" = "DESC",
+    isActive: boolean | null = null
   ) => {
     try {
       setLoading(true);
-      let url = `http://localhost:8080/cinema/api/promotions?page=${page}&size=${pageSize}&sortBy=${sortBy}&sortDirection=${sortDirection}`;
+      
+      const params: PromotionSearchParams = {
+        page,
+        size,
+        sortBy,
+        sortDirection,
+        ...(isActive !== null && { isActive }),
+        ...(searchTerm && { search: searchTerm })
+      };
 
-      if (isActive !== null) {
-        url += `&isActive=${isActive}`;
-      }
-
-      const response = await fetch(url);
-      const data = await response.json();
-
-      setPromotions(data.content || []);
-      // setTotalCount(data.totalElements || 0); // We'll use filtered data length instead
+      const response = await getAllPromotions(params);
+      setPromotions(response.content || []);
+      setTotalCount(response.page?.totalElements || 0);
     } catch (error) {
       console.error("Error fetching promotions:", error);
       toast.error("Không thể tải danh sách khuyến mãi");
@@ -107,8 +118,8 @@ export default function ProfessionalPromotionManagement() {
 
   // Gọi API khi component mount hoặc các tham số thay đổi
   useEffect(() => {
-    fetchPromotions(currentPage - 1, pageSize, "startDate", "desc", null);
-  }, [currentPage, pageSize]);
+    fetchPromotions(currentPage - 1, pageSize, "startDate", "DESC", null);
+  }, [currentPage, pageSize, searchTerm]);
 
   // Filter and search logic
   const filteredData = useMemo(() => {
@@ -214,15 +225,7 @@ export default function ProfessionalPromotionManagement() {
   const handleBulkDelete = async () => {
     try {
       const promises = selectedPromotions.map((promotion) =>
-        fetch(
-          `http://localhost:8080/cinema/api/promotions/${promotion.promotionId}`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-            },
-          }
-        )
+        deletePromotion(promotion.promotionId)
       );
 
       await Promise.all(promises);
@@ -286,22 +289,8 @@ export default function ProfessionalPromotionManagement() {
 
   const handleDelete = async (record: PromotionDto) => {
     try {
-      const response = await fetch(
-        `http://localhost:8080/cinema/api/promotions/${record.promotionId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete promotion: ${response.status}`);
-      }
-
+      await deletePromotion(record.promotionId);
       message.success(`Deleted "${record.promotionName}" successfully`);
-
       // Refresh the data
       fetchPromotions(currentPage - 1, pageSize);
     } catch (error) {
@@ -500,137 +489,28 @@ export default function ProfessionalPromotionManagement() {
         );
       }
 
-      let response;
+      let result: PromotionDto;
       if (editingPromotion) {
-        // Cập nhật khuyến mãi
+        // Update existing promotion
         console.log(
           "Updating promotion with ID:",
           editingPromotion.promotionId
         );
-        response = await fetch(
-          `http://localhost:8080/cinema/api/promotions/${editingPromotion.promotionId}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify(payload),
-          }
-        );
+        result = await updatePromotion(editingPromotion.promotionId, payload as PromotionUpdateRequest);
       } else {
-        // Tạo khuyến mãi mới
+        // Create new promotion
         console.log("Creating new promotion");
-        response = await fetch("http://localhost:8080/cinema/api/promotions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify(payload),
-        });
-      }
-      if (!response.ok) {
-        let errorMessage = `Lỗi server: ${response.status} - ${response.statusText}`;
-        console.error("Request failed:", {
-          status: response.status,
-          statusText: response.statusText,
-          url: response.url,
-          method: editingPromotion ? "PUT" : "POST",
-          payload: payload,
-          headers: response.headers,
-        });
-
-        try {
-          const errorData = await response.text();
-          console.error("Server error response:", errorData);
-
-          // Try to parse as JSON for better error messages
-          if (errorData && errorData.trim()) {
-            try {
-              const errorJson = JSON.parse(errorData);
-              if (errorJson.message) {
-                errorMessage = errorJson.message;
-              } else if (errorJson.error) {
-                errorMessage = errorJson.error;
-              } else if (errorJson.details) {
-                errorMessage = errorJson.details;
-              } else if (typeof errorJson === "string") {
-                errorMessage = errorJson;
-              }
-            } catch {
-              // If not JSON, use the raw text if it's meaningful
-              if (errorData.length < 200) {
-                errorMessage = errorData;
-              }
-            }
-          }
-        } catch (e) {
-          console.error("Could not read error response:", e);
-        }
-
-        // Show specific error messages
-        if (response.status === 403) {
-          errorMessage =
-            "Bạn không có quyền thực hiện thao tác này. Vui lòng liên hệ admin để được cấp quyền.";
-        } else if (response.status === 401) {
-          errorMessage = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
-          // Optionally redirect to login
-          // window.location.href = '/login';
-        } else if (response.status === 400) {
-          errorMessage = `Dữ liệu gửi lên không hợp lệ: ${errorMessage}`;
-        } else if (response.status === 500) {
-          errorMessage = "Lỗi server nội bộ. Vui lòng thử lại sau.";
-        } else if (response.status === 404) {
-          errorMessage = "Không tìm thấy promotion cần chỉnh sửa.";
-        }
-
-        throw new Error(errorMessage);
+        result = await createPromotion(payload as PromotionCreateRequest);
       }
 
-      console.log("Response successful, parsing result...");
-      let result;
-      try {
-        const responseText = await response.text();
-        console.log("Raw response:", responseText);
+      console.log("API call successful, result:", result);
 
-        if (responseText) {
-          result = JSON.parse(responseText);
-        } else {
-          // If response is empty but successful, create a default result
-          result = {
-            promotionId: editingPromotion?.promotionId,
-            promotionCode: payload.promotionCode,
-            promotionName: payload.promotionName,
-          };
-        }        } catch (_parseError) {
-          console.error("Error parsing response:", _parseError);
-          // If we can't parse but response was ok, assume success
-          result = {
-            promotionId: editingPromotion?.promotionId,
-            promotionCode: payload.promotionCode,
-            promotionName: payload.promotionName,
-          };
-        }
-
-      console.log("Parsed result:", result);
-
-      // Upload banner nếu có
+      // Upload banner if provided
       if (values.banner && values.banner.length > 0) {
-        const bannerFormData = new FormData();
-        bannerFormData.append("banner", values.banner[0].originFileObj);
-
-        await fetch(
-          `http://localhost:8080/cinema/api/promotions/${result.promotionId}/banner`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-            },
-            body: bannerFormData,
-          }
-        );
+        const bannerFile = values.banner[0].originFileObj;
+        await uploadPromotionBanner(result.promotionId, bannerFile);
       }
+
       toast.success(
         editingPromotion
           ? `Cập nhật promotion thành công: ${
@@ -682,128 +562,59 @@ export default function ProfessionalPromotionManagement() {
       dataIndex: "promotionId",
       key: "promotionId",
       width: 60,
+      align: "center" as const,
       render: (_: unknown, record: PromotionDto, index: number) => (
-        <div className="text-center">
-          <span className="font-mono text-sm text-gray-500">
-            {(currentPage - 1) * pageSize + index + 1}
-          </span>
-        </div>
+        <span className="font-mono text-sm text-gray-500">
+          {(currentPage - 1) * pageSize + index + 1}
+        </span>
       ),
     },
     {
-      title: "Promotion Information",
-      key: "promotion_info",
-      width: 280,
+      title: "Promotion Name",
+      key: "promotion_name",
+      width: 200,
       render: (_: unknown, record: PromotionDto) => (
-        <div className="flex items-center gap-3">
-          {record.bannerUrl ? (
-            <Avatar
-              src={record.bannerUrl}
-              size={40}
-              className="flex-shrink-0"
-            />
-          ) : (
-            <Avatar
-              icon={<GiftOutlined />}
-              size={40}
-              className="bg-purple-100 text-purple-600 flex-shrink-0"
-            />
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="font-semibold text-gray-900 mb-1 truncate text-sm">
-              {record.promotionName}
-            </div>
-            <div className="text-xs text-gray-600 mb-1 truncate">
-              {record.description}
-            </div>{" "}
-            <div className="flex items-center gap-1 flex-wrap">
-              <Tag color="purple" className="text-xs m-0">
-                {record.promotionCode}
-              </Tag>
-              <Tag color="cyan" className="text-xs m-0">
-                {record.promotionTypeDisplay}
-              </Tag>
-              {record.isPointsPromotion && (
-                <Tag color="orange" className="text-xs m-0">
-                  {record.pointsDisplay}
-                </Tag>
-              )}
-              {record.memberOnly && (
-                <Tag color="green" className="text-xs m-0">
-                  Member Only
-                </Tag>
-              )}
-            </div>
+        <div>
+          <div className="font-medium text-gray-900 text-sm">
+            {record.promotionName}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            Code: {record.promotionCode}
           </div>
         </div>
       ),
     },
-    
     {
       title: "Discount",
       key: "discount",
       width: 120,
-      
-      render: (_: unknown, record: PromotionDto) => {
-        let displayValue;
-
-        if (record.discountType === "BUY_ONE_GET_ONE") {
-          displayValue = "BOGO";
-        } else if (record.discountType?.toLowerCase().includes("percentage")) {
-          displayValue = `${record.discountValue}%`;
-        } else {
-          // For FIXED_AMOUNT, format as VND
-          displayValue =
-            Number(record.discountValue).toLocaleString("vi-VN") + " ₫";
-        }
-
-        const colorMap = {
-          PERCENTAGE: "blue",
-          FIXED_AMOUNT: "green",
-          BUY_ONE_GET_ONE: "purple",
-        };
-
-        const labelMap = {
-          PERCENTAGE: "Percentage",
-          FIXED_AMOUNT: "Fixed Amount",
-          BUY_ONE_GET_ONE: "Buy One Get One",
-        };
-        return (
-          <div className="text-sm">
-            <div className="font-medium text-gray-900 mb-1">{displayValue}</div>
-            <Tag
-              color={colorMap[record.discountType] || "blue"}
-              className="text-xs"
-            >
-              {labelMap[record.discountType] || record.discountType}
-            </Tag>{" "}
-            {record.maxDiscountAmount && record.maxDiscountAmount > 0 && (
-              <div className="text-xs text-gray-500 mt-1">
-                Max: {Number(record.maxDiscountAmount).toLocaleString("vi-VN")}{" "}
-                ₫
-              </div>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      title: "Period",
-      key: "period",
-      width: 150,
+      align: "center" as const,
       render: (_: unknown, record: PromotionDto) => (
-        <div className="text-sm">
-          <div className="text-gray-900 mb-1">
-            {new Date(record.startDate).toLocaleDateString()}
+        <div className="text-center">
+          <div className="font-medium text-blue-600 text-sm">
+            {record.discountDisplay}
           </div>
           <div className="text-xs text-gray-500">
-            to {new Date(record.endDate).toLocaleDateString()}
+            {record.discountType === "PERCENTAGE" ? "Percentage" : 
+             record.discountType === "FIXED_AMOUNT" ? "Fixed Amount" : "BOGO"}
           </div>
-          {record.validityDisplay && (
-            <div className="text-xs text-blue-600 mt-1">
-              {record.validityDisplay}
-            </div>
-          )}
+        </div>
+      ),
+    },
+    {
+      title: "Validity Period",
+      key: "period",
+      width: 140,
+      align: "center" as const,
+      render: (_: unknown, record: PromotionDto) => (
+        <div className="text-center text-sm">
+          <div className="text-gray-900">
+            {new Date(record.startDate).toLocaleDateString('vi-VN')}
+          </div>
+          <div className="text-xs text-gray-500">to</div>
+          <div className="text-gray-900">
+            {new Date(record.endDate).toLocaleDateString('vi-VN')}
+          </div>
         </div>
       ),
     },
@@ -813,26 +624,24 @@ export default function ProfessionalPromotionManagement() {
       width: 100,
       align: "center" as const,
       render: (_: unknown, record: PromotionDto) => {
-        // Use the pre-calculated statusDisplay from backend
-        const status =
-          record.statusDisplay ||
-          (record.isExpired
-            ? "expired"
-            : record.isActive
-            ? "active"
-            : "inactive");
-
         let color = "default";
-        if (record.isActive && !record.isExpired) color = "success";
-        else if (record.isExpired) color = "error";
-        else color = "warning";
+        let text = "Inactive";
+        
+        if (record.isActive && !record.isExpired) {
+          color = "success";
+          text = "Active";
+        } else if (record.isExpired) {
+          color = "error";
+          text = "Expired";
+        }
+        
         return (
           <div className="text-center">
-            <Tag color={color} className="font-medium text-xs">
-              {status}
+            <Tag color={color} className="text-xs">
+              {text}
             </Tag>
             {record.isFeatured && (
-              <div className="text-xs text-orange-500 mt-1">Featured</div>
+              <div className="text-xs text-orange-500 mt-1">★ Featured</div>
             )}
           </div>
         );
@@ -840,55 +649,41 @@ export default function ProfessionalPromotionManagement() {
     },
     {
       title: "Usage",
-      dataIndex: "currentUsageCount",
-      key: "currentUsageCount",
+      key: "usage",
       width: 80,
       align: "center" as const,
-      render: (count: number, record: PromotionDto) => (
-        <div className="text-center">
-          <div className="text-sm font-medium">{count || 0}</div>
-          <div className="text-xs text-gray-500">
-            {record.usageDisplay || `${count || 0} times`}
-          </div>
-          {record.remainingUsage && record.remainingUsage !== 2147483647 && (
-            <div className="text-xs text-blue-600">
-              {record.remainingUsage} left
-            </div>
-          )}
+      render: (_: unknown, record: PromotionDto) => (
+        <div className="text-center text-sm">
+          <div className="font-medium">{record.currentUsageCount || 0}</div>
+          <div className="text-xs text-gray-500">times</div>
         </div>
       ),
     },
     {
       title: "Min Purchase",
-      dataIndex: "minPurchaseAmount",
-      key: "minPurchaseAmount",
-      width: 100,
+      key: "min_purchase",
+      width: 110,
       align: "right" as const,
-      render: (value: number) => (
-        <div className="text-right">
-          {" "}
-          <span className="font-mono text-sm">
-            {value && value > 0
-              ? `${Number(value).toLocaleString("vi-VN")} ₫`
-              : "None"}
-          </span>
+      render: (_: unknown, record: PromotionDto) => (
+        <div className="text-right text-sm">
+          {record.minPurchaseAmount && record.minPurchaseAmount > 0
+            ? `${Number(record.minPurchaseAmount).toLocaleString("vi-VN")}₫`
+            : "No minimum"}
         </div>
       ),
     },
     {
-      title: "Membership",
-      key: "membership",
-      width: 120,
+      title: "Type",
+      key: "type",
+      width: 100,
+      align: "center" as const,
       render: (_: unknown, record: PromotionDto) => (
-        <div className="text-sm">
-          <div className="text-gray-900 mb-1">
-            {record.membershipDisplay ||
-              (record.memberOnly ? "Members Only" : "All Users")}
-          </div>
-          {record.applicabilityDisplay && (
-            <div className="text-xs text-gray-500">
-              {record.applicabilityDisplay}
-            </div>
+        <div className="text-center">
+          <Tag color={record.memberOnly ? "green" : "blue"} className="text-xs">
+            {record.memberOnly ? "Members" : "Public"}
+          </Tag>
+          {record.isPointsPromotion && (
+            <div className="text-xs text-purple-600 mt-1">Points</div>
           )}
         </div>
       ),
@@ -942,15 +737,12 @@ export default function ProfessionalPromotionManagement() {
   ];
 
   return (
-    <div className="min-h-screen transition-colors duration-200">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Statistics Cards */}
         <Row gutter={[16, 16]} className="mb-6">
           <Col xs={12} sm={12} lg={6}>
-            <Card
-              className="text-center border-0 shadow-sm h-32 flex flex-col justify-center"
-              size="small"
-            >
+            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center">
               <Statistic
                 title="Total Promotions"
                 value={statistics.totalPromotions}
@@ -960,10 +752,7 @@ export default function ProfessionalPromotionManagement() {
             </Card>
           </Col>
           <Col xs={12} sm={12} lg={6}>
-            <Card
-              className="text-center border-0 shadow-sm h-32 flex flex-col justify-center"
-              size="small"
-            >
+            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center">
               <Statistic
                 title="Active Promotions"
                 value={statistics.activePromotions}
@@ -971,13 +760,9 @@ export default function ProfessionalPromotionManagement() {
                 valueStyle={{ color: "#52c41a", fontSize: "1.5rem" }}
               />
             </Card>
-          </Col>{" "}
-          
+          </Col>
           <Col xs={12} sm={12} lg={6}>
-            <Card
-              className="text-center border-0 shadow-sm h-32 flex flex-col justify-center"
-              size="small"
-            >
+            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center">
               <Statistic
                 title="Points Promotions"
                 value={statistics.pointsPromotions}
@@ -987,10 +772,7 @@ export default function ProfessionalPromotionManagement() {
             </Card>
           </Col>
           <Col xs={12} sm={12} lg={6}>
-            <Card
-              className="text-center border-0 shadow-sm h-32 flex flex-col justify-center"
-              size="small"
-            >
+            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center">
               <Statistic
                 title="Featured Promotions"
                 value={statistics.featuredPromotions}
@@ -1001,53 +783,33 @@ export default function ProfessionalPromotionManagement() {
           </Col>
         </Row>
 
-        {/* Main Content Card */}        
-        <Card
-          className="shadow-sm border-0"
-          styles={{ body: { padding: 0 } }}
-          style={{ borderRadius: 16 }}
-        >
+        {/* Main Content Card */}
+        <Card className="shadow-sm border-0" styles={{ body: { padding: 0 } }}>
           {/* Header Section */}
           <div className="px-6 py-5 border-b border-gray-100 bg-white flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
             <div>
-              <Title
-                level={2}
-                className="m-0 text-gray-900 text-xl xl:text-2xl"
-              >
+              <Title level={2} className="m-0 text-gray-900 text-xl xl:text-2xl">
                 Promotion Management
               </Title>
               <Text type="secondary" className="text-sm xl:text-base">
                 Manage and organize your cinema&apos;s promotional campaigns
               </Text>
-            </div>{" "}
-            
+            </div>
             <div className="flex items-center gap-3">
-              {" "}
-              
-            {selectedRowKeys.length > 0 && (
-                <Space>
-                  <Popconfirm
-                    title="Bulk Delete"
-                    description={`Delete ${selectedRowKeys.length} selected promotions? This action cannot be undone.`}
-                    onConfirm={handleBulkDelete}
-                    okText="Delete"
-                    cancelText="Cancel"
-                    okButtonProps={{ danger: true }}
-                  >
-                    <Button size="small" danger>
-                      Delete Selected ({selectedRowKeys.length})
-                    </Button>
-                  </Popconfirm>
-                </Space>
+              {selectedRowKeys.length > 0 && (
+                <Popconfirm
+                  title="Bulk Delete"
+                  description={`Delete ${selectedRowKeys.length} selected promotions? This action cannot be undone.`}
+                  onConfirm={handleBulkDelete}
+                  okText="Delete"
+                  cancelText="Cancel"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button size="small" danger>
+                    Delete Selected ({selectedRowKeys.length})
+                  </Button>
+                </Popconfirm>
               )}
-              <Button
-                icon={<ReloadOutlined />}
-                size="middle"
-                className="border-gray-300 text-gray-600 hover:border-blue-500 hover:text-blue-500"
-                onClick={() => fetchPromotions(currentPage - 1, pageSize)}
-              >
-                Refresh
-              </Button>
               <Button
                 size="middle"
                 className="border-gray-300 text-gray-600 hover:border-green-500 hover:text-green-500"
@@ -1059,14 +821,14 @@ export default function ProfessionalPromotionManagement() {
                 type="primary"
                 icon={<PlusOutlined />}
                 size="middle"
-                className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
+                className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm"
                 onClick={handleAdd}
               >
                 Add New Promotion
               </Button>
             </div>
-          </div>{" "}
-          
+          </div>
+
           {/* Filters Section */}
           <div className="px-6 py-5 bg-gray-50 border-b border-gray-100">
             <Row gutter={[12, 12]}>
@@ -1087,6 +849,7 @@ export default function ProfessionalPromotionManagement() {
                   size="middle"
                   onClick={() => {
                     setSearchTerm("");
+                    fetchPromotions(0, pageSize);
                   }}
                 >
                   Reset
@@ -1094,17 +857,16 @@ export default function ProfessionalPromotionManagement() {
               </Col>
             </Row>
           </div>
+
           {/* Table Section */}
           <div className="bg-white">
-            {" "}
-            
-          <Table
+            <Table
               dataSource={filteredData}
               columns={columns}
               pagination={false}
-              scroll={{ x: 1200 }}
+              scroll={{ x: 1000 }}
               className="professional-table"
-              size="small"
+              size="middle"
               loading={loading}
               rowSelection={{
                 selectedRowKeys,
@@ -1121,17 +883,18 @@ export default function ProfessionalPromotionManagement() {
               }}
               rowKey="promotionId"
             />
+            
             {/* Pagination */}
             <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <Text type="secondary" className="text-sm">
                 Showing {(currentPage - 1) * pageSize + 1} to{" "}
-                {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-                {filteredData.length} promotions
+                {Math.min(currentPage * pageSize, totalCount)} of{" "}
+                {totalCount} promotions
               </Text>
               <Pagination
                 current={currentPage}
                 pageSize={pageSize}
-                total={filteredData.length}
+                total={totalCount}
                 onChange={(page, size) => {
                   setCurrentPage(page);
                   setPageSize(size);
@@ -1139,8 +902,7 @@ export default function ProfessionalPromotionManagement() {
                 showSizeChanger
                 showQuickJumper={false}
                 pageSizeOptions={["5", "10", "20", "50"]}
-                className="professional-pagination"
-                size="small"
+                size="default"
               />
             </div>
           </div>
@@ -1795,15 +1557,6 @@ export default function ProfessionalPromotionManagement() {
         .professional-table .ant-table-thead > tr > th {
           font-weight: 600;
           border-bottom: 2px solid var(--ant-color-border);
-        }
-
-        .professional-pagination .ant-pagination-item-active {
-          background: var(--ant-color-primary);
-          border-color: var(--ant-color-primary);
-        }
-
-        .professional-pagination .ant-pagination-item-active a {
-          color: white;
         }
 
         .professional-modal .ant-modal-header {

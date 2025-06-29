@@ -49,11 +49,18 @@ export default function UserDropdown({ user }: { user: User }) {
             label: "Logout",            onClick: () => {
               Logout_API()
                 .then(() => {
-                  // Clear localStorage
+                  // Comprehensive cleanup of all authentication data
+                  
+                  // Clear all localStorage auth data
                   localStorage.removeItem("accessToken");
+                  localStorage.removeItem("access_token");
+                  localStorage.removeItem("authToken");
                   localStorage.removeItem("userInfo");
                   
-                  // Clear cookies for middleware-based protection
+                  // Clear sessionStorage auth data
+                  sessionStorage.removeItem("accessToken");
+                  
+                  // Clear all auth cookies
                   clearAuthCookies();
                   
                   // Update Redux store
@@ -63,7 +70,16 @@ export default function UserDropdown({ user }: { user: User }) {
                   router.push(ROUTES.HOME);
                 })
                 .catch((error) => {
-                  console.error("Logout failed:", error);
+                  console.error("Logout API failed:", error);
+                  // Still perform cleanup even if API fails
+                  localStorage.removeItem("accessToken");
+                  localStorage.removeItem("access_token");
+                  localStorage.removeItem("authToken");
+                  localStorage.removeItem("userInfo");
+                  sessionStorage.removeItem("accessToken");
+                  clearAuthCookies();
+                  dispatch(logout());
+                  router.push(ROUTES.HOME);
                 });
             },
           },

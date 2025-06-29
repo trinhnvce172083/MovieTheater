@@ -1,18 +1,90 @@
-import axiosClient from '../axiosClient';
-import { 
-  Promotion, 
-  PromotionCreateRequest, 
-  PromotionUpdateRequest, 
-  PromotionSearchParams,
-  PromotionValidationRequest,
-  PromotionValidationResponse,
-  PromotionUsageResponse
-} from '../../types/Admin/promotion';
+import axiosClient from "@/api/axiosClient";
+import { PromotionDto } from "@/types/Admin/promotion";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8082/cinema';
+// Types for API requests and responses
+export interface PromotionCreateRequest {
+  promotionCode: string;
+  promotionName: string;
+  description: string;
+  promotionType: "PUBLIC" | "POINT_BASED";
+  discountType: "PERCENTAGE" | "FIXED_AMOUNT" | "BUY_ONE_GET_ONE";
+  discountValue: number;
+  maxDiscountAmount?: number;
+  minPurchaseAmount?: number;
+  startDate: string; // YYYY-MM-DD format
+  endDate: string; // YYYY-MM-DD format
+  isActive: boolean;
+  maxUsageCount?: number;
+  maxUsagePerUser?: number;
+  applicableDays?: "ALL" | "WEEKDAYS" | "WEEKENDS";
+  applicableTimes?: string; // "MORNING,AFTERNOON,EVENING" or specific combinations
+  applicableMovies?: string; // Comma-separated movie IDs
+  applicableRooms?: string; // Comma-separated room IDs
+  memberOnly: boolean;
+  membershipLevels?: string; // "BRONZE,SILVER,GOLD,PLATINUM"
+  isFeatured?: boolean;
+  displayOrder?: number;
+  // Point-based fields
+  pointsRequired?: number;
+  pointsValue?: number;
+  codeValidityHours?: number;
+  maxCodesPerUser?: number;
+}
+
+export interface PromotionUpdateRequest extends Partial<PromotionCreateRequest> {}
+
+export interface PromotionSearchParams {
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  sortDirection?: "ASC" | "DESC";
+  isActive?: boolean;
+  promotionType?: "PUBLIC" | "POINT_BASED";
+  discountType?: "PERCENTAGE" | "FIXED_AMOUNT" | "BUY_ONE_GET_ONE";
+  memberOnly?: boolean;
+  isFeatured?: boolean;
+  search?: string;
+}
+
+export interface PromotionListResponse {
+  content: PromotionDto[];
+  page: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
+export interface PromotionValidationRequest {
+  code: string;
+  orderAmount: number;
+}
+
+export interface PromotionValidationResponse {
+  isValid: boolean;
+  promotion?: PromotionDto;
+  discountAmount?: number;
+  message?: string;
+}
+
+export interface PromotionUsageResponse {
+  promotionId: number;
+  currentUsage: number;
+  maxUsage?: number;
+  userUsage?: number;
+  maxUserUsage?: number;
+  remainingUsage?: number;
+}
+
+export interface BannerUploadResponse {
+  code: number;
+  message: string;
+  data: string; // Banner URL
+}
 
 // Get all promotions with pagination and filters
-export const getAllPromotions = async (params: PromotionSearchParams = {}) => {
+export const getAllPromotions = async (params: PromotionSearchParams = {}): Promise<PromotionListResponse> => {
   try {
     const queryParams = new URLSearchParams();
     
@@ -27,7 +99,7 @@ export const getAllPromotions = async (params: PromotionSearchParams = {}) => {
     if (params.isFeatured !== undefined) queryParams.append('isFeatured', params.isFeatured.toString());
     if (params.search) queryParams.append('search', params.search);
 
-    const response = await axiosClient.get(`${API_BASE_URL}/api/promotions?${queryParams.toString()}`);
+    const response = await axiosClient.get(`/promotions?${queryParams.toString()}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching promotions:', error);
@@ -36,9 +108,9 @@ export const getAllPromotions = async (params: PromotionSearchParams = {}) => {
 };
 
 // Get promotion by ID
-export const getPromotionById = async (id: number): Promise<Promotion> => {
+export const getPromotionById = async (id: number): Promise<PromotionDto> => {
   try {
-    const response = await axiosClient.get(`${API_BASE_URL}/api/promotions/${id}`);
+    const response = await axiosClient.get(`/promotions/${id}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching promotion:', error);
@@ -47,9 +119,9 @@ export const getPromotionById = async (id: number): Promise<Promotion> => {
 };
 
 // Get promotion by code
-export const getPromotionByCode = async (code: string): Promise<Promotion> => {
+export const getPromotionByCode = async (code: string): Promise<PromotionDto> => {
   try {
-    const response = await axiosClient.get(`${API_BASE_URL}/api/promotions/code/${code}`);
+    const response = await axiosClient.get(`/promotions/code/${code}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching promotion by code:', error);
@@ -58,9 +130,9 @@ export const getPromotionByCode = async (code: string): Promise<Promotion> => {
 };
 
 // Create new promotion
-export const createPromotion = async (promotionData: PromotionCreateRequest): Promise<Promotion> => {
+export const createPromotion = async (promotionData: PromotionCreateRequest): Promise<PromotionDto> => {
   try {
-    const response = await axiosClient.post(`${API_BASE_URL}/api/promotions`, promotionData);
+    const response = await axiosClient.post(`/promotions`, promotionData);
     return response.data;
   } catch (error) {
     console.error('Error creating promotion:', error);
@@ -69,9 +141,9 @@ export const createPromotion = async (promotionData: PromotionCreateRequest): Pr
 };
 
 // Update promotion
-export const updatePromotion = async (id: number, promotionData: PromotionUpdateRequest): Promise<Promotion> => {
+export const updatePromotion = async (id: number, promotionData: PromotionUpdateRequest): Promise<PromotionDto> => {
   try {
-    const response = await axiosClient.put(`${API_BASE_URL}/api/promotions/${id}`, promotionData);
+    const response = await axiosClient.put(`/promotions/${id}`, promotionData);
     return response.data;
   } catch (error) {
     console.error('Error updating promotion:', error);
@@ -82,7 +154,7 @@ export const updatePromotion = async (id: number, promotionData: PromotionUpdate
 // Delete promotion
 export const deletePromotion = async (id: number): Promise<void> => {
   try {
-    await axiosClient.delete(`${API_BASE_URL}/api/promotions/${id}`);
+    await axiosClient.delete(`/promotions/${id}`);
   } catch (error) {
     console.error('Error deleting promotion:', error);
     throw error;
@@ -90,9 +162,9 @@ export const deletePromotion = async (id: number): Promise<void> => {
 };
 
 // Get active promotions
-export const getActivePromotions = async (): Promise<Promotion[]> => {
+export const getActivePromotions = async (): Promise<PromotionDto[]> => {
   try {
-    const response = await axiosClient.get(`${API_BASE_URL}/api/promotions/active`);
+    const response = await axiosClient.get(`/promotions/active`);
     return response.data;
   } catch (error) {
     console.error('Error fetching active promotions:', error);
@@ -101,9 +173,9 @@ export const getActivePromotions = async (): Promise<Promotion[]> => {
 };
 
 // Get promotions by type
-export const getPromotionsByType = async (type: string): Promise<Promotion[]> => {
+export const getPromotionsByType = async (type: string): Promise<PromotionDto[]> => {
   try {
-    const response = await axiosClient.get(`${API_BASE_URL}/api/promotions/type/${type}`);
+    const response = await axiosClient.get(`/promotions/type/${type}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching promotions by type:', error);
@@ -114,7 +186,7 @@ export const getPromotionsByType = async (type: string): Promise<Promotion[]> =>
 // Validate promotion code
 export const validatePromotionCode = async (request: PromotionValidationRequest): Promise<PromotionValidationResponse> => {
   try {
-    const response = await axiosClient.post(`${API_BASE_URL}/api/promotions/validate`, request);
+    const response = await axiosClient.post(`/promotions/validate`, request);
     return response.data;
   } catch (error) {
     console.error('Error validating promotion code:', error);
@@ -125,7 +197,7 @@ export const validatePromotionCode = async (request: PromotionValidationRequest)
 // Get promotion usage statistics
 export const getPromotionUsage = async (id: number): Promise<PromotionUsageResponse> => {
   try {
-    const response = await axiosClient.get(`${API_BASE_URL}/api/promotions/usage/${id}`);
+    const response = await axiosClient.get(`/promotions/usage/${id}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching promotion usage:', error);
@@ -134,9 +206,9 @@ export const getPromotionUsage = async (id: number): Promise<PromotionUsageRespo
 };
 
 // Get expiring promotions
-export const getExpiringPromotions = async (days: number = 7): Promise<Promotion[]> => {
+export const getExpiringPromotions = async (days: number = 7): Promise<PromotionDto[]> => {
   try {
-    const response = await axiosClient.get(`${API_BASE_URL}/api/promotions/expiring?days=${days}`);
+    const response = await axiosClient.get(`/promotions/expiring?days=${days}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching expiring promotions:', error);
@@ -145,9 +217,9 @@ export const getExpiringPromotions = async (days: number = 7): Promise<Promotion
 };
 
 // Activate promotion
-export const activatePromotion = async (id: number): Promise<Promotion> => {
+export const activatePromotion = async (id: number): Promise<PromotionDto> => {
   try {
-    const response = await axiosClient.post(`${API_BASE_URL}/api/promotions/${id}/activate`);
+    const response = await axiosClient.post(`/promotions/${id}/activate`);
     return response.data;
   } catch (error) {
     console.error('Error activating promotion:', error);
@@ -156,9 +228,9 @@ export const activatePromotion = async (id: number): Promise<Promotion> => {
 };
 
 // Deactivate promotion
-export const deactivatePromotion = async (id: number): Promise<Promotion> => {
+export const deactivatePromotion = async (id: number): Promise<PromotionDto> => {
   try {
-    const response = await axiosClient.post(`${API_BASE_URL}/api/promotions/${id}/deactivate`);
+    const response = await axiosClient.post(`/promotions/${id}/deactivate`);
     return response.data;
   } catch (error) {
     console.error('Error deactivating promotion:', error);
@@ -167,9 +239,9 @@ export const deactivatePromotion = async (id: number): Promise<Promotion> => {
 };
 
 // Get movie-specific promotions
-export const getMoviePromotions = async (movieId: number): Promise<Promotion[]> => {
+export const getMoviePromotions = async (movieId: number): Promise<PromotionDto[]> => {
   try {
-    const response = await axiosClient.get(`${API_BASE_URL}/api/promotions/movie/${movieId}`);
+    const response = await axiosClient.get(`/promotions/movie/${movieId}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching movie promotions:', error);
@@ -178,9 +250,9 @@ export const getMoviePromotions = async (movieId: number): Promise<Promotion[]> 
 };
 
 // Get user eligible promotions
-export const getUserEligiblePromotions = async (): Promise<Promotion[]> => {
+export const getUserEligiblePromotions = async (): Promise<PromotionDto[]> => {
   try {
-    const response = await axiosClient.get(`${API_BASE_URL}/api/promotions/user-eligible`);
+    const response = await axiosClient.get(`/promotions/user-eligible`);
     return response.data;
   } catch (error) {
     console.error('Error fetching user eligible promotions:', error);
@@ -189,13 +261,13 @@ export const getUserEligiblePromotions = async (): Promise<Promotion[]> => {
 };
 
 // Upload promotion banner
-export const uploadPromotionBanner = async (id: number, bannerFile: File): Promise<{ url: string }> => {
+export const uploadPromotionBanner = async (id: number, bannerFile: File): Promise<BannerUploadResponse> => {
   try {
     const formData = new FormData();
     formData.append('banner', bannerFile);
 
     const response = await axiosClient.post(
-      `${API_BASE_URL}/api/promotions/${id}/banner`,
+      `/promotions/${id}/banner`,
       formData,
       {
         headers: {
@@ -211,13 +283,13 @@ export const uploadPromotionBanner = async (id: number, bannerFile: File): Promi
 };
 
 // Update promotion banner
-export const updatePromotionBanner = async (id: number, bannerFile: File): Promise<{ url: string }> => {
+export const updatePromotionBanner = async (id: number, bannerFile: File): Promise<BannerUploadResponse> => {
   try {
     const formData = new FormData();
     formData.append('banner', bannerFile);
 
     const response = await axiosClient.put(
-      `${API_BASE_URL}/api/promotions/${id}/banner`,
+      `/promotions/${id}/banner`,
       formData,
       {
         headers: {
@@ -235,7 +307,7 @@ export const updatePromotionBanner = async (id: number, bannerFile: File): Promi
 // Get promotion banner URL
 export const getPromotionBannerUrl = async (id: number): Promise<string> => {
   try {
-    const response = await axiosClient.get(`${API_BASE_URL}/api/promotions/${id}/banner`);
+    const response = await axiosClient.get(`/promotions/${id}/banner`);
     return response.data.data;
   } catch (error) {
     console.error('Error fetching promotion banner URL:', error);
@@ -246,7 +318,7 @@ export const getPromotionBannerUrl = async (id: number): Promise<string> => {
 // Delete promotion banner
 export const deletePromotionBanner = async (id: number): Promise<boolean> => {
   try {
-    const response = await axiosClient.delete(`${API_BASE_URL}/api/promotions/${id}/banner`);
+    const response = await axiosClient.delete(`/promotions/${id}/banner`);
     return response.data.data;
   } catch (error) {
     console.error('Error deleting promotion banner:', error);
@@ -257,7 +329,7 @@ export const deletePromotionBanner = async (id: number): Promise<boolean> => {
 // Check if promotion has banner
 export const hasPromotionBanner = async (id: number): Promise<boolean> => {
   try {
-    const response = await axiosClient.get(`${API_BASE_URL}/api/promotions/${id}/banner/exists`);
+    const response = await axiosClient.get(`/promotions/${id}/banner/exists`);
     return response.data.data;
   } catch (error) {
     console.error('Error checking promotion banner:', error);

@@ -4,8 +4,7 @@ import { Bell, UserCircle } from "lucide-react";
 import Image from "next/image";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import ROUTES from "@/constants/routes";
-import { Logout_API } from "@/api/auth/Logout_API";
-import nookies from "nookies";
+import { performLogout } from "@/utils/authLogout";
 import { useRouter } from "next/navigation";
 
 export default function AdminHeader() {
@@ -13,13 +12,15 @@ export default function AdminHeader() {
 
   const handleLogout = async () => {
     try {
-      await Logout_API();
+      // Use the centralized logout function
+      await performLogout();
+      
+      // Force redirect to login page with a complete page reload
+      window.location.href = ROUTES.LOGIN;
     } catch (error) {
-      console.error("Logout failed:", error);
-    } finally {
-      nookies.destroy(null, "accessToken");
-      localStorage.removeItem("userInfo");
-      router.push(ROUTES.LOGIN);
+      console.error("Complete logout failed:", error);
+      // Fallback: force redirect anyway
+      window.location.href = ROUTES.LOGIN;
     }
   };
 
