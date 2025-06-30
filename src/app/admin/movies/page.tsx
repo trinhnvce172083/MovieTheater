@@ -365,9 +365,9 @@ export default function ProfessionalMovieManagement() {
       width: 80,
       render: (rating: string) => (
         <div className="text-center">
-          <Tag color="orange" className="text-xs">
+          <div className="text-sm text-gray-900">
             {rating}
-          </Tag>
+          </div>
         </div>
       ),
     },
@@ -379,22 +379,12 @@ export default function ProfessionalMovieManagement() {
       align: "center" as const,
       render: (status: string) => (
         <div className="text-center">
-          <Tag
-            color={
-              status === "NOW_SHOWING" 
-                ? "success" 
-                : status === "COMING_SOON" 
-                ? "processing" 
-                : "default"
-            }
-            className="font-medium text-xs"
-          >
+          <div className="text-sm text-gray-900">
             {status === "NOW_SHOWING" ? "Now Showing" : 
              status === "COMING_SOON" ? "Coming Soon" : 
              status === "ENDED" ? "Ended" : status}
-          </Tag>
+          </div>
         </div>
-        
       ),
     },
     {

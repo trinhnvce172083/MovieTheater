@@ -11,16 +11,20 @@ import {
 import AppBarChart from "@/components/AppBarChart";
 import { getAllUsers } from "@/api/admin/getAllUsers";
 import { getMovies } from "@/api/admin/getAllMovies";
+import { getAllPromotions } from "@/api/admin/getAllPromotions";
+import axiosClient from "@/api/axiosClient";
 
 export default function AdminDashboard() {
   const [totalUsers, setTotalUsers] = useState<number | null>(null);
   const [totalMovies, setTotalMovies] = useState<number | null>(null);
+  const [totalRooms, setTotalRooms] = useState<number | null>(null);
+  const [totalPromotions, setTotalPromotions] = useState<number | null>(null);
   // Mock data - in a real application, this would come from an API
   const stats = {
     totalUsers: totalUsers,
     totalMovies: totalMovies !== null ? totalMovies : "...",
-    totalShowtimes: 789,
-    totalRevenue: 98765,
+    totalRooms: totalRooms !== null ? totalRooms : "...",
+    totalPromotions: totalPromotions !== null ? totalPromotions : "...",
   };
 
   
@@ -64,6 +68,52 @@ export default function AdminDashboard() {
     fetchTotalMovies();
   }, []);
 
+  //Take all rooms from the API
+  useEffect(() => {
+    async function fetchTotalRooms() {
+      try {
+        const response = await axiosClient.get('/cinema-rooms', {
+          params: {
+            page: 0,
+            size: 100,
+            sortBy: 'cinemaRoomName',
+            sortDirection: 'asc'
+          }
+        });
+        if (typeof response.data.page?.totalElements === "number") {
+          setTotalRooms(response.data.page.totalElements);
+        } else if (response.data.content && Array.isArray(response.data.content)) {
+          setTotalRooms(response.data.content.length);
+        }
+      } catch {
+        setTotalRooms(null);
+      }
+    }
+    fetchTotalRooms();
+  }, []);
+
+  //Take all promotions from the API
+  useEffect(() => {
+    async function fetchTotalPromotions() {
+      try {
+        const data = await getAllPromotions({
+          page: 0,
+          size: 100,
+          sortBy: "promotionName",
+          sortDirection: "ASC",
+        });
+        if (typeof data.page?.totalElements === "number") {
+          setTotalPromotions(data.page.totalElements);
+        } else if (data.content && Array.isArray(data.content)) {
+          setTotalPromotions(data.content.length);
+        }
+      } catch {
+        setTotalPromotions(null);
+      }
+    }
+    fetchTotalPromotions();
+  }, []);
+
   return (
     <div>
       <div className="flex items-center gap-4 mb-8">
@@ -97,8 +147,8 @@ export default function AdminDashboard() {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Total Showtimes"
-              value={stats.totalShowtimes}
+              title="Total Rooms"
+              value={stats.totalRooms}
               prefix={<ClockCircleOutlined />}
               valueStyle={{ color: "#722ed1" }}
             />
@@ -108,11 +158,10 @@ export default function AdminDashboard() {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Total Revenue"
-              value={stats.totalRevenue}
+              title="Total Promotions"
+              value={stats.totalPromotions}
               prefix={<DollarOutlined />}
               valueStyle={{ color: "#cf1322" }}
-              formatter={(value) => `$${value.toLocaleString()}`}
             />
           </Card>
         </Col>

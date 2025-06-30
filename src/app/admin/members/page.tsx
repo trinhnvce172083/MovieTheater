@@ -15,7 +15,6 @@ import {
   Modal,
   Form,
   DatePicker,
-  Tag,
   Row,
   Col,
   Typography,
@@ -493,17 +492,11 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
       key: "type",
       width: 100,
       render: (type: string) => (
-        <Tag
-          color={
-            type === "ADMIN" ? "red" : 
-            type === "STAFF" ? "purple" : 
-            type === "EMPLOYEE" ? "orange" : 
-            "blue"
-          }
-          className="text-xs m-0"
-        >
-          {type}
-        </Tag>
+        <div>
+          <div className="text-sm text-gray-900">
+            {type}
+          </div>
+        </div>
       ),
     },
     {
@@ -513,12 +506,11 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
       width: 90,
       align: "center" as const,
       render: (status: string) => (
-        <Tag
-          color={status === "active" ? "success" : "default"}
-          className="font-medium text-xs"
-        >
-          {status === "active" ? "Active" : "Inactive"}
-        </Tag>
+        <div className="text-center">
+          <div className="text-sm text-gray-900">
+            {status === "active" ? "Active" : "Inactive"}
+          </div>
+        </div>
       ),
     },    {
       title: "Actions",

@@ -582,11 +582,6 @@ export default function CinemaRoomManagement() {
                 <Title level={2} className="m-0 text-gray-900 text-xl xl:text-2xl">
                   Room Management
                 </Title>
-                {backendStatus === 'connected' && (
-                  <Tag color="green" className="text-xs">
-                    API Connected
-                  </Tag>
-                )}
                 {backendStatus === 'disconnected' && (
                   <Tag color="orange" className="text-xs">
                     Demo Mode
