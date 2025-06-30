@@ -38,7 +38,7 @@ import {
 } from "@ant-design/icons";
 import { getAllUsers } from "@/api/admin/getAllUsers";
 import { debugAuthStatus } from "@/utils/authDebug";
-import { getAuthTokenFromCookies } from "@/utils/authCookies";
+
 import axiosClient from "@/api/axiosClient";
 import { useRouter } from "next/navigation";
 
@@ -179,7 +179,7 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
                  localStorage.getItem('access_token') || 
                  localStorage.getItem('authToken') ||
                  sessionStorage.getItem('accessToken') ||
-                 getAuthTokenFromCookies(); // Add cookies check
+                 
     
     console.log('🔍 Auth check - Token found:', token ? 'YES' : 'NO');
     if (token) {
@@ -188,7 +188,7 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
         localStorage.getItem("access_token") ? "localStorage(access_token)" :
         localStorage.getItem("authToken") ? "localStorage(authToken)" :
         sessionStorage.getItem("accessToken") ? "sessionStorage(accessToken)" :
-        getAuthTokenFromCookies() ? "cookies(authToken)" : "unknown");
+        
       console.log('Token preview:', token.substring(0, 20) + '...');
     }
     

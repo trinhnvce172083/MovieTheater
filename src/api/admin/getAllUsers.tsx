@@ -1,5 +1,5 @@
 import axiosClient from "../axiosClient";
-import { getAuthTokenFromCookies } from "@/utils/authCookies";
+
 
 export interface ApiUser {
   accountId: number;
@@ -130,7 +130,7 @@ export const getAllUsers = async (): Promise<UsersResponse> => {
                  localStorage.getItem("access_token") || 
                  localStorage.getItem("authToken") ||
                  sessionStorage.getItem("accessToken") ||
-                 getAuthTokenFromCookies(); // Add cookies check
+            
     
     console.log("Access token:", token ? "Present" : "Missing");
     if (token) {
@@ -139,7 +139,7 @@ export const getAllUsers = async (): Promise<UsersResponse> => {
         localStorage.getItem("access_token") ? "localStorage(access_token)" :
         localStorage.getItem("authToken") ? "localStorage(authToken)" :
         sessionStorage.getItem("accessToken") ? "sessionStorage(accessToken)" :
-        getAuthTokenFromCookies() ? "cookies(authToken)" : "unknown");
+  
       console.log("Token preview:", token.substring(0, 20) + "...");
     }
     

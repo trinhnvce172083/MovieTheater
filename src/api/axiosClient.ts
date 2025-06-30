@@ -1,9 +1,7 @@
 import axios from "axios";
 import { store } from "@/store";
-import { logout } from "@/store/slices/authSlice";
-import { clearAuthCookies, getAuthTokenFromCookies } from "@/utils/authCookies";
-import { performLogout } from "@/utils/authLogout";
-import { getAuthTokenFromCookies } from "@/utils/authCookies";
+import { login, logout } from "@/store/slices/authSlice";
+import { refreshToken } from "@/api/auth/Refresh_Token_API";
 
 const axiosClient = axios.create({
   baseURL: "http://localhost:8080/cinema/api",
@@ -15,50 +13,49 @@ const axiosClient = axios.create({
 // Thêm interceptor để tự động gắn token vào header
 axiosClient.interceptors.request.use(
   (config) => {
-    // Check multiple possible token locations including cookies
-    const token = getAuthTokenFromCookies() || 
-                 localStorage.getItem("access_token") || 
-                 localStorage.getItem("authToken") ||
-                 sessionStorage.getItem("accessToken") ||
-                 getAuthTokenFromCookies(); // Add cookies check
-    
+    const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('Token attached to request from:', 
-        localStorage.getItem("accessToken") ? 'localStorage(accessToken)' :
-        localStorage.getItem("access_token") ? 'localStorage(access_token)' :
-        localStorage.getItem("authToken") ? 'localStorage(authToken)' :
-        sessionStorage.getItem("accessToken") ? 'sessionStorage(accessToken)' :
-        getAuthTokenFromCookies() ? 'cookies(authToken)' : 'unknown');
-      console.log('Token preview:', token.substring(0, 20) + '...');
-    } else {
-      console.log('No token found in localStorage, sessionStorage, or cookies');
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Xử lý lỗi response
+// Xử lý lỗi response và tự động refresh token
 axiosClient.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    // Kiểm tra nếu lỗi là Unauthorized (401)
-    if (error.response && error.response.status === 401) {
-      console.warn('🚨 Unauthorized request detected. Performing complete logout...');
-      
-      // Use the centralized logout function for complete cleanup
-      performLogout().finally(() => {
-        // Đăng xuất khỏi Redux store
-        store.dispatch(logout());
-        
-        // Force redirect to login page if not already there
-        if (typeof window !== "undefined" && !window.location.pathname.includes("/auth/Login")) {
-          window.location.href = "/auth/Login";
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    // Nếu lỗi là 401 và chưa thử refresh
+    if (error.response && (error.response.status === 401 || error.response.status === 403) && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const storedRefreshToken = localStorage.getItem("refreshToken");
+      if (storedRefreshToken) {
+        try {
+          const data = await refreshToken(storedRefreshToken);
+          const newAccessToken = data?.data?.accessToken;
+          const newRefreshToken = data?.data?.refreshToken;
+          if (newAccessToken) {
+            localStorage.setItem("accessToken", newAccessToken);
+            if (newRefreshToken) localStorage.setItem("refreshToken", newRefreshToken);
+            store.dispatch(login({ token: newAccessToken }));
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            return axiosClient(originalRequest); // Thử lại request với token mới
+          }
+        } catch {
+          // Nếu refresh thất bại, tiếp tục logout bên dưới
         }
-      });
+      }
+      // Nếu không có refreshToken hoặc refresh thất bại
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("userInfo");
+      localStorage.removeItem("isLoggedIn");
+      store.dispatch(logout());
+      if (typeof window !== "undefined" && !window.location.pathname.includes("/auth/Login")) {
+        window.location.href = "/auth/Login";
+      }
     }
     return Promise.reject(error);
   }

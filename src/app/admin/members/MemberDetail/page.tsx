@@ -28,7 +28,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import axiosClient from "@/api/axiosClient";
 import { debugAuthStatus } from "@/utils/authDebug";
-import { getAuthTokenFromCookies } from "@/utils/authCookies";
+
 
 const { Title, Text } = Typography;
 

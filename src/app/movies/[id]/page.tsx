@@ -1,14 +1,13 @@
-"use client";
-
 import React from "react";
 import MovieDetailTemplate from "@/components/MovieDetails/MovieDetailTemplate";
 
-interface MovieDetailPageProps {
-  params: { id: string } | Promise<{ id: string }>;
-}
+type Params = Promise<{ id: string }>;
 
-export default function MovieDetailPage({ params }: MovieDetailPageProps) {
-  // Hỗ trợ cả trường hợp params là Promise (Next.js 14+)
-  const actualParams = typeof params.then === "function" ? React.use(params) : params;
-  return <MovieDetailTemplate movieId={actualParams.id} />;
-} 
+export default function MovieDetailPage(props: {
+  params: Params;
+}) {
+  const params = React.use(props.params);
+  const movieId = params.id;
+
+  return <MovieDetailTemplate movieId={movieId} />;
+}
