@@ -92,7 +92,6 @@ src/
 
 The application uses JWT-based authentication with the following storage locations:
 - LocalStorage (`accessToken`, `userInfo`)
-- Cookies (`authToken`, `userRole`)
 
 ## Development Notes
 

@@ -1,8 +1,7 @@
 "use client";
 
-import { Search, Filter, RotateCcw, Wifi, WifiOff } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -11,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { MovieFilters } from "@/types/NowShowing/movie";
+import { Filter, RotateCcw, Search, WifiOff } from "lucide-react";
 
 interface SearchFiltersApiProps {
   filters: MovieFilters;
@@ -25,7 +25,7 @@ export function SearchFiltersApi({
   onFiltersChange,
   loading = false,
 }: SearchFiltersApiProps) {
-  const hasActiveFilters = 
+  const hasActiveFilters =
     filters.searchTerm !== "" ||
     filters.selectedGenre !== "all" ||
     filters.selectedRating !== "all" ||
@@ -46,9 +46,11 @@ export function SearchFiltersApi({
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Filter className="h-5 w-5 text-orange-400" />
-          <h2 className="text-lg font-semibold text-white">Search & Filter Movies</h2>
+          <h2 className="text-lg font-semibold text-white">
+            Search & Filter Movies
+          </h2>
         </div>
-        
+
         <div className="flex items-center gap-4">
           {/* API Status Indicator */}
           <div className="flex items-center gap-2">
@@ -59,7 +61,6 @@ export function SearchFiltersApi({
               </>
             ) : (
               <>
-               
                 <span className="text-green-400 text-sm"></span>
               </>
             )}
@@ -155,26 +156,28 @@ export function SearchFiltersApi({
       {hasActiveFilters && (
         <div className="mt-4 pt-4 border-t border-orange-500/20">
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-orange-300 text-sm font-medium">Active filters:</span>
-            
+            <span className="text-orange-300 text-sm font-medium">
+              Active filters:
+            </span>
+
             {filters.searchTerm && (
               <span className="bg-orange-500/20 text-orange-300 px-2 py-1 rounded-full text-xs">
-                Search: "{filters.searchTerm}"
+                Search: &quot;{filters.searchTerm}&quot;
               </span>
             )}
-            
+
             {filters.selectedGenre !== "all" && (
               <span className="bg-orange-500/20 text-orange-300 px-2 py-1 rounded-full text-xs">
                 Genre: {filters.selectedGenre}
               </span>
             )}
-            
+
             {filters.selectedRating !== "all" && (
               <span className="bg-orange-500/20 text-orange-300 px-2 py-1 rounded-full text-xs">
                 Rating: {filters.selectedRating}
               </span>
             )}
-            
+
             {filters.sortBy !== "featured" && (
               <span className="bg-orange-500/20 text-orange-300 px-2 py-1 rounded-full text-xs">
                 Sort: {filters.sortBy}
@@ -185,4 +188,4 @@ export function SearchFiltersApi({
       )}
     </div>
   );
-} 
+}

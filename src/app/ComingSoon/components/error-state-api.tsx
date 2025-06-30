@@ -1,8 +1,8 @@
 "use client";
 
-import { AlertCircle, RefreshCw, Wifi, WifiOff, Server } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, RefreshCw, Server, WifiOff } from "lucide-react";
 
 interface ErrorStateApiProps {
   error: string;
@@ -11,21 +11,29 @@ interface ErrorStateApiProps {
 
 export function ErrorStateApi({ error, onRetry }: ErrorStateApiProps) {
   const getErrorType = (errorMessage: string) => {
-    if (errorMessage.includes("Network Error") || errorMessage.includes("fetch")) {
+    if (
+      errorMessage.includes("Network Error") ||
+      errorMessage.includes("fetch")
+    ) {
       return {
         type: "network",
         icon: WifiOff,
         title: "Network Connection Error",
-        description: "Unable to connect to the API server. Please check your internet connection.",
-        color: "text-red-400"
+        description:
+          "Unable to connect to the API server. Please check your internet connection.",
+        color: "text-red-400",
       };
-    } else if (errorMessage.includes("500") || errorMessage.includes("server")) {
+    } else if (
+      errorMessage.includes("500") ||
+      errorMessage.includes("server")
+    ) {
       return {
         type: "server",
         icon: Server,
         title: "Server Error",
-        description: "The API server is experiencing issues. Please try again later.",
-        color: "text-orange-400"
+        description:
+          "The API server is experiencing issues. Please try again later.",
+        color: "text-orange-400",
       };
     } else if (errorMessage.includes("404")) {
       return {
@@ -33,7 +41,7 @@ export function ErrorStateApi({ error, onRetry }: ErrorStateApiProps) {
         icon: AlertCircle,
         title: "Resource Not Found",
         description: "The requested movies data could not be found.",
-        color: "text-yellow-400"
+        color: "text-yellow-400",
       };
     } else {
       return {
@@ -41,7 +49,7 @@ export function ErrorStateApi({ error, onRetry }: ErrorStateApiProps) {
         icon: AlertCircle,
         title: "Error Loading Movies",
         description: "An unexpected error occurred while fetching movie data.",
-        color: "text-red-400"
+        color: "text-red-400",
       };
     }
   };
@@ -60,12 +68,10 @@ export function ErrorStateApi({ error, onRetry }: ErrorStateApiProps) {
           <AlertDescription className="text-red-200 mt-2">
             {errorInfo.description}
           </AlertDescription>
-          
+
           {/* Error Details */}
           <div className="mt-4 p-3 bg-black/30 rounded-lg border border-red-500/20">
-            <p className="text-xs text-gray-400 font-mono">
-              {error}
-            </p>
+            <p className="text-xs text-gray-400 font-mono">{error}</p>
           </div>
         </Alert>
 
@@ -80,7 +86,7 @@ export function ErrorStateApi({ error, onRetry }: ErrorStateApiProps) {
               Try Again
             </Button>
           )}
-          
+
           <Button
             onClick={() => window.location.reload()}
             variant="outline"
@@ -93,7 +99,9 @@ export function ErrorStateApi({ error, onRetry }: ErrorStateApiProps) {
 
         {/* Troubleshooting Tips */}
         <div className="mt-8 bg-black/30 backdrop-blur-sm rounded-lg p-4 border border-orange-500/20">
-          <h3 className="text-orange-300 font-semibold mb-3 text-sm">Troubleshooting Tips:</h3>
+          <h3 className="text-orange-300 font-semibold mb-3 text-sm">
+            Troubleshooting Tips:
+          </h3>
           <ul className="text-xs text-gray-300 space-y-2">
             <li className="flex items-start gap-2">
               <span className="text-orange-400">•</span>
@@ -114,9 +122,8 @@ export function ErrorStateApi({ error, onRetry }: ErrorStateApiProps) {
           </ul>
         </div>
 
-        {/* API Status */}  
-        
+        {/* API Status */}
       </div>
     </div>
   );
-} 
+}
