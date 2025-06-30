@@ -1,7 +1,19 @@
-import axios from "axios";
+import { refreshToken } from "@/api/auth/Refresh_Token_API";
 import { store } from "@/store";
 import { login, logout } from "@/store/slices/authSlice";
-import { refreshToken } from "@/api/auth/Refresh_Token_API";
+import axios from "axios";
+
+let isRefreshing = false;
+let refreshSubscribers: Array<(token: string) => void> = [];
+
+function onRefreshed(token: string) {
+  refreshSubscribers.forEach((callback) => callback(token));
+  refreshSubscribers = [];
+}
+
+function subscribeTokenRefresh(callback: (token: string) => void) {
+  refreshSubscribers.push(callback);
+}
 
 const axiosClient = axios.create({
   baseURL: "http://localhost:8080/cinema/api",
@@ -27,35 +39,81 @@ axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    // Nếu lỗi là 401 và chưa thử refresh
-    if (error.response && (error.response.status === 401 || error.response.status === 403) && !originalRequest._retry) {
+    if (
+      error.response &&
+      (error.response.status === 401 || error.response.status === 403) &&
+      !originalRequest._retry
+    ) {
       originalRequest._retry = true;
       const storedRefreshToken = localStorage.getItem("refreshToken");
-      if (storedRefreshToken) {
+      if (!storedRefreshToken) {
+        // Không có refreshToken, logout luôn
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userInfo");
+        localStorage.removeItem("isLoggedIn");
+        store.dispatch(logout());
+        if (
+          typeof window !== "undefined" &&
+          !window.location.pathname.includes("/auth/Login")
+        ) {
+          window.location.href = "/auth/Login";
+        }
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        // Nếu đang refresh, chờ token mới rồi retry
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh((token: string) => {
+            if (token) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(axiosClient(originalRequest));
+            } else {
+              reject(error);
+            }
+          });
+        });
+      }
+
+      isRefreshing = true;
+      return new Promise(async (resolve, reject) => {
         try {
           const data = await refreshToken(storedRefreshToken);
           const newAccessToken = data?.data?.accessToken;
           const newRefreshToken = data?.data?.refreshToken;
           if (newAccessToken) {
             localStorage.setItem("accessToken", newAccessToken);
-            if (newRefreshToken) localStorage.setItem("refreshToken", newRefreshToken);
+            if (newRefreshToken)
+              localStorage.setItem("refreshToken", newRefreshToken);
             store.dispatch(login({ token: newAccessToken }));
+            axiosClient.defaults.headers["Authorization"] = `Bearer ${newAccessToken}`;
+            onRefreshed(newAccessToken);
             originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-            return axiosClient(originalRequest); // Thử lại request với token mới
+            resolve(axiosClient(originalRequest));
+          } else {
+            onRefreshed("");
+            reject(error);
           }
         } catch {
-          // Nếu refresh thất bại, tiếp tục logout bên dưới
+          onRefreshed("");
+          // Nếu refresh thất bại, logout
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("userInfo");
+          localStorage.removeItem("isLoggedIn");
+          store.dispatch(logout());
+          if (
+            typeof window !== "undefined" &&
+            !window.location.pathname.includes("/auth/Login")
+          ) {
+            window.location.href = "/auth/Login";
+          }
+          reject(error);
+        } finally {
+          isRefreshing = false;
         }
-      }
-      // Nếu không có refreshToken hoặc refresh thất bại
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("userInfo");
-      localStorage.removeItem("isLoggedIn");
-      store.dispatch(logout());
-      if (typeof window !== "undefined" && !window.location.pathname.includes("/auth/Login")) {
-        window.location.href = "/auth/Login";
-      }
+      });
     }
     return Promise.reject(error);
   }

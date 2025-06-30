@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/select";
 import type { MovieFilters } from "@/types/NowShowing/movie";
 import { MovieApiService } from "@/api/movie-api";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface SearchFiltersProps {
   filters: MovieFilters;
@@ -27,11 +27,13 @@ export function SearchFilters({
 }: SearchFiltersProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [searchTerm, setSearchTerm] = useState(filters.searchTerm || "");
+  const debouncedSearchTerm = useDebounce(searchTerm, 400);
 
   // Execute search function
   const executeSearch = async (term: string) => {
     if (term.trim().length === 0) {
       setIsSearching(false);
+      onFiltersChange({ searchTerm: "" });
       return;
     }
     setIsSearching(true);
@@ -47,16 +49,20 @@ export function SearchFilters({
     }
   };
 
-  // Handle input change without searching
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const term = e.target.value;
-    setSearchTerm(term);
-    if (term.trim().length === 0) {
-      onFiltersChange({ searchTerm: "" });
+  // Debounce effect for search
+  useEffect(() => {
+    if (debouncedSearchTerm !== filters.searchTerm) {
+      executeSearch(debouncedSearchTerm);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchTerm]);
+
+  // Handle input change (debounced search will trigger)
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
 
-  // Handle Enter key press
+  // Handle Enter key press (immediate search)
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -78,14 +84,6 @@ export function SearchFilters({
               onKeyDown={handleKeyDown}
               className="pl-10 bg-gray-800 border-orange-500/30 text-white placeholder:text-gray-400"
             />
-            <Button
-              type="button"
-              className="ml-2 px-3 py-2 bg-orange-700 text-white rounded"
-              onClick={() => executeSearch(searchTerm)}
-              disabled={isSearching}
-            >
-              <Search className="h-4 w-4" />
-            </Button>
           </div>
           {isSearching && (
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
