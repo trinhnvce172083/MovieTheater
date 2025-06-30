@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import dayjs from "dayjs";
 import {
   Card,
   Table,
@@ -22,7 +23,7 @@ import {
   Statistic,
   Alert,
 } from "antd";
-import type { ColumnsType } from 'antd/es/table';
+import type { ColumnsType } from "antd/es/table";
 import {
   PlusOutlined,
   EditOutlined,
@@ -35,10 +36,16 @@ import {
   CheckCircleOutlined,
   EyeOutlined,
 } from "@ant-design/icons";
-import { getAllUsers } from "@/api/admin/getAllUsers";
-import { debugAuthStatus } from "@/utils/authDebug";
-import { getAuthTokenFromCookies } from "@/utils/authCookies";
-import axiosClient from "@/api/axiosClient";
+import {
+  getAllUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  getUserStatistics,
+  type ApiUser,
+  type UserManagementRequest,
+} from "@/api/admin/getAllUsers";
+
 import { useRouter } from "next/navigation";
 
 const { Option } = Select;
@@ -52,42 +59,24 @@ interface MemberData {
   email: string;
   phone: string;
   joinDate: string;
-  status: 'active' | 'inactive';
+  dateOfBirth?: string;
+  status: "active" | "inactive";
   type: string;
   avatar: string;
 }
 
-// Interface for API User Response
-interface ApiUser {
-  accountId?: number;
-  fullName?: string;
-  username?: string;
-  email?: string;
-  phoneNumber?: string;
-  createdAt?: string;
-  isActive?: boolean;
-  role?: string;
-  avatar?: string;
-}
+// Using ApiUser from the API import instead of defining it here
 
-// Interface for creating/updating members
-interface MemberCreateRequest {
-  username: string;
-  password?: string; // Optional for updates
-  fullName: string;
-  email: string;
-  phoneNumber?: string;
-  address?: string;
-  dateOfBirth?: string;
-  role: string;
-  isActive: boolean;
-}
+// Using UserManagementRequest from API for creating/updating members
 
 // Interface for error responses
 interface ApiErrorResponse {
   response: {
     status: number;
-    data: unknown;
+    data: {
+      message?: string;
+      [key: string]: unknown;
+    };
   };
 }
 
@@ -99,7 +88,8 @@ interface MemberStatistics {
   types: Record<string, number>;
 }
 
-export default function AdminMemberManagement() {  const [memberData, setMemberData] = useState<MemberData[]>([]);
+export default function AdminMemberManagement() {
+  const [memberData, setMemberData] = useState<MemberData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("");
@@ -107,126 +97,199 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingMember, setEditingMember] = useState<MemberData | null>(null);  const [form] = Form.useForm();
+  const [editingMember, setEditingMember] = useState<MemberData | null>(null);
+  const [form] = Form.useForm();
   const router = useRouter();
   // Simple auth status check
   const [showAuthWarning, setShowAuthWarning] = useState(false);
   const [isUsingApiData, setIsUsingApiData] = useState(true);
 
   // Fetch users from API
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('Fetching users...');
-      const response = await getAllUsers();
-      console.log('API Response:', response);
-      
+      console.log("🔄 fetchUsers: Starting to fetch users...");
+
+      // Pass pagination parameters that match the backend expectations
+      const params = {
+        page: currentPage - 1, // Backend uses 0-based pagination
+        size: pageSize,
+        sortBy: "createdAt",
+        sortDirection: "DESC" as const,
+      };
+
+      const response = await getAllUsers(params);
+      console.log("🔄 fetchUsers: API Response received:", response);
+      console.log(
+        "🔄 fetchUsers: Response content length:",
+        response?.content?.length
+      );
+
       // Check if response and response.content exist and is an array
       if (!response || !response.content || !Array.isArray(response.content)) {
-        console.warn('Invalid API response structure:', response);
+        console.warn(
+          "❌ fetchUsers: Invalid API response structure:",
+          response
+        );
         setMemberData([]);
         return;
-      }      // Transform API data to match our table structure
-      const transformedData: MemberData[] = response.content.map((user: unknown, index: number) => {
-        console.log('Processing user:', user);
-        try {
-          const userObj = user as ApiUser; // Type assertion for API response
-          return {
-            key: userObj.accountId ? userObj.accountId.toString() : index.toString(),
-            id: userObj.accountId ? userObj.accountId.toString() : `MB${String(index + 1).padStart(3, '0')}`,
-            name: userObj.fullName || userObj.username || 'N/A',
-            email: userObj.email || 'N/A',
-            phone: userObj.phoneNumber || 'N/A',
-            joinDate: userObj.createdAt ? new Date(userObj.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-            status: (userObj.isActive !== false ? 'active' : 'inactive') as 'active' | 'inactive',
-            type: userObj.role || 'CUSTOMER',
-            avatar: userObj.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userObj.fullName || userObj.username || 'User')}&background=random`,
-          };
-        } catch (error) {
-          console.error('Error processing user:', user, error);
-          const inactiveStatus = 'inactive' as const;
-          return {
-            key: index.toString(),
-            id: `MB${String(index + 1).padStart(3, '0')}`,
-            name: 'Error Loading User',
-            email: 'N/A',
-            phone: 'N/A',
-            joinDate: new Date().toISOString().split('T')[0],
-            status: inactiveStatus,
-            type: 'CUSTOMER',
-            avatar: 'https://ui-avatars.com/api/?name=Error&background=random',
-          };
+      }
+
+      // Transform API data to match our table structure
+      const transformedData: MemberData[] = response.content.map(
+        (user: unknown, index: number) => {
+          console.log("🔄 fetchUsers: Processing user:", user);
+          try {
+            const userObj = user as ApiUser; // Type assertion for API response
+            return {
+              key: userObj.accountId
+                ? userObj.accountId.toString()
+                : index.toString(),
+              id: userObj.accountId
+                ? userObj.accountId.toString()
+                : `MB${String(index + 1).padStart(3, "0")}`,
+              name: userObj.fullName || userObj.username || "N/A",
+              email: userObj.email || "N/A",
+              phone: userObj.phoneNumber || "N/A",
+              joinDate: userObj.createdAt
+                ? new Date(userObj.createdAt).toISOString().split("T")[0]
+                : new Date().toISOString().split("T")[0],
+              dateOfBirth: userObj.dateOfBirth || undefined,
+              status: (userObj.isActive !== false ? "active" : "inactive") as
+                | "active"
+                | "inactive",
+              type: userObj.role || "CUSTOMER",
+              avatar:
+                userObj.avatar ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                  userObj.fullName || userObj.username || "User"
+                )}&background=random`,
+            };
+          } catch (error) {
+            console.error("❌ fetchUsers: Error processing user:", user, error);
+            const inactiveStatus = "inactive" as const;
+            return {
+              key: index.toString(),
+              id: `MB${String(index + 1).padStart(3, "0")}`,
+              name: "Error Loading User",
+              email: "N/A",
+              phone: "N/A",
+              joinDate: new Date().toISOString().split("T")[0],
+              dateOfBirth: undefined,
+              status: inactiveStatus,
+              type: "CUSTOMER",
+              avatar:
+                "https://ui-avatars.com/api/?name=Error&background=random",
+            };
+          }
         }
-      });
-        console.log('Transformed data:', transformedData);
+      );
+
+      console.log(
+        "✅ fetchUsers: Transformed data length:",
+        transformedData.length
+      );
+      console.log(
+        "✅ fetchUsers: Transformed data:",
+        transformedData.map((u) => `${u.id}: ${u.name}`)
+      );
+      console.log("✅ fetchUsers: Setting memberData with new data...");
+
       setMemberData(transformedData || []);
       setIsUsingApiData(true);
+
+      console.log("✅ fetchUsers: memberData state updated successfully");
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error("❌ fetchUsers: Error fetching users:", error);
       // Since getAllUsers now returns mock data on error, this is less likely to happen
       // But if it does, show a more informative message
-      console.log('Using fallback data due to API error');
-      message.warning('Using sample data - please check your connection or login status');
+      console.log("❌ fetchUsers: Using fallback data due to API error");
+      message.warning(
+        "Using sample data - please check your connection or login status"
+      );
       setMemberData([]);
       setIsUsingApiData(false);
     } finally {
       setLoading(false);
+      console.log(
+        "✅ fetchUsers: Fetch operation completed, loading set to false"
+      );
     }
-  };  useEffect(() => {
-    // Check multiple possible token locations including cookies
-    const token = localStorage.getItem('accessToken') || 
-                 localStorage.getItem('access_token') || 
-                 localStorage.getItem('authToken') ||
-                 sessionStorage.getItem('accessToken') ||
-                 getAuthTokenFromCookies(); // Add cookies check
-    
-    console.log('🔍 Auth check - Token found:', token ? 'YES' : 'NO');
+  }, [currentPage, pageSize]);
+
+  // Fetch statistics from API
+  const fetchStatistics = useCallback(async () => {
+    try {
+      const stats = await getUserStatistics();
+      console.log("Statistics from API:", stats);
+      return stats;
+    } catch (error) {
+      console.error("Error fetching statistics:", error);
+      return null;
+    }
+  }, []);
+  useEffect(() => {
+    const token =
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("access_token") ||
+      localStorage.getItem("authToken") ||
+      sessionStorage.getItem("accessToken");
+
+    console.log("🔍 Auth check - Token found:", token ? "YES" : "NO");
     if (token) {
-      console.log('Token source:', 
-        localStorage.getItem("accessToken") ? "localStorage(accessToken)" :
-        localStorage.getItem("access_token") ? "localStorage(access_token)" :
-        localStorage.getItem("authToken") ? "localStorage(authToken)" :
-        sessionStorage.getItem("accessToken") ? "sessionStorage(accessToken)" :
-        getAuthTokenFromCookies() ? "cookies(authToken)" : "unknown");
-      console.log('Token preview:', token.substring(0, 20) + '...');
+      console.log(
+        "Token source:",
+        localStorage.getItem("accessToken")
+          ? "localStorage(accessToken)"
+          : localStorage.getItem("access_token")
+          ? "localStorage(access_token)"
+          : localStorage.getItem("authToken")
+          ? "localStorage(authToken)"
+          : sessionStorage.getItem("accessToken")
+          ? "sessionStorage(accessToken)"
+          : "unknown"
+      );
+      console.log("Token preview:", token.substring(0, 20) + "...");
     }
-    
-    // Run debug function for detailed auth info
-    debugAuthStatus();
-    
+
     setShowAuthWarning(!token);
   }, []);
 
   useEffect(() => {
     fetchUsers();
-  }, []);  // Filter and search logic
+    fetchStatistics();
+  }, [fetchUsers, fetchStatistics]); // Re-fetch when pagination changes  // Filter and search logic
   const filteredData = useMemo(() => {
     try {
       if (!memberData || !Array.isArray(memberData)) {
-        console.log('memberData is not an array:', memberData);
+        console.log("memberData is not an array:", memberData);
         return [];
       }
-      
+
       return memberData.filter((member) => {
         try {
           if (!member) return false;
-          
-          const matchesSearch = !searchTerm ||
-            (member.name && member.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (member.email && member.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (member.id && member.id.toLowerCase().includes(searchTerm.toLowerCase()));
-            
+
+          const matchesSearch =
+            !searchTerm ||
+            (member.name &&
+              member.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (member.email &&
+              member.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (member.id &&
+              member.id.toLowerCase().includes(searchTerm.toLowerCase()));
+
           const matchesStatus = !filterStatus || member.status === filterStatus;
           const matchesType = !filterType || member.type === filterType;
-          
+
           return matchesSearch && matchesStatus && matchesType;
         } catch (error) {
-          console.error('Error filtering member:', member, error);
+          console.error("Error filtering member:", member, error);
           return false;
         }
       });
     } catch (error) {
-      console.error('Error in filteredData calculation:', error);
+      console.error("Error in filteredData calculation:", error);
       return [];
     }
   }, [searchTerm, filterStatus, filterType, memberData]);
@@ -240,78 +303,86 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
   // Reset current page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterStatus, filterType]);// Statistics calculations
+  }, [searchTerm, filterStatus, filterType]); // Statistics calculations
   const statistics: MemberStatistics = useMemo(() => {
     try {
       const totalMembers = memberData?.length || 0;
-      const activeMembers = memberData?.filter(
-        (m) => m.status === "active"
-      )?.length || 0;
-      
-      const newMembers = memberData?.filter((m) => {
-        try {
-          const join = new Date(m.joinDate);
-          const now = new Date();
-          return (
-            join.getMonth() === now.getMonth() &&
-            join.getFullYear() === now.getFullYear()
-          );
-        } catch (error) {
-          console.error('Error processing date for member:', m, error);
-          return false;
-        }
-      })?.length || 0;
-      
-      const types = memberData?.reduce((acc: Record<string, number>, m) => {
-        try {
-          acc[m.type] = (acc[m.type] || 0) + 1;
-          return acc;
-        } catch (error) {
-          console.error('Error processing type for member:', m, error);
-          return acc;
-        }
-      }, {}) || {};
-      
+      const activeMembers =
+        memberData?.filter((m) => m.status === "active")?.length || 0;
+
+      const newMembers =
+        memberData?.filter((m) => {
+          try {
+            const join = new Date(m.joinDate);
+            const now = new Date();
+            return (
+              join.getMonth() === now.getMonth() &&
+              join.getFullYear() === now.getFullYear()
+            );
+          } catch (error) {
+            console.error("Error processing date for member:", m, error);
+            return false;
+          }
+        })?.length || 0;
+
+      const types =
+        memberData?.reduce((acc: Record<string, number>, m) => {
+          try {
+            acc[m.type] = (acc[m.type] || 0) + 1;
+            return acc;
+          } catch (error) {
+            console.error("Error processing type for member:", m, error);
+            return acc;
+          }
+        }, {}) || {};
+
       return { totalMembers, activeMembers, newMembers, types };
     } catch (error) {
-      console.error('Error calculating statistics:', error);
+      console.error("Error calculating statistics:", error);
       return { totalMembers: 0, activeMembers: 0, newMembers: 0, types: {} };
-    }  }, [memberData]);
+    }
+  }, [memberData]);
 
   // CRUD Operations
-  const createMember = async (memberData: MemberCreateRequest) => {
+  const createMember = async (memberData: UserManagementRequest) => {
     try {
       setLoading(true);
-      console.log('Creating member with data:', memberData);
-        // Ensure all required fields are present and properly formatted
-      const payload = {
-        ...memberData,
-        // Ensure role is uppercase
-        role: memberData.role?.toUpperCase() || 'STAFF'
-      };
-      
-      console.log('Sending payload:', payload);
-      const response = await axiosClient.post('/admin/users', payload);
-      console.log('Create response:', response.data);
-      message.success('Member created successfully');
+      console.log("Creating member with data:", memberData);
+
+      // Use the imported createUser function
+      const result = await createUser(memberData);
+      console.log("Create response:", result);
+      message.success("Member created successfully");
       await fetchUsers(); // Refresh the list
       return true;
     } catch (error) {
-      console.error('Error creating member:', error);
-      if (error && typeof error === 'object' && 'response' in error) {
+      console.error("Error creating member:", error);
+      if (error && typeof error === "object" && "response" in error) {
         const axiosError = error as ApiErrorResponse;
-        console.error('Backend error details:', axiosError.response.data);
+        console.error("Backend error details:", axiosError.response.data);
         if (axiosError.response.status === 400) {
-          message.error('Validation error. Please check all required fields are filled correctly.');
+          message.error(
+            "Validation error. Please check all required fields are filled correctly."
+          );
         } else if (axiosError.response.status === 401) {
-          message.error('Authentication failed. Please login again.');
+          message.error("Authentication failed. Please login again.");
         } else if (axiosError.response.status === 403) {
-          message.error('Access denied. You may not have admin permissions.');
+          message.error("Access denied. You may not have admin permissions.");
+        } else if (axiosError.response.status === 409) {
+          // Handle conflict - usually duplicate username or email
+          const errorMessage =
+            axiosError.response.data?.message ||
+            "Username or email already exists";
+          message.error(
+            `Cannot create member: ${errorMessage}. Please use a different username or email.`
+          );
         } else {
-          message.error(`Failed to create member: ${axiosError.response.status}`);
+          message.error(
+            `Failed to create member: ${axiosError.response.status}`
+          );
         }
       } else {
-        message.error('Failed to create member');
+        message.error("Failed to create member");
       }
       return false;
     } finally {
@@ -319,28 +390,47 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
     }
   };
 
-  const updateMember = async (id: string, memberData: MemberCreateRequest) => {
+  const updateMember = async (
+    id: string,
+    memberData: UserManagementRequest
+  ) => {
     try {
       setLoading(true);
-      console.log('Updating member:', id, memberData);
-      const response = await axiosClient.put(`/admin/users/${id}`, memberData);
-      console.log('Update response:', response.data);
-      message.success('Member updated successfully');
+      console.log("Updating member:", id, memberData);
+
+      // Use the imported updateUser function
+      const result = await updateUser(parseInt(id), memberData);
+      console.log("Update response:", result);
+      message.success("Member updated successfully");
       await fetchUsers(); // Refresh the list
       return true;
     } catch (error) {
-      console.error('Error updating member:', error);
-      if (error && typeof error === 'object' && 'response' in error) {
+      console.error("Error updating member:", error);
+      if (error && typeof error === "object" && "response" in error) {
         const axiosError = error as ApiErrorResponse;
-        if (axiosError.response.status === 401) {
-          message.error('Authentication failed. Please login again.');
+        if (axiosError.response.status === 400) {
+          message.error(
+            "Validation error. Please check all required fields are filled correctly."
+          );
+        } else if (axiosError.response.status === 401) {
+          message.error("Authentication failed. Please login again.");
         } else if (axiosError.response.status === 403) {
-          message.error('Access denied. You may not have admin permissions.');
+          message.error("Access denied. You may not have admin permissions.");
+        } else if (axiosError.response.status === 409) {
+          // Handle conflict - usually duplicate username or email
+          const errorMessage =
+            axiosError.response.data?.message ||
+            "Username or email already exists";
+          message.error(
+            `Cannot update member: ${errorMessage}. Please use a different username or email.`
+          );
         } else {
-          message.error(`Failed to update member: ${axiosError.response.status}`);
+          message.error(
+            `Failed to update member: ${axiosError.response.status}`
+          );
         }
       } else {
-        message.error('Failed to update member');
+        message.error("Failed to update member");
       }
       return false;
     } finally {
@@ -351,25 +441,49 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
   const deleteMember = async (id: string, name: string) => {
     try {
       setLoading(true);
-      console.log('Deleting member:', id);
-      const response = await axiosClient.delete(`/admin/users/${id}`);
-      console.log('Delete response:', response.data);
+      console.log("🗑️ Frontend: Starting delete for member:", id, name);
+      console.log(
+        "🗑️ Frontend: Current member count before delete:",
+        memberData.length
+      );
+
+      // Use the imported deleteUser function and wait for it to complete
+      await deleteUser(parseInt(id));
+      console.log("✅ Frontend: deleteUser API call completed successfully");
+
       message.success(`Deleted member "${name}" successfully`);
-      await fetchUsers(); // Refresh the list
+
+      // Only refresh the user list after successful deletion
+      console.log(
+        "🔄 Frontend: Refreshing user list after successful deletion..."
+      );
+      await fetchUsers();
+      console.log("✅ Frontend: User list refresh completed");
+
       return true;
     } catch (error) {
-      console.error('Error deleting member:', error);
-      if (error && typeof error === 'object' && 'response' in error) {
+      console.error("❌ Frontend: Error deleting member:", error);
+      if (error && typeof error === "object" && "response" in error) {
         const axiosError = error as ApiErrorResponse;
+        console.error(
+          "❌ Frontend: HTTP error status:",
+          axiosError.response.status
+        );
         if (axiosError.response.status === 401) {
-          message.error('Authentication failed. Please login again.');
+          message.error("Authentication failed. Please login again.");
         } else if (axiosError.response.status === 403) {
-          message.error('Access denied. You may not have admin permissions.');
+          message.error("Access denied. You may not have admin permissions.");
+        } else if (axiosError.response.status === 404) {
+          message.error("Member not found. It may have already been deleted.");
+          // Still refresh the list in case of 404
+          await fetchUsers();
         } else {
-          message.error(`Failed to delete member: ${axiosError.response.status}`);
+          message.error(
+            `Failed to delete member: ${axiosError.response.status}`
+          );
         }
       } else {
-        message.error('Failed to delete member');
+        message.error("Failed to delete member");
       }
       return false;
     } finally {
@@ -378,19 +492,20 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
   };
   const handleEdit = (record: MemberData) => {
     setEditingMember(record);
-    form.setFieldsValue({ 
+    form.setFieldsValue({
       name: record.name,
       username: record.id, // Use the id as username for now, you might want to store actual username
       email: record.email,
       phone: record.phone,
       type: record.type,
       status: record.status,
-      joinDate: record.joinDate,
+      joinDate: record.joinDate ? dayjs(record.joinDate) : null,
+      dob: record.dateOfBirth ? dayjs(record.dateOfBirth) : null,
     });
     setIsModalVisible(true);
   };
-  const handleDelete = (record: MemberData) => {
-    deleteMember(record.id, record.name);
+  const handleDelete = async (record: MemberData) => {
+    await deleteMember(record.id, record.name);
   };
 
   const handleViewDetail = (record: MemberData) => {
@@ -400,16 +515,16 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
-      console.log('Form values:', values);      // Transform form data to match API expectations
-      const memberData: MemberCreateRequest = {
+      console.log("Form values:", values); // Transform form data to match API expectations
+      const memberData: UserManagementRequest = {
         username: values.username,
         fullName: values.name,
         email: values.email,
         phoneNumber: values.phone || undefined,
         address: values.address || undefined,
-        dateOfBirth: values.dob ? values.dob.format('YYYY-MM-DD') : undefined,
-        role: values.type,
-        isActive: values.status === 'active',
+        dateOfBirth: values.dob ? values.dob.format("YYYY-MM-DD") : undefined,
+        role: values.type as "ADMIN" | "EMPLOYEE" | "CUSTOMER",
+        isActive: values.status === "active",
       };
 
       // Add password for create, or for update if provided
@@ -430,7 +545,7 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
         form.resetFields();
       }
     } catch (error) {
-      console.error('Form validation failed:', error);
+      console.error("Form validation failed:", error);
     }
   };
 
@@ -438,7 +553,8 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
     setIsModalVisible(false);
     setEditingMember(null);
     form.resetFields();
-  };  const columns: ColumnsType<MemberData> = [
+  };
+  const columns: ColumnsType<MemberData> = [
     {
       title: "#",
       dataIndex: "id",
@@ -486,16 +602,15 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
       render: (date: string) => (
         <span className="text-sm">{new Date(date).toLocaleDateString()}</span>
       ),
-    },    {
+    },
+    {
       title: "Type",
       dataIndex: "type",
       key: "type",
       width: 100,
       render: (type: string) => (
         <div>
-          <div className="text-sm text-gray-900">
-            {type}
-          </div>
+          <div className="text-sm text-gray-900">{type}</div>
         </div>
       ),
     },
@@ -512,15 +627,17 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
           </div>
         </div>
       ),
-    },    {
+    },
+    {
       title: "Actions",
       key: "actions",
       width: 130,
       fixed: "right" as const,
-      align: "center" as const,      render: (_: unknown, record: MemberData) => (
+      align: "center" as const,
+      render: (_: unknown, record: MemberData) => (
         <Space size="small">
           {/* Only show View Details button for Staff and Employee, not for Admin */}
-          {record.type !== 'ADMIN' && (
+          {record.type !== "ADMIN" && (
             <Tooltip title="View Details">
               <Button
                 type="text"
@@ -531,17 +648,25 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               />
             </Tooltip>
           )}
-          <Tooltip title={isUsingApiData ? "Edit" : "Edit disabled in demo mode"}>
+          <Tooltip
+            title={isUsingApiData ? "Edit" : "Edit disabled in demo mode"}
+          >
             <Button
               type="text"
               icon={<EditOutlined />}
               size="small"
-              className={isUsingApiData ? "text-green-600 hover:bg-green-50" : "text-gray-400"}
+              className={
+                isUsingApiData
+                  ? "text-green-600 hover:bg-green-50"
+                  : "text-gray-400"
+              }
               onClick={() => handleEdit(record)}
               disabled={!isUsingApiData}
             />
           </Tooltip>
-          <Tooltip title={isUsingApiData ? "Delete" : "Delete disabled in demo mode"}>
+          <Tooltip
+            title={isUsingApiData ? "Delete" : "Delete disabled in demo mode"}
+          >
             <Popconfirm
               title="Delete Member"
               description="Are you sure?"
@@ -555,7 +680,11 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
                 type="text"
                 icon={<DeleteOutlined />}
                 size="small"
-                className={isUsingApiData ? "text-red-600 hover:bg-red-50" : "text-gray-400"}
+                className={
+                  isUsingApiData
+                    ? "text-red-600 hover:bg-red-50"
+                    : "text-gray-400"
+                }
                 disabled={!isUsingApiData}
               />
             </Popconfirm>
@@ -578,7 +707,7 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
             closable
           />
         )}
-        
+
         {/* Authentication Warning */}
         {showAuthWarning && (
           <Card className="mb-6 border-orange-200 bg-orange-50">
@@ -587,14 +716,18 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               <div>
                 <strong>Authentication Notice</strong>
                 <p className="text-sm text-gray-600 mb-0">
-                  You are not logged in. Displaying sample data for demonstration. 
-                  <a href="/auth/Login" className="text-blue-600 ml-1">Log in here</a> to access real data.
+                  You are not logged in. Displaying sample data for
+                  demonstration.
+                  <a href="/auth/Login" className="text-blue-600 ml-1">
+                    Log in here
+                  </a>{" "}
+                  to access real data.
                 </p>
               </div>
             </div>
           </Card>
         )}
-        
+
         {/* Statistics Cards */}
         <Row gutter={[16, 16]} className="mb-6">
           <Col xs={12} sm={12} lg={6}>
@@ -636,7 +769,9 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               />
             </Card>
           </Col>
-          <Col xs={12} sm={12} lg={6}>            <Card
+          <Col xs={12} sm={12} lg={6}>
+            {" "}
+            <Card
               className="text-center border-0 shadow-sm h-32 flex flex-col justify-center"
               size="small"
             >
@@ -650,7 +785,7 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               />
             </Card>
           </Col>
-        </Row>        
+        </Row>
         {/* Main Content Card */}
         <Card
           className="shadow-sm border-0"
@@ -665,11 +800,11 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
                 className="m-0 text-gray-900 text-xl xl:text-2xl"
               >
                 Member Management
-              </Title>              
+              </Title>
               <Text type="secondary" className="text-sm xl:text-base">
                 Manage and organize your cinema&apos;s member list
               </Text>
-            </div>            
+            </div>
             <div className="flex items-center gap-3">
               <Button
                 type="primary"
@@ -678,7 +813,11 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
                 className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
                 onClick={() => setIsModalVisible(true)}
                 disabled={!isUsingApiData}
-                title={!isUsingApiData ? "Create/Edit functions require backend connection" : "Add new member"}
+                title={
+                  !isUsingApiData
+                    ? "Create/Edit functions require backend connection"
+                    : "Add new member"
+                }
               >
                 Add New Member
               </Button>
@@ -701,7 +840,7 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               <Col xs={12} sm={6} lg={4} xl={3}>
                 <Select
                   placeholder="Status"
-                  value={filterStatus}
+                  // value={filterStatus}
                   onChange={setFilterStatus}
                   className="w-full h-10"
                   allowClear
@@ -710,7 +849,24 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
                   <Option value="active">Active</Option>
                   <Option value="inactive">Inactive</Option>
                 </Select>
-              </Col>              <Col xs={12} sm={6} lg={4} xl={3}>
+                {/* <Select
+                  showSearch
+                  style={{ width: 200 }}
+                  placeholder="Select a person"
+                  optionFilterProp="children"
+                  filterOption={(input, option) =>
+                    option.props.children
+                      .toLowerCase()
+                      .indexOf(input.toLowerCase()) >= 0
+                  }
+                >
+                  <Option value="jack">Jack</Option>
+                  <Option value="lucy">Lucy</Option>
+                  <Option value="tom">Tom</Option>
+                </Select> */}
+                
+              </Col>
+              <Col xs={12} sm={6} lg={4} xl={3}>
                 <Select
                   placeholder="Type"
                   value={filterType}
@@ -720,7 +876,6 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
                   size="middle"
                 >
                   <Option value="ADMIN">Admin</Option>
-                  <Option value="STAFF">Staff</Option>
                   <Option value="EMPLOYEE">Employee</Option>
                   <Option value="CUSTOMER">Customer</Option>
                 </Select>
@@ -728,8 +883,9 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
             </Row>
           </div>
 
-          {/* Table Section */}          
-          <div className="bg-white">            <Table
+          {/* Table Section */}
+          <div className="bg-white">
+            <Table
               dataSource={paginatedData}
               columns={columns}
               pagination={false}
@@ -739,7 +895,8 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               size="small"
               loading={loading}
               rowKey="key"
-            />{/* Pagination */}
+            />
+            {/* Pagination */}
             <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <Text type="secondary" className="text-sm">
                 Showing {Math.max(1, (currentPage - 1) * pageSize + 1)} to{" "}
@@ -757,8 +914,7 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
                 showSizeChanger
                 showQuickJumper={false}
                 pageSizeOptions={["5", "10", "20", "50"]}
-                className="professional-pagination"
-                size="small"
+                size="default"
               />
             </div>
           </div>
@@ -775,7 +931,9 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
         className="professional-modal"
         okText={editingMember ? "Update Member" : "Add Member"}
         cancelText="Cancel"
-      >        <Form form={form} layout="vertical" className="mt-6">
+      >
+        {" "}
+        <Form form={form} layout="vertical" className="mt-6">
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
@@ -801,39 +959,57 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               <Form.Item
                 name="email"
                 label="Email"
-                rules={[{ required: true, message: "Please enter email" }, 
-                  { type: "email", message: "Invalid email!" }]}
+                rules={[
+                  { required: true, message: "Please enter email" },
+                  { type: "email", message: "Invalid email!" },
+                ]}
               >
-                <Input placeholder="Enter email" className="h-10" type="email" />
+                <Input
+                  placeholder="Enter email"
+                  className="h-10"
+                  type="email"
+                />
               </Form.Item>
-            </Col>            <Col xs={24} sm={12}>
+            </Col>{" "}
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="phone"
                 label="Phone"
-                rules={[{ required: true, message: "Please enter phone number" }]}
+                rules={[
+                  { required: true, message: "Please enter phone number" },
+                ]}
               >
-                <Input placeholder="Enter phone number" className="h-10" type="tel" />
+                <Input
+                  placeholder="Enter phone number"
+                  className="h-10"
+                  type="tel"
+                />
               </Form.Item>
-            </Col>          </Row>
+            </Col>{" "}
+          </Row>
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 name="password"
                 label="Password"
                 rules={[
-                  { 
-                    required: !editingMember, 
-                    message: "Please enter password" 
+                  {
+                    required: !editingMember,
+                    message: "Please enter password",
                   },
-                  { 
-                    min: 6, 
-                    message: "Password must be at least 6 characters" 
-                  }
+                  {
+                    min: 6,
+                    message: "Password must be at least 6 characters",
+                  },
                 ]}
               >
-                <Input.Password 
-                  placeholder={editingMember ? "Leave blank to keep current password" : "Enter password"} 
-                  className="h-10" 
+                <Input.Password
+                  placeholder={
+                    editingMember
+                      ? "Leave blank to keep current password"
+                      : "Enter password"
+                  }
+                  className="h-10"
                 />
               </Form.Item>
             </Col>
@@ -857,7 +1033,9 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               <Form.Item
                 name="dob"
                 label="Date of Birth"
-                rules={[{ required: true, message: "Please select date of birth" }]}
+                rules={[
+                  { required: true, message: "Please select date of birth" },
+                ]}
               >
                 <DatePicker className="w-full h-10" format="DD-MM-YYYY" />
               </Form.Item>
@@ -883,17 +1061,23 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
                 label="ID Number"
                 rules={[{ required: true, message: "Please enter ID number" }]}
               >
-                <Input placeholder="Enter ID number" className="h-10" type="number" />
+                <Input
+                  placeholder="Enter ID number"
+                  className="h-10"
+                  type="number"
+                />
               </Form.Item>
             </Col>
-            <Col xs={24} sm={12}>              <Form.Item
+            <Col xs={24} sm={12}>
+              {" "}
+              <Form.Item
                 name="type"
                 label="Role"
                 rules={[{ required: true, message: "Please select role" }]}
               >
                 <Select placeholder="Select role" className="h-10">
-                  <Option value="STAFF">Staff</Option>
                   <Option value="EMPLOYEE">Employee</Option>
+                  <Option value="CUSTOMER">Customer</Option>
                 </Select>
               </Form.Item>
             </Col>

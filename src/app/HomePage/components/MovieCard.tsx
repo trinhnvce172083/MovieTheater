@@ -8,9 +8,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { Movie } from "@/types/NowShowing/movie";
 import Link from "next/link";
 
-// Simple blur placeholder for better user experience
-const BLUR_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAEwgJ5i4Fx7AAAAABJRU5ErkJggg==";
-
 interface MovieCardProps {
   movie: Movie;
   onViewDetails?: (movieId: string) => void;
@@ -37,7 +34,9 @@ export function MovieCard({ movie, onViewDetails }: MovieCardProps) {
   };
 
   const handleViewDetails = () => {
-    onViewDetails?.(movie.movieId);
+    if (onViewDetails) {
+      onViewDetails(movie.movieId);
+    }
 
   };
 
@@ -73,8 +72,6 @@ export function MovieCard({ movie, onViewDetails }: MovieCardProps) {
             sizes="220px"
             className="object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
             priority={movie.isFeatured}
-            placeholder="blur"
-            blurDataURL={BLUR_DATA_URL}
           />
 
           {/* Overlay gradient */}

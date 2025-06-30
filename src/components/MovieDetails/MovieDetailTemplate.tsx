@@ -206,8 +206,8 @@ export default function MovieDetailTemplate({ movieId }: MovieDetailTemplateProp
                       }}
                     />
                     
-                    {/* Badges
-                    <div className="absolute top-3 left-3 space-y-2">
+                    {/* Badges */}
+                    {/* <div className="absolute top-3 left-3 space-y-2">
                       {movie.isFeatured && (
                         <Badge variant="default" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white animate-pulse">
                           ⭐ NỔI BẬT
@@ -458,8 +458,12 @@ export default function MovieDetailTemplate({ movieId }: MovieDetailTemplateProp
           movieId={movieId}
           onContinue={(schedule: Schedule) => {
             setIsModalOpen(false);
+            if (!schedule.cinemaRoomId) {
+              console.error("cinemaRoomId is missing from schedule object");
+              return;
+            }
             router.push(
-              `/booking/seat-selection?scheduleId=${schedule.scheduleId}`
+              `/booking/seat-selection?scheduleId=${schedule.scheduleId}&roomId=${schedule.cinemaRoomId}`
             );
           }}
         />

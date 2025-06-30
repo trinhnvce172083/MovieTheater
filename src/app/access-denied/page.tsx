@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
-import { roleNames, Role } from "@/casl/roles";
+
 import ROUTES from "@/constants/routes";
 
 export default function AccessDenied() {

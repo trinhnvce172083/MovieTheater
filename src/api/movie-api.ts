@@ -55,7 +55,7 @@ export class MovieApiService {
       };
     }
   }
-  static async searchMovies(query: string, page: number = 0, size: number = 10): Promise<ApiResponse<Movie[]>> {
+  static async searchMoviesNowShowing(query: string, page: number = 0, size: number = 9): Promise<ApiResponse<Movie[]>> {
     try {
       const response = await axiosClient.get("/movies/search", {
         params: { 
@@ -65,8 +65,17 @@ export class MovieApiService {
         },
       });
       const data = response.data;
+
+      const moviesArray = Array.isArray(data.movies)
+        ? data.movies
+        : Array.isArray(data)
+          ? data
+          : [];
+
+      const nowShowingMovies = moviesArray.filter((movie: Movie) => movie.status === "NOW_SHOWING");
+
       return {
-        data: data.movies || data,
+        data: nowShowingMovies,
         success: true,
       };
     } catch (error: unknown) {

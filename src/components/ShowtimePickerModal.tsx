@@ -7,11 +7,35 @@ import { Ring } from '@uiball/loaders';
 
 // Helper to generate next 7 days
 const generateDates = () => {
+  const today = dayjs();
+  const currentDayOfWeek = today.day(); // 0 = CN, 1 = T2, ..., 6 = T7
   const dates = [];
+
+  // Thêm 7 ngày tiếp theo vào mảng
   for (let i = 0; i < 7; i++) {
     dates.push(dayjs().add(i, 'day'));
   }
-  return dates;
+  
+  // Sắp xếp lại ngày theo thứ tự mong muốn
+  return dates.sort((a, b) => {
+    const dayOfWeekA = a.day();
+    const dayOfWeekB = b.day();
+    
+    // Hàm chuyển đổi thứ tự ưu tiên
+    const getPriority = (day: number) => {
+      // Nếu là ngày hiện tại, ưu tiên cao nhất
+      if (day === currentDayOfWeek) return -1;
+      
+      // Nếu ngày nhỏ hơn ngày hiện tại (thứ 2, 3 nếu hôm nay là thứ 4)
+      // thì đẩy xuống cuối
+      if (day < currentDayOfWeek) return day + 7;
+      
+      // Các ngày còn lại giữ nguyên thứ tự
+      return day;
+    };
+    
+    return getPriority(dayOfWeekA) - getPriority(dayOfWeekB);
+  });
 };
 
 interface ShowtimePickerModalProps {

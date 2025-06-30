@@ -12,6 +12,7 @@ const ROUTES = {
   BOOKING: "/booking",
   BOOKING_SELECT_SEAT: "/booking/seat-selection",
   PAYMENT: "/payment",
+  CORNCHIP: "/booking/CornChip",
 
   // Movie Routes
   MOVIES: "/movies",
