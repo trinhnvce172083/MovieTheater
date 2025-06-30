@@ -125,12 +125,10 @@ export const getAllUsers = async (): Promise<UsersResponse> => {
     console.log("Making API call to /cinema/api/admin/users");
     console.log("Base URL:", axiosClient.defaults.baseURL);
     
-    // Check multiple possible token locations including cookies
     const token = localStorage.getItem("accessToken") || 
                  localStorage.getItem("access_token") || 
                  localStorage.getItem("authToken") ||
-                 sessionStorage.getItem("accessToken") ||
-            
+                 sessionStorage.getItem("accessToken");
     
     console.log("Access token:", token ? "Present" : "Missing");
     if (token) {
@@ -139,7 +137,8 @@ export const getAllUsers = async (): Promise<UsersResponse> => {
         localStorage.getItem("access_token") ? "localStorage(access_token)" :
         localStorage.getItem("authToken") ? "localStorage(authToken)" :
         sessionStorage.getItem("accessToken") ? "sessionStorage(accessToken)" :
-  
+        "Unknown"
+      );
       console.log("Token preview:", token.substring(0, 20) + "...");
     }
     

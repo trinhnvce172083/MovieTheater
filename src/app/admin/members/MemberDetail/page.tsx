@@ -27,7 +27,6 @@ import {
 } from "@ant-design/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import axiosClient from "@/api/axiosClient";
-import { debugAuthStatus } from "@/utils/authDebug";
 
 
 const { Title, Text } = Typography;
@@ -66,7 +65,7 @@ const MemberDetailPage: React.FC = () => {
   // Fetch current user info to check permissions
   const fetchCurrentUser = async (): Promise<CurrentUser | null> => {
     try {
-      const token = getAuthTokenFromCookies();
+      const token = localStorage.getItem('accessToken');
       if (!token) {
         throw new Error('No authentication token found');
       }
@@ -85,14 +84,17 @@ const MemberDetailPage: React.FC = () => {
   // Fetch user details
   const fetchUserDetail = async (id: string): Promise<UserDetail | null> => {
     try {
-      const token = getAuthTokenFromCookies();
+      const token = localStorage.getItem('accessToken');
       if (!token) {
         throw new Error('No authentication token found');
       }
 
-      debugAuthStatus();
-      const response = await axiosClient.get(`/admin/users/${id}`);
-      
+      const response = await axiosClient.get(`/admin/users/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
       if (response.data) {
         return {
           accountId: response.data.accountId,

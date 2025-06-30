@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { BookingApiService } from "@/api/booking-api";
 import { decodeJwt } from "@/hooks/decodeJwt";
-import { getAuthTokenFromCookies } from "@/utils/authCookies";
+import ROUTES from "@/constants/routes";
 
 // Mở rộng interface Seat để có type
 interface Seat {
@@ -269,7 +269,7 @@ export default function SeatSelectionPage() {
       return;
     }
 
-    const token = getAuthTokenFromCookies();
+    const token = localStorage.getItem("accessToken");
     if (!token) {
       messageApi.error("You need to login to book tickets!");
       router.push("/auth/Login");
@@ -294,7 +294,17 @@ export default function SeatSelectionPage() {
 
       if (response.success) {
         messageApi.success("Booking successful!");
-        router.push(`/CornChip?bookingId=${response.data.bookingId}`);
+        const params = new URLSearchParams({
+          scheduleId: scheduleId ?? "",
+          roomId: roomId ?? "",
+          seats: JSON.stringify(selectedSeats.map(seat => ({
+            id: seat.id,
+            row: seat.row,
+            number: seat.number,
+            type: seat.type,
+          }))),
+        }).toString();
+        router.push(`${ROUTES.CORNCHIP}?${params}`);
       } else {
         messageApi.error(response.message || "Unable to create booking");
       }
