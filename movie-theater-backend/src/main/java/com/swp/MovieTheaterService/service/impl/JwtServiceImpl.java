@@ -84,8 +84,7 @@ public class JwtServiceImpl implements JwtService {
                     .toLocalDateTime();
         } catch (Exception e) {
             log.error("Error extracting token expiry time: {}", e.getMessage());
-            // Fallback: return current time + 24 hours
-            return LocalDateTime.now().plusHours(24);
+            throw new AppException(ErrorCode.TOKEN_INVALID);
         }
     }
 

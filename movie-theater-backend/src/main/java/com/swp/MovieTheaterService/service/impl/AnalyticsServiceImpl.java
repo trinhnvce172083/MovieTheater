@@ -3,6 +3,8 @@ package com.swp.MovieTheaterService.service.impl;
 import com.swp.MovieTheaterService.dto.analytics.DashboardSummaryResponse;
 import com.swp.MovieTheaterService.dto.analytics.ReportRequest;
 import com.swp.MovieTheaterService.enums.BookingStatus;
+import com.swp.MovieTheaterService.exception.AppException;
+import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.repository.*;
 import com.swp.MovieTheaterService.service.AnalyticsService;
 import lombok.RequiredArgsConstructor;
@@ -74,7 +76,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         } catch (Exception e) {
             log.error("Error generating dashboard summary: {}", e.getMessage(), e);
-            throw new RuntimeException("Không thể tạo dashboard summary", e);
+            throw new AppException(ErrorCode.ANALYTICS_GENERATION_FAILED);
         }
     }
 
@@ -106,7 +108,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                     report = generateComprehensiveReport(request);
                     break;
                 default:
-                    throw new IllegalArgumentException("Unsupported report type: " + request.getReportType());
+                    throw new AppException(ErrorCode.REPORT_TYPE_UNSUPPORTED);
             }
             
             // Add metadata
@@ -119,7 +121,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         } catch (Exception e) {
             log.error("Error generating report: {}", e.getMessage(), e);
-            throw new RuntimeException("Không thể tạo báo cáo", e);
+            throw new AppException(ErrorCode.ANALYTICS_GENERATION_FAILED);
         }
     }
 
@@ -138,11 +140,11 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 case EXCEL:
                     return exportToExcel(reportData);
                 default:
-                    throw new IllegalArgumentException("Unsupported export format");
+                    throw new AppException(ErrorCode.EXPORT_FORMAT_UNSUPPORTED);
             }
         } catch (Exception e) {
             log.error("Error exporting report: {}", e.getMessage(), e);
-            throw new RuntimeException("Không thể export báo cáo", e);
+            throw new AppException(ErrorCode.ANALYTICS_GENERATION_FAILED);
         }
     }
 

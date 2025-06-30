@@ -558,7 +558,7 @@ public class AuthServiceImpl implements AuthService {
             log.info("Verification email resent to: {}", email);
         } catch (Exception e) {
             log.error("Failed to resend verification email to: {} - {}", email, e.getMessage());
-            throw new RuntimeException("Không thể gửi email xác thực", e);
+            throw new AppException(ErrorCode.EMAIL_SENDING_FAILED);
         }
     }
 
@@ -580,7 +580,7 @@ public class AuthServiceImpl implements AuthService {
             log.info("Reset password email sent to: {}", request.getEmail());
         } catch (Exception e) {
             log.error("Failed to send reset password email to: {} - {}", request.getEmail(), e.getMessage());
-            throw new RuntimeException("Không thể gửi email đặt lại mật khẩu", e);
+            throw new AppException(ErrorCode.EMAIL_SENDING_FAILED);
         }
     }
 

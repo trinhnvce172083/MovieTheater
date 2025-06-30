@@ -54,7 +54,7 @@ public class PromotionService {
         
         // Validate promotion code uniqueness
         if (promotionRepository.existsByPromotionCodeAndIsActiveTrue(request.getCode())) {
-            throw new RuntimeException("Mã khuyến mãi đã tồn tại: " + request.getCode());
+            throw new AppException(ErrorCode.PROMOTION_CODE_INVALID, "Mã khuyến mãi đã tồn tại: " + request.getCode());
         }
 
         Promotion promotion = mapToEntity(request);
@@ -130,7 +130,7 @@ public class PromotionService {
     @Transactional(readOnly = true)
     public PromotionResponse getPromotionByCode(String promotionCode) {
         Promotion promotion = promotionRepository.findByPromotionCodeAndIsActiveTrue(promotionCode)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi: " + promotionCode));
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
         return mapToResponse(promotion);
     }
 
@@ -159,7 +159,7 @@ public class PromotionService {
     @Transactional(readOnly = true)
     public double calculateDiscount(String promotionCode, Double totalAmount) {
         Promotion promotion = promotionRepository.findByPromotionCodeAndIsActiveTrue(promotionCode)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi: " + promotionCode));
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
         
         return promotion.calculateDiscount(totalAmount);
     }
@@ -167,10 +167,10 @@ public class PromotionService {
     // Apply promotion (increment usage)
     public void applyPromotion(String promotionCode) {
         Promotion promotion = promotionRepository.findByPromotionCodeAndIsActiveTrue(promotionCode)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi: " + promotionCode));
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
         
         if (!promotion.isValid()) {
-            throw new RuntimeException("Khuyến mãi không còn hiệu lực: " + promotionCode);
+            throw new AppException(ErrorCode.PROMOTION_EXPIRED);
         }
 
         promotion.incrementUsage();
@@ -305,14 +305,14 @@ public class PromotionService {
     @Transactional(readOnly = true)
     public PromotionResponse getPromotionById(Long id) {
         Promotion promotion = promotionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi với ID: " + id));
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
         return mapToResponse(promotion);
     }
 
     // Update promotion
     public PromotionResponse updatePromotion(Long id, Object request) {
         Promotion promotion = promotionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi với ID: " + id));
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
         
         // Simple update - just modify updatedAt for now
         promotion.setUpdatedAt(LocalDateTime.now());
@@ -323,7 +323,7 @@ public class PromotionService {
     // Delete promotion
     public void deletePromotion(Long id) {
         Promotion promotion = promotionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi với ID: " + id));
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
         
         promotion.setIsActive(false);
         promotion.setUpdatedAt(LocalDateTime.now());
@@ -377,7 +377,7 @@ public class PromotionService {
     @Transactional(readOnly = true)
     public Object getPromotionUsage(Long id) {
         Promotion promotion = promotionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi với ID: " + id));
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
         
         return new Object() {
             public Integer usageCount = promotion.getCurrentUsageCount();
@@ -396,7 +396,7 @@ public class PromotionService {
     // Activate promotion
     public PromotionResponse activatePromotion(Long id) {
         Promotion promotion = promotionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi với ID: " + id));
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
         
         promotion.setIsActive(true);
         promotion.setUpdatedAt(LocalDateTime.now());
@@ -407,7 +407,7 @@ public class PromotionService {
     // Deactivate promotion and return response
     public PromotionResponse deactivatePromotion(Long id) {
         Promotion promotion = promotionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi với ID: " + id));
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
         
         promotion.setIsActive(false);
         promotion.setUpdatedAt(LocalDateTime.now());

@@ -6,6 +6,7 @@ import com.swp.MovieTheaterService.dto.schedule.ScheduleCreateRequest;
 import com.swp.MovieTheaterService.dto.schedule.ScheduleResponse;
 import com.swp.MovieTheaterService.dto.schedule.MultipleMovieScheduleRequest;
 import com.swp.MovieTheaterService.dto.schedule.MultipleMovieScheduleResponse;
+import com.swp.MovieTheaterService.exception.AppException;
 import com.swp.MovieTheaterService.exception.AutoScheduleException;
 import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.entity.CinemaRoom;
@@ -205,7 +206,7 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
 
         try {
             Movie movie = movieRepository.findById(movieId)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy phim với ID: " + movieId));
+                    .orElseThrow(() -> new AppException(ErrorCode.MOVIE_NOT_FOUND));
 
             if (!"NOW_SHOWING".equals(movie.getStatus())) {
                 errors.add("Phim không ở trạng thái đang chiếu");

@@ -337,7 +337,7 @@ public class MovieServiceImpl implements MovieService {
                     
         } catch (Exception e) {
             log.error("Error getting movies with filter: {}", e.getMessage(), e);
-            throw new RuntimeException("Không thể lấy danh sách phim", e);
+            throw new AppException(ErrorCode.MOVIE_FETCH_FAILED);
         }
     }
 

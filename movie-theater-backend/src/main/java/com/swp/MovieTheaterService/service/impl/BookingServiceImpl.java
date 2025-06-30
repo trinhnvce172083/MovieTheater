@@ -78,13 +78,13 @@ public class BookingServiceImpl implements BookingService {
         // Validate guest booking information
         if (!request.isValidGuestBooking()) {
             log.warn("Invalid guest booking information");
-            throw new IllegalArgumentException("Thông tin khách hàng không hợp lệ cho đặt vé khách");
+            throw new AppException(ErrorCode.BOOKING_INVALID_CUSTOMER_INFO);
         }
 
         // Validate selected seats
         if (request.getSeatIds() == null || request.getSeatIds().isEmpty()) {
             log.warn("No seats selected for booking");
-            throw new IllegalArgumentException("Vui lòng chọn ít nhất một ghế");
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Vui lòng chọn ít nhất một ghế");
         }
 
         // Check seat availability
@@ -93,7 +93,7 @@ public class BookingServiceImpl implements BookingService {
         // Validate seat count
         if (selectedSeatIds.size() > 10) {
             log.warn("Too many seats selected: {}", selectedSeatIds.size());
-            throw new IllegalArgumentException("Không thể đặt quá 10 ghế trong một lần");
+            throw new AppException(ErrorCode.BOOKING_SEAT_LIMIT_EXCEEDED);
         }
 
         // Seat availability will be checked in the main booking flow via SeatReservationService
@@ -1040,13 +1040,13 @@ public class BookingServiceImpl implements BookingService {
 
         // Only allow adding concessions to PENDING bookings
         if (!booking.isPending()) {
-            throw new IllegalArgumentException("Chỉ có thể thêm đồ ăn/uống vào booking đang chờ xử lý");
+            throw new AppException(ErrorCode.BOOKING_INVALID_STATUS);
         }
 
         // Validate concession availability
         if (!concessionService.isAvailableForOrder(request.getConcessionId(), request.getQuantity())) {
             Concession concession = concessionService.getConcessionById(request.getConcessionId());
-            throw new IllegalArgumentException(
+            throw new AppException(ErrorCode.CONCESSION_OUT_OF_STOCK,
                     String.format("Không đủ số lượng cho %s (yêu cầu: %d, còn lại: %d)",
                             concession.getFullName(),
                             request.getQuantity(),
@@ -1071,7 +1071,7 @@ public class BookingServiceImpl implements BookingService {
 
         // Only allow removing concessions from PENDING bookings
         if (!booking.isPending()) {
-            throw new IllegalArgumentException("Chỉ có thể xóa đồ ăn/uống từ booking đang chờ xử lý");
+            throw new AppException(ErrorCode.BOOKING_INVALID_STATUS);
         }
 
         // Find and remove concession
@@ -1080,7 +1080,7 @@ public class BookingServiceImpl implements BookingService {
         BookingConcession toRemove = concessions.stream()
                 .filter(bc -> bc.getConcession().getConcessionId().equals(concessionId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đồ ăn/uống trong booking"));
+                .orElseThrow(() -> new AppException(ErrorCode.CONCESSION_NOT_FOUND));
 
         // Restore stock
         concessionService.updateStock(concessionId, -toRemove.getQuantity()); // Negative to restore
@@ -1104,7 +1104,7 @@ public class BookingServiceImpl implements BookingService {
 
         // Only allow updating concessions in PENDING bookings
         if (!booking.isPending()) {
-            throw new IllegalArgumentException("Chỉ có thể cập nhật đồ ăn/uống trong booking đang chờ xử lý");
+            throw new AppException(ErrorCode.BOOKING_INVALID_STATUS);
         }
 
         // Find concession in booking
@@ -1113,7 +1113,7 @@ public class BookingServiceImpl implements BookingService {
         BookingConcession toUpdate = concessions.stream()
                 .filter(bc -> bc.getConcession().getConcessionId().equals(concessionId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đồ ăn/uống trong booking"));
+                .orElseThrow(() -> new AppException(ErrorCode.CONCESSION_NOT_FOUND));
 
         // Calculate stock change
         Integer oldQuantity = toUpdate.getQuantity();
@@ -1122,7 +1122,7 @@ public class BookingServiceImpl implements BookingService {
         // Validate availability for increase
         if (stockChange > 0 && !concessionService.isAvailableForOrder(concessionId, stockChange)) {
             Concession concession = concessionService.getConcessionById(concessionId);
-            throw new IllegalArgumentException(
+            throw new AppException(ErrorCode.CONCESSION_OUT_OF_STOCK,
                     String.format("Không đủ số lượng để tăng %s (yêu cầu thêm: %d, còn lại: %d)",
                             concession.getFullName(),
                             stockChange,
@@ -1363,7 +1363,7 @@ public class BookingServiceImpl implements BookingService {
 
             // Validate availability again (double check)
             if (!concessionService.isAvailableForOrder(order.getConcessionId(), order.getQuantity())) {
-                throw new IllegalArgumentException(
+                throw new AppException(ErrorCode.CONCESSION_OUT_OF_STOCK,
                         String.format("Không đủ số lượng cho %s", concession.getFullName()));
             }
 
@@ -1541,20 +1541,20 @@ public class BookingServiceImpl implements BookingService {
     private void validateConcessionOrder(ConcessionOrderRequest order) {
         // Validate order structure
         if (!order.isValidOrder()) {
-            throw new IllegalArgumentException("Đơn hàng đồ ăn/uống không hợp lệ");
+            throw new AppException(ErrorCode.CONCESSION_ORDER_INVALID);
         }
 
         // Validate concession exists and is available
         Concession concession = concessionService.getConcessionById(order.getConcessionId());
 
         if (!concession.isInStock()) {
-            throw new IllegalArgumentException(
+            throw new AppException(ErrorCode.CONCESSION_OUT_OF_STOCK,
                     String.format("Món %s hiện không có sẵn", concession.getFullName()));
         }
 
         // Validate quantity availability
         if (!concessionService.isAvailableForOrder(order.getConcessionId(), order.getQuantity())) {
-            throw new IllegalArgumentException(
+            throw new AppException(ErrorCode.CONCESSION_OUT_OF_STOCK,
                     String.format("Không đủ số lượng cho %s (yêu cầu: %d, còn lại: %d)",
                             concession.getFullName(),
                             order.getQuantity(),

@@ -64,6 +64,7 @@ public enum ErrorCode {
     MOVIE_RATING_INVALID(1304, "Đánh giá phim không hợp lệ", HttpStatus.BAD_REQUEST),
     MOVIE_STATUS_INVALID(1305, "Trạng thái phim không hợp lệ", HttpStatus.BAD_REQUEST),
     MOVIE_RELEASE_DATE_INVALID(1306, "Ngày phát hành không hợp lệ", HttpStatus.BAD_REQUEST),
+    MOVIE_FETCH_FAILED(1307, "Không thể lấy danh sách phim", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // ==================== CINEMA & ROOM MANAGEMENT (1400-1499)
     // ====================
@@ -161,7 +162,25 @@ public enum ErrorCode {
     AUTO_SCHEDULE_CONCURRENT_MODIFICATION(2116, "Dữ liệu đã bị thay đổi bởi tiến trình khác", HttpStatus.CONFLICT),
     AUTO_SCHEDULE_INSUFFICIENT_TIME_SLOTS(2117, "Không đủ khung giờ chiếu khả dụng", HttpStatus.BAD_REQUEST),
     AUTO_SCHEDULE_MOVIE_DURATION_CONFLICT(2118, "Thời lượng phim xung đột với khung giờ", HttpStatus.BAD_REQUEST),
-    AUTO_SCHEDULE_ROOM_CAPACITY_INSUFFICIENT(2119, "Sức chứa phòng chiếu không đủ", HttpStatus.BAD_REQUEST);
+    AUTO_SCHEDULE_ROOM_CAPACITY_INSUFFICIENT(2119, "Sức chứa phòng chiếu không đủ", HttpStatus.BAD_REQUEST),
+
+    // ==================== ANALYTICS & REPORTING (2200-2299) ====================
+    ANALYTICS_GENERATION_FAILED(2200, "Không thể tạo báo cáo phân tích", HttpStatus.INTERNAL_SERVER_ERROR),
+    REPORT_TYPE_UNSUPPORTED(2201, "Loại báo cáo không được hỗ trợ", HttpStatus.BAD_REQUEST),
+    EXPORT_FORMAT_UNSUPPORTED(2202, "Định dạng export không được hỗ trợ", HttpStatus.BAD_REQUEST),
+    REPORT_DATA_INSUFFICIENT(2203, "Không đủ dữ liệu để tạo báo cáo", HttpStatus.BAD_REQUEST),
+
+    // ==================== EMAIL & NOTIFICATION (2300-2399) ====================
+    EMAIL_SENDING_FAILED(2300, "Gửi email thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
+    EMAIL_TEMPLATE_NOT_FOUND(2301, "Không tìm thấy template email", HttpStatus.NOT_FOUND),
+    EMAIL_AUTHENTICATION_FAILED(2302, "Xác thực email server thất bại", HttpStatus.SERVICE_UNAVAILABLE),
+    NOTIFICATION_SENDING_FAILED(2303, "Gửi thông báo thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    // ==================== CONCESSION MANAGEMENT (2400-2499) ====================
+    CONCESSION_NOT_FOUND(2400, "Đồ ăn/uống không tồn tại", HttpStatus.NOT_FOUND),
+    CONCESSION_OUT_OF_STOCK(2401, "Đồ ăn/uống đã hết hàng", HttpStatus.CONFLICT),
+    CONCESSION_INVALID_QUANTITY(2402, "Số lượng đồ ăn/uống không hợp lệ", HttpStatus.BAD_REQUEST),
+    CONCESSION_ORDER_INVALID(2403, "Đơn hàng đồ ăn/uống không hợp lệ", HttpStatus.BAD_REQUEST);
 
     int code;
     String message;

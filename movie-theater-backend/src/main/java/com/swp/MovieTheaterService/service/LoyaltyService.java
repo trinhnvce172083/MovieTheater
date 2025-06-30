@@ -4,6 +4,8 @@ import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.entity.Booking;
 import com.swp.MovieTheaterService.entity.LoyaltyTransaction;
 import com.swp.MovieTheaterService.entity.Promotion;
+import com.swp.MovieTheaterService.exception.AppException;
+import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.repository.AccountRepository;
 import com.swp.MovieTheaterService.repository.LoyaltyTransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -72,7 +74,7 @@ public class LoyaltyService {
         // Validate account has enough points
         int availablePoints = getAvailablePoints(account.getAccountId());
         if (availablePoints < promotion.getPointsRequired()) {
-            throw new RuntimeException("Không đủ điểm để đổi khuyến mãi. Cần: " + 
+            throw new AppException(ErrorCode.INSUFFICIENT_POINTS, "Không đủ điểm để đổi khuyến mãi. Cần: " +
                     promotion.getPointsRequired() + ", Có: " + availablePoints);
         }
 
