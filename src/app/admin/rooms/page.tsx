@@ -1,787 +1,938 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
-  Plus,
-  Search,
-  RotateCcw,
-  Eye,
-  Edit,
-  Trash2,
-  Download,
-  Home,
-  Settings,
-  CheckCircle,
-  Grid,
-  X,
-} from "lucide-react"
-import { Button as AntdButton, Tooltip, Popconfirm, Space } from "antd";
+  Card,
+  Table,
+  Button,
+  Input,
+  Select,
+  Space,
+  Pagination,
+  Tooltip,
+  Popconfirm,
+  message,
+  Modal,
+  Form,
+  Tag,
+  Statistic,
+  Row,
+  Col,
+  Typography,
+  Avatar,
+  Checkbox,
+  InputNumber,
+  Spin,
+  Alert,
+} from "antd";
+import type { ColumnsType } from 'antd/es/table';
 import {
-  EyeOutlined,
+  PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  SettingOutlined,
+  SearchOutlined,  EyeOutlined,
+  ReloadOutlined,
+  VideoCameraOutlined,
+  ClockCircleOutlined,
+  GlobalOutlined,  HomeOutlined,
 } from "@ant-design/icons";
+import { useRouter } from "next/navigation";
+import axiosClient from "@/api/axiosClient";
 
+const { Option } = Select;
+const { Title, Text } = Typography;
+const { TextArea } = Input;
 
-const roomData = [
-  {
-    key: "1",
-    id: "R001",
-    name: "Premium Cinema Hall A",
-    seats: 48,
-    type: "Premium",
-    status: "Active",
-    layout: "6x8",
-    features: ["Dolby Atmos", "Recliner Seats", "4K Projection"],
-    lastMaintenance: "2024-05-15",
-  },
-  {
-    key: "2",
-    id: "R002",
-    name: "Standard Cinema Hall B",
-    seats: 40,
-    type: "Standard",
-    status: "Active",
-    layout: "5x8",
-    features: ["Surround Sound", "Standard Seats"],
-    lastMaintenance: "2024-05-10",
-  },
-  {
-    key: "3",
-    id: "R003",
-    name: "VIP Cinema Hall C",
-    seats: 24,
-    type: "VIP",
-    status: "Maintenance",
-    layout: "4x6",
-    features: ["Premium Leather", "In-seat Service", "Private Lounge"],
-    lastMaintenance: "2024-05-20",
-  },
-  {
-    key: "4",
-    id: "R004",
-    name: "IMAX Cinema Hall D",
-    seats: 65,
-    type: "IMAX",
-    status: "Active",
-    layout: "8x8+1",
-    features: ["IMAX Screen", "Enhanced Audio", "Stadium Seating"],
-    lastMaintenance: "2024-05-12",
-  },
-]
-
-const generateSeatMap = (seats: number) => {
-  const rows = Math.ceil(Math.sqrt(seats))
-  const cols = Math.ceil(seats / rows)
-  return Array(rows)
-    .fill(0)
-    .map((_, row) =>
-      Array(cols)
-        .fill(0)
-        .map((_, col) => {
-          const seatNum = row * cols + col + 1
-          if (seatNum > seats) return null
-          return {
-            seat: `${String.fromCharCode(65 + row)}${col + 1}`,
-            status: Math.random() < 0.7 ? "available" : Math.random() < 0.5 ? "booked" : "blocked",
-          }
-        })
-        .filter(Boolean),
-    )
+// Interface for Create/Update Room Request
+interface RoomCreateRequest {
+  cinemaRoomName: string;
+  roomType: string;
+  seatQuantity: number;
+  rows: number;
+  columns: number;
+  description?: string;
+  has3D?: boolean;
+  hasDolbyAtmos?: boolean;
+  hasReclinerSeats?: boolean;
+  priceMultiplier: number;
+  isActive?: boolean;
 }
 
-const StatCard = ({ title, value, icon: Icon, gradient, textColor }: { title: string, value: string, icon: React.ElementType, gradient: string, textColor: string }) => (
-  <div className={`${gradient} rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}>
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-white/80 text-sm font-medium">{title}</p>
-        <p className={`text-3xl font-bold ${textColor}`}>{value}</p>
-      </div>
-      <div className="p-3 bg-white/20 rounded-lg">
-        {Icon && <Icon size={24} />}
-      </div>
-    </div>
-  </div>
-)
-
-const Badge = ({ children, variant = "default" }: { children: React.ReactNode, variant: string }) => {
-  const variants: { [key: string]: string } = {
-    default: "bg-gray-100 text-gray-800",
-    success: "bg-green-100 text-green-800",
-    warning: "bg-yellow-100 text-yellow-800",
-    danger: "bg-red-100 text-red-800",
-    info: "bg-blue-100 text-blue-800",
-    purple: "bg-purple-100 text-purple-800",
-    orange: "bg-orange-100 text-orange-800",
-  }
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]}`}>{children}</span>
-  )
+// Interface for Cinema Room Response
+interface CinemaRoomResponse {
+  cinemaRoomId: number;
+  cinemaRoomName: string;
+  seatQuantity: number;
+  roomType: string;
+  isActive: boolean;
+  description: string;
+  rows: number;
+  columns: number;
+  has3D: boolean;
+  hasDolbyAtmos: boolean;
+  hasReclinerSeats: boolean;
+  priceMultiplier: number;
+  createdAt: string;
+  updatedAt: string;
+  availableSeats?: number;
+  occupiedSeats?: number;
+  maintenanceSeats?: number;
+  scheduleCount?: number;
 }
 
-const Modal = ({ isOpen, onClose, title, children, footer }: { isOpen: boolean, onClose: () => void, title: React.ReactNode, children: React.ReactNode, footer: React.ReactNode }) => {
-  if (!isOpen) return null
+// Room Management Component
+export default function CinemaRoomManagement() {
+  const [roomData, setRoomData] = useState<CinemaRoomResponse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalElements, setTotalElements] = useState(0);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<CinemaRoomResponse | null>(null);
+  const [isUsingApiData, setIsUsingApiData] = useState(true);
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
+  const [form] = Form.useForm();
+  const router = useRouter();
+  // Sample data for testing (when API is not available)
+  const sampleRoomData = useMemo<CinemaRoomResponse[]>(() => [
+    {
+      cinemaRoomId: 1,
+      cinemaRoomName: "Premium Hall A",
+      seatQuantity: 48,
+      roomType: "VIP",
+      isActive: true,
+      description: "Premium cinema hall with luxury seating and enhanced viewing experience",
+      rows: 6,
+      columns: 8,
+      has3D: true,
+      hasDolbyAtmos: true,
+      hasReclinerSeats: true,
+      priceMultiplier: 1.5,
+      createdAt: "2024-01-15T10:00:00",
+      updatedAt: "2024-06-20T14:30:00",
+    },
+    {
+      cinemaRoomId: 2,
+      cinemaRoomName: "Standard Hall B",
+      seatQuantity: 40,
+      roomType: "STANDARD",
+      isActive: true,
+      description: "Standard cinema hall with comfortable seating for regular movie viewing",
+      rows: 5,
+      columns: 8,
+      has3D: false,
+      hasDolbyAtmos: false,
+      hasReclinerSeats: false,
+      priceMultiplier: 1.0,
+      createdAt: "2024-01-20T09:00:00",
+      updatedAt: "2024-06-18T11:15:00",
+    },    {
+      cinemaRoomId: 3,
+      cinemaRoomName: "VIP Theater",
+      seatQuantity: 32,
+      roomType: "VIP",
+      isActive: true,
+      description: "Exclusive VIP theater with premium amenities and personalized service",
+      rows: 4,
+      columns: 8,
+      has3D: true,
+      hasDolbyAtmos: true,
+      hasReclinerSeats: true,
+      priceMultiplier: 2.0,
+      createdAt: "2024-02-01T08:00:00",
+      updatedAt: "2024-06-22T16:45:00",
+    },
+    {
+      cinemaRoomId: 4,
+      cinemaRoomName: "Standard Hall C",
+      seatQuantity: 60,
+      roomType: "STANDARD",
+      isActive: false,
+      description: "Large standard cinema hall currently under maintenance",
+      rows: 6,
+      columns: 10,
+      has3D: false,
+      hasDolbyAtmos: false,
+      hasReclinerSeats: false,
+      priceMultiplier: 1.0,
+      createdAt: "2024-03-10T12:00:00",      updatedAt: "2024-06-21T09:30:00",
+    },
+  ], []);  // API Functions
+  const fetchRooms = useCallback(async () => {
+    try {
+      setLoading(true);
+      console.log('🔄 Fetching rooms from API...');
+      const response = await axiosClient.get('/cinema-rooms', {
+        params: {
+          page: currentPage - 1, // Backend uses 0-based pagination
+          size: pageSize,
+          sortBy: 'cinemaRoomName',
+          sortDirection: 'asc'
+        }
+      });      console.log('✅ Rooms fetched successfully:', response.data);
+      setRoomData(response.data.content || []);
+      setTotalElements(response.data.page?.totalElements || 0);
+      setIsUsingApiData(true);
+      setBackendStatus('connected');} catch (error) {
+      console.error('❌ Error fetching rooms:', error);
+      
+      // Provide detailed error information
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response: { status: number; data: unknown; statusText: string } };
+        console.error('Response error:', axiosError.response.status, axiosError.response.data);
+        if (axiosError.response.status === 500) {
+          message.error('Server error occurred. Please check if the backend server is running on localhost:8080');
+        } else if (axiosError.response.status === 401) {
+          message.error('Authentication failed. Please login again.');
+        } else if (axiosError.response.status === 403) {
+          message.error('Access denied. You may not have admin permissions.');
+        } else {
+          message.error(`API Error: ${axiosError.response.status} - ${axiosError.response.statusText}`);
+        }
+      } else if (error && typeof error === 'object' && 'request' in error) {
+        console.error('Network error:', error);
+        message.error('Cannot connect to backend server. Please ensure the server is running on localhost:8080');
+      } else {
+        console.error('Unknown error:', error);
+        message.error('An unexpected error occurred');
+      }      message.warning('Using sample data as fallback');
+      // Use sample data as fallback
+      setRoomData(sampleRoomData);
+      setTotalElements(sampleRoomData.length);
+      setIsUsingApiData(false);
+      setBackendStatus('disconnected');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, pageSize, sampleRoomData]);
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose}></div>
+  const searchRooms = useCallback(async (keyword: string) => {
+    if (!keyword.trim()) {
+      fetchRooms();
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const response = await axiosClient.get('/cinema-rooms/search', {
+        params: {
+          keyword,
+          page: currentPage - 1,
+          size: pageSize
+        }
+      });      setRoomData(response.data.content || []);
+      setTotalElements(response.data.page?.totalElements || 0);
+    } catch (error) {
+      console.error('Error searching rooms:', error);
+      message.error('Failed to search rooms');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, pageSize, fetchRooms]);
+  const createRoom = async (roomData: RoomCreateRequest) => {
+    try {
+      setLoading(true);
+      await axiosClient.post('/cinema-rooms', roomData);
+      message.success('Room created successfully');
+      fetchRooms();
+      return true;
+    } catch (error) {
+      console.error('Error creating room:', error);
+      message.error('Failed to create room');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <div className="bg-white px-6 pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-                <X size={20} />
-              </button>
-            </div>
-            <hr className="border-gray-200 mb-6" />
-          </div>
+  const updateRoom = async (id: number, roomData: RoomCreateRequest) => {
+    try {
+      setLoading(true);
+      await axiosClient.put(`/cinema-rooms/${id}`, roomData);
+      message.success('Room updated successfully');
+      fetchRooms();
+      return true;
+    } catch (error) {
+      console.error('Error updating room:', error);
+      message.error('Failed to update room');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-          <div className="px-6 pb-6">{children}</div>
+  const deleteRoom = async (id: number) => {
+    try {
+      setLoading(true);
+      await axiosClient.delete(`/cinema-rooms/${id}`);
+      message.success('Room deleted successfully');
+      fetchRooms();
+    } catch (error) {
+      console.error('Error deleting room:', error);
+      message.error('Failed to delete room');
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
 
-          {footer && <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">{footer}</div>}
-        </div>
-      </div>
-    </div>
-  )
-}
+  useEffect(() => {
+    const delayedSearch = setTimeout(() => {
+      if (searchTerm) {
+        searchRooms(searchTerm);
+      } else {
+        fetchRooms();
+      }
+    }, 500);
 
-const Button = ({ children, variant = "default", size = "md", icon, onClick, disabled = false, className = "" }: { children: React.ReactNode, variant: string, size: string, icon?: React.ReactNode, onClick?: () => void, disabled?: boolean, className?: string }) => {
-  const variants: { [key: string]: string } = {
-    default: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50",
-    primary: "bg-blue-600 text-white hover:bg-blue-700 border border-transparent",
-    danger: "bg-red-600 text-white hover:bg-red-700 border border-transparent",
-    success: "bg-green-600 text-white hover:bg-green-700 border border-transparent",
-    warning: "bg-yellow-600 text-white hover:bg-yellow-700 border border-transparent",
-  }
-  const sizes: { [key: string]: string } = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-sm",
-    lg: "px-6 py-3 text-base",
-  }
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
-    >
-      {icon && <span className="mr-2">{icon}</span>}
-      {children}
-    </button>
-  )
-}
+    return () => clearTimeout(delayedSearch);
+  }, [searchTerm, searchRooms, fetchRooms]);
 
-type RoomType = typeof roomData[0];
-
-export default function ProfessionalRoomManagement() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
-  const [isAddModalVisible, setIsAddModalVisible] = useState(false)
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false)
-  const [isSeatModalVisible, setIsSeatModalVisible] = useState(false)
-  const [selectedRoom, setSelectedRoom] = useState<RoomType | null>(null)
-  const [typeFilter, setTypeFilter] = useState("all")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [formData, setFormData] = useState({
-    name: "",
-    id: "",
-    seats: "",
-    type: "",
-    layout: "",
-    features: [] as string[],
-    status: "Active",
-  })
-  const [activeTab, setActiveTab] = useState("overview")
-  const [selectedRoomForSchedule, setSelectedRoomForSchedule] = useState<RoomType | null>(null)
-
+  // Filter and search logic
   const filteredData = useMemo(() => {
     return roomData.filter((room) => {
-      const matchesSearch =
-        room.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        room.id.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesType = typeFilter === "all" || room.type === typeFilter
-      const matchesStatus = statusFilter === "all" || room.status === statusFilter
-      return matchesSearch && matchesType && matchesStatus
-    })
-  }, [searchTerm, typeFilter, statusFilter])
+      const matchesType = !filterType || room.roomType === filterType;
+      const matchesStatus = !filterStatus || 
+        (filterStatus === 'active' ? room.isActive : !room.isActive);
 
+      return matchesType && matchesStatus;
+    });
+  }, [roomData, filterType, filterStatus]);
+
+  // Statistics calculations
   const statistics = useMemo(() => {
-    const totalRooms = roomData.length
-    const totalSeats = roomData.reduce((sum, r) => sum + r.seats, 0)
-    const activeRooms = roomData.filter((r) => r.status === "Active").length
-    const avgSeats = Math.round(totalSeats / totalRooms)
-    return { totalRooms, totalSeats, activeRooms, avgSeats }
-  }, [])
+    const totalRooms = roomData.length;
+    const activeRooms = roomData.filter((r) => r.isActive).length;
+    const totalSeats = roomData.reduce((sum, room) => sum + room.seatQuantity, 0);
+    const avgSeats = totalRooms > 0 ? Math.round(totalSeats / totalRooms) : 0;
 
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize
-    return filteredData.slice(startIndex, startIndex + pageSize)
-  }, [filteredData, currentPage, pageSize])
+    return { totalRooms, activeRooms, totalSeats, avgSeats };
+  }, [roomData]);
 
-  const totalPages = Math.ceil(filteredData.length / pageSize)
+  const handleEdit = (record: CinemaRoomResponse) => {
+    setEditingRoom(record);
+    form.setFieldsValue({
+      cinemaRoomName: record.cinemaRoomName,
+      roomType: record.roomType,
+      seatQuantity: record.seatQuantity,
+      rows: record.rows,
+      columns: record.columns,
+      description: record.description,
+      has3D: record.has3D,
+      hasDolbyAtmos: record.hasDolbyAtmos,
+      hasReclinerSeats: record.hasReclinerSeats,
+      priceMultiplier: record.priceMultiplier,
+      isActive: record.isActive,
+    });
+    setIsModalVisible(true);
+  };
 
-  const handleShowSeatDetail = (room: RoomType) => {
-    setSelectedRoom(room)
-    setIsSeatModalVisible(true)
-  }
+  const handleDelete = (record: CinemaRoomResponse) => {
+    deleteRoom(record.cinemaRoomId);
+  };
 
-  const handleEditRoom = (room: RoomType) => {
-    setSelectedRoom(room)
-    setFormData({
-      name: room.name,
-      id: room.id,
-      seats: String(room.seats),
-      type: room.type,
-      layout: room.layout,
-      features: room.features,
-      status: room.status,
-    })
-    setIsEditModalVisible(true)
-  }
-
-  const handleAddRoom = () => {
-    // Simulate adding room
-    setIsAddModalVisible(false)
-    setFormData({ name: "", id: "", seats: "", type: "", layout: "", features: [], status: "Active" })
-  }
-
-  const handleUpdateRoom = () => {
-    // Simulate updating room
-    setIsEditModalVisible(false)
-    setFormData({ name: "", id: "", seats: "", type: "", layout: "", features: [], status: "Active" })
-  }
-
-  const handleDeleteRoom = (room: RoomType) => {
-    if (confirm(`Are you sure you want to delete "${room.name}"?`)) {
-      // Simulate deletion
-      console.log(`Deleted room: ${room.name}`)
+  const handleModalOk = async () => {
+    try {
+      const values = await form.validateFields();
+      
+      if (editingRoom) {
+        const success = await updateRoom(editingRoom.cinemaRoomId, values);
+        if (success) {
+          setIsModalVisible(false);
+          setEditingRoom(null);
+          form.resetFields();
+        }
+      } else {
+        const success = await createRoom(values);
+        if (success) {
+          setIsModalVisible(false);
+          form.resetFields();
+        }
+      }
+    } catch (error) {
+      console.error('Form validation failed:', error);
     }
-  }
+  };
+  const handleModalCancel = () => {
+    setIsModalVisible(false);
+    setEditingRoom(null);
+    form.resetFields();
+  };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "Active":
-        return <Badge variant="success">Active</Badge>
-      case "Maintenance":
-        return <Badge variant="warning">Maintenance</Badge>
-      case "Inactive":
-        return <Badge variant="danger">Inactive</Badge>
-      default:
-        return <Badge variant="default">Unknown</Badge>
-    }
-  }
-
-  const getTypeBadge = (type: string) => {
-    switch (type) {
-      case "Premium":
-        return <Badge variant="purple">Premium</Badge>
-      case "VIP":
-        return <Badge variant="orange">VIP</Badge>
-      case "IMAX":
-        return <Badge variant="danger">IMAX</Badge>
-      case "Standard":
-        return <Badge variant="info">Standard</Badge>
-      default:
-        return <Badge variant="default">Standard</Badge>
-    }
-  }
-
+  const columns: ColumnsType<CinemaRoomResponse> = [{
+      title: "#",
+      dataIndex: "cinemaRoomId",
+      key: "cinemaRoomId",
+      width: 60,
+      render: (_: unknown, record: CinemaRoomResponse, index: number) => (
+        <div className="text-center">
+          <span className="font-mono text-sm text-gray-500">
+            {(currentPage - 1) * pageSize + index + 1}
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: "Room Information",
+      key: "room_info",
+      width: 280,
+      render: (_: unknown, record: CinemaRoomResponse) => (
+        <div className="flex items-center gap-3">
+          <Avatar
+            icon={<HomeOutlined />}
+            size={40}
+            className="bg-blue-100 text-blue-600 flex-shrink-0"
+          />
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-gray-900 mb-1 truncate text-sm">
+              {record.cinemaRoomName}
+            </div>
+            <div className="text-xs text-gray-600 mb-1 truncate">
+              {record.rows}x{record.columns} Layout
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Type & Status",
+      key: "type_status",
+      width: 120,
+      render: (_: unknown, record: CinemaRoomResponse) => (
+        <div className="text-sm">
+          <div className="font-medium text-gray-900 truncate mb-1">
+            {record.roomType}
+          </div>
+          <Tag
+            color={record.isActive ? "success" : "warning"}
+            className="text-xs"
+          >
+            {record.isActive ? "Active" : "Inactive"}
+          </Tag>
+        </div>
+      ),
+    },
+    {
+      title: "Capacity",
+      key: "capacity",
+      width: 80,
+      align: "center" as const,
+      render: (_: unknown, record: CinemaRoomResponse) => (
+        <div className="text-center">
+          <div className="text-sm font-medium">{record.seatQuantity}</div>
+          <div className="text-xs text-gray-500">seats</div>
+        </div>
+      ),    },
+    {
+      title: "Price Multiplier",
+      dataIndex: "priceMultiplier",
+      key: "priceMultiplier",
+      width: 120,
+      align: "center" as const,
+      render: (multiplier: number) => (
+        <div className="text-sm">
+          <div className=" font-medium">{multiplier}x</div>
+        </div>
+      ),
+    },
+    {
+      title: "Description",
+      key: "description",
+      align: "center" as const,
+      width: 200,
+      render: (_: unknown, record: CinemaRoomResponse) => (
+        <div className="text-sm">
+          <div className="text-gray-900 line-clamp-2">
+            {record.description || "No description available"}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      width: 100,
+      fixed: "right" as const,
+      align: "center" as const,
+      render: (_: unknown, record: CinemaRoomResponse) => (
+        <Space size="small">          <Tooltip title="View">
+            <Button
+              type="text"
+              icon={<EyeOutlined />}
+              size="small"
+              className="text-blue-600 hover:bg-blue-50"
+              onClick={() => router.push(`/admin/rooms/RoomDetail?id=${record.cinemaRoomId}`)}
+            />
+          </Tooltip>          <Tooltip title={isUsingApiData ? "Edit" : "Edit disabled in demo mode"}>
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              size="small"
+              className={isUsingApiData ? "text-green-600 hover:bg-green-50" : "text-gray-400"}
+              onClick={() => handleEdit(record)}
+              disabled={!isUsingApiData}
+            />
+          </Tooltip>
+          <Tooltip title={isUsingApiData ? "Delete" : "Delete disabled in demo mode"}>
+            <Popconfirm
+              title="Delete Room"
+              description="Are you sure?"
+              onConfirm={() => handleDelete(record)}
+              okText="Delete"
+              cancelText="Cancel"
+              okButtonProps={{ danger: true }}
+              disabled={!isUsingApiData}
+            >
+              <Button
+                type="text"
+                icon={<DeleteOutlined />}
+                size="small"
+                className={isUsingApiData ? "text-red-600 hover:bg-red-50" : "text-gray-400"}
+                disabled={!isUsingApiData}
+              />
+            </Popconfirm>
+          </Tooltip>
+        </Space>
+      ),
+    },
+  ];
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
-        {/* Cinema Rooms Overview and below */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          {/* Enhanced Header */}
-          <div className="px-8 py-6 bg-white border-b border-gray-100">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Cinema Rooms Overview</h2>
-                <p className="text-gray-600 mt-1">Manage and monitor all your cinema facilities</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  icon={<Download size={16} />}
-                  variant="default"
-                  size="md"
-                  onClick={() => {}}
-                  disabled={false}
-                  className=""
-                >
-                  Export
-                </Button>
-                <Button
-                  variant="primary"
-                  icon={<Plus size={16} />}
-                  size="md"
-                  onClick={() => setIsAddModalVisible(true)}
-                  disabled={false}
-                  className="text-white px-4 py-2"
-                >
-                  Add New Room
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Enhanced Filters */}
-          <div className="px-8 py-6 bg-gray-50 border-b border-gray-100">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                  <input
-                    type="text"
-                    placeholder="Search by room name or ID..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-12"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Room Type</label>
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-12"
-                >
-                  <option value="all">All Types</option>
-                  <option value="Standard">Standard</option>
-                  <option value="Premium">Premium</option>
-                  <option value="VIP">VIP</option>
-                  <option value="IMAX">IMAX</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-12"
-                >
-                  <option value="all">All Status</option>
-                  <option value="Active">Active</option>
-                  <option value="Maintenance">Maintenance</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-              </div>
-
-              <div>
-                <Button
-                  icon={<RotateCcw size={16} />}
-                  variant="default"
-                  size="md"
-                  onClick={() => {
-                    setSearchTerm("")
-                    setTypeFilter("all")
-                    setStatusFilter("all")
-                  }}
-                  disabled={false}
-                  className="h-12"
-                >
-                  Reset Filters
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Enhanced Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Room ID</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Room Details</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Capacity</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Features</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {paginatedData.map((room) => (
-                  <tr key={room.key} className="hover:bg-blue-50 transition-all duration-200">
-                    <td className="px-6 py-4">
-                      <div className="bg-blue-50 text-blue-700 font-mono text-sm font-semibold px-3 py-1 rounded-lg inline-block">
-                        {room.id}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="font-semibold text-gray-900 mb-1">{room.name}</div>
-                        <div className="flex items-center gap-2 mb-2">
-                          {getTypeBadge(room.type)}
-                          {getStatusBadge(room.status)}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Layout: {room.layout} • Last Maintenance: {room.lastMaintenance}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="text-2xl font-bold text-gray-900">{room.seats}</div>
-                      <div className="text-xs text-gray-500">seats</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-1">
-                        {room.features.slice(0, 2).map((feature, index) => (
-                          <Badge key={index} variant="default">
-                            {feature}
-                          </Badge>
-                        ))}
-                        {room.features.length > 2 && <Badge variant="info">+{room.features.length - 2} more</Badge>}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Space size="small">
-                        <Tooltip title="View">
-                          <AntdButton
-                            type="primary"
-                            icon={<EyeOutlined />}
-                            size="small"
-                            onClick={() => handleShowSeatDetail(room)}
-                            className="bg-blue-600 hover:bg-blue-700 border-0 text-white"
-                          >
-                            View
-                          </AntdButton>
-                        </Tooltip>
-                        <Tooltip title="Edit">
-                          <AntdButton
-                            type="default"
-                            icon={<EditOutlined />}
-                            size="small"
-                            onClick={() => handleEditRoom(room)}
-                            className="text-green-600 hover:bg-green-50"
-                          />
-                        </Tooltip>
-                        <Tooltip title="Delete">
-                          <Popconfirm
-                            title="Delete Room"
-                            description="Are you sure?"
-                            onConfirm={() => handleDeleteRoom(room)}
-                            okText="Delete"
-                            cancelText="Cancel"
-                            okButtonProps={{ danger: true }}
-                          >
-                            <AntdButton
-                              type="default"
-                              icon={<DeleteOutlined />}
-                              size="small"
-                              className="text-red-600 hover:bg-red-50"
-                            />
-                          </Popconfirm>
-                        </Tooltip>
-                        <Tooltip title="Schedule">
-                          <AntdButton
-                            type="default"
-                            icon={<SettingOutlined />}
-                            size="small"
-                            onClick={() => {
-                              setSelectedRoomForSchedule(room)
-                              setActiveTab("schedule")
-                            }}
-                            className="text-blue-600 hover:bg-blue-50"
-                          />
-                        </Tooltip>
-                      </Space>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Enhanced Pagination */}
-          <div className="px-8 py-6 border-t border-gray-100 bg-gray-50">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-sm text-gray-600">
-                Showing <span className="font-semibold">{(currentPage - 1) * pageSize + 1}</span> to{" "}
-                <span className="font-semibold">{Math.min(currentPage * pageSize, filteredData.length)}</span> of{" "}
-                <span className="font-semibold">{filteredData.length}</span> rooms
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="default"
-                  size="sm"
-                  icon={null}
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className=""
-                >
-                  Previous
-                </Button>
-
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const page = i + 1
-                  return (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? "primary" : "default"}
-                      size="sm"
-                      icon={null}
-                      onClick={() => setCurrentPage(page)}
-                      disabled={false}
-                      className=""
-                    >
-                      {page}
-                    </Button>
-                  )
-                })}
-
-                <Button
-                  variant="default"
-                  size="sm"
-                  icon={null}
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className=""
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Add Room Modal */}
-      <Modal
-        isOpen={isAddModalVisible}
-        onClose={() => setIsAddModalVisible(false)}
-        title={
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Plus className="text-blue-600" size={20} />
-            </div>
-            <span className="text-lg font-bold">Add New Cinema Room</span>
-          </div>
-        }
-        footer={
-          <>
-            <Button variant="default" size="md" icon={null} onClick={() => setIsAddModalVisible(false)} disabled={false} className="">Cancel</Button>
-            <Button variant="primary" size="md" icon={null} onClick={handleAddRoom} disabled={false} className="">Create Room</Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Room Name</label>
-              <input
-                type="text"
-                placeholder="e.g., Premium Cinema Hall A"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Room ID</label>
-              <input
-                type="text"
-                placeholder="e.g., R005"
-                value={formData.id}
-                onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Seat Capacity</label>
-              <input
-                type="number"
-                placeholder="48"
-                value={formData.seats}
-                onChange={(e) => setFormData({ ...formData, seats: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Room Type</label>
-              <select
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        {/* Backend Status Alert */}
+        {!isUsingApiData && (
+          <Alert
+            message="Demo Mode Active"
+            description="Backend server is not available. Currently showing sample data. To connect to real data, ensure the backend server is running on localhost:8080"
+            type="warning"
+            showIcon
+            closable
+            className="mb-4"
+            action={
+              <Button 
+                size="small" 
+                type="primary" 
+                onClick={() => window.location.reload()}
               >
-                <option value="">Select type</option>
-                <option value="Standard">Standard</option>
-                <option value="Premium">Premium</option>
-                <option value="VIP">VIP</option>
-                <option value="IMAX">IMAX</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Seat Layout</label>
-              <input
-                type="text"
-                placeholder="6x8"
-                value={formData.layout}
-                onChange={(e) => setFormData({ ...formData, layout: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                Retry Connection
+              </Button>
+            }
+          />
+        )}
+        
+        {/* Statistics Cards */}
+        <Row gutter={[16, 16]} className="mb-6">
+          <Col xs={12} sm={12} lg={6}>
+            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center" size="small">
+              <Statistic
+                title="Total Rooms"
+                value={statistics.totalRooms}
+                prefix={<HomeOutlined className="text-blue-600" />}
+                valueStyle={{ color: "#1677ff", fontSize: "1.5rem" }}
               />
-            </div>
-          </div>
-        </div>
-      </Modal>
+            </Card>
+          </Col>
+          <Col xs={12} sm={12} lg={6}>
+            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center" size="small">
+              <Statistic
+                title="Active Rooms"
+                value={statistics.activeRooms}
+                prefix={<GlobalOutlined className="text-green-600" />}
+                valueStyle={{ color: "#52c41a", fontSize: "1.5rem" }}
+              />
+            </Card>
+          </Col>
+          <Col xs={12} sm={12} lg={6}>
+            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center" size="small">
+              <Statistic
+                title="Total Seats"
+                value={statistics.totalSeats}
+                prefix={<VideoCameraOutlined className="text-purple-600" />}
+                valueStyle={{ color: "#722ed1", fontSize: "1.5rem" }}
+              />
+            </Card>
+          </Col>
+          <Col xs={12} sm={12} lg={6}>
+            <Card className="text-center border-0 shadow-sm h-32 flex flex-col justify-center" size="small">
+              <Statistic
+                title="Avg Seats/Room"
+                value={statistics.avgSeats}
+                suffix="seats"
+                prefix={<ClockCircleOutlined className="text-orange-600" />}
+                valueStyle={{ color: "#faad14", fontSize: "1.5rem" }}
+              />
+            </Card>
+          </Col>
+        </Row>
 
-      {/* Edit Room Modal */}
-      <Modal
-        isOpen={isEditModalVisible}
-        onClose={() => setIsEditModalVisible(false)}
-        title={
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Edit className="text-orange-600" size={20} />
-            </div>
-            <span>Edit Room Details</span>
-          </div>
-        }
-        footer={
-          <>
-            <Button variant="default" size="md" icon={null} onClick={() => setIsEditModalVisible(false)} disabled={false} className="">Cancel</Button>
-            <Button variant="warning" size="md" icon={null} onClick={handleUpdateRoom} disabled={false} className="">Update Room</Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Room Name</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Room ID</label>
-              <input
-                type="text"
-                value={formData.id}
-                disabled
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Seat Capacity</label>
-              <input
-                type="number"
-                value={formData.seats}
-                onChange={(e) => setFormData({ ...formData, seats: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Room Type</label>
-              <select
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="Standard">Standard</option>
-                <option value="Premium">Premium</option>
-                <option value="VIP">VIP</option>
-                <option value="IMAX">IMAX</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="Active">Active</option>
-                <option value="Maintenance">Maintenance</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Enhanced Seat Detail Modal */}
-      <Modal
-        isOpen={isSeatModalVisible}
-        onClose={() => setIsSeatModalVisible(false)}
-        title={
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Eye className="text-green-600" size={20} />
-            </div>
-            <div>
-              <div className="font-semibold">Seat Layout</div>
-              <div className="text-sm font-normal text-gray-600">{selectedRoom?.name}</div>
-            </div>
-          </div>
-        }
-        footer={<></>}
-      >
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4">
-            {generateSeatMap(selectedRoom?.seats || 0).map((row, rowIndex) => (
-              <div key={rowIndex} className="flex justify-center gap-2">
-                {row.map((seat, seatIndex) =>
-                  seat ? (
-                    <div
-                      key={seatIndex}
-                      className={`w-8 h-8 flex items-center justify-center rounded-md text-xs font-medium ${
-                        seat.status === "available"
-                          ? "bg-green-100 text-green-700 hover:bg-green-200 cursor-pointer"
-                          : seat.status === "booked"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {seat.seat}
-                    </div>
-                  ) : (
-                    <div key={seatIndex} className="w-8 h-8"></div>
-                  ),
+        {/* Main Content Card */}
+        <Card
+          className="shadow-sm border-0"
+          styles={{ body: { padding: 0 } }}
+          style={{ borderRadius: 16 }}
+        >
+          {/* Header Section */}
+          <div className="px-6 py-5 border-b border-gray-100 bg-white flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Title level={2} className="m-0 text-gray-900 text-xl xl:text-2xl">
+                  Room Management
+                </Title>
+                {backendStatus === 'connected' && (
+                  <Tag color="green" className="text-xs">
+                    API Connected
+                  </Tag>
                 )}
-              </div>
-            ))}
+                {backendStatus === 'disconnected' && (
+                  <Tag color="orange" className="text-xs">
+                    Demo Mode
+                  </Tag>
+                )}
+                {backendStatus === 'checking' && (
+                  <Tag color="blue" className="text-xs">
+                    Connecting...
+                  </Tag>
+                )}
+              </div>              
+              <Text type="secondary" className="text-sm xl:text-base">
+                Manage and organize your cinema room facilities
+              </Text>
+            </div>            <div className="flex items-center gap-3">
+              {backendStatus === 'disconnected' && (
+                <Button
+                  type="default"
+                  icon={<ReloadOutlined />}
+                  size="middle"
+                  className="text-xs xl:text-sm h-10 px-4"
+                  onClick={() => window.location.reload()}
+                  title="Retry connection to backend"
+                >
+                  Retry Connection
+                </Button>
+              )}
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                size="middle"
+                className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
+                onClick={() => setIsModalVisible(true)}
+                disabled={!isUsingApiData}
+                title={!isUsingApiData ? "Create/Edit functions require backend connection" : "Add new room"}
+              >
+                Add New Room
+              </Button>
+            </div>
           </div>
-        </div>
+
+          {/* Filters Section */}
+          <div className="px-6 py-5 bg-gray-50 border-b border-gray-100">
+            <Row gutter={[12, 12]}>
+              <Col xs={24} sm={12} lg={10} xl={8}>
+                <Input
+                  placeholder="Search rooms, ID, or names..."
+                  prefix={<SearchOutlined className="text-gray-400" />}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full h-10 px-4"
+                  allowClear
+                />
+              </Col>              <Col xs={12} sm={6} lg={4} xl={3}>
+                <Select
+                  placeholder="Type"
+                  value={filterType}
+                  onChange={setFilterType}
+                  className="w-full h-10 px-4"
+                  allowClear
+                  size="middle"
+                >
+                  <Option value="STANDARD">Standard</Option>
+                  <Option value="VIP">VIP</Option>
+                </Select>
+              </Col>
+              <Col xs={12} sm={6} lg={3} xl={3}>
+                <Select
+                  placeholder="Status"
+                  value={filterStatus}
+                  onChange={setFilterStatus}
+                  className="w-full h-10 px-4"
+                  allowClear
+                  size="middle"
+                >
+                  <Option value="active">Active</Option>
+                  <Option value="inactive">Inactive</Option>
+                </Select>
+              </Col>
+              <Col xs={12} sm={6} lg={3} xl={3}>
+                <Button
+                  icon={<ReloadOutlined />}
+                  className="w-full h-10 px-4"
+                  size="middle"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setFilterType("");
+                    setFilterStatus("");
+                    fetchRooms();
+                  }}
+                >
+                  Reset
+                </Button>
+              </Col>
+            </Row>
+          </div>          {/* Table Section */}
+          <div className="bg-white">
+            <Spin spinning={loading}>
+              <Table
+                dataSource={filteredData}
+                columns={columns}
+                pagination={false}
+                scroll={{ x: 950 }}
+                rowClassName="hover:bg-gray-50 transition-colors"
+                className="professional-table"
+                size="small"
+                rowKey="cinemaRoomId"
+              />
+            </Spin>
+
+            {/* Pagination */}
+            <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <Text type="secondary" className="text-sm">
+                Showing {(currentPage - 1) * pageSize + 1} to{" "}
+                {Math.min(currentPage * pageSize, totalElements)} of{" "}
+                {totalElements} rooms
+              </Text>
+              <Pagination
+                current={currentPage}
+                pageSize={pageSize}
+                total={totalElements}
+                onChange={(page, size) => {
+                  setCurrentPage(page);
+                  if (size !== pageSize) {
+                    setPageSize(size);
+                  }
+                }}
+                showSizeChanger
+                showQuickJumper={false}
+                pageSizeOptions={["5", "10", "20", "50"]}
+                className="professional-pagination"
+                size="small"
+              />
+            </div>
+          </div>
+        </Card>
+      </div>      {/* Add/Edit Room Modal */}
+      <Modal
+        title={editingRoom ? "Edit Room" : "Add New Room"}
+        open={isModalVisible}
+        onOk={handleModalOk}
+        onCancel={handleModalCancel}
+        width={800}
+        className="professional-modal"
+        okText={editingRoom ? "Update Room" : "Add Room"}
+        cancelText="Cancel"
+        confirmLoading={loading}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          className="mt-6"
+        >
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="cinemaRoomName"
+                label="Room Name"
+                rules={[
+                  { required: true, message: "Please enter room name" },
+                  { max: 50, message: "Room name cannot exceed 50 characters" }
+                ]}
+              >
+                <Input placeholder="Enter room name" className="h-10" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="roomType"
+                label="Room Type"
+                rules={[{ required: true, message: "Please select room type" }]}
+              >                <Select placeholder="Select room type" className="h-10">
+                  <Option value="STANDARD">Standard</Option>
+                  <Option value="VIP">VIP</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="seatQuantity"
+                label="Total Seats"
+                rules={[
+                  { required: true, message: "Please enter total seats" },
+                  { type: 'number', min: 1, max: 500, message: "Seats must be between 1 and 500" }
+                ]}
+              >
+                <InputNumber 
+                  placeholder="Enter total seats" 
+                  className="w-full h-10" 
+                  min={1}
+                  max={500}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="rows"
+                label="Rows"
+                rules={[
+                  { required: true, message: "Please enter number of rows" },
+                  { type: 'number', min: 1, max: 30, message: "Rows must be between 1 and 30" }
+                ]}
+              >
+                <InputNumber 
+                  placeholder="Enter rows" 
+                  className="w-full h-10" 
+                  min={1}
+                  max={30}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="columns"
+                label="Columns"
+                rules={[
+                  { required: true, message: "Please enter number of columns" },
+                  { type: 'number', min: 1, max: 50, message: "Columns must be between 1 and 50" }
+                ]}
+              >
+                <InputNumber 
+                  placeholder="Enter columns" 
+                  className="w-full h-10" 
+                  min={1}
+                  max={50}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={24}>
+              <Form.Item
+                name="description"
+                label="Description"
+                rules={[{ max: 1000, message: "Description cannot exceed 1000 characters" }]}
+              >
+                <TextArea 
+                  placeholder="Enter room description" 
+                  rows={3}
+                  showCount
+                  maxLength={1000}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="priceMultiplier"
+                label="Price Multiplier"
+                rules={[
+                  { required: true, message: "Please enter price multiplier" },
+                  { type: 'number', min: 0.1, max: 10, message: "Multiplier must be between 0.1 and 10" }
+                ]}
+              >
+                <InputNumber 
+                  placeholder="Enter price multiplier" 
+                  className="w-full h-10" 
+                  min={0.1}
+                  max={10}
+                  step={0.1}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="isActive"
+                label="Status"
+                valuePropName="checked"
+                initialValue={true}
+              >
+                <Checkbox>Active</Checkbox>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="has3D"
+                valuePropName="checked"
+              >
+                <Checkbox>3D Capability</Checkbox>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="hasDolbyAtmos"
+                valuePropName="checked"
+              >
+                <Checkbox>Dolby Atmos</Checkbox>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="hasReclinerSeats"
+                valuePropName="checked"
+              >
+                <Checkbox>Recliner Seats</Checkbox>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
       </Modal>
 
-      {/* Room Schedule Modal */}
-      <Modal
-        isOpen={!!selectedRoomForSchedule}
-        onClose={() => setSelectedRoomForSchedule(null)}
-        title={
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Settings className="text-blue-600" size={20} />
-            </div>
-            <div>
-              <div className="font-semibold">Room Schedule</div>
-              <div className="text-sm font-normal text-gray-600">{selectedRoomForSchedule?.name}</div>
-            </div>
-          </div>
+      <style jsx global>{`
+        .professional-table .ant-table-thead > tr > th {
+          background: #fafafa;
+          border-bottom: 2px solid #f0f0f0;
+          font-weight: 600;
+          color: #262626;
         }
-        footer={<></>}
-      >
-        <div className="space-y-6">
-          {selectedRoomForSchedule && (
-            <div>Room schedule calendar goes here.</div>
-            // If you want to use the real component, uncomment:
-            // <RoomScheduleCalendar roomId={selectedRoomForSchedule.id} roomName={selectedRoomForSchedule.name} />
-          )}
-        </div>
-      </Modal>
+        
+        .professional-table .ant-table-tbody > tr:hover > td {
+          background: #f8faff;
+        }
+        
+        .professional-pagination .ant-pagination-item-active {
+          background: #1677ff;
+          border-color: #1677ff;
+        }
+        
+        .professional-pagination .ant-pagination-item-active a {
+          color: white;
+        }
+        
+        .professional-modal .ant-modal-header {
+          border-bottom: 1px solid #f0f0f0;
+          padding: 24px 24px 16px;
+        }
+          .professional-modal .ant-modal-body {
+          padding: 24px;
+        }
+        
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
     </div>
-  )
+  );
 }

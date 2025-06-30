@@ -1,17 +1,19 @@
 "use client";
-import React, { useState } from "react";
-import { Button, Form, Input, Typography, message, Checkbox } from "antd";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
-import ROUTES from "@/constants/routes";
 import { Login_API } from "@/api/auth/Login_API";
-import { useDispatch } from "react-redux";
-import { login } from "@/store/authSlice";
+import { Card } from "@/components/ui/card";
+import ROUTES from "@/constants/routes";
 import { decodeJwt } from "@/hooks/decodeJwt";
+import { cn } from "@/lib/utils";
+import { login } from "@/store/slices/authSlice";
 import { LoginFormValues } from "@/types/Login/LoginFormValues";
+import { Form, Typography, message } from "antd";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import LoginFooter from "./components/LoginFooter";
+import LoginForm from "./components/LoginForm";
 
-export const LoginPage: React.FC = () => {
+const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const router = useRouter();
@@ -25,27 +27,44 @@ export const LoginPage: React.FC = () => {
         password: values.password,
         rememberMe: values.rememberMe || false,
       });
-
-      // localStorage.removeItem("authToken");
       const accessToken = data?.data?.accessToken;
       if (accessToken) {
-        sessionStorage.setItem("accessToken", accessToken);
         const userInfo = decodeJwt(accessToken);
-        dispatch(login({ token: accessToken, user: userInfo }));
-        message.success("Login successful");
-        sessionStorage.setItem("userInfo", JSON.stringify(userInfo));
+        const refreshToken = data?.data?.refreshToken;
+        const issuedAtMs = Date.now();
+        const expiresAtMs = userInfo?.exp ? Number(userInfo.exp) * 1000 : 0;
+        const expiryTimeInMinutes = Math.floor((expiresAtMs - Date.now()) / 60000);
+        const latestRefreshTime = new Date(expiresAtMs);
+        const userInfoObj = {
+          accountId: userInfo?.accountId || "",
+          userName: userInfo?.sub || "",
+          Role: userInfo?.role || "MEMBER",
+          issuedAt: new Date(issuedAtMs).toLocaleString(),
+          expiryTimeInMinutes: expiryTimeInMinutes.toString(),
+          latestRefreshTime: latestRefreshTime.toLocaleString(),
+        };
 
-        // Redirect based on user role
-        if (userInfo?.role === "MEMBER") {
-          router.push(ROUTES.HOME);
-        } else if (userInfo?.role === "ADMIN") {
+        // Store refresh token in localStorage for client-side access
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
+        // Store user information in localStorage
+        localStorage.setItem("userInfo", JSON.stringify(userInfoObj));
+
+        // Set a flag for logged-in status
+        localStorage.setItem("isLoggedIn", "true");
+
+        // Update Redux store
+        dispatch(login({ token: accessToken }));
+
+        if (userInfoObj?.Role === "ADMIN") {
           router.push(ROUTES.ADMIN_DASHBOARD);
+        } else if (userInfo?.role === "MEMBER") {
+          router.push(ROUTES.HOME);
+        } else {
+          message.error(
+            "You do not have permission to access this application. Please contact your administrator."
+          );
         }
-        //  else if (userInfo?.role === "EMPLOYEE") {
-        //   router.push(ROUTES.EMPLOYEE_HOME);
-        // }
-      } else {
-        message.error(data?.message || "Login failed");
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -70,52 +89,8 @@ export const LoginPage: React.FC = () => {
         <Typography.Title level={2} className="text-center mb-6">
           Login
         </Typography.Title>
-        <Form
-          name="login"
-          layout="vertical"
-          onFinish={onFinish}
-          autoComplete="off"
-          form={form}
-        >
-          <Form.Item
-            label="Username"
-            name="username"
-            rules={[{ required: true, message: "Please input your username!" }]}
-          >
-            <Input size="large" placeholder="Enter your username" className="rounded-lg" />
-          </Form.Item>
-          <Form.Item
-            label="Password"
-            name="password"
-            rules={[{ required: true, message: "Please input your password!" }]}
-          >
-            <Input.Password
-              size="large"
-              placeholder="Enter your password"
-              className="rounded-lg"
-            />
-          </Form.Item>
-          <Form.Item name="rememberMe" valuePropName="checked">
-            <Checkbox>Remember me</Checkbox>
-          </Form.Item>
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              className="w-full mt-2"
-              size="large"
-              loading={loading}
-            >
-              Log In
-            </Button>
-          </Form.Item>
-        </Form>
-        <div className="mt-4 text-center text-sm text-gray-500">
-          Don&apos;t have an account?{" "}
-          <a href="/auth/Register" className="text-indigo-600 hover:underline">
-            Sign up
-          </a>
-        </div>
+        <LoginForm loading={loading} onFinish={onFinish} form={form} />
+        <LoginFooter />
       </Card>
     </div>
   );

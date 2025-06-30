@@ -2,10 +2,15 @@
 
 import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
+import "../styles/animations.css";
+import '@ant-design/v5-patch-for-react-19';
+import "react-toastify/dist/ReactToastify.css";
 import {ThemeProvider} from "@/components/providers/ThemeProvider";
 import ClientLayoutWrapper from "@/components/ClientLayoutWrapper";
+import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { Provider } from "react-redux";
 import { store } from "@/store";
+import { ToastContainer } from 'react-toastify';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +34,7 @@ export default function RootLayout({
       >
         {/* <BackTop duration={100} visibilityHeight={50} /> */}
         <Provider store={store}>
+          <AntdRegistry>
           <ThemeProvider 
             attribute="class" 
             defaultTheme="system" 
@@ -37,7 +43,9 @@ export default function RootLayout({
           >
             <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
           </ThemeProvider>
+          </AntdRegistry>
         </Provider>
+        <ToastContainer />
       </body>
     </html>
   );

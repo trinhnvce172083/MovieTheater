@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState} from "react";
 import { Layout, Menu, Button, Tooltip } from "antd";
 import {
   DashboardOutlined,
@@ -8,7 +8,6 @@ import {
   VideoCameraOutlined,
   GiftOutlined,
   CalendarOutlined,
-  SettingOutlined,
   BankOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -78,50 +77,53 @@ export default function AdminLayout({
       setIsAnimating(false);
     }, 300);
   };
-
-  // Custom styles for smooth animations
+  // Enhanced styles with modern gradient and glass effect
   const siderStyle = {
     position: "fixed" as const,
     height: "100vh",
     left: 0,
     top: 0,
     bottom: 0,
-    background: "linear-gradient(180deg, #233554 0%, #274690 100%)",
+    background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
+    backgroundSize: "200% 200%",
+    animation: "gradientShift 8s ease infinite",
     display: "flex",
     flexDirection: "column" as const,
     justifyContent: "flex-start" as const,
-    transition: 'all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1)',
+    transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
     zIndex: 100,
     boxShadow: collapsed 
-      ? '4px 0 12px rgba(0, 0, 0, 0.1)' 
-      : '8px 0 24px rgba(0, 0, 0, 0.12)',
-  };
-
-  const toggleButtonStyle = {
+      ? '8px 0 32px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(255,255,255,0.1)' 
+      : '16px 0 64px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255,255,255,0.1)',
+    backdropFilter: 'blur(20px)',
+    borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+  };  const toggleButtonStyle = {
     position: 'absolute' as const,
-    top: '20px',
-    right: collapsed ? '-20px' : '-20px',
+    top: '24px',
+    right: collapsed ? '-22px' : '-22px',
     zIndex: 101,
-    transition: 'all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1)',
-    transform: `translateX(${collapsed ? '0px' : '0px'}) scale(${isAnimating ? '0.95' : '1'})`,
-    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
-    background: 'linear-gradient(135deg, #274690 0%, #1d3557 100%)',
-    border: '2px solid rgba(255, 255, 255, 0.1)',
-    backdropFilter: 'blur(10px)',
+    transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
+    transform: `translateX(${collapsed ? '0px' : '0px'}) scale(${isAnimating ? '0.9' : '1'})`,
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.3)',
+    background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+    border: '2px solid rgba(255, 255, 255, 0.2)',
+    backdropFilter: 'blur(20px)',
+    borderRadius: '50%',
+    width: '44px',
+    height: '44px',
   };
-
   const logoContainerStyle = {
     opacity: collapsed ? 0 : 1,
-    transform: collapsed ? 'translateY(-10px) scale(0.9)' : 'translateY(0) scale(1)',
-    transition: 'all 0.4s cubic-bezier(0.645, 0.045, 0.355, 1)',
-    transitionDelay: collapsed ? '0ms' : '100ms',
+    transform: collapsed ? 'translateY(-20px) scale(0.8)' : 'translateY(0) scale(1)',
+    transition: 'all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1)',
+    transitionDelay: collapsed ? '0ms' : '150ms',
   };
-
   const contentStyle = {
     marginLeft: collapsed ? 80 : 240,
-    transition: 'margin-left 0.3s cubic-bezier(0.645, 0.045, 0.355, 1)',
+    transition: 'margin-left 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
     minHeight: "100vh",
-    background: "#f5f5f5",
+    background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+    backgroundAttachment: "fixed",
   };
 
   return (
@@ -146,31 +148,30 @@ export default function AdminLayout({
           <Button
             type="primary"
             shape="circle"
-            size="large"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={handleToggleCollapse}
-            style={toggleButtonStyle}
-            className="hover:scale-105 active:scale-95"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = `translateX(0px) scale(1.05)`;
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.2)';
+            size="large"            icon={collapsed ? <MenuUnfoldOutlined style={{ color: '#ffffff' }} /> : <MenuFoldOutlined style={{ color: '#ffffff' }} />}
+            onClick={handleToggleCollapse}style={toggleButtonStyle}
+            className="hover:scale-110 active:scale-95"            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = `translateX(0px) scale(1.1)`;
+              e.currentTarget.style.boxShadow = '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.4)';
+              e.currentTarget.style.background = 'linear-gradient(135deg, #333333 0%, #4a4a4a 100%)';
+              e.currentTarget.style.color = '#ffffff';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = `translateX(0px) scale(1)`;
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.15)';
+              e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.3)';
+              e.currentTarget.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)';
+              e.currentTarget.style.color = '#ffffff';
             }}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           />
-        </Tooltip>
-
-        <div style={{ 
+        </Tooltip>        <div style={{ 
           flex: 1, 
           display: "flex", 
           flexDirection: "column",
-          paddingTop: collapsed ? '80px' : '20px',
-          transition: 'padding-top 0.3s cubic-bezier(0.645, 0.045, 0.355, 1)'
+          paddingTop: collapsed ? '90px' : '28px',
+          transition: 'padding-top 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)'
         }}>
-          {/* Logo Section with Enhanced Animation */}
+          {/* Logo Section with Enhanced Glass Effect */}
           <div 
             className="flex flex-col items-center py-8"
             style={logoContainerStyle}
@@ -178,54 +179,76 @@ export default function AdminLayout({
             <div style={{
               position: 'relative',
               borderRadius: '50%',
-              background: 'rgba(255, 255, 255, 0.1)',
-              padding: 12,
-              backdropFilter: 'blur(10px)',
-              border: '2px solid rgba(255, 255, 255, 0.2)',
-              transition: 'all 0.3s ease',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 100%)',
+              padding: 16,
+              backdropFilter: 'blur(20px)',
+              border: '2px solid rgba(255, 255, 255, 0.3)',
+              transition: 'all 0.4s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
             }}>
               <Image 
                 src="/Logo.png" 
                 alt="Lumiere Logo" 
-                width={80} 
-                height={80} 
+                width={88} 
+                height={88} 
                 style={{ 
                   borderRadius: "50%", 
-                  background: "#111",
-                  transition: 'all 0.3s ease',
+                  background: "linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)",
+                  transition: 'all 0.4s ease',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
                 }} 
               />
             </div>
             <div style={{
-              marginTop: 16,
+              marginTop: 20,
               opacity: collapsed ? 0 : 1,
-              transform: collapsed ? 'translateY(10px)' : 'translateY(0)',
-              transition: 'all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1)',
-              transitionDelay: collapsed ? '0ms' : '150ms',
+              transform: collapsed ? 'translateY(15px)' : 'translateY(0)',
+              transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
+              transitionDelay: collapsed ? '0ms' : '200ms',
             }}>
               <h3 style={{
                 color: '#fff',
-                fontSize: '14px',
-                fontWeight: '500',
+                fontSize: '16px',
+                fontWeight: '600',
                 margin: 0,
                 textAlign: 'center',
-                letterSpacing: '0.3px',
+                letterSpacing: '0.5px',
+                textShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                background: 'linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.8) 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
               }}>
                 Admin Panel
               </h3>
+              <p style={{
+                color: 'rgba(255, 255, 255, 0.8)',
+                fontSize: '12px',
+                fontWeight: '400',
+                margin: '4px 0 0 0',
+                textAlign: 'center',
+                letterSpacing: '0.3px',
+                textShadow: '0 1px 4px rgba(0, 0, 0, 0.2)',
+              }}>
+                Management Console
+              </p>
             </div>
-          </div>
-
-          {/* Divider with Animation */}
+          </div>          
+          {/* Enhanced Animated Divider */}
           <div 
-            className="mx-6 mb-4" 
+            className="mx-6 mb-6" 
             style={{
-              height: '1px',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+              height: '2px',
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), rgba(255,255,255,0.3), rgba(255,255,255,0.6), transparent)',
               opacity: collapsed ? 0 : 1,
               transform: collapsed ? 'scaleX(0)' : 'scaleX(1)',
-              transition: 'all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1)',
-              transitionDelay: collapsed ? '0ms' : '200ms',
+              transition: 'all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1)',
+              transitionDelay: collapsed ? '0ms' : '300ms',
+              borderRadius: '2px',
+              boxShadow: '0 0 8px rgba(255, 255, 255, 0.3)',
             }}
           />
 
@@ -241,121 +264,211 @@ export default function AdminLayout({
               color: "#fff", 
               border: "none",
               flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              alignItems: collapsed ? 'center' : 'stretch',
+              height: '100%',
+              minHeight: 0,
             }}
             inlineIndent={collapsed ? 0 : 24}
             theme="dark"
           />
         </div>
-
-        {/* Enhanced Settings Icon */}
-        <div style={{ 
-          position: "absolute", 
-          bottom: 24, 
-          left: collapsed ? '50%' : '24px',
-          transform: collapsed ? 'translateX(-50%)' : 'none',
-          transition: 'all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1)',
-        }}>
-          <Tooltip title="Settings" placement={collapsed ? "right" : "top"}>
-            <Button
-              type="text"
-              icon={<SettingOutlined />}
-              style={{
-                color: '#fff',
-                fontSize: '16px',
-                opacity: 0.85,
-                border: 'none',
-                background: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '8px',
-                width: collapsed ? '40px' : 'auto',
-                height: '40px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.3s ease',
-                backdropFilter: 'blur(10px)',
-              }}
-              className="hover:bg-white/20 hover:scale-105"
-            >
-              {!collapsed && <span style={{ marginLeft: 8, fontSize: '12px' }}>Settings</span>}
-            </Button>
-          </Tooltip>
-        </div>
       </Sider>
 
       <Layout style={contentStyle}>
         {/* Admin Header at the top of the content */}
-        <AdminHeader />
-        <Content
+        <AdminHeader />        <Content
           style={{
-            background: "#fff",
+            background: "rgba(255, 255, 255, 0.95)",
+            backdropFilter: "blur(20px)",
             display: "flex",
             justifyContent: "center",
             alignItems: "flex-start",
-            transition: 'all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1)',
+            transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
           }}
-          className="m-6 p-6 rounded-xl shadow-sm"
+          className="m-8 p-8 rounded-2xl"
         >
           <div className="w-full" style={{ maxWidth: "100%" }}>
             {children}
           </div>
         </Content>
-      </Layout>
-
-      {/* Custom CSS for additional enhancements */}
+      </Layout>      {/* Enhanced Custom CSS with modern animations and effects */}
       <style jsx global>{`
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-6px); }
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.8; }
+        }
+
+        @keyframes slideInLeft {
+          from { transform: translateX(-20px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+
         .admin-sidebar-menu .ant-menu-item {
-          margin: 4px 8px !important;
-          border-radius: 8px !important;
-          transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1) !important;
-          backdrop-filter: blur(10px);
-          font-size: 12px !important;
-          height: 38px !important;
-          line-height: 38px !important;
+          margin: 6px 8px !important;
+          border-radius: 12px !important;
+          transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+          backdrop-filter: blur(20px);
+          font-size: 14px !important;
+          height: 44px !important;
+          line-height: 44px !important;
           display: flex !important;
           align-items: center !important;
+          justify-content: flex-start !important;
+          background: rgba(255, 255, 255, 0.05) !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          animation: slideInLeft 0.5s ease-out !important;
+          position: relative !important;
+          overflow: hidden !important;
+          transform-origin: left center !important;
+        }
+
+        .admin-sidebar-menu .ant-menu-item::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+          transition: left 0.5s;
+        }
+
+        .admin-sidebar-menu .ant-menu-item:hover::before {
+          left: 100%;
         }
         
         .admin-sidebar-menu .ant-menu-item .ant-menu-title-content {
-          font-weight: 400 !important;
+          font-weight: 500 !important;
           white-space: nowrap !important;
           overflow: hidden !important;
           text-overflow: ellipsis !important;
-          font-size: 12px !important;
-        }
-        
+          font-size: 14px !important;
+          letter-spacing: 0.3px !important;
+        }        
         .admin-sidebar-menu .ant-menu-item:hover {
-          background: rgba(255, 255, 255, 0.15) !important;
-        }
-        
-        .admin-sidebar-menu .ant-menu-item-selected {
-          background: rgba(255, 255, 255, 0.2) !important;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%) !important;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
           border: 1px solid rgba(255, 255, 255, 0.3) !important;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          transform: translateX(2px) !important;
+        }        
+        .admin-sidebar-menu .ant-menu-item-selected {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.2) 100%) !important;
+          border: 1px solid rgba(255, 255, 255, 0.4) !important;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+          transform: translateX(2px) !important;
+        }        
+        .admin-sidebar-menu .ant-menu-item-selected::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 4px;
+          height: 70%;
+          background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 100%);
+          border-radius: 0 2px 2px 0;
+          box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
         }
         
         .admin-sidebar-menu .ant-menu-item .ant-menu-item-icon {
-          transition: all 0.3s ease !important;
-          font-size: 14px !important;
-        }
-        
-        .admin-sidebar-menu .ant-menu-item:hover .ant-menu-item-icon {
-          transform: scale(1.1);
+          transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+          font-size: 20px !important;
+          margin-right: 16px !important;
+          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
         }
 
-        /* Collapsed state specific styles */
+        .admin-sidebar-menu .ant-menu-item:hover .ant-menu-item-icon {
+          transform: scale(1.1) rotate(-2deg) !important;
+          filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+        }
+
+        .admin-sidebar-menu .ant-menu-item-selected .ant-menu-item-icon {
+          transform: scale(1.1) !important;
+          animation: pulse 2s infinite;
+        }
+
+        /* Enhanced collapsed state styles */
         .admin-sidebar-menu .ant-menu-item.ant-menu-item-only-child {
           padding-left: 24px !important;
         }
 
-        /* When collapsed, center the icons */
         .ant-layout-sider-collapsed .admin-sidebar-menu .ant-menu-item {
           text-align: center !important;
           padding-left: 0 !important;
           padding-right: 0 !important;
+          justify-content: center !important;
+          margin: 8px 12px !important;
+          width: 48px !important;
+          margin-left: auto !important;
+          margin-right: auto !important;
+          transform-origin: center center !important;
+        }
+
+        .ant-layout-sider-collapsed .admin-sidebar-menu .ant-menu-item:hover {
+          transform: scale(1.05) !important;
+        }
+
+        .ant-layout-sider-collapsed .admin-sidebar-menu .ant-menu-item-selected {
+          transform: scale(1.05) !important;
         }
 
         .ant-layout-sider-collapsed .admin-sidebar-menu .ant-menu-item .ant-menu-item-icon {
           margin-right: 0 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          width: 100%;
+        }
+
+        .ant-layout-sider-collapsed .admin-sidebar-menu .ant-menu-title-content {
+          display: none !important;
+        }
+
+        /* Custom scrollbar for sidebar */
+        .admin-sidebar-menu::-webkit-scrollbar {
+          width: 4px;
+        }
+
+        .admin-sidebar-menu::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        .admin-sidebar-menu::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 2px;
+        }
+
+        .admin-sidebar-menu::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Enhanced glass effect for content */
+        .ant-layout-content::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+          border-radius: inherit;
+          pointer-events: none;
         }
       `}</style>
     </Layout>

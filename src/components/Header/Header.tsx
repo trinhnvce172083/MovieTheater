@@ -1,17 +1,18 @@
 //Header
-
 "use client";
-import React from "react";
+
+import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import ROUTES from "@/constants/routes";
 import { useAuth } from "@/hooks/useAuth";
-import SearchBar from "./SearchBar";
 import NotificationDropdown from "./NotificationDropdown";
 import UserDropdown from "./UserDropdown";
 import LanguageDropdown from "./LanguageDropdown";
 
-export default function Header() {
+// Dynamic import để tránh hydration mismatch
+const HeaderComponent = () => {
   const { isLoggedIn, user } = useAuth();
 
   return (
@@ -21,9 +22,11 @@ export default function Header() {
           <Image
             src="/Logo.png"
             alt="Logo"
-            width={500}
-            height={500}
+            width={180}
+            height={72}
             className="w-auto h-24"
+            priority // Logo is important for First Contentful Paint
+            sizes="180px"
           />
         </Link>
         <nav className="flex space-x-8">
@@ -33,22 +36,15 @@ export default function Header() {
           >
             Now Showing
           </Link>
-          {/* <Link
-            href={ROUTES.BOOKING}
-            className="hover:text-red-500 transition-colors"
-          >
-            Booking
-          </Link> */}
           <Link
-            href={ROUTES.MOVIES}
+            href={ROUTES.COMING_SOON}
             className="hover:text-red-500 transition-colors"
           >
-            Movies
+            Coming Soon
           </Link>
         </nav>
       </div>
       <div className="flex items-center space-x-6">
-        <SearchBar />
         {!isLoggedIn ? (
           <Link
             href={ROUTES.LOGIN}
@@ -66,4 +62,16 @@ export default function Header() {
       </div>
     </header>
   );
-}
+};
+
+// Export với dynamic import để tránh hydration mismatch
+export default dynamic(() => Promise.resolve(HeaderComponent), {
+  ssr: false,
+  loading: () => (
+    <header className="flex items-center justify-between px-6 bg-black py-0 text-white relative z-10">
+      <div className="flex items-center">
+        <div className="w-24 h-24 bg-gray-300 animate-pulse rounded"></div>
+      </div>
+    </header>
+  ),
+});
