@@ -458,8 +458,12 @@ export default function MovieDetailTemplate({ movieId }: MovieDetailTemplateProp
           movieId={movieId}
           onContinue={(schedule: Schedule) => {
             setIsModalOpen(false);
+            if (!schedule.cinemaRoomId) {
+              console.error("cinemaRoomId is missing from schedule object");
+              return;
+            }
             router.push(
-              `/booking/seat-selection?scheduleId=${schedule.scheduleId}`
+              `/booking/seat-selection?scheduleId=${schedule.scheduleId}&roomId=${schedule.cinemaRoomId}`
             );
           }}
         />
