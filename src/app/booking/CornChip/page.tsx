@@ -6,6 +6,10 @@ import concessionApi from '@/api/concessionApi';
 import ConcessionsList from './ConcessionsList';
 import OrderSummary from './OrderSummary';
 import Image from 'next/image';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { useRouter } from 'next/navigation';
+import ROUTES from '@/constants/routes';
 
 interface Concession {
   id: number;
@@ -15,19 +19,23 @@ interface Concession {
   imageUrl?: string;
 }
 
-const mockMovieDetails = {
-  title: 'SPIDER-MAN: NO WAY HOME',
-  date: '10:00 28/05/2025',
-  details: 'Screening room 02 - Seat H18',
-  image: '/popcorn.jpg'
-};
-
 export default function CornChipPage() {
   const [concessions, setConcessions] = useState<Concession[]>([]);
   const [quantities, setQuantities] = useState<{[key: number]: number}>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const bookingData = useSelector((state: RootState) => state.booking);
+  const router = useRouter();
 
+  // Kiểm tra dữ liệu booking
+  useEffect(() => {
+    if (!bookingData.scheduleId || bookingData.selectedSeats.length === 0) {
+      router.replace(ROUTES.MOVIES);
+      return;
+    }
+  }, [bookingData.scheduleId, bookingData.selectedSeats.length, router]);
+
+  // Lấy danh sách concessions
   useEffect(() => {
     const fetchConcessions = async () => {
       try {
@@ -38,8 +46,10 @@ export default function CornChipPage() {
           id: item.id ?? item.concessionId
         }));
         setConcessions(fetchedConcessions);
+        
+        // Khởi tạo số lượng về 0 cho mỗi item
         const initialQuantities = fetchedConcessions.reduce(
-          (acc, item, idx) => ({ ...acc, [item.id ?? idx]: 0 }),
+          (acc, item) => ({ ...acc, [item.id]: 0 }),
           {}
         );
         setQuantities(initialQuantities);
@@ -50,19 +60,34 @@ export default function CornChipPage() {
         setLoading(false);
       }
     };
+
     fetchConcessions();
   }, []);
 
-  const handleQuantityChange = (id, delta) => {
+  // Xử lý thay đổi số lượng
+  const handleQuantityChange = (id: number, delta: number) => {
     setQuantities(prev => ({
       ...prev,
       [id]: Math.max(0, (prev[id] || 0) + delta)
     }));
   };
 
+  // Tính tổng tiền đồ ăn
   const totalOrder = concessions.reduce((total, item) => {
     return total + (quantities[item.id] || 0) * item.price;
   }, 0);
+
+  // Tạo thông tin phim từ Redux state
+  const movieDetails = {
+    title: bookingData.movieInfo?.title || bookingData.scheduleInfo?.movieTitle || 'Unknown Movie',
+    date: bookingData.scheduleInfo ? 
+      `${bookingData.scheduleInfo.displayTime} ${bookingData.scheduleInfo.displayDate}` : 
+      'Loading...',
+    details: bookingData.scheduleInfo ? 
+      `${bookingData.scheduleInfo.cinemaRoomName} - ${bookingData.selectedSeats.map(seat => `${seat.row}${seat.number}`).join(', ')}` :
+      'Loading...',
+    image: bookingData.movieInfo?.posterUrl || '/popcorn.jpg'
+  };
 
   return (
     <>
@@ -77,7 +102,10 @@ export default function CornChipPage() {
             error={error}
           />
           <div className="lg:col-span-1">
-            <OrderSummary movieDetails={mockMovieDetails} totalOrder={totalOrder} />
+            <OrderSummary 
+              movieDetails={movieDetails} 
+              totalOrder={totalOrder}
+            />
           </div>
         </div>
       </div>
