@@ -26,13 +26,26 @@ import {
   CloseCircleOutlined,
 } from "@ant-design/icons";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getUserById, type ApiUser } from "@/api/admin/getAllUsers";
-import { profile } from "@/api/auth/profile";
+import axiosClient from "@/api/axiosClient";
 
 
 const { Title, Text } = Typography;
 
-// Using ApiUser from the API for user details
+// Interface for detailed user data
+interface UserDetail {
+  accountId: number;
+  username: string;
+  fullName: string;
+  email: string;
+  phoneNumber?: string;
+  address?: string;
+  dateOfBirth?: string;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  avatar?: string;
+}
 
 // Interface for current user info (to check if viewing admin)
 interface CurrentUser {
@@ -44,8 +57,7 @@ const MemberDetailPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get('id');
-  
-  const [userDetail, setUserDetail] = useState<ApiUser | null>(null);
+    const [userDetail, setUserDetail] = useState<UserDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const [isUsingApiData, setIsUsingApiData] = useState(false);
@@ -53,10 +65,15 @@ const MemberDetailPage: React.FC = () => {
   // Fetch current user info to check permissions
   const fetchCurrentUser = async (): Promise<CurrentUser | null> => {
     try {
-      const response = await profile();
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await axiosClient.get('/auth/profile');
       return {
-        accountId: response.accountId,
-        role: response.role
+        accountId: response.data.accountId,
+        role: response.data.role
       };
     } catch (error) {
       console.error('Failed to fetch current user:', error);
@@ -65,10 +82,36 @@ const MemberDetailPage: React.FC = () => {
   };
 
   // Fetch user details
-  const fetchUserDetail = async (id: string): Promise<ApiUser | null> => {
+  const fetchUserDetail = async (id: string): Promise<UserDetail | null> => {
     try {
-      const response = await getUserById(parseInt(id));
-      return response;
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await axiosClient.get(`/admin/users/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (response.data) {
+        return {
+          accountId: response.data.accountId,
+          username: response.data.username || 'N/A',
+          fullName: response.data.fullName || 'N/A',
+          email: response.data.email || 'N/A',
+          phoneNumber: response.data.phoneNumber,
+          address: response.data.address,
+          dateOfBirth: response.data.dateOfBirth,
+          role: response.data.role || 'CUSTOMER',
+          isActive: response.data.isActive !== false,
+          createdAt: response.data.createdAt || new Date().toISOString(),
+          updatedAt: response.data.updatedAt,
+          avatar: response.data.avatar
+        };
+      }
+      return null;
     } catch (error) {
       console.error('Failed to fetch user detail:', error);
       throw error;

@@ -365,9 +365,9 @@ export default function ProfessionalMovieManagement() {
       width: 80,
       render: (rating: string) => (
         <div className="text-center">
-          <div className="text-sm text-gray-900">
+          <Tag color="orange" className="text-xs">
             {rating}
-          </div>
+          </Tag>
         </div>
       ),
     },
@@ -379,12 +379,22 @@ export default function ProfessionalMovieManagement() {
       align: "center" as const,
       render: (status: string) => (
         <div className="text-center">
-          <div className="text-sm text-gray-900">
+          <Tag
+            color={
+              status === "NOW_SHOWING"
+                ? "success"
+                : status === "COMING_SOON"
+                ? "processing"
+                : "default"
+            }
+            className="font-medium text-xs"
+          >
             {status === "NOW_SHOWING" ? "Now Showing" : 
              status === "COMING_SOON" ? "Coming Soon" : 
              status === "ENDED" ? "Ended" : status}
-          </div>
+          </Tag>
         </div>
+
       ),
     },
     {
@@ -636,7 +646,8 @@ export default function ProfessionalMovieManagement() {
                 showSizeChanger
                 showQuickJumper={false}
                 pageSizeOptions={["5", "10", "20", "50"]}
-                size="default"
+                className="professional-pagination"
+                size="small"
               />
             </div>
           </div>

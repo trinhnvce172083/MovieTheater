@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import dayjs from "dayjs";
 import {
   Card,
@@ -21,6 +21,7 @@ import {
   Row,
   Col,
   Typography,
+  Avatar,
   InputNumber,
   Switch,
   Upload,
@@ -42,14 +43,19 @@ import { PromotionDto } from "@/types/Admin/promotion";
 import {
   getAllPromotions,
   deletePromotion,
+  activatePromotion,
+  deactivatePromotion,
+  getPromotionUsage,
   createPromotion,
   updatePromotion,
   uploadPromotionBanner,
+  updatePromotionBanner,
+  deletePromotionBanner,
   type PromotionCreateRequest,
   type PromotionUpdateRequest,
   type PromotionSearchParams
 } from '@/api/admin/getAllPromotions';
-// import { toast } from 'react-toastify'; // Comment out if not properly configured
+import { toast } from 'react-toastify';
 import Image from "next/image";
 
 const { Option } = Select;
@@ -80,7 +86,7 @@ export default function ProfessionalPromotionManagement() {
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   
-  const fetchPromotions = useCallback(async (
+  const fetchPromotions = async (
     page = 0,
     size = 10,
     sortBy = "startDate",
@@ -104,20 +110,16 @@ export default function ProfessionalPromotionManagement() {
       setTotalCount(response.page?.totalElements || 0);
     } catch (error) {
       console.error("Error fetching promotions:", error);
-      message.error("Không thể tải danh sách khuyến mãi");
+      toast.error("Không thể tải danh sách khuyến mãi");
     } finally {
       setLoading(false);
     }
-  }, [searchTerm]);
+  };
 
   // Gọi API khi component mount hoặc các tham số thay đổi
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchPromotions(currentPage - 1, pageSize, "startDate", "DESC", null);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [currentPage, pageSize, searchTerm, fetchPromotions]);
+    fetchPromotions(currentPage - 1, pageSize, "startDate", "DESC", null);
+  }, [currentPage, pageSize, searchTerm]);
 
   // Filter and search logic
   const filteredData = useMemo(() => {
@@ -227,7 +229,7 @@ export default function ProfessionalPromotionManagement() {
       );
 
       await Promise.all(promises);
-      message.success(
+      toast.success(
         `Deleted ${selectedPromotions.length} promotions successfully`
       );
       setSelectedRowKeys([]);
@@ -235,7 +237,7 @@ export default function ProfessionalPromotionManagement() {
       fetchPromotions(currentPage - 1, pageSize);
     } catch (error) {
       console.error("Error bulk deleting:", error);
-      message.error("Không thể xóa khuyến mãi");
+      toast.error("Không thể xóa khuyến mãi");
     }
   };
 
@@ -282,7 +284,7 @@ export default function ProfessionalPromotionManagement() {
     link.click();
     document.body.removeChild(link);
 
-    message.success("Data exported successfully");
+    toast.success("Data exported successfully");
   };
 
   const handleDelete = async (record: PromotionDto) => {
@@ -293,7 +295,7 @@ export default function ProfessionalPromotionManagement() {
       fetchPromotions(currentPage - 1, pageSize);
     } catch (error) {
       console.error('Error deleting promotion:', error);
-      message.error('Không thể xóa khuyến mãi');
+      toast.error('Không thể xóa khuyến mãi');
     }
   };
 
@@ -509,7 +511,7 @@ export default function ProfessionalPromotionManagement() {
         await uploadPromotionBanner(result.promotionId, bannerFile);
       }
 
-      message.success(
+      toast.success(
         editingPromotion
           ? `Cập nhật promotion thành công: ${
               result.promotionCode || result.promotionName
@@ -537,11 +539,11 @@ export default function ProfessionalPromotionManagement() {
       }
 
       // Show user-friendly error message
-      message.error(errorMessage);
+      toast.error(errorMessage);
 
       // If it's a 401 error, might need to refresh token
       if (error.message && error.message.includes("401")) {
-        message.warning(
+        toast.warning(
           "Phiên đăng nhập có thể đã hết hạn. Vui lòng thử lại sau khi refresh trang."
         );
       }
@@ -622,21 +624,24 @@ export default function ProfessionalPromotionManagement() {
       width: 100,
       align: "center" as const,
       render: (_: unknown, record: PromotionDto) => {
+        let color = "default";
         let text = "Inactive";
         
         if (record.isActive && !record.isExpired) {
+          color = "success";
           text = "Active";
         } else if (record.isExpired) {
+          color = "error";
           text = "Expired";
         }
         
         return (
           <div className="text-center">
-            <div className="text-sm text-gray-900">
+            <Tag color={color} className="text-xs">
               {text}
-            </div>
+            </Tag>
             {record.isFeatured && (
-              <div className="text-xs text-gray-500 mt-1">Featured</div>
+              <div className="text-xs text-orange-500 mt-1">★ Featured</div>
             )}
           </div>
         );
@@ -674,11 +679,11 @@ export default function ProfessionalPromotionManagement() {
       align: "center" as const,
       render: (_: unknown, record: PromotionDto) => (
         <div className="text-center">
-          <div className="text-sm text-gray-900">
+          <Tag color={record.memberOnly ? "green" : "blue"} className="text-xs">
             {record.memberOnly ? "Members" : "Public"}
-          </div>
+          </Tag>
           {record.isPointsPromotion && (
-            <div className="text-xs text-gray-500 mt-1">Points</div>
+            <div className="text-xs text-purple-600 mt-1">Points</div>
           )}
         </div>
       ),
