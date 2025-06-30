@@ -4,10 +4,10 @@ import {
   useMoviesApi,
   useMovieFiltersApi,
 } from "@/hooks/MoviesApi/use-movies-api";
-import { SearchFiltersApi } from "@/api/Coming-soon/search-filters-api";
-import { MovieGridApi } from "@/api/Coming-soon/movie-grid-api";
-import { ErrorStateApi } from "@/api/Coming-soon/error-state-api";
-import { LoadingStateApi } from "@/api/Coming-soon/loading-state-api";
+import { SearchFiltersApi } from "@/app/ComingSoon/components/search-filters-api";
+import { MovieGridApi } from "@/app/ComingSoon/components/movie-grid-api";
+import { ErrorStateApi } from "@/app/ComingSoon/components/error-state-api";
+import { LoadingStateApi } from "@/app/ComingSoon/components/loading-state-api";
 
 export default function MoviesApiPage() {
   const { movies, loading, error, refetch } = useMoviesApi();

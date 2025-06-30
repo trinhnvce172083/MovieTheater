@@ -1,19 +1,19 @@
 "use client";
 
-import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MovieCard } from "./movie-card";
-import type { Movie } from "@/types/NowShowing/movie";
-import { useState } from "react";
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-  PaginationEllipsis,
 } from "@/components/ui/pagination";
+import type { Movie } from "@/types/NowShowing/movie";
+import { Filter } from "lucide-react";
+import { useState } from "react";
+import { MovieCard } from "./movie-card";
 
 interface MovieGridProps {
   movies: Movie[];
