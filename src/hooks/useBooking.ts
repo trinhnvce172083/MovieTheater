@@ -1,214 +1,98 @@
-import { useState, useEffect, useCallback } from "react";
-import { BookingApiService, type Seat, type BookingSummary } from "@/api/booking-api";
-import { message } from "antd";
+import { useState, useCallback } from "react";
+import { BookingApiService } from "@/api/booking-api";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+import { decodeJwt } from "./decodeJwt";
+import type { Seat } from "@/app/booking/seat-selection/seatType";
+
+export interface BookingSummary {
+  bookingId: number;
+  bookingCode: string;
+  movieTitle: string;
+  showtime: string;
+  seats: Seat[];
+  totalAmount: number;
+}
 
 export interface UseBookingOptions {
-  scheduleId?: string | number;
-  autoRefresh?: boolean;
-  refreshInterval?: number;
+  scheduleId?: string | null;
+  roomId?: string | null;
 }
 
 export function useBooking(options: UseBookingOptions = {}) {
-  const { scheduleId, autoRefresh = false, refreshInterval = 30000 } = options;
-  
+  const { scheduleId, roomId } = options;
+
   const [seats, setSeats] = useState<Seat[]>([]);
-  const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Lấy trạng thái ghế
-  const fetchSeatStatus = useCallback(async () => {
-    if (!scheduleId) return;
+  const token = useSelector((state: RootState) => state.auth.token);
+  const userInfo = decodeJwt(token);
+  const userId = userInfo?.accountId;
 
+  const fetchSeatStatus = useCallback(async () => {
+    if (!scheduleId || !roomId) return;
+
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await BookingApiService.getSeatStatus(scheduleId);
-      
-      if (response.success) {
-        setSeats(response.data);
-      } else {
-        setError(response.message || "Không thể tải trạng thái ghế");
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Lỗi kết nối server";
+      // Lấy layout ghế từ room
+      const layoutResponse = await BookingApiService.getSeatLayout(roomId);
+      const seatLayout = layoutResponse.data;
+
+      // Lấy trạng thái ghế từ schedule
+      const statusResponse = await BookingApiService.getSeatStatus(scheduleId);
+      const seatStatus = statusResponse.data.seats;
+
+      // Kết hợp dữ liệu: layout + status
+      const combinedSeats = seatLayout.map((layoutSeat: Seat) => {
+        const statusSeat = seatStatus.find((s: Seat) => s.seatId === layoutSeat.seatId);
+        return {
+          ...layoutSeat,
+          status: statusSeat?.status || layoutSeat.status || "AVAILABLE",
+          reservedBySession: statusSeat?.reservedBySession,
+          reservationExpiry: statusSeat?.reservationExpiry,
+        };
+      });
+
+      setSeats(combinedSeats);
+    } catch (err: any) {
+      console.error("Error fetching seat status:", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "An unexpected error occurred.";
       setError(errorMessage);
-      console.error("Error fetching seat status:", errorMessage);
     } finally {
       setLoading(false);
     }
-  }, [scheduleId]);
+  }, [scheduleId, roomId]);
 
-  // Giữ ghế tạm thời
-  const reserveSeats = useCallback(async (seatIds: string[]) => {
-    if (!scheduleId) {
-      throw new Error("Schedule ID is required");
-    }
-
-    try {
-      const response = await BookingApiService.reserveSeats({
-        seatIds,
-        scheduleId,
-        sessionId: sessionId || undefined,
-      });
-
-      if (response.success) {
-        setSessionId(response.data.sessionId);
-        return response.data.sessionId;
-      } else {
-        throw new Error(response.message || "Không thể giữ ghế");
-      }
-    } catch (error) {
-      console.error("Error reserving seats:", error);
-      throw error;
-    }
-  }, [scheduleId, sessionId]);
-
-  // Giải phóng ghế
-  const releaseSeats = useCallback(async () => {
-    if (!sessionId) return;
-
-    try {
-      await BookingApiService.releaseSeats(sessionId);
-      setSessionId(null);
-      setSelectedSeats([]);
-    } catch (error) {
-      console.error("Error releasing seats:", error);
-    }
-  }, [sessionId]);
-
-  // Gia hạn giữ ghế
-  const extendReservation = useCallback(async () => {
-    if (!sessionId) return false;
-
-    try {
-      const response = await BookingApiService.extendSeatReservation(sessionId);
-      return response.success;
-    } catch (error) {
-      console.error("Error extending reservation:", error);
-      return false;
-    }
-  }, [sessionId]);
-
-  // Chọn ghế
-  const selectSeat = useCallback(async (seat: Seat, maxSeats: number = 10) => {
-    const isCurrentlySelected = selectedSeats.some((s) => s.id === seat.id);
-
-    if (isCurrentlySelected) {
-      // Bỏ chọn ghế
-      setSelectedSeats((prev) => {
-        if (seat.type === "couple") {
-          return prev.filter(s => s.coupleId !== seat.coupleId);
-        } else {
-          return prev.filter((s) => s.id !== seat.id);
-        }
-      });
-    } else {
-      // Chọn ghế mới
-      if (selectedSeats.length >= maxSeats) {
-        throw new Error(`Bạn chỉ có thể chọn tối đa ${maxSeats} ghế!`);
+  const createBooking = useCallback(
+    async (selectedSeatsToBook: Seat[]) => {
+      if (!scheduleId || selectedSeatsToBook.length === 0) {
+        throw new Error("Please select at least one seat.");
       }
 
-      // Xử lý ghế đôi
-      if (seat.type === "couple") {
-        const coupleSeats = seats.filter(s => s.coupleId === seat.coupleId);
-        if (selectedSeats.length + 2 <= maxSeats) {
-          setSelectedSeats((prev) => [...prev, ...coupleSeats.map(s => ({ ...s, status: "selected" as const }))]);
-          
-          // Giữ ghế tạm thời
-          const seatIds = coupleSeats.map(s => s.id);
-          await reserveSeats(seatIds);
-        } else {
-          throw new Error(`Bạn chỉ có thể chọn thêm ${maxSeats - selectedSeats.length} ghế!`);
-        }
-      } else {
-        setSelectedSeats((prev) => [...prev, { ...seat, status: "selected" as const }]);
-        
-        // Giữ ghế tạm thời
-        await reserveSeats([seat.id]);
-      }
-    }
-  }, [selectedSeats, seats, reserveSeats]);
-
-  // Tạo booking
-  const createBooking = useCallback(async () => {
-    if (!scheduleId || selectedSeats.length === 0) {
-      throw new Error("Vui lòng chọn ít nhất một ghế!");
-    }
-
-    try {
-      const response = await BookingApiService.createBooking({
-        scheduleId,
-        seatIds: selectedSeats.map(seat => seat.id),
-      });
-
-      if (response.success) {
-        // Giải phóng session sau khi tạo booking thành công
-        await releaseSeats();
-        return response.data.bookingId;
-      } else {
-        throw new Error(response.message || "Không thể tạo booking");
-      }
-    } catch (error) {
-      console.error("Error creating booking:", error);
-      throw error;
-    }
-  }, [scheduleId, selectedSeats, releaseSeats]);
-
-  // Lấy booking summary
-  const getBookingSummary = useCallback(async (bookingId: string): Promise<BookingSummary> => {
-    try {
-      const response = await BookingApiService.getBookingSummary(bookingId);
-      
-      if (response.success) {
+      try {
+        const response = await BookingApiService.createBooking({
+          scheduleId: Number(scheduleId),
+          seatIds: selectedSeatsToBook.map((seat) => seat.seatId),
+        });
         return response.data;
-      } else {
-        throw new Error(response.message || "Không thể tải thông tin booking");
+      } catch (error) {
+        console.error("Error creating booking:", error);
+        throw error;
       }
-    } catch (error) {
-      console.error("Error fetching booking summary:", error);
-      throw error;
-    }
-  }, []);
-
-  // Auto refresh seat status
-  useEffect(() => {
-    if (autoRefresh && scheduleId) {
-      const interval = setInterval(fetchSeatStatus, refreshInterval);
-      return () => clearInterval(interval);
-    }
-  }, [autoRefresh, scheduleId, refreshInterval, fetchSeatStatus]);
-
-  // Cleanup khi component unmount
-  useEffect(() => {
-    return () => {
-      if (sessionId) {
-        releaseSeats().catch(console.error);
-      }
-    };
-  }, [sessionId, releaseSeats]);
+    },
+    [scheduleId]
+  );
 
   return {
-    // State
     seats,
-    selectedSeats,
-    sessionId,
     loading,
     error,
-    
-    // Actions
     fetchSeatStatus,
-    selectSeat,
-    reserveSeats,
-    releaseSeats,
-    extendReservation,
     createBooking,
-    getBookingSummary,
-    
-    // Utilities
-    totalAmount: selectedSeats.reduce((sum, seat) => sum + seat.price, 0),
-    selectedSeatIds: selectedSeats.map(seat => seat.id),
   };
 } 

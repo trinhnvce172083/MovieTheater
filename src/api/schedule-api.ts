@@ -15,10 +15,7 @@ export class ScheduleApiService {
   ): Promise<ApiResponse<Schedule[]>> {
     try {
       const response = await axiosClient.get(`/schedules/movie/${movieId}`, {
-        params: { 
-          fromDate: date,
-          toDate: date 
-        },
+        params: { fromDate: date, toDate: date },
       });
       return {
         data: response.data || [],
@@ -26,6 +23,23 @@ export class ScheduleApiService {
       };
     } catch (error: unknown) {
       console.error(`Error fetching schedules for movie ${movieId} on date ${date}:`, error);
+      return {
+        data: [],
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to fetch schedules",
+      };
+    }
+  }
+
+  static async getSchedulesByMovie(movieId: string | number): Promise<ApiResponse<Schedule[]>> {
+    try {
+      const response = await axiosClient.get(`/movies/${movieId}/schedules`);
+      return {
+        data: response.data || [],
+        success: true,
+      };
+    } catch (error: unknown) {
+      console.error(`Error fetching schedules for movie ${movieId}:`, error);
       return {
         data: [],
         success: false,

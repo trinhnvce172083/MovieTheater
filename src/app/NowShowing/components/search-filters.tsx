@@ -39,7 +39,7 @@ export function SearchFilters({
     setIsSearching(true);
     try {
       const result = await MovieApiService.searchMoviesNowShowing(term, 0, 9);
-      if (result.success && result.data) {
+      if (result.data) {
         onFiltersChange({ searchTerm: term });
       }
     } catch (error) {

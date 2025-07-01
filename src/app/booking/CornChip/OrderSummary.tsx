@@ -1,7 +1,19 @@
 import React from 'react';
 import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
+import ROUTES from '@/constants/routes';
 
-export default function OrderSummary({ movieDetails, totalOrder }) {
+export default function OrderSummary({ movieDetails, totalOrder, bookingData }) {
+  const router = useRouter();
+
+  const handleCheckout = () => {
+    // Logic to proceed to payment
+    // You can pass bookingData to the payment page via Redux or query params
+    console.log("Proceeding to checkout with:", bookingData);
+    router.push(ROUTES.PAYMENT);
+  };
+
   return (
     <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
       {movieDetails.image && (
@@ -28,7 +40,12 @@ export default function OrderSummary({ movieDetails, totalOrder }) {
         <span className="font-semibold">Total:</span>
         <span className="text-lg font-bold text-yellow-400">{totalOrder.toLocaleString('vi-VN')} VND</span>
       </div>
-      <button className="mt-6 w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded transition">Thanh toán</button>
+      <Button 
+        className="mt-6 w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded transition"
+        onClick={handleCheckout}
+      >
+        Checkout
+      </Button>
     </div>
   );
 } 

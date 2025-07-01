@@ -21,11 +21,11 @@ export function useMoviesApi() {
 
       const response = await MovieApiService.getUpComingMovies();
 
-      if (response.success) {
+      if (Array.isArray(response.data)) {
         setMovies(response.data);
         setRetryCount(0);
       } else {
-        throw new Error(response.message || "Failed to fetch movies");
+        setMovies([]);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
@@ -67,9 +67,9 @@ export function useMovieFiltersApi(movies: Movie[]) {
   const allGenres = useMemo(() => {
     const genreSet = new Set<string>();
     movies.forEach((movie) => {
-      const genreArray = Array.isArray(movie.genre) 
-        ? movie.genre 
-        : (typeof movie.genre === "string" ? movie.genre.split(",") : []);
+      const genreArray = Array.isArray(movie.genre)
+        ? movie.genre
+        : (movie.genre ? String(movie.genre).split(",") : []);
       
       genreArray.forEach((genre) => {
         if (genre && genre.trim()) {
@@ -87,20 +87,21 @@ export function useMovieFiltersApi(movies: Movie[]) {
     // Search filter
     if (filters.searchTerm) {
       const searchLower = filters.searchTerm.toLowerCase();
-      filtered = filtered.filter((movie) =>
-        movie.title.toLowerCase().includes(searchLower) ||
-        (Array.isArray(movie.genre) 
-          ? movie.genre.some(g => g.toLowerCase().includes(searchLower))
-          : movie.genre.toLowerCase().includes(searchLower))
-      );
+      filtered = filtered.filter((movie) => {
+        const genreArray = Array.isArray(movie.genre)
+          ? movie.genre
+          : (movie.genre ? String(movie.genre).split(",") : []);
+        return movie.title.toLowerCase().includes(searchLower) ||
+          genreArray.some(g => typeof g === 'string' && g.toLowerCase().includes(searchLower));
+      });
     }
 
     // Genre filter
     if (filters.selectedGenre !== "all") {
       filtered = filtered.filter((movie) => {
-        const genreArray = Array.isArray(movie.genre) 
-          ? movie.genre 
-          : (typeof movie.genre === "string" ? movie.genre.split(",") : []);
+        const genreArray = Array.isArray(movie.genre)
+          ? movie.genre
+          : (movie.genre ? String(movie.genre).split(",") : []);
         return genreArray.some(g => g.trim() === filters.selectedGenre);
       });
     }

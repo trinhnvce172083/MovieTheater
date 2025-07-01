@@ -55,7 +55,7 @@ export default function CornChipPage() {
         setQuantities(initialQuantities);
         setError(null);
       } catch (error) {
-        setError("Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.");
+        setError("Failed to load concessions. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -84,7 +84,7 @@ export default function CornChipPage() {
       `${bookingData.scheduleInfo.displayTime} ${bookingData.scheduleInfo.displayDate}` : 
       'Loading...',
     details: bookingData.scheduleInfo ? 
-      `${bookingData.scheduleInfo.cinemaRoomName} - ${bookingData.selectedSeats.map(seat => `${seat.row}${seat.number}`).join(', ')}` :
+      `${bookingData.scheduleInfo.cinemaRoomName} - ${bookingData.selectedSeats.map(seat => seat.seatNumber).join(', ')}` :
       'Loading...',
     image: bookingData.movieInfo?.posterUrl || '/popcorn.jpg'
   };
@@ -105,6 +105,7 @@ export default function CornChipPage() {
             <OrderSummary 
               movieDetails={movieDetails} 
               totalOrder={totalOrder}
+              bookingData={bookingData}
             />
           </div>
         </div>
