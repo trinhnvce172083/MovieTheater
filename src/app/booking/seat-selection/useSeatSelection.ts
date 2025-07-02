@@ -9,15 +9,22 @@ export function useSeatSelection(maxSeats: number) {
   const selectSeat = (
     seat: Seat,
     allSeats: Seat[],
-    onMaxWarning?: () => void
+    onMaxWarning?: () => void,
+    onRowWarning?: (row: string | number) => void
   ) => {
     const isCurrentlySelected = selectedSeats.some((s) => s.seatId === seat.seatId);
 
+    if (selectedSeats.length > 0 && !isCurrentlySelected) {
+      const currentRow = selectedSeats[0].seatRow;
+      if (seat.seatRow !== currentRow) {
+        if (onRowWarning) onRowWarning(currentRow);
+        return;
+      }
+    }
+
     if (isCurrentlySelected) {
-      // Bỏ chọn ghế
       setSelectedSeats((prev) => prev.filter((s) => s.seatId !== seat.seatId));
     } else {
-      // Chọn ghế mới
       if (selectedSeats.length >= maxSeats) {
         if (onMaxWarning) onMaxWarning();
         return;

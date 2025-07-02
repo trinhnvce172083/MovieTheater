@@ -63,11 +63,14 @@ export default function SeatSelectionPage() {
     if (scheduleId) {
       const fetchRelatedInfo = async () => {
         try {
-          const today = new Date();
-          const dateStr = today.toISOString().slice(0, 10);
-          const scheduleResponse = await ScheduleApiService.getSchedulesForMovie(Number(scheduleId), dateStr);
-          if (scheduleResponse.data && scheduleResponse.data.length > 0) {
-            const scheduleData = scheduleResponse.data[0];
+          console.log("🔍 Fetching schedule info for scheduleId:", scheduleId);
+          
+          // Lấy thông tin schedule trực tiếp bằng scheduleId
+          const scheduleResponse = await ScheduleApiService.getScheduleById(Number(scheduleId));
+          console.log("📅 Schedule response:", scheduleResponse);
+          
+          if (scheduleResponse.success && scheduleResponse.data) {
+            const scheduleData = scheduleResponse.data;
             dispatch(setScheduleInfo({
               scheduleId: scheduleData.scheduleId,
               displayTime: scheduleData.displayTime,
@@ -77,9 +80,13 @@ export default function SeatSelectionPage() {
               movieId: scheduleData.movieId,
             }));
 
+            // Lấy thông tin movie nếu có movieId
             if (scheduleData.movieId) {
+              console.log("🎬 Fetching movie info for movieId:", scheduleData.movieId);
               const movieResponse = await MovieApiService.getMovieById(Number(scheduleData.movieId));
-              if (movieResponse.data) {
+              console.log("🎬 Movie response:", movieResponse);
+              
+              if (movieResponse.success && movieResponse.data) {
                 const movieData = movieResponse.data;
                 dispatch(setMovieInfo({
                   movieId: Number(movieData.movieId),
@@ -87,11 +94,20 @@ export default function SeatSelectionPage() {
                   duration: movieData.duration,
                   posterUrl: movieData.posterUrl,
                 }));
+                console.log("✅ Movie info set successfully:", movieData.title);
+              } else {
+                console.error("❌ Failed to get movie info:", movieResponse.message);
+                messageApi.error("Failed to load movie details.");
               }
+            } else {
+              console.warn("⚠️ No movieId found in schedule data");
             }
+          } else {
+            console.error("❌ Failed to get schedule info:", scheduleResponse.message);
+            messageApi.error("Failed to load schedule details.");
           }
         } catch (e) {
-          console.error("Failed to fetch related info", e);
+          console.error("❌ Failed to fetch related info", e);
           messageApi.error("Failed to load movie and schedule details.");
         }
       };
@@ -102,9 +118,12 @@ export default function SeatSelectionPage() {
   }, [scheduleId, dispatch, fetchSeatStatus, messageApi]);
 
   const handleSelectSeat = (seat: Seat) => {
-    selectSeat(seat, seats, () => {
-      messageApi.warning(`You can select a maximum of ${MAX_SEATS} seats.`);
-    });
+    selectSeat(
+      seat,
+      seats,
+      () => messageApi.warning(`You can select up to ${MAX_SEATS} seats only.`),
+      () => messageApi.warning("You can only select seats in the same row!")
+    );
   };
 
   const handleContinue = async () => {
