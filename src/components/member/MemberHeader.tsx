@@ -51,7 +51,7 @@ const MemberHeader: React.FC<MemberHeaderProps> = ({ user }) => {
   const pathname = usePathname();
 
   return (
-    <div className="fixed top-0 min-h-screen flex flex-col justify-between p-8">
+    <div className="fixed top-0 min-h-screen flex flex-col justify-between p-10">
       {/* Logo + Menu */}
       <div>
         <div className="pt-24 flex flex-col items-center mb-6">
