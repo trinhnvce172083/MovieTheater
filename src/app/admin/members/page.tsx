@@ -538,7 +538,6 @@ export default function AdminMemberManagement() {
   const handleEdit = (record: MemberData) => {
     setEditingMember(record);
     form.setFieldsValue({
-    form.setFieldsValue({
       name: record.name,
       username: record.username || record.id, // Use actual username if available, fallback to id
       email: record.email,
@@ -856,7 +855,6 @@ export default function AdminMemberManagement() {
             </Card>
           </Col>
         </Row>
-        </Row>
         {/* Main Content Card */}
         <Card
           className="shadow-sm border-0"
@@ -872,11 +870,9 @@ export default function AdminMemberManagement() {
               >
                 Member Management
               </Title>
-              </Title>
               <Text type="secondary" className="text-sm xl:text-base">
                 Manage and organize your cinema&apos;s member list
               </Text>
-            </div>
             </div>
             <div className="flex items-center gap-3">
               <Button
@@ -1138,7 +1134,6 @@ export default function AdminMemberManagement() {
                   className="h-10"
                   disabled={!!editingMember} // Read-only when editing
                 >
-                  <Option value="ADMIN">Admin</Option>
                   <Option value="EMPLOYEE">Employee</Option>
                   <Option value="MEMBER">Member</Option>
                   <Option value="CUSTOMER">Customer</Option>
