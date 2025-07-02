@@ -10,6 +10,8 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useRouter } from 'next/navigation';
 import ROUTES from '@/constants/routes';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 interface Concession {
   id: number;
@@ -92,16 +94,7 @@ export default function CornChipPage() {
   return (
     <>
       <Header />
-      <div className="p-2">
-        <button
-          onClick={() => router.push('/booking/seat-selection')}
-          className="flex items-center border border-gray-400 rounded px-4 py-2 mt-2 mb-4 bg-transparent text-black hover:bg-gray-100 font-medium"
-          style={{ position: 'relative', zIndex: 10 }}
-        >
-          <span className="mr-2">&#8592;</span> Back to Booking
-        </button>
-      </div>
-      <div className="bg-gray-900 text-white min-h-screen p-8 pt-0">
+      <div className="bg-[#151a23] text-white min-h-screen p-8 pt-0 mt-10">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
           <ConcessionsList
             concessions={concessions}

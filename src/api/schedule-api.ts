@@ -9,6 +9,23 @@ interface ApiResponse<T> {
 }
 
 export class ScheduleApiService {
+  static async getScheduleById(scheduleId: string | number): Promise<ApiResponse<Schedule>> {
+    try {
+      const response = await axiosClient.get(`/schedules/${scheduleId}`);
+      return {
+        data: response.data,
+        success: true,
+      };
+    } catch (error: unknown) {
+      console.error(`Error fetching schedule ${scheduleId}:`, error);
+      return {
+        data: {} as Schedule,
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to fetch schedule",
+      };
+    }
+  }
+
   static async getSchedulesForMovie(
     movieId: string | number,
     date: string // Định dạng YYYY-MM-DD

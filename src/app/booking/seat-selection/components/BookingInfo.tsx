@@ -87,7 +87,6 @@ const BookingInfo: React.FC<BookingInfoProps> = ({
         className="flex-1 rounded-full bg-[#a084ee] hover:bg-[#7f56d9] text-white font-semibold h-12 text-lg transition-all"
         onClick={onContinue}
         loading={loading}
-        disabled={selectedSeats.length === 0}
       >
         Continue
       </Button>

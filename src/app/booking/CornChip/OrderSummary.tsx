@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import ROUTES from '@/constants/routes';
+import { ArrowLeft } from 'lucide-react';
 
 interface OrderSummaryProps {
   movieDetails: any;
@@ -51,12 +52,22 @@ const OrderSummary = ({ movieDetails, totalOrder, bookingData, concessions, quan
       <div className="font-bold text-right text-lg mt-4 mb-2">
         Total: <span className="text-yellow-600">{totalOrder.toLocaleString()} VND</span>
       </div>
-      <Button 
-        className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 rounded"
-        onClick={handleCheckout}
-      >
-        Checkout
-      </Button>
+      <div className="flex gap-4 mt-4">
+        <Button
+          variant="outline"
+          size="lg"
+          className="bg-white text-black border-gray-300 hover:bg-gray-100"
+          onClick={() => router.push('/booking/seat-selection')}
+        >
+          <ArrowLeft />
+        </Button>
+        <Button 
+          className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 rounded"
+          onClick={handleCheckout}
+        >
+          Checkout
+        </Button>
+      </div>
     </div>
   );
 };

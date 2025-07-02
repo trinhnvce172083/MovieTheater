@@ -92,7 +92,7 @@ export class MovieApiService {
     } catch (error: unknown) {
       console.error("Error fetching movie:", error);
       return {
-        data: undefined,
+        data: null,
         success: false,
         message: error instanceof Error ? error.message : "Failed to fetch movie",
       };
