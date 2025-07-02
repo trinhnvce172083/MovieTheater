@@ -27,13 +27,13 @@ export default function CornChipPage() {
   const bookingData = useSelector((state: RootState) => state.booking);
   const router = useRouter();
 
-  // Kiểm tra dữ liệu booking
-  useEffect(() => {
-    if (!bookingData.scheduleId || bookingData.selectedSeats.length === 0) {
-      router.replace(ROUTES.MOVIES);
-      return;
-    }
-  }, [bookingData.scheduleId, bookingData.selectedSeats.length, router]);
+  // // Kiểm tra dữ liệu booking
+  // useEffect(() => {
+  //   if (!bookingData.scheduleId || bookingData.selectedSeats.length === 0) {
+  //     router.replace(ROUTES.MOVIES);
+  //     return;
+  //   }
+  // }, [bookingData.scheduleId, bookingData.selectedSeats.length, router]);
 
   // Lấy danh sách concessions
   useEffect(() => {
@@ -92,7 +92,16 @@ export default function CornChipPage() {
   return (
     <>
       <Header />
-      <div className="bg-gray-900 text-white min-h-screen p-8">
+      <div className="p-2">
+        <button
+          onClick={() => router.push('/booking/seat-selection')}
+          className="flex items-center border border-gray-400 rounded px-4 py-2 mt-2 mb-4 bg-transparent text-black hover:bg-gray-100 font-medium"
+          style={{ position: 'relative', zIndex: 10 }}
+        >
+          <span className="mr-2">&#8592;</span> Back to Booking
+        </button>
+      </div>
+      <div className="bg-gray-900 text-white min-h-screen p-8 pt-0">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
           <ConcessionsList
             concessions={concessions}
@@ -106,6 +115,8 @@ export default function CornChipPage() {
               movieDetails={movieDetails} 
               totalOrder={totalOrder}
               bookingData={bookingData}
+              concessions={concessions}
+              quantities={quantities}
             />
           </div>
         </div>
