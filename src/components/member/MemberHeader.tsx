@@ -69,7 +69,7 @@ const MemberHeader: React.FC<MemberHeaderProps> = ({ user }) => {
             {MEMBER_TABS.map((tab) => (
               <Link href={tab.path} key={tab.key}>
                 <button
-                  className={`w-full text-left flex items-center space-x-2 px-4 py-2 rounded-full font-semibold transition ${
+                  className={`w-full text-left flex items-center space-x-2 px-4 py-2 rounded-full transition ${
                     pathname === tab.path
                       ? "bg-white shadow"
                       : "bg-white/30 hover:bg-white/50"
