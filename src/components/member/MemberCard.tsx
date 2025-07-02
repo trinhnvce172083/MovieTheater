@@ -23,7 +23,7 @@ const MemberCard: React.FC<MemberCardProps> = ({
     <div className={`flex items-center gap-4 ${className}`}>
       <Avatar 
         size={80} 
-        src={avatar}
+        src={avatar || undefined}
         icon={<UserOutlined />}
         className="border-4 border-gray-100"
       />

@@ -9,6 +9,7 @@ import {
   FileTextOutlined,
   SettingOutlined,
 } from "@ant-design/icons";
+import Image from "next/image";
 
 interface MemberHeaderProps {
   user: {
@@ -50,29 +51,36 @@ const MemberHeader: React.FC<MemberHeaderProps> = ({ user }) => {
   const pathname = usePathname();
 
   return (
-    <div className="h-full flex flex-col justify-between p-4">
+    <div className="fixed top-0 min-h-screen flex flex-col justify-between p-8">
       {/* Logo + Menu */}
       <div>
-        <div className="flex flex-col items-center mb-6">
-          <img src="/logo.png" alt="Logo" className="w-24 h-20 mb-4" />
-        </div>
+        <div className="pt-24 flex flex-col items-center mb-6">
+          {/* Logo */}
+          <Image
+            src="/logo.png"
+            alt="Logo"
+            width={96}
+            height={80}
+            className="w-24 h-20 mb-4"
+          />
 
-        {/* Menu */}
-        <div className="flex flex-col gap-y-4 mb-6">
-          {MEMBER_TABS.map((tab) => (
-            <Link href={tab.path} key={tab.key}>
-              <button
-                className={`w-full text-left flex items-center space-x-2 px-4 py-2 rounded-full font-semibold transition ${
-                  pathname === tab.path
-                    ? "bg-white shadow"
-                    : "bg-white/30 hover:bg-white/50"
-                }`}
-              >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            </Link>
-          ))}
+          {/* Menu */}
+          <div className="flex flex-col gap-y-4 mb-6">
+            {MEMBER_TABS.map((tab) => (
+              <Link href={tab.path} key={tab.key}>
+                <button
+                  className={`w-full text-left flex items-center space-x-2 px-4 py-2 rounded-full font-semibold transition ${
+                    pathname === tab.path
+                      ? "bg-white shadow"
+                      : "bg-white/30 hover:bg-white/50"
+                  }`}
+                >
+                  <span className="text-gray-800">{tab.icon}</span>
+                  <span className="text-gray-800">{tab.label}</span>
+                </button>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
 
