@@ -55,25 +55,19 @@ export class MovieApiService {
       };
     }
   }
+
   static async searchMoviesNowShowing(query: string, page: number = 0, size: number = 9): Promise<ApiResponse<Movie[]>> {
     try {
       const response = await axiosClient.get("/movies/search", {
-        params: { 
-          keyword: query,
-          page,
-          size
-        },
+        params: { keyword: query, page, size },
       });
       const data = response.data;
-
       const moviesArray = Array.isArray(data.movies)
         ? data.movies
         : Array.isArray(data)
-          ? data
-          : [];
-
+        ? data
+        : [];
       const nowShowingMovies = moviesArray.filter((movie: Movie) => movie.status === "NOW_SHOWING");
-
       return {
         data: nowShowingMovies,
         success: true,
@@ -84,6 +78,23 @@ export class MovieApiService {
         data: [],
         success: false,
         message: error instanceof Error ? error.message : "Failed to search movies",
+      };
+    }
+  }
+
+  static async getMovieById(movieId: string | number): Promise<ApiResponse<Movie>> {
+    try {
+      const response = await axiosClient.get(`/movies/${movieId}`);
+      return {
+        data: response.data,
+        success: true,
+      };
+    } catch (error: unknown) {
+      console.error("Error fetching movie:", error);
+      return {
+        data: null,
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to fetch movie",
       };
     }
   }

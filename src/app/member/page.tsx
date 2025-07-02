@@ -109,7 +109,7 @@ export default function AccountInformation() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Typography.Title level={2} className="text-white mb-8 text-center">
+      <Typography.Title level={2} className="text-gray-900 mb-8 text-center">
         Account Information
       </Typography.Title>
 

@@ -13,8 +13,11 @@ export function useMovies() {
       MovieApiService.getNowShowingMovies(),
       MovieApiService.getUpComingMovies(),
     ]).then(([nowRes, upRes]) => {
-      setNowShowingMovies(nowRes.data || []);
-      setUpcomingMovies(upRes.data || []);
+      setNowShowingMovies(nowRes && nowRes.data ? nowRes.data : []);
+      setUpcomingMovies(upRes && upRes.data ? upRes.data : []);
+      setLoading(false);
+    }).catch((error) => {
+      console.error("Error fetching movies:", error);
       setLoading(false);
     });
   }, []);

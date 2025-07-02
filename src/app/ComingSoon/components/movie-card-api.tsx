@@ -2,7 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Star, Clock, Calendar, Eye, ShoppingCart, Zap, DollarSign } from "lucide-react";
+import {
+  Star,
+  Clock,
+  Calendar,
+  Eye,
+  ShoppingCart,
+  Zap,
+  DollarSign,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,10 +22,10 @@ interface MovieCardApiProps {
   isFeatured?: boolean;
 }
 
-export function MovieCardApi({ 
-  movie, 
-  onBookNow, 
-  isFeatured = false 
+export function MovieCardApi({
+  movie,
+  onBookNow,
+  isFeatured = false,
 }: MovieCardApiProps) {
   const getRatingColor = (rating: string) => {
     switch (rating) {
@@ -40,21 +48,24 @@ export function MovieCardApi({
     onBookNow?.(movie.movieId);
   };
 
-
-
   // Ensure genre is array
   const genreArr = Array.isArray(movie.genre)
     ? movie.genre
-    : (typeof movie.genre === "string" ? movie.genre : "").split(",").map((g) => g.trim()).filter(Boolean);
+    : (typeof movie.genre === "string" ? movie.genre : "")
+        .split(",")
+        .map((g) => g.trim())
+        .filter(Boolean);
 
   const imageUrl = movie.posterUrl || "";
 
   return (
-    <Card className={`
+    <Card
+      className={`
       bg-gray-900/80 border-orange-500/20 hover:border-orange-500/50 
       transition-all duration-300 hover:scale-105 group relative overflow-hidden
-      ${isFeatured ? 'ring-2 ring-orange-500/30' : ''}
-    `}>
+      ${isFeatured ? "ring-2 ring-orange-500/30" : ""}
+    `}
+    >
       <CardContent className="p-0">
         {/* Movie Poster */}
         <div className="relative overflow-hidden">
@@ -89,7 +100,9 @@ export function MovieCardApi({
 
           {/* Rating Badge */}
           <Badge
-            className={`absolute top-2 right-2 ${getRatingColor(movie.rating)} text-white font-semibold transition-colors`}
+            className={`absolute top-2 right-2 ${getRatingColor(
+              movie.rating
+            )} text-white font-semibold transition-colors`}
           >
             {movie.rating}
           </Badge>
@@ -104,12 +117,12 @@ export function MovieCardApi({
 
           {/* Status Badge */}
           <div className="absolute bottom-2 right-2">
-            <Badge 
-              variant="outline" 
+            <Badge
+              variant="outline"
               className={`text-xs ${
-                movie.status === 'active' 
-                  ? 'border-green-500/50 text-green-400 bg-green-500/10' 
-                  : 'border-red-500/50 text-red-400 bg-red-500/10'
+                movie.status === "active"
+                  ? "border-green-500/50 text-green-400 bg-green-500/10"
+                  : "border-red-500/50 text-red-400 bg-red-500/10"
               }`}
             >
               {movie.status}
@@ -187,7 +200,7 @@ export function MovieCardApi({
                 {movie.price.toFixed(2)}
               </span>
             </div>
-            
+
             <div className="flex gap-2">
               <Link href={`/movies/${movie.movieId}`}>
                 <Button
@@ -208,10 +221,8 @@ export function MovieCardApi({
               </Link>
             </div>
           </div>
-
-
         </div>
       </CardContent>
     </Card>
   );
-} 
+}
