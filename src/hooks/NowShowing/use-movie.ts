@@ -16,10 +16,10 @@ export function useMovies() {
 
       const response = await MovieApiService.getNowShowingMovies();
 
-      if (response.success) {
+      if (response.data) {
         setMovies(response.data);
       } else {
-        setError(response.message || "Failed to fetch movies");
+        setError("Failed to fetch movies");
       }
     } catch (err) {
       setError(

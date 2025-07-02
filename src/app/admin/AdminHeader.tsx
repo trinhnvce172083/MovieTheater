@@ -62,7 +62,7 @@ export default function AdminHeader() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-[160px]">
             <DropdownMenuItem
-              onClick={() => router.push(ROUTES.ADMIN_DASHBOARD)}
+              onClick={() => router.push(ROUTES.MEMBER_PROFILE)}
             >
               My Profile
             </DropdownMenuItem>

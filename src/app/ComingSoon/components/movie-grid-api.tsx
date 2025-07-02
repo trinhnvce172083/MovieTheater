@@ -1,9 +1,9 @@
 "use client";
 
-import { Filter, Eye, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MovieCardApi } from "./movie-card-api";
 import type { Movie } from "@/types/NowShowing/movie";
+import { Filter } from "lucide-react";
+import { MovieCardApi } from "./movie-card-api";
 
 interface MovieGridApiProps {
   movies: Movie[];
@@ -21,11 +21,13 @@ export function MovieGridApi({
       <div className="text-center py-12">
         <div className="bg-black/30 backdrop-blur-sm rounded-lg p-8 border border-orange-500/20">
           <Filter className="h-16 w-16 mx-auto mb-4 text-orange-400" />
-          <h3 className="text-xl font-semibold mb-2 text-white">No movies found</h3>
+          <h3 className="text-xl font-semibold mb-2 text-white">
+            No movies found
+          </h3>
           <p className="text-orange-200 mb-6">
             Try adjusting your search criteria or filters to find more movies
           </p>
-          
+
           <div className="space-y-3">
             <p className="text-sm text-gray-400">Suggestions:</p>
             <ul className="text-sm text-gray-300 space-y-1">
@@ -34,7 +36,7 @@ export function MovieGridApi({
               <li>• Try different genre or rating filters</li>
             </ul>
           </div>
-          
+
           {onClearFilters && (
             <Button
               onClick={onClearFilters}
@@ -51,8 +53,8 @@ export function MovieGridApi({
   }
 
   // Separate featured and regular movies
-  const featuredMovies = movies.filter(movie => movie.isFeatured);
-  const regularMovies = movies.filter(movie => !movie.isFeatured);
+  const featuredMovies = movies.filter((movie) => movie.isFeatured);
+  const regularMovies = movies.filter((movie) => !movie.isFeatured);
 
   return (
     <div className="space-y-8">
@@ -68,12 +70,12 @@ export function MovieGridApi({
               </span>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {featuredMovies.map((movie) => (
-              <MovieCardApi 
-                key={movie.movieId} 
-                movie={movie} 
+              <MovieCardApi
+                key={movie.movieId}
+                movie={movie}
                 onBookNow={onBookNow}
                 isFeatured={true}
               />
@@ -98,12 +100,12 @@ export function MovieGridApi({
               </div>
             </>
           )}
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {regularMovies.map((movie) => (
-              <MovieCardApi 
-                key={movie.movieId} 
-                movie={movie} 
+              <MovieCardApi
+                key={movie.movieId}
+                movie={movie}
                 onBookNow={onBookNow}
                 isFeatured={false}
               />
@@ -130,13 +132,11 @@ export function MovieGridApi({
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-blue-300">
-                {movies.length} Total
-              </span>
+              <span className="text-blue-300">{movies.length} Total</span>
             </div>
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}

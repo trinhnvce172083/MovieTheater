@@ -2,10 +2,90 @@ import axiosClient from "./axiosClient";
 
 // Types
 export interface Seat {
-  id: number;
-  row: string;
-  number: string;
-  status: string;
+  seatId: number;
+  seatNumber: string;
+  seatRow: string | number;
+  seatColumn?: number;
+  status: string; // AVAILABLE | OCCUPIED | TEMPORARILY_RESERVED
+  seatType: string; // STANDARD | VIP | COUPLE
+  reservedBySession?: string;
+  reservationExpiry?: string;
+  isActive?: boolean;
+  priceMultiplier?: number;
+  isRecliner?: boolean;
+  hasTable?: boolean;
+  cinemaRoomId?: number;
+  cinemaRoomName?: string;
+  rowLetter?: string;
+  displayName?: string;
+  isAvailable?: boolean;
+  isOccupied?: boolean;
+  isTemporarilyReserved?: boolean;
+  isVIP?: boolean;
+  isCouple?: boolean;
+  isWheelchair?: boolean;
+  isPremium?: boolean;
+}
+
+export interface SeatStatusResponse {
+  seats: Seat[];
+  lastUpdated: string;
+}
+
+export interface BookingRequest {
+  scheduleId: number;
+  seatIds: number[];
+}
+
+export interface BookingResponse {
+  bookingId: number;
+  bookingCode: string;
+  bookingDate: string;
+  bookingStatus: string;
+  totalAmount: number;
+  discountAmount: number;
+  finalAmount: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  isGuestBooking: boolean;
+  schedule: {
+    scheduleId: number;
+    showDateTime: string;
+    formattedShowDateTime: string;
+    language: string;
+    isSubtitled: boolean;
+  };
+  movie: {
+    movieId: number;
+    title: string;
+    originalTitle: string;
+    duration: number;
+    rating: string;
+    genres: string;
+    director: string;
+    posterUrl: string;
+    formattedDuration: string;
+  };
+  cinema: {
+    cinemaRoomId: number;
+    cinemaRoomName: string;
+    cinemaLocation: string;
+    address: string;
+  };
+  paymentMethod: string;
+  qrCode: string;
+  isCheckedIn: boolean;
+  canBeCancelled: boolean;
+  canBeCheckedIn: boolean;
+  isExpired: boolean;
+  createdAt: string;
+  updatedAt: string;
+  formattedBookingDate: string;
+  formattedShowDateTime: string;
+  statusDisplayName: string;
+  refundPolicy: string;
+  discountPercentage: number;
 }
 
 export interface SeatReservationRequest {
@@ -14,35 +94,9 @@ export interface SeatReservationRequest {
   sessionId?: string;
 }
 
-export interface BookingRequest {
-  scheduleId: string | number;
-  seatIds: string[];
-  userId?: string;
-  guestInfo?: {
-    name: string;
-    email: string;
-    phone: string;
-  };
-}
-
-export interface BookingSummary {
-  bookingId: string;
-  movieTitle: string;
-  scheduleInfo: {
-    date: string;
-    time: string;
-    cinemaRoom: string;
-  };
-  seats: Seat[];
-  totalAmount: number;
-  status: string;
-}
-
-export interface SeatLayout {
-  seatId: number;
-  seatNumber: string;
-  seatRow: number;
-  seatType: string;
+export interface SeatReservationResponse {
+  sessionId: string;
+  expiresAt: string;
 }
 
 export interface ApiResponse<T> {
@@ -51,211 +105,43 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-export class BookingApiService {
-  // Lấy trạng thái ghế của suất chiếu
-  static async getSeatStatus(scheduleId: string | number): Promise<ApiResponse<Seat[]>> {
-    try {
-      // Thử các endpoint khác nhau có thể tồn tại
-      let response;
-      
-      try {
-        // Thử endpoint theo format bạn đã cung cấp
-        response = await axiosClient.get(`/bookings/schedules/${scheduleId}/seats`);
-      } catch {
-        // Nếu không được, thử endpoint khác
-        try {
-          response = await axiosClient.get(`/schedules/${scheduleId}/seats`);
-        } catch {
-          // Thử endpoint khác nữa
-          response = await axiosClient.get(`/schedule/${scheduleId}/seats`);
-        }
-      }
-      
-      return {
-        data: response.data,
-        success: true,
-      };
-    } catch (error: unknown) {
-      console.error("Error fetching seat status:", error);
-      
-      // Log chi tiết lỗi để debug
-      if (error instanceof Error) {
-        console.error("Error details:", {
-          message: error.message,
-          name: error.name,
-          stack: error.stack
-        });
-      }
-      
-      return {
-        data: [],
-        success: false,
-        message: error instanceof Error ? error.message : "Failed to fetch seat status",
-      };
-    }
-  }
+export const BookingApiService = {
+  // Cập nhật endpoint để phù hợp với backend
+  getSeatStatus: (scheduleId: string | number) =>
+    axiosClient.get<SeatStatusResponse>(`/bookings/schedules/${scheduleId}/seats`),
 
-  // Lấy layout ghế của phòng chiếu
-  static async getSeatLayout(roomId: string | number): Promise<ApiResponse<SeatLayout[]>> {
-    try {
-      const response = await axiosClient.get(`/cinema-rooms/${roomId}/seats`);
-      return {
-        data: response.data,
-        success: true,
-      };
-    } catch (error: unknown) {
-      console.error(`Error fetching seat layout for room ${roomId}:`, error);
-      return {
-        data: [],
-        success: false,
-        message: error instanceof Error ? error.message : "Failed to fetch seat layout",
-      };
-    }
-  }
+  // API lấy layout ghế của phòng chiếu
+  getSeatLayout: (roomId: string | number) =>
+    axiosClient.get<Seat[]>(`/cinema-rooms/${roomId}/seats`),
 
-  // Tạm thời giữ ghế
-  static async reserveSeats(request: SeatReservationRequest): Promise<ApiResponse<{ sessionId: string }>> {
-    try {
-      const response = await axiosClient.post(`/bookings/schedules/${request.scheduleId}/seats/reserve`, {
-        seatIds: request.seatIds,
-      });
-      return {
-        data: response.data,
-        success: true,
-      };
-    } catch (error: unknown) {
-      console.error("Error reserving seats:", error);
-      return {
-        data: { sessionId: "" },
-        success: false,
-        message: error instanceof Error ? error.message : "Failed to reserve seats",
-      };
-    }
-  }
+  reserveSeats: (data: {
+    seatIds: string[];
+    scheduleId: string | number;
+    sessionId?: string;
+  }) => axiosClient.post<SeatReservationResponse>("/bookings/reserve", data),
 
-  // Gia hạn giữ ghế
-  static async extendSeatReservation(sessionId: string): Promise<ApiResponse<{ extended: boolean }>> {
-    try {
-      const response = await axiosClient.post(`/bookings/sessions/${sessionId}/seats/extend`);
-      return {
-        data: response.data,
-        success: true,
-      };
-    } catch (error: unknown) {
-      console.error("Error extending seat reservation:", error);
-      return {
-        data: { extended: false },
-        success: false,
-        message: error instanceof Error ? error.message : "Failed to extend reservation",
-      };
-    }
-  }
+  releaseSeats: (sessionId: string) =>
+    axiosClient.post(`/bookings/release/${sessionId}`),
 
-  // Giải phóng ghế
-  static async releaseSeats(sessionId: string): Promise<ApiResponse<{ released: boolean }>> {
-    try {
-      const response = await axiosClient.delete(`/bookings/sessions/${sessionId}/seats/release`);
-      return {
-        data: response.data,
-        success: true,
-      };
-    } catch (error: unknown) {
-      console.error("Error releasing seats:", error);
-      return {
-        data: { released: false },
-        success: false,
-        message: error instanceof Error ? error.message : "Failed to release seats",
-      };
-    }
-  }
+  extendSeatReservation: (sessionId: string) =>
+    axiosClient.post(`/bookings/extend/${sessionId}`),
 
-  // Tạo booking
-  static async createBooking(request: BookingRequest): Promise<ApiResponse<{ bookingId: string }>> {
-    try {
-      const response = await axiosClient.post("/bookings", request);
-      return {
-        data: response.data,
-        success: true,
-      };
-    } catch (error: unknown) {
-      console.error("Error creating booking:", error);
-      return {
-        data: { bookingId: "" },
-        success: false,
-        message: error instanceof Error ? error.message : "Failed to create booking",
-      };
-    }
-  }
+  // Cập nhật để phù hợp với backend
+  createBooking: (data: BookingRequest) =>
+    axiosClient.post<BookingResponse>("/bookings", data),
 
-  // Lấy tóm tắt booking
-  static async getBookingSummary(bookingId: string): Promise<ApiResponse<BookingSummary>> {
-    try {
-      const response = await axiosClient.get(`/bookings/${bookingId}/summary`);
-      return {
-        data: response.data,
-        success: true,
-      };
-    } catch (error: unknown) {
-      console.error("Error fetching booking summary:", error);
-      return {
-        data: {} as BookingSummary,
-        success: false,
-        message: error instanceof Error ? error.message : "Failed to fetch booking summary",
-      };
-    }
-  }
+  getBookingSummary: (bookingId: string) =>
+    axiosClient.get<BookingResponse>(`/bookings/summary/${bookingId}`),
 
   // Lấy booking details
-  static async getBookingDetails(bookingId: string): Promise<ApiResponse<Record<string, unknown>>> {
-    try {
-      const response = await axiosClient.get(`/bookings/${bookingId}`);
-      return {
-        data: response.data,
-        success: true,
-      };
-    } catch (error: unknown) {
-      console.error("Error fetching booking details:", error);
-      return {
-        data: {},
-        success: false,
-        message: error instanceof Error ? error.message : "Failed to fetch booking details",
-      };
-    }
-  }
+  getBookingDetails: (bookingId: string) =>
+    axiosClient.get<ApiResponse<BookingResponse>>(`/bookings/${bookingId}`),
 
   // Hủy booking
-  static async cancelBooking(bookingId: string): Promise<ApiResponse<{ cancelled: boolean }>> {
-    try {
-      const response = await axiosClient.post(`/bookings/${bookingId}/cancel`);
-      return {
-        data: response.data,
-        success: true,
-      };
-    } catch (error: unknown) {
-      console.error("Error cancelling booking:", error);
-      return {
-        data: { cancelled: false },
-        success: false,
-        message: error instanceof Error ? error.message : "Failed to cancel booking",
-      };
-    }
-  }
+  cancelBooking: (bookingId: string) =>
+    axiosClient.post<ApiResponse<{ cancelled: boolean }>>(`/bookings/${bookingId}/cancel`),
 
   // Lấy booking của user
-  static async getMyBookings(): Promise<ApiResponse<Record<string, unknown>[]>> {
-    try {
-      const response = await axiosClient.get("/bookings/my-bookings");
-      return {
-        data: response.data,
-        success: true,
-      };
-    } catch (error: unknown) {
-      console.error("Error fetching my bookings:", error);
-      return {
-        data: [],
-        success: false,
-        message: error instanceof Error ? error.message : "Failed to fetch my bookings",
-      };
-    }
-  }
-} 
+  getMyBookings: () =>
+    axiosClient.get<ApiResponse<BookingResponse[]>>("/bookings/my-bookings"),
+}; 
