@@ -85,8 +85,8 @@ export default function CinemaRoomManagement() {
   const [roomData, setRoomData] = useState<CinemaRoomResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
+  const [filterType, setFilterType] = useState<string | undefined>(undefined);
+  const [filterStatus, setFilterStatus] = useState<string | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalElements, setTotalElements] = useState(0);
@@ -637,7 +637,7 @@ export default function CinemaRoomManagement() {
                 />
               </Col>              <Col xs={12} sm={6} lg={4} xl={3}>
                 <Select
-                  placeholder="Type"
+                  placeholder="All Types"
                   value={filterType}
                   onChange={setFilterType}
                   className="w-full h-10 px-4"
@@ -650,7 +650,7 @@ export default function CinemaRoomManagement() {
               </Col>
               <Col xs={12} sm={6} lg={3} xl={3}>
                 <Select
-                  placeholder="Status"
+                  placeholder="All Status"
                   value={filterStatus}
                   onChange={setFilterStatus}
                   className="w-full h-10 px-4"
@@ -668,12 +668,14 @@ export default function CinemaRoomManagement() {
                   size="middle"
                   onClick={() => {
                     setSearchTerm("");
-                    setFilterType("");
-                    setFilterStatus("");
-                    fetchRooms();
+                    setFilterType(undefined);
+                    setFilterStatus(undefined);
+                    setCurrentPage(1);
+                    message.success("Filters cleared successfully");
                   }}
+                  disabled={!searchTerm && !filterType && !filterStatus}
                 >
-                  Reset
+                  Clear Filters
                 </Button>
               </Col>
             </Row>

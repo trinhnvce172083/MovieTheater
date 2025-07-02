@@ -227,13 +227,31 @@ export default function AdminConcessionsPage() {
         </div>
 
         <div style={{ marginBottom: 16 }}>
-             <Input
-                placeholder="Search by name or description..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ width: '100%' }}
-                prefix={<SearchOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
-            />
+            <Row gutter={[12, 12]}>
+                <Col xs={24} sm={16} lg={18}>
+                    <Input
+                        placeholder="Search by name or description..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{ width: '100%' }}
+                        prefix={<SearchOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
+                        allowClear
+                    />
+                </Col>
+                <Col xs={24} sm={8} lg={6}>
+                    <Button
+                        icon={<ReloadOutlined />}
+                        style={{ width: '100%' }}
+                        onClick={() => {
+                            setSearchTerm("");
+                            message.success("Search cleared successfully");
+                        }}
+                        disabled={!searchTerm}
+                    >
+                        Clear Search
+                    </Button>
+                </Col>
+            </Row>
         </div>
 
         <Table

@@ -35,8 +35,10 @@ import {
   UsergroupAddOutlined,
   CheckCircleOutlined,
   EyeOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import { getAllUsers } from "@/api/admin/getAllUsers";
+import dayjs from 'dayjs';
 
 import axiosClient from "@/api/axiosClient";
 import { useRouter } from "next/navigation";
@@ -55,6 +57,9 @@ interface MemberData {
   status: 'active' | 'inactive';
   type: string;
   avatar: string;
+  username?: string; // Added to track actual username
+  address?: string; // Added for editing
+  dob?: string; // Added for editing (date of birth)
 }
 
 // Interface for API User Response
@@ -68,6 +73,8 @@ interface ApiUser {
   isActive?: boolean;
   role?: string;
   avatar?: string;
+  address?: string; // User's address from registration
+  dateOfBirth?: string; // User's date of birth from registration
 }
 
 // Interface for creating/updating members
@@ -107,7 +114,10 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingMember, setEditingMember] = useState<MemberData | null>(null);  const [form] = Form.useForm();
+  const [editingMember, setEditingMember] = useState<MemberData | null>(null);
+  const [currentUser, setCurrentUser] = useState<{id: string, role: string, username: string} | null>(null);
+
+  const [form] = Form.useForm();
   const router = useRouter();
   // Simple auth status check
   const [showAuthWarning, setShowAuthWarning] = useState(false);
@@ -141,6 +151,10 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
             status: (userObj.isActive !== false ? 'active' : 'inactive') as 'active' | 'inactive',
             type: userObj.role || 'CUSTOMER',
             avatar: userObj.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userObj.fullName || userObj.username || 'User')}&background=random`,
+            username: userObj.username || 'N/A',
+            // Add address and date of birth from API response
+            address: userObj.address || '',
+            dob: userObj.dateOfBirth || '',
           };
         } catch (error) {
           console.error('Error processing user:', user, error);
@@ -155,6 +169,7 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
             status: inactiveStatus,
             type: 'CUSTOMER',
             avatar: 'https://ui-avatars.com/api/?name=Error&background=random',
+            username: 'N/A',
           };
         }
       });
@@ -188,6 +203,33 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
         "unknown"
       );
       console.log('Token preview:', token.substring(0, 20) + '...');
+      
+      // Get current user info from token or localStorage
+      try {
+        const userInfo = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+        if (userInfo) {
+          const parsedUser = JSON.parse(userInfo);
+          setCurrentUser({
+            id: parsedUser.accountId || parsedUser.id || '4', // Default to admin user ID from API response
+            role: parsedUser.role || 'ADMIN',
+            username: parsedUser.username || 'PhoenixZ'
+          });
+        } else {
+          // Fallback to default admin user (from API response)
+          setCurrentUser({
+            id: '4',
+            role: 'ADMIN', 
+            username: 'PhoenixZ'
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing user info:', error);
+        setCurrentUser({
+          id: '4',
+          role: 'ADMIN',
+          username: 'PhoenixZ'
+        });
+      }
     }
 
     setShowAuthWarning(!token);
@@ -195,7 +237,45 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
 
   useEffect(() => {
     fetchUsers();
-  }, []);  // Filter and search logic
+  }, []);
+
+  // Permission check functions
+  const canViewDetails = (targetUser: MemberData) => {
+    if (!currentUser) return false;
+    // Admin can view all users
+    if (currentUser.role === 'ADMIN') return true;
+    // Users can view their own details
+    return String(currentUser.id) === String(targetUser.id);
+  };
+
+  const canEdit = (targetUser: MemberData) => {
+    if (!currentUser) return false;
+    // Users can only edit their own information
+    // Convert both to strings for comparison since IDs might be numbers or strings
+    const currentUserId = String(currentUser.id);
+    const targetUserId = String(targetUser.id);
+    
+    console.log('Checking edit permission:', {
+      currentUserId,
+      targetUserId,
+      match: currentUserId === targetUserId,
+      currentUserRole: currentUser.role,
+      targetUserType: targetUser.type
+    });
+    
+    return currentUserId === targetUserId;
+  };
+
+  const canDelete = (targetUser: MemberData) => {
+    if (!currentUser) return false;
+    // Admin can delete non-admin users (EMPLOYEE, MEMBER, CUSTOMER)
+    if (currentUser.role === 'ADMIN' && targetUser.type !== 'ADMIN') {
+      return true;
+    }
+    return false;
+  };  // Filter and search logic
+  // NOTE: Inactive members are hidden by default to simulate hard delete in UI
+  // Users can still view inactive members by explicitly selecting "Inactive" status filter
   const filteredData = useMemo(() => {
     try {
       if (!memberData || !Array.isArray(memberData)) {
@@ -206,6 +286,11 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
       return memberData.filter((member) => {
         try {
           if (!member) return false;
+
+          // Hide inactive (soft deleted) members from the list to simulate hard delete
+          // Only show them if explicitly filtering by "inactive" status
+          const isActiveOrExplicitlyFilteringInactive = member.status === 'active' || filterStatus === 'inactive';
+          if (!isActiveOrExplicitlyFilteringInactive) return false;
 
           const matchesSearch = !searchTerm ||
             (member.name && member.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -236,16 +321,20 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
   // Reset current page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterStatus, filterType]);// Statistics calculations
+  }, [searchTerm, filterStatus, filterType]);  // Statistics calculations
   const statistics: MemberStatistics = useMemo(() => {
     try {
-      const totalMembers = memberData?.length || 0;
+      // Since we're hiding inactive members from UI, total should reflect only active members
       const activeMembers = memberData?.filter(
         (m) => m.status === "active"
       )?.length || 0;
+      const totalMembers = activeMembers; // Show active as total since inactive are hidden
 
       const newMembers = memberData?.filter((m) => {
         try {
+          // Only count active members who joined this month
+          if (m.status !== 'active') return false;
+          
           const join = new Date(m.joinDate);
           const now = new Date();
           return (
@@ -260,7 +349,10 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
 
       const types = memberData?.reduce((acc: Record<string, number>, m) => {
         try {
-          acc[m.type] = (acc[m.type] || 0) + 1;
+          // Only count active members in type statistics
+          if (m.status === 'active') {
+            acc[m.type] = (acc[m.type] || 0) + 1;
+          }
           return acc;
         } catch (error) {
           console.error('Error processing type for member:', m, error);
@@ -279,11 +371,40 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
     try {
       setLoading(true);
       console.log('Creating member with data:', memberData);
-        // Ensure all required fields are present and properly formatted
+      
+      // Validate required fields
+      if (!memberData.fullName || !memberData.email || !memberData.username) {
+        message.error('Please fill in all required fields: Full Name, Email, and Username');
+        return false;
+      }
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(memberData.email)) {
+        message.error('Please enter a valid email address');
+        return false;
+      }
+      
+      // Validate username format
+      const usernameRegex = /^[a-zA-Z0-9_]+$/;
+      if (!usernameRegex.test(memberData.username)) {
+        message.error('Username can only contain letters, numbers, and underscores');
+        return false;
+      }
+      
+      // Ensure all required fields are present and properly formatted
       const payload = {
-        ...memberData,
-        // Ensure role is uppercase
-        role: memberData.role?.toUpperCase() || 'STAFF'
+        username: memberData.username.trim(),
+        fullName: memberData.fullName.trim(),
+        email: memberData.email.trim().toLowerCase(),
+        password: memberData.password || undefined,
+        phoneNumber: memberData.phoneNumber?.trim() || undefined,
+        address: memberData.address?.trim() || undefined,
+        dateOfBirth: memberData.dateOfBirth || undefined,
+        // Ensure role is uppercase and valid
+        role: (memberData.role?.toUpperCase() || 'MEMBER') as 'ADMIN' | 'EMPLOYEE' | 'MEMBER' | 'CUSTOMER',
+        // Ensure boolean fields are properly set
+        isActive: memberData.isActive !== false, // Default to true if not specified
       };
 
       console.log('Sending payload:', payload);
@@ -296,18 +417,47 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
       console.error('Error creating member:', error);
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as ApiErrorResponse;
-        console.error('Backend error details:', axiosError.response.data);
-        if (axiosError.response.status === 400) {
-          message.error('Validation error. Please check all required fields are filled correctly.');
-        } else if (axiosError.response.status === 401) {
-          message.error('Authentication failed. Please login again.');
-        } else if (axiosError.response.status === 403) {
-          message.error('Access denied. You may not have admin permissions.');
-        } else {
-          message.error(`Failed to create member: ${axiosError.response.status}`);
+        console.error('Backend error details:', axiosError.response?.data);
+        
+        const status = axiosError.response?.status;
+        const errorData = axiosError.response?.data;
+        
+        switch (status) {
+          case 400:
+            message.error('Validation error. Please check all required fields are filled correctly.');
+            break;
+          case 401:
+            message.error('Authentication failed. Please login again.');
+            break;
+          case 403:
+            message.error('Access denied. You may not have admin permissions.');
+            break;
+          case 409:
+            // Handle conflict - usually duplicate email or username
+            let conflictMessage = 'A member with this information already exists.';
+            if (errorData && typeof errorData === 'object' && 'message' in errorData) {
+              const message = (errorData as { message: string }).message;
+              if (message.includes('email')) {
+                conflictMessage = 'A member with this email address already exists.';
+              } else if (message.includes('username')) {
+                conflictMessage = 'A member with this username already exists.';
+              } else {
+                conflictMessage = message;
+              }
+            }
+            message.error(conflictMessage);
+            break;
+          case 422:
+            message.error('Invalid data format. Please check your input.');
+            break;
+          case 500:
+            message.error('Server error. Please try again later.');
+            break;
+          default:
+            message.error(`Failed to create member: ${status || 'Unknown error'}`);
         }
       } else {
-        message.error('Failed to create member');
+        message.error('Failed to create member. Please check your network connection.');
       }
       return false;
     } finally {
@@ -344,6 +494,8 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
     }
   };
 
+  // NOTE: This performs a soft delete - sets member status to "inactive"
+  // Inactive members are hidden from the UI by default to simulate hard delete
   const deleteMember = async (id: string, name: string) => {
     try {
       setLoading(true);
@@ -376,12 +528,15 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
     setEditingMember(record);
     form.setFieldsValue({
       name: record.name,
-      username: record.id, // Use the id as username for now, you might want to store actual username
+      username: record.username || record.id, // Use actual username if available, fallback to id
       email: record.email,
       phone: record.phone,
-      type: record.type,
-      status: record.status,
+      type: record.type, // Will be read-only when editing
       joinDate: record.joinDate,
+      // Address can be edited, DOB from registration - read-only when editing
+      address: record.address || '',
+      dob: record.dob ? dayjs(record.dob) : null, // Will be read-only when editing
+      // Note: status is removed from form, it can only be changed via delete (soft delete)
     });
     setIsModalVisible(true);
   };
@@ -396,16 +551,22 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
-      console.log('Form values:', values);      // Transform form data to match API expectations
+      console.log('Form values:', values);
+      console.log('Is editing?', !!editingMember);
+      console.log('Editing member:', editingMember);
+      
+      // Transform form data to match API expectations
       const memberData: MemberCreateRequest = {
         username: values.username,
-        fullName: values.name,
+        fullName: values.name, // form field "name" maps to API field "fullName"
         email: values.email,
         phoneNumber: values.phone || undefined,
         address: values.address || undefined,
         dateOfBirth: values.dob ? values.dob.format('YYYY-MM-DD') : undefined,
-        role: values.type,
-        isActive: values.status === 'active',
+        role: values.type || 'MEMBER', // form field "type" maps to API field "role"
+        // For editing, keep the current status (don't change it)
+        // For creating, default to active
+        isActive: editingMember ? editingMember.status === 'active' : true,
       };
 
       // Add password for create, or for update if provided
@@ -413,10 +574,16 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
         memberData.password = values.password;
       }
 
+      console.log('Transformed memberData:', memberData);
+      console.log('Role being sent:', memberData.role);
+      console.log('Status being sent (preserved from existing or default active):', memberData.isActive);
+
       let success = false;
       if (editingMember) {
+        console.log('Calling updateMember with ID:', editingMember.id);
         success = await updateMember(editingMember.id, memberData);
       } else {
+        console.log('Calling createMember');
         success = await createMember(memberData);
       }
 
@@ -427,6 +594,7 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
       }
     } catch (error) {
       console.error('Form validation failed:', error);
+      message.error('Please check all required fields and try again.');
     }
   };
 
@@ -468,6 +636,13 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
       ),
     },
     {
+      title: "Username",
+      dataIndex: "username",
+      key: "username",
+      width: 120,
+      render: (username: string) => <span className="text-sm font-mono text-gray-700">{username}</span>,
+    },
+    {
       title: "Phone",
       dataIndex: "phone",
       key: "phone",
@@ -483,7 +658,7 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
         <span className="text-sm">{new Date(date).toLocaleDateString()}</span>
       ),
     },    {
-      title: "Type",
+      title: "Role",
       dataIndex: "type",
       key: "type",
       width: 100,
@@ -491,8 +666,8 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
         <Tag
           color={
             type === "ADMIN" ? "red" :
-            type === "STAFF" ? "purple" :
             type === "EMPLOYEE" ? "orange" :
+            type === "MEMBER" ? "green" :
             "blue"
           }
           className="text-xs m-0"
@@ -522,8 +697,8 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
       fixed: "right" as const,
       align: "center" as const,      render: (_: unknown, record: MemberData) => (
         <Space size="small">
-          {/* Only show View Details button for Staff and Employee, not for Admin */}
-          {record.type !== 'ADMIN' && (
+          {/* View Details - Admin can view all, users can view own details */}
+          {canViewDetails(record) && (
             <Tooltip title="View Details">
               <Button
                 type="text"
@@ -534,35 +709,43 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               />
             </Tooltip>
           )}
-          <Tooltip title={isUsingApiData ? "Edit" : "Edit disabled in demo mode"}>
-            <Button
-              type="text"
-              icon={<EditOutlined />}
-              size="small"
-              className={isUsingApiData ? "text-green-600 hover:bg-green-50" : "text-gray-400"}
-              onClick={() => handleEdit(record)}
-              disabled={!isUsingApiData}
-            />
-          </Tooltip>
-          <Tooltip title={isUsingApiData ? "Delete" : "Delete disabled in demo mode"}>
-            <Popconfirm
-              title="Delete Member"
-              description="Are you sure?"
-              onConfirm={() => handleDelete(record)}
-              okText="Delete"
-              cancelText="Cancel"
-              okButtonProps={{ danger: true }}
-              disabled={!isUsingApiData}
-            >
+          
+          {/* Edit - Users can only edit their own information */}
+          {canEdit(record) && (
+            <Tooltip title={isUsingApiData ? "Edit" : "Edit disabled in demo mode"}>
               <Button
                 type="text"
-                icon={<DeleteOutlined />}
+                icon={<EditOutlined />}
                 size="small"
-                className={isUsingApiData ? "text-red-600 hover:bg-red-50" : "text-gray-400"}
+                className={isUsingApiData ? "text-green-600 hover:bg-green-50" : "text-gray-400"}
+                onClick={() => handleEdit(record)}
                 disabled={!isUsingApiData}
               />
-            </Popconfirm>
-          </Tooltip>
+            </Tooltip>
+          )}
+          
+          {/* Delete - Admin can delete non-admin users only */}
+          {canDelete(record) && (
+            <Tooltip title={isUsingApiData ? "Delete" : "Delete disabled in demo mode"}>
+              <Popconfirm
+                title="Delete Member"
+                description={`Are you sure you want to delete ${record.name}?`}
+                onConfirm={() => handleDelete(record)}
+                okText="Delete"
+                cancelText="Cancel"
+                okButtonProps={{ danger: true }}
+                disabled={!isUsingApiData}
+              >
+                <Button
+                  type="text"
+                  icon={<DeleteOutlined />}
+                  size="small"
+                  className={isUsingApiData ? "text-red-600 hover:bg-red-50" : "text-gray-400"}
+                  disabled={!isUsingApiData}
+                />
+              </Popconfirm>
+            </Tooltip>
+          )}
         </Space>
       ),
     },
@@ -644,7 +827,7 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               size="small"
             >
               <Statistic
-                title="Admin/Staff/Employee"
+                title="Admin/Employee"
                 value={Object.entries(statistics.types)
                   .map(([type, count]) => `${type}:${count}`)
                   .join(" ")}
@@ -703,8 +886,8 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               </Col>
               <Col xs={12} sm={6} lg={4} xl={3}>
                 <Select
-                  placeholder="Status"
-                  value={filterStatus}
+                  placeholder="All Status"
+                  value={filterStatus || undefined}
                   onChange={setFilterStatus}
                   className="w-full h-10"
                   allowClear
@@ -715,18 +898,35 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
                 </Select>
               </Col>              <Col xs={12} sm={6} lg={4} xl={3}>
                 <Select
-                  placeholder="Type"
-                  value={filterType}
+                  placeholder="All Roles"
+                  value={filterType || undefined}
                   onChange={setFilterType}
                   className="w-full h-10"
                   allowClear
                   size="middle"
                 >
                   <Option value="ADMIN">Admin</Option>
-                  <Option value="STAFF">Staff</Option>
                   <Option value="EMPLOYEE">Employee</Option>
+                  <Option value="MEMBER">Member</Option>
                   <Option value="CUSTOMER">Customer</Option>
                 </Select>
+              </Col>
+              <Col xs={12} sm={6} lg={4} xl={3}>
+                <Button
+                  icon={<ReloadOutlined />}
+                  className="w-full h-10 px-4"
+                  size="middle"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setFilterStatus("");
+                    setFilterType("");
+                    setCurrentPage(1);
+                    message.success("Filters cleared successfully");
+                  }}
+                  disabled={!searchTerm && !filterStatus && !filterType}
+                >
+                  Clear Filters
+                </Button>
               </Col>
             </Row>
           </div>
@@ -793,9 +993,20 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               <Form.Item
                 name="username"
                 label="Username"
-                rules={[{ required: true, message: "Please enter username" }]}
+                rules={[
+                  { required: true, message: "Please enter username" },
+                  { min: 3, message: "Username must be at least 3 characters" },
+                  { max: 20, message: "Username must be less than 20 characters" },
+                  { 
+                    pattern: /^[a-zA-Z0-9_]+$/, 
+                    message: "Username can only contain letters, numbers, and underscores" 
+                  }
+                ]}
               >
-                <Input placeholder="Enter username" className="h-10" />
+                <Input 
+                  placeholder="Enter username (letters, numbers, underscore only)" 
+                  className="h-10" 
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -804,18 +1015,29 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               <Form.Item
                 name="email"
                 label="Email"
-                rules={[{ required: true, message: "Please enter email" },
-                  { type: "email", message: "Invalid email!" }]}
+                rules={[
+                  { required: true, message: "Please enter email" },
+                  { type: "email", message: "Please enter a valid email address" }
+                ]}
               >
-                <Input placeholder="Enter email" className="h-10" type="email" />
+                <Input 
+                  placeholder="Enter email address" 
+                  className="h-10" 
+                  type="email" 
+                />
               </Form.Item>
             </Col>            <Col xs={24} sm={12}>
               <Form.Item
                 name="phone"
                 label="Phone"
-                rules={[{ required: true, message: "Please enter phone number" }]}
+                rules={[
+                  { 
+                    pattern: /^[+]?[0-9\s\-\(\)]+$/, 
+                    message: "Please enter a valid phone number" 
+                  }
+                ]}
               >
-                <Input placeholder="Enter phone number" className="h-10" type="tel" />
+                <Input placeholder="Enter phone number (optional)" className="h-10" type="tel" />
               </Form.Item>
             </Col>          </Row>
           <Row gutter={16}>
@@ -849,9 +1071,13 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               <Form.Item
                 name="address"
                 label="Address"
-                rules={[{ required: true, message: "Please enter address" }]}
+                rules={[{ required: !editingMember, message: "Please enter address" }]}
               >
-                <Input.TextArea placeholder="Enter address" rows={2} />
+                <Input.TextArea 
+                  placeholder="Enter address" 
+                  rows={2} 
+                  // Address can be edited when editing existing members
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -860,67 +1086,31 @@ export default function AdminMemberManagement() {  const [memberData, setMemberD
               <Form.Item
                 name="dob"
                 label="Date of Birth"
-                rules={[{ required: true, message: "Please select date of birth" }]}
+                rules={[{ required: !editingMember, message: "Please select date of birth" }]}
               >
-                <DatePicker className="w-full h-10" format="DD-MM-YYYY" />
+                <DatePicker 
+                  className="w-full h-10" 
+                  format="DD-MM-YYYY" 
+                  disabled={!!editingMember} // Read-only when editing
+                />
               </Form.Item>
             </Col>
-            <Col xs={24} sm={12}>
+            <Col xs={24} sm={12}>              
               <Form.Item
-                name="gender"
-                label="Gender"
-                rules={[{ required: true, message: "Please select gender" }]}
-              >
-                <Select placeholder="Select gender" className="h-10">
-                  <Option value="M">Male</Option>
-                  <Option value="F">Female</Option>
-                  <Option value="O">Other</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="idNumber"
-                label="ID Number"
-                rules={[{ required: true, message: "Please enter ID number" }]}
-              >
-                <Input placeholder="Enter ID number" className="h-10" type="number" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>              <Form.Item
                 name="type"
                 label="Role"
                 rules={[{ required: true, message: "Please select role" }]}
               >
-                <Select placeholder="Select role" className="h-10">
-                  <Option value="STAFF">Staff</Option>
+                <Select 
+                  placeholder="Select role" 
+                  className="h-10"
+                  disabled={!!editingMember} // Read-only when editing
+                >
+                  <Option value="ADMIN">Admin</Option>
                   <Option value="EMPLOYEE">Employee</Option>
+                  <Option value="MEMBER">Member</Option>
+                  <Option value="CUSTOMER">Customer</Option>
                 </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="status"
-                label="Status"
-                rules={[{ required: true, message: "Please select status" }]}
-              >
-                <Select placeholder="Select status" className="h-10">
-                  <Option value="active">Active</Option>
-                  <Option value="inactive">Inactive</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="joinDate"
-                label="Join Date"
-                rules={[{ required: true, message: "Please select join date" }]}
-              >
-                <DatePicker className="w-full h-10" format="DD-MM-YYYY" />
               </Form.Item>
             </Col>
           </Row>

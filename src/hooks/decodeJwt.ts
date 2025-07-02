@@ -8,6 +8,9 @@ export interface JwtPayload {
   email?: string;
   phoneNumber?: string;
   role?: string;
+  exp?: number; // Expiration time
+  iat?: number; // Issued at time
+  username?: string;
   [key: string]: unknown;
 }
 

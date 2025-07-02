@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getMovieById, updateMovie, deleteMovie } from "../../../../api/admin/getAllMovies";
 import {
@@ -24,6 +24,7 @@ import {
   Alert,
   Descriptions,
   Image,
+  Switch,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -35,7 +36,6 @@ import {
   DollarOutlined,
   GlobalOutlined,
   SaveOutlined,
-  ReloadOutlined,
   PlayCircleOutlined,
   UserOutlined,
   TeamOutlined,
@@ -45,16 +45,18 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
-// Movie interface based on API response
+// Movie interface based on API response - matches backend Movie entity
 interface Movie {
   movieId: number;
   title: string;
   originalTitle?: string;
   description?: string;
-  genre?: string;
+  genre?: string; // Backend uses 'genres' but API may return as 'genre'
+  genres?: string; // Also support 'genres' field name
   duration: number;
   formattedDuration?: string;
   releaseDate: string;
+  endDate?: string;
   rating: string;
   posterUrl?: string;
   backdropUrl?: string;
@@ -63,12 +65,14 @@ interface Movie {
   status: string;
   imdbRating?: number;
   isFeatured?: boolean;
+  isActive?: boolean;
   isAdultContent?: boolean;
   director?: string;
   cast?: string;
   language?: string;
   country?: string;
   productionCompany?: string;
+  budget?: number;
   boxOffice?: number;
   revenue?: number;
 }
@@ -87,56 +91,106 @@ const MovieDetailPage: React.FC = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [editForm] = Form.useForm();
 
-  useEffect(() => {
-    const fetchMovieDetail = async () => {
-      setLoading(true);
-      try {
-        const movieData = await getMovieById(parseInt(movieId));
-        // Enhance with additional mock data if needed
-        const enhancedMovie = {
-          ...movieData,
-          description: movieData.description || "A gripping horror thriller that continues the legacy of the 28 Days Later franchise. Set 28 years after the initial outbreak, the film explores a world forever changed by the rage virus. Survivors must navigate through a post-apocalyptic landscape filled with danger, hope, and the constant threat of the infected. This installment brings new characters while honoring the intense atmosphere that made the original films so compelling.",
-          director: movieData.director || "Danny Boyle",
-          cast: movieData.cast || "Jodie Comer, Aaron Taylor-Johnson, Ralph Fiennes, Jack O'Connell",
-          language: movieData.language || "English",
-          country: movieData.country || "United Kingdom",
-          productionCompany: movieData.productionCompany || "DNA Films",
-          boxOffice: movieData.boxOffice || 250000000,
-          revenue: movieData.revenue || 350000000,
-          backdropUrl: movieData.backdropUrl || "https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/backdrop-28years.jpg",
-          trailerUrl: movieData.trailerUrl || "https://www.youtube.com/watch?v=example",
-        };
-        setMovie(enhancedMovie);
-      } catch {
-        message.error("Failed to load movie details");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (movieId) {
-      fetchMovieDetail();
+  const fetchMovieDetail = useCallback(async () => {
+    setLoading(true);
+    try {
+      console.log('Fetching movie detail for ID:', movieId);
+      const movieData = await getMovieById(parseInt(movieId));
+      console.log('Fetched movie data:', movieData);
+      
+      // Enhance with additional mock data if needed
+      const enhancedMovie = {
+        ...movieData,
+        description: movieData.description || "A gripping horror thriller that continues the legacy of the 28 Days Later franchise. Set 28 years after the initial outbreak, the film explores a world forever changed by the rage virus. Survivors must navigate through a post-apocalyptic landscape filled with danger, hope, and the constant threat of the infected. This installment brings new characters while honoring the intense atmosphere that made the original films so compelling.",
+        director: movieData.director || "Danny Boyle",
+        cast: movieData.cast || "Jodie Comer, Aaron Taylor-Johnson, Ralph Fiennes, Jack O'Connell",
+        language: movieData.language || "English",
+        country: movieData.country || "United Kingdom",
+        productionCompany: movieData.productionCompany || "DNA Films",
+        boxOffice: movieData.boxOffice || 250000000,
+        revenue: movieData.revenue || 350000000,
+        backdropUrl: movieData.backdropUrl || "https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/backdrop-28years.jpg",
+        trailerUrl: movieData.trailerUrl || "https://www.youtube.com/watch?v=example",
+      };
+      setMovie(enhancedMovie);
+    } catch (error) {
+      console.error('Error fetching movie details:', error);
+      message.error("Failed to load movie details");
+    } finally {
+      setLoading(false);
     }
   }, [movieId]);
 
+  // Initial load
+  useEffect(() => {
+    if (movieId) {
+      fetchMovieDetail();
+    }
+  }, [movieId, fetchMovieDetail]);
+
+  // Add visibility change listener to refresh data when page becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && movieId) {
+        console.log('Page became visible, refreshing movie data');
+        fetchMovieDetail();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [movieId, fetchMovieDetail]);
+
   const handleEdit = () => {
     if (movie) {
-      editForm.setFieldsValue({
+      // Map movie fields to form fields with proper field naming
+      const formData = {
         ...movie,
-        releaseDate: dayjs(movie.releaseDate),
-      });
+        releaseDate: movie.releaseDate ? dayjs(movie.releaseDate) : undefined,
+        genres: movie.genre || movie.genres, // Handle both genre and genres field names
+        // Ensure boolean values are properly set
+        isFeatured: Boolean(movie.isFeatured),
+        isActive: Boolean(movie.isActive),
+      };
+      
+      editForm.setFieldsValue(formData);
       setEditModalVisible(true);
     }
   };
 
   const handleEditSubmit = async (values: Partial<Movie>) => {
     try {
-      await updateMovie(movie!.movieId, values);
+      // Transform form data to match backend expectations
+      const movieData = {
+        ...values,
+        releaseDate: values.releaseDate ? dayjs(values.releaseDate).format('YYYY-MM-DD') : undefined,
+        // Map 'genres' form field to 'genres' backend field
+        genres: values.genres,
+        // Ensure numeric fields are properly converted
+        duration: values.duration ? Number(values.duration) : undefined,
+        price: values.price ? Number(values.price) : undefined,
+        imdbRating: values.imdbRating ? Number(values.imdbRating) : undefined,
+        budget: values.budget ? Number(values.budget) : undefined,
+        boxOffice: values.boxOffice ? Number(values.boxOffice) : undefined,
+      };
+
+      // Remove undefined fields to avoid sending them to the backend
+      Object.keys(movieData).forEach(key => {
+        if (movieData[key] === undefined) {
+          delete movieData[key];
+        }
+      });
+
+      await updateMovie(movie!.movieId, movieData);
       message.success("Movie updated successfully");
       setEditModalVisible(false);
-      // Update local state
-      setMovie(prev => prev ? { ...prev, ...values } : null);
-    } catch {
+      // Refresh data from API to ensure we have the latest version
+      await fetchMovieDetail();
+    } catch (error) {
+      console.error('Error updating movie:', error);
       message.error("Failed to update movie");
     }
   };
@@ -230,9 +284,13 @@ const MovieDetailPage: React.FC = () => {
         </Col>
         <Col>
           <Space>
-            <Button icon={<ReloadOutlined />} onClick={() => window.location.reload()}>
+            {/* <Button 
+              icon={<ReloadOutlined />} 
+              onClick={fetchMovieDetail}
+              loading={loading}
+            >
               Refresh
-            </Button>
+            </Button> */}
             <Button type="primary" icon={<EditOutlined />} onClick={handleEdit}>
               Edit Movie
             </Button>
@@ -486,11 +544,11 @@ const MovieDetailPage: React.FC = () => {
           <Row gutter={16}>
             <Col span={8}>
               <Form.Item
-                name="genre"
-                label="Genre"
-                rules={[{ required: true, message: "Please enter genre" }]}
+                name="genres"
+                label="Genres"
+                rules={[{ required: true, message: "Please enter genres" }]}
               >
-                <Input placeholder="e.g., Action, Drama" />
+                <Input placeholder="e.g., Action, Drama, Thriller" />
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -558,14 +616,38 @@ const MovieDetailPage: React.FC = () => {
           </Row>
 
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item name="director" label="Director">
                 <Input />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item name="language" label="Language">
                 <Input />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="country" label="Country">
+                <Input />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="productionCompany" label="Production Company">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="imdbRating" label="IMDB Rating">
+                <InputNumber
+                  min={0}
+                  max={10}
+                  step={0.1}
+                  style={{ width: "100%" }}
+                  placeholder="0.0 - 10.0"
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -575,14 +657,50 @@ const MovieDetailPage: React.FC = () => {
           </Form.Item>
 
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item name="posterUrl" label="Poster URL">
                 <Input />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
+              <Form.Item name="backdropUrl" label="Backdrop URL">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
               <Form.Item name="trailerUrl" label="Trailer URL">
                 <Input />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={6}>
+              <Form.Item name="isFeatured" label="Featured" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="isActive" label="Active" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="budget" label="Budget">
+                <InputNumber
+                  min={0}
+                  style={{ width: "100%" }}
+                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="boxOffice" label="Box Office">
+                <InputNumber
+                  min={0}
+                  style={{ width: "100%" }}
+                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                />
               </Form.Item>
             </Col>
           </Row>
