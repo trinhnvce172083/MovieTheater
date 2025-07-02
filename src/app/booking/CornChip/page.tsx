@@ -94,8 +94,8 @@ export default function CornChipPage() {
   return (
     <>
       <Header />
-      <div className="bg-[#151a23] text-white min-h-screen p-8 pt-0 mt-10">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="bg-[#151a23] text-white min-h-screen px-8 pt-2 mt-10">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 bg-[#151a23] rounded-xl">
           <ConcessionsList
             concessions={concessions}
             quantities={quantities}
@@ -103,7 +103,7 @@ export default function CornChipPage() {
             loading={loading}
             error={error}
           />
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 h-full flex items-stretch">
             <OrderSummary 
               movieDetails={movieDetails} 
               totalOrder={totalOrder}
