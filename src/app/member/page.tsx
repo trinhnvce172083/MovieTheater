@@ -120,6 +120,17 @@ export default function MemberAccountPage() {
     message.info("Form reset to original values");
   };
 
+  //hotfix for reload issue
+  // This will force reload the page if it was navigated to via SPA navigation
+  useEffect(() => {
+    if (!sessionStorage.getItem("member_reloaded")) {
+      sessionStorage.setItem("member_reloaded", "true");
+      window.location.reload();
+    } else {
+      sessionStorage.removeItem("member_reloaded");
+    }
+  }, []);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">

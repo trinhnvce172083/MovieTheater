@@ -38,8 +38,7 @@ export default function UserDropdown({ user }: { user: User }) {
             icon: <UserOutlined />,
             label: "Profile",
             onClick: () => {
-              // Redirect to profile page
-              window.location.href = ROUTES.MEMBER_DASHBOARD;
+              router.push(ROUTES.MEMBER_DASHBOARD);
             },
           },
           { type: "divider" },

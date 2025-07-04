@@ -60,7 +60,6 @@ function useAsyncData<T>(
     if (!mountedRef.current) return;
 
     setState((prev) => {
-      console.log("[useAsyncData] Before API call, loading:", true);
       return { ...prev, loading: true, error: null };
     });
 
@@ -70,7 +69,6 @@ function useAsyncData<T>(
       if (!mountedRef.current) return;
 
       setState((prev) => {
-        console.log("[useAsyncData] After API call, loading:", false);
         return {
           ...prev,
           data: response.data,
@@ -88,7 +86,6 @@ function useAsyncData<T>(
           : "An unexpected error occurred";
 
       setState((prev) => {
-        console.log("[useAsyncData] API error, loading:", false);
         return {
           ...prev,
           loading: false,
