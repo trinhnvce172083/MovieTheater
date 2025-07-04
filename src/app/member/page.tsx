@@ -1,228 +1,344 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Button, Form, Input, Typography, message, Alert } from "antd";
-import { MemberCard } from "@/components/member";
-import { UserProfile } from "@/types/member/User";
-import { profile } from "@/api/auth/profile";
-import axiosClient from "@/api/axiosClient";
+import { useState, useEffect } from "react";
+import {
+  Button,
+  Form,
+  Input,
+  Typography,
+  message,
+  Alert,
+  Spin,
+  Card,
+  Upload,
+  Avatar,
+  Row,
+  Col,
+} from "antd";
+import {
+  UserOutlined,
+  CameraOutlined,
+  LoadingOutlined,
+} from "@ant-design/icons";
+import { useMemberProfile } from "@/hooks/member";
+import type { ProfileUpdateRequest } from "@/types/member";
 
 interface FormValues {
-  username: string;
-  password: string;
-  email: string;
   fullName: string;
-  dateOfBirth: string;
-  sex: string;
   phoneNumber: string;
+  dateOfBirth: string;
   address: string;
+  username: string;
+  // password: string;
+  email: string;
 }
 
-export default function AccountInformation() {
-  const [loading, setLoading] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+export default function MemberAccountPage() {
   const [form] = Form.useForm<FormValues>();
+  const [hasChanges, setHasChanges] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
 
+  const {
+    profile,
+    loading,
+    error,
+    updateProfile,
+    updatingProfile,
+    updateError,
+    // changePassword,
+    // changingPassword,
+    // passwordError,
+    refetch,
+  } = useMemberProfile();
+
+  // Initialize form when profile is loaded
   useEffect(() => {
-    async function loadProfile() {
-      try {
-        const data = await profile();
-        setUserProfile(data);
-
-        form.setFieldsValue({
-          username: data.username,
-          password: data.password,
-          email: data.email,
-          fullName: data.full_name,
-          dateOfBirth: data.date_of_birth,
-          sex: "",
-          phoneNumber: data.phone_number,
-          address: data.address,
-        });
-      } catch (err) {
-        console.error(err);
-        message.error("Failed to load profile");
-      }
+    if (profile) {
+      form.setFieldsValue({
+        username: profile.username || "",
+        // password: profile.password ? profile.password : "********",
+        email: profile.email || "",
+        fullName: profile.fullName || "",
+        phoneNumber: profile.phoneNumber || "",
+        dateOfBirth: profile.dateOfBirth
+          ? profile.dateOfBirth.slice(0, 10)
+          : "",
+        address: profile.address || "",
+      });
+      setAvatarPreview(profile.avatarUrl || "");
     }
+  }, [profile, form]);
 
-    loadProfile();
-  }, [form]);
+  const handleProfileUpdate = async (values: FormValues) => {
+    if (!profile) return;
 
-  const onFinish = async (values: FormValues) => {
-    if (!userProfile) return;
+    const updateRequest: ProfileUpdateRequest = {
+      fullName: values.fullName,
+      phoneNumber: values.phoneNumber,
+      dateOfBirth: values.dateOfBirth,
+      address: values.address,
+      ...(avatarFile && { avatarFile }),
+      // username: values.username,
+      // password: values.password,
+    };
 
-    setLoading(true);
-    try {
-      const payload: UserProfile = {
-        username: values.username,
-        password: values.password,
-        email: values.email,
-        full_name: values.fullName,
-        date_of_birth: values.dateOfBirth,
-        phone_number: values.phoneNumber,
-        address: values.address,
-      };
+    await updateProfile(updateRequest);
+    setHasChanges(false);
+    setAvatarFile(null);
+  };
 
-      if (
-      !payload.username ||
-      !payload.password ||
-      !payload.email ||
-      !payload.full_name ||
-      !payload.date_of_birth ||
-      !payload.phone_number ||
-      !payload.address
-    ) {
-      message.error("Vui lòng điền đầy đủ thông tin!");
-      setLoading(false);
-      return;
-    }
+  const handleAvatarChange = (file: File) => {
+    setAvatarFile(file);
+    setHasChanges(true);
 
-      await axiosClient.put("/auth/profile", payload);
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setAvatarPreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
 
-      setUserProfile(payload);
-      setHasChanges(false);
-      message.success("Profile updated successfully!");
-    } catch (err) {
-      console.error(err);
-      message.error("Update failed");
-    } finally {
-      setLoading(false);
-    }
+    return false; // Prevent auto upload
   };
 
   const handleReset = () => {
-    if (!userProfile) return;
+    if (!profile) return;
+
     form.setFieldsValue({
-      username: userProfile.username,
-      password: userProfile.password,
-      email: userProfile.email,
-      fullName: userProfile.full_name,
-      dateOfBirth: userProfile.date_of_birth,
-      sex: "",
-      phoneNumber: userProfile.phone_number,
-      address: userProfile.address,
+      username: profile.username || "",
+      // password: profile.password ? profile.password : "********",
+      email: profile.email || "",
+      fullName: profile.fullName || "",
+      phoneNumber: profile.phoneNumber || "",
+      dateOfBirth: profile.dateOfBirth || "",
+      address: profile.address || "",
     });
+    setAvatarPreview(profile.avatarUrl || "");
+    setAvatarFile(null);
     setHasChanges(false);
     message.info("Form reset to original values");
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <Alert
+          message="Error Loading Profile"
+          description={error}
+          type="error"
+          showIcon
+          action={
+            <Button size="small" danger onClick={refetch}>
+              Try Again
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <Alert
+          message="Profile Not Found"
+          description="Unable to load your profile information."
+          type="warning"
+          showIcon
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-4xl mx-auto">
-      <Typography.Title level={2} className="text-gray-900 mb-8 text-center">
+    <div className="max-w-4xl mx-auto p-6">
+      <Typography.Title level={2} className="text-white mb-8 text-center">
         Account Information
       </Typography.Title>
 
-      <div className="bg-white rounded-2xl shadow-xl p-8">
-        {userProfile && (
-          <>
-            <MemberCard
-              name={userProfile.full_name}
-              email={userProfile.email}
-              avatar="" // nếu API trả avatar
-              points={0} // nếu API trả points
-            />
-
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <Typography.Title level={5} className="mb-3 text-blue-800">
-                Current Profile Information
-              </Typography.Title>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                {[
-                  ["Account", userProfile.username],
-                  ["Full Name", userProfile.full_name],
-                  ["Email", userProfile.email],
-                  ["Phone", userProfile.phone_number],
-                  ["Date of Birth", userProfile.date_of_birth],
-                  ["Address", userProfile.address],
-                ].map(([label, val]) => (
-                  <div key={label}>
-                    <span className="text-gray-600">{label}:</span>
-                    <div className="font-medium">{val}</div>
+      <Row gutter={[24, 24]}>
+        {/* Member Card Section */}
+        <Col xs={24} lg={8}>
+          <Card className="text-center">
+            <div className="mb-4">
+              <Upload
+                beforeUpload={handleAvatarChange}
+                showUploadList={false}
+                accept="image/*"
+              >
+                <div className="relative inline-block cursor-pointer">
+                  <Avatar
+                    size={120}
+                    src={avatarPreview || profile.avatarUrl || undefined}
+                    icon={<UserOutlined />}
+                    className="mb-2"
+                  />
+                  <div className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-2 text-white hover:bg-blue-600 transition-colors">
+                    <CameraOutlined />
                   </div>
-                ))}
-              </div>
+                </div>
+              </Upload>
             </div>
-          </>
-        )}
+          </Card>
+        </Col>
 
-        <div className="bg-gray-50 rounded-xl p-6">
-          <Typography.Title level={4} className="mb-2">
-            Account Information
-          </Typography.Title>
-          <Typography.Text type="secondary" className="block mb-4">
-            Make changes to your profile here. Click save when you’re done.
-          </Typography.Text>
+        {/* Profile Form Section */}
+        <Col xs={24} lg={16}>
+          <Card>
+            <Typography.Title level={4} className="mb-4">
+              Edit Profile Information
+            </Typography.Title>
 
-          {hasChanges && (
-            <Alert
-              message="You have unsaved changes"
-              type="warning"
-              showIcon
-              className="mb-4"
-            />
-          )}
+            {hasChanges && (
+              <Alert
+                message="You have unsaved changes"
+                type="warning"
+                showIcon
+                className="mb-4"
+              />
+            )}
 
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={onFinish}
-            onValuesChange={() => {
-              setHasChanges(true);
-            }}
-            className="max-w-2xl"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Form.Item label="Account" name="username" rules={[{ required: true }]}>
-                <Input size="large" className="rounded-lg" />
-              </Form.Item>
-              <Form.Item label="Password" name="password" rules={[{ required: true }]}>
-                <Input.Password size="large" className="rounded-lg" />
-              </Form.Item>
-              <Form.Item label="Email" name="email" rules={[{ required: true, type: 'email' }]}>
-                <Input size="large" className="rounded-lg" />
-              </Form.Item>
-              <Form.Item label="Full name" name="fullName" rules={[{ required: true }]}>
-                <Input size="large" className="rounded-lg" />
-              </Form.Item>
-              <Form.Item label="Date of Birth" name="dateOfBirth" rules={[{ required: true }]}>
-                <Input size="large" className="rounded-lg" />
-              </Form.Item>
-              <Form.Item label="Sex" name="sex" rules={[{ required: true }]}>
-                <Input size="large" className="rounded-lg" />
-              </Form.Item>
-              <Form.Item label="Phone Number" name="phoneNumber" rules={[{ required: true }]}>
-                <Input size="large" className="rounded-lg" />
-              </Form.Item>
-            </div>
-            <Form.Item
-              label="Address"
-              name="address"
-              rules={[{ required: true }]}
-              className="mt-4"
+            {updateError && (
+              <Alert
+                message="Update Failed"
+                description={updateError}
+                type="error"
+                showIcon
+                className="mb-4"
+              />
+            )}
+
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleProfileUpdate}
+              onValuesChange={() => setHasChanges(true)}
             >
-              <Input.TextArea size="large" className="rounded-lg" rows={3} />
-            </Form.Item>
-
-            <Form.Item className="mt-6">
-              <div className="flex gap-3">
+              <Row gutter={16}>
+                <Col xs={24} md={12}>
+                  <Form.Item label="Username" name="username">
+                    <Input size="large" readOnly />
+                  </Form.Item>
+                </Col>
+                {/* <Col xs={24} md={12}>
+                  <Form.Item
+                    label="Password"
+                    name="password"
+                    rules={[
+                      { required: true, message: "Please enter your password" },
+                    ]}
+                  >
+                    <Input.Password
+                      size="large"
+                      placeholder="Enter your password"
+                    />
+                  </Form.Item>
+                </Col> */}
+                <Col xs={24} md={12}>
+                  <Form.Item
+                    label="Email"
+                    name="email"
+                    rules={[
+                      { required: true, message: "Please enter your email" },
+                    ]}
+                  >
+                    <Input size="large" placeholder="Enter your email" />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} md={12}>
+                  <Form.Item
+                    label="Full Name"
+                    name="fullName"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter your full name",
+                      },
+                    ]}
+                  >
+                    <Input size="large" placeholder="Enter your full name" />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} md={12}>
+                  <Form.Item
+                    label="Phone Number"
+                    name="phoneNumber"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter your phone number",
+                      },
+                      {
+                        pattern: /^[0-9+\-\s()]+$/,
+                        message: "Please enter a valid phone number",
+                      },
+                    ]}
+                  >
+                    <Input size="large" placeholder="Enter your phone number" />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} md={12}>
+                  <Form.Item
+                    label="Date of Birth"
+                    name="dateOfBirth"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter your date of birth",
+                      },
+                    ]}
+                  >
+                    <Input size="large" type="date" />
+                  </Form.Item>
+                </Col>
+                <Col xs={24}>
+                  <Form.Item
+                    label="Address"
+                    name="address"
+                    rules={[
+                      { required: true, message: "Please enter your address" },
+                    ]}
+                  >
+                    <Input.TextArea
+                      size="large"
+                      rows={3}
+                      placeholder="Enter your address"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <div className="flex gap-3 mt-6">
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={loading}
                   size="large"
-                  className="bg-blue-600 hover:bg-blue-700 rounded-lg px-8"
+                  loading={updatingProfile}
+                  disabled={!hasChanges}
+                  icon={updatingProfile ? <LoadingOutlined /> : undefined}
                 >
-                  Save changes
+                  {updatingProfile ? "Updating..." : "Save Changes"}
                 </Button>
-                <Button type="default" size="large" onClick={handleReset} className="rounded-lg px-6">
+                <Button
+                  size="large"
+                  onClick={handleReset}
+                  disabled={!hasChanges || updatingProfile}
+                >
                   Reset
                 </Button>
               </div>
-            </Form.Item>
-          </Form>
-        </div>
-      </div>
+            </Form>
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 }

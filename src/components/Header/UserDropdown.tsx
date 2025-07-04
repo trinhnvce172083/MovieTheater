@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { Dropdown, Avatar } from "antd";
 import { UserOutlined, LogoutOutlined } from "@ant-design/icons";
-import Link from "next/link";
 import ROUTES from "@/constants/routes";
 import { useRouter } from "next/navigation";
 import { Logout_API } from "@/api/auth/Logout_API";
@@ -37,7 +36,11 @@ export default function UserDropdown({ user }: { user: User }) {
           {
             key: "profile",
             icon: <UserOutlined />,
-            label: <Link href={ROUTES.MEMBER_DASHBOARD}>Profile</Link>,
+            label: "Profile",
+            onClick: () => {
+              // Redirect to profile page
+              window.location.href = ROUTES.MEMBER_DASHBOARD;
+            },
           },
           { type: "divider" },
           {

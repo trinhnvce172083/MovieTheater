@@ -8,7 +8,7 @@ export default function MemberLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen pt-24">
+    <div className="flex min-h-screen">
       <header className="fixed top-0 left-0 right-0 z-50">
         <Header />
       </header>

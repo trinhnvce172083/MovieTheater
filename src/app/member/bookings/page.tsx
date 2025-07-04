@@ -6,64 +6,94 @@ import {
   Card,
   Button,
   Tag,
-  QRCode,
   Modal,
   Empty,
+  Spin,
+  Alert,
+  Row,
+  Col,
+  QRCode,
   Divider,
+  Input,
+  Select,
+  Pagination,
 } from "antd";
 import {
   CalendarOutlined,
   EnvironmentOutlined,
   ClockCircleOutlined,
   QrcodeOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+  FilterOutlined,
 } from "@ant-design/icons";
+import { useActiveBookings, useBookingActions } from "@/hooks/member";
+import type { MemberBooking, BookingListParams } from "@/types/member";
+import Image from "next/image";
 
-interface BookedTicket {
-  id: string;
-  movieTitle: string;
-  moviePoster: string;
-  cinema: string;
-  showtime: string;
-  seats: string[];
-  totalPrice: number;
-  status: "confirmed" | "used" | "expired";
-  bookingDate: string;
-  ticketCode: string;
-}
+const { Search } = Input;
+const { Option } = Select;
 
-const BookedTickets: React.FC = () => {
+export default function BookedTicketsPage() {
   const [qrModalVisible, setQrModalVisible] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState<BookedTicket | null>(
+  const [selectedBooking, setSelectedBooking] = useState<MemberBooking | null>(
     null
   );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
-  // Mock booked tickets data - thực tế sẽ lấy từ API
-  const bookedTickets: BookedTicket[] = [
-    {
-      id: "1",
-      movieTitle: "Avengers: Endgame",
-      moviePoster: "/movie-poster-3.jpg",
-      cinema: "Lumiere Cinema District 1",
-      showtime: "2024-12-25 19:30",
-      seats: ["A5", "A6"],
-      totalPrice: 300000,
-      status: "confirmed",
-      bookingDate: "2024-12-20",
-      ticketCode: "LUM240001",
-    },
-    {
-      id: "2",
-      movieTitle: "Top Gun: Maverick",
-      moviePoster: "/movie-poster-4.jpg",
-      cinema: "Lumiere Cinema District 3",
-      showtime: "2024-12-28 21:00",
-      seats: ["C3", "C4"],
-      totalPrice: 280000,
-      status: "confirmed",
-      bookingDate: "2024-12-22",
-      ticketCode: "LUM240002",
-    },
-  ];
+  // Build params for API call
+  const params: BookingListParams = {
+    page: currentPage,
+    size: pageSize,
+    sortBy: "bookingDate",
+    sortDirection: "DESC",
+    ...(statusFilter !== "all" && { status: [statusFilter as MemberBooking["status"]] }),
+  };
+
+  const { bookings, totalElements, loading, error, refresh } =
+    useActiveBookings(params);
+
+  const { cancelBooking, cancelling, checkInBooking, checkingIn } =
+    useBookingActions(() => {
+      refresh(); // Refresh list after action
+      setSelectedBooking(null);
+      setQrModalVisible(false);
+    });
+
+  // Filter bookings by search query
+  const filteredBookings = bookings.filter(
+    (booking) =>
+      !searchQuery ||
+      booking.movieTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking.cinemaRoom.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking.bookingCode.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleShowQR = (booking: MemberBooking) => {
+    setSelectedBooking(booking);
+    setQrModalVisible(true);
+  };
+
+  const handleCancelBooking = async (booking: MemberBooking) => {
+    Modal.confirm({
+      title: "Cancel Booking",
+      content: `Are you sure you want to cancel the booking for "${booking.movieTitle}"?`,
+      okText: "Yes, Cancel",
+      okType: "danger",
+      cancelText: "No",
+      onOk: () => cancelBooking({ bookingId: booking.bookingId }),
+    });
+  };
+
+  const handleCheckIn = async (booking: MemberBooking) => {
+    await checkInBooking({
+      bookingId: booking.bookingId,
+      qrCode: booking.qrCode,
+    });
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -82,19 +112,18 @@ const BookedTickets: React.FC = () => {
     });
   };
 
-  const handleShowQR = (ticket: BookedTicket) => {
-    setSelectedTicket(ticket);
-    setQrModalVisible(true);
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "confirmed":
-        return "green";
-      case "used":
+      case "CONFIRMED":
         return "blue";
-      case "expired":
+      case "PAID":
+        return "green";
+      case "PENDING":
+        return "orange";
+      case "CANCELLED":
         return "red";
+      case "COMPLETED":
+        return "purple";
       default:
         return "default";
     }
@@ -102,154 +131,299 @@ const BookedTickets: React.FC = () => {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "confirmed":
+      case "CONFIRMED":
         return "Confirmed";
-      case "used":
-        return "Used";
-      case "expired":
-        return "Expired";
+      case "PAID":
+        return "Paid";
+      case "PENDING":
+        return "Pending";
+      case "CANCELLED":
+        return "Cancelled";
+      case "COMPLETED":
+        return "Completed";
       default:
         return status;
     }
   };
 
+  const renderBookingCard = (booking: MemberBooking) => (
+    <Card
+      key={booking.bookingId}
+      className="mb-4 shadow-sm hover:shadow-md transition-shadow border-l-4 border-l-blue-500"
+    >
+      <Row gutter={16}>
+        {/* Movie Poster */}
+        <Col xs={24} sm={6} md={4}>
+          <div className="w-full h-32 bg-gray-200 rounded-lg flex items-center justify-center mb-4 sm:mb-0">
+            {booking.moviePoster ? (
+              <Image
+                width={128}
+                height={192}
+                src={booking.moviePoster}
+                alt={booking.movieTitle}
+                className="w-full h-full object-cover rounded-lg"
+              />
+            ) : (
+              <span className="text-gray-500 text-xs text-center px-2">
+                Movie Poster
+              </span>
+            )}
+          </div>
+        </Col>
+
+        {/* Booking Details */}
+        <Col xs={24} sm={18} md={20}>
+          <div className="flex justify-between items-start mb-3">
+            <div>
+              <Typography.Title level={4} className="mb-1">
+                {booking.movieTitle}
+              </Typography.Title>
+              <div className="flex items-center gap-2 mb-2">
+                <Tag color={getStatusColor(booking.status)}>
+                  {getStatusText(booking.status)}
+                </Tag>
+                <span className="text-gray-500 text-sm">
+                  Booking: {booking.bookingCode}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <Row gutter={[16, 8]}>
+            <Col xs={24} md={12}>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <EnvironmentOutlined className="text-blue-500" />
+                  <span className="text-sm">{booking.cinemaRoom}</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <CalendarOutlined className="text-green-500" />
+                  <span className="text-sm">
+                    {formatDateTime(`${booking.showDate} ${booking.startTime}`)}
+                  </span>
+                </div>
+              </div>
+            </Col>
+
+            <Col xs={24} md={12}>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <ClockCircleOutlined className="text-orange-500" />
+                  <span className="text-sm">
+                    Seats:{" "}
+                    {booking.seats
+                      .map((seat) => `${seat.seatRow}${seat.seatNumber}`)
+                      .join(", ")}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold">
+                    Total: {formatPrice(booking.finalAmount)}
+                  </span>
+                  {booking.discountAmount > 0 && (
+                    <span className="text-xs text-green-600">
+                      (Saved: {formatPrice(booking.discountAmount)})
+                    </span>
+                  )}
+                </div>
+              </div>
+            </Col>
+          </Row>
+
+          <Divider className="my-4" />
+
+          <div className="flex flex-wrap gap-2">
+            {booking.canCheckIn && (
+              <Button
+                type="primary"
+                icon={<QrcodeOutlined />}
+                onClick={() => handleCheckIn(booking)}
+                loading={checkingIn}
+                size="small"
+              >
+                Check In
+              </Button>
+            )}
+
+            {booking.qrCode && (
+              <Button
+                icon={<QrcodeOutlined />}
+                onClick={() => handleShowQR(booking)}
+                size="small"
+              >
+                Show QR Code
+              </Button>
+            )}
+
+            {booking.canCancel && (
+              <Button
+                danger
+                onClick={() => handleCancelBooking(booking)}
+                loading={cancelling}
+                size="small"
+              >
+                Cancel Booking
+              </Button>
+            )}
+
+            <span className="text-xs text-gray-500 flex items-center">
+              Booked: {formatDateTime(booking.bookingDate)}
+            </span>
+          </div>
+        </Col>
+      </Row>
+    </Card>
+  );
+
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-6xl mx-auto p-6">
       <Typography.Title level={2} className="text-white mb-8 text-center">
-        Booked Tickets
+        Active Bookings
       </Typography.Title>
 
-      <div className="bg-white rounded-2xl shadow-xl p-6">
-        {bookedTickets.length === 0 ? (
-          <Empty description="No booked tickets found" className="py-12" />
-        ) : (
-          <div className="space-y-6">
-            {bookedTickets.map((ticket) => (
-              <Card
-                key={ticket.id}
-                className="shadow-sm hover:shadow-md transition-shadow border-l-4 border-l-blue-500"
-                styles={{ body: { padding: "24px" } }}
-              >
-                <div className="flex gap-4">
-                  {/* Movie Poster */}
-                  <div className="w-28 h-40 bg-gray-200 rounded-lg flex-shrink-0 flex items-center justify-center">
-                    <span className="text-gray-500 text-xs text-center px-2">
-                      Movie Poster
-                    </span>
-                  </div>
+      <Card className="mb-6">
+        <Row gutter={16} className="mb-4">
+          <Col xs={24} sm={12} md={8}>
+            <Search
+              placeholder="Search by movie, cinema, or booking code"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              prefix={<SearchOutlined />}
+              allowClear
+            />
+          </Col>
 
-                  {/* Ticket Details */}
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <Typography.Title level={4} className="mb-1">
-                          {ticket.movieTitle}
-                        </Typography.Title>
-                        <Typography.Text type="secondary" className="text-sm">
-                          Ticket Code: {ticket.ticketCode}
-                        </Typography.Text>
-                      </div>
-                      <Tag
-                        color={getStatusColor(ticket.status)}
-                        className="text-sm px-3 py-1"
-                      >
-                        {getStatusText(ticket.status)}
-                      </Tag>
-                    </div>
+          <Col xs={24} sm={12} md={6}>
+            <Select
+              value={statusFilter}
+              onChange={setStatusFilter}
+              className="w-full"
+              prefix={<FilterOutlined />}
+            >
+              <Option value="all">All Status</Option>
+              <Option value="CONFIRMED">Confirmed</Option>
+              <Option value="PAID">Paid</Option>
+              <Option value="PENDING">Pending</Option>
+            </Select>
+          </Col>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <EnvironmentOutlined className="text-blue-500" />
-                          <span className="text-sm">{ticket.cinema}</span>
-                        </div>
+          <Col xs={24} sm={12} md={4}>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={refresh}
+              loading={loading}
+              className="w-full"
+            >
+              Refresh
+            </Button>
+          </Col>
+        </Row>
 
-                        <div className="flex items-center gap-2">
-                          <CalendarOutlined className="text-green-500" />
-                          <span className="text-sm">
-                            {formatDateTime(ticket.showtime)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <ClockCircleOutlined className="text-orange-500" />
-                          <span className="text-sm">
-                            Seats: {ticket.seats.join(", ")}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold">
-                            Total: {formatPrice(ticket.totalPrice)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Divider className="my-4" />
-
-                    <div className="flex justify-between items-center">
-                      <Typography.Text type="secondary" className="text-sm">
-                        Booked on:{" "}
-                        {new Date(ticket.bookingDate).toLocaleDateString(
-                          "vi-VN"
-                        )}
-                      </Typography.Text>
-
-                      <div className="flex gap-2">
-                        <Button
-                          type="primary"
-                          icon={<QrcodeOutlined />}
-                          onClick={() => handleShowQR(ticket)}
-                          className="bg-blue-500 hover:bg-blue-600"
-                        >
-                          Show QR Code
-                        </Button>
-                        <Button type="default">Download Ticket</Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+        {error && (
+          <Alert
+            message="Error Loading Bookings"
+            description={error}
+            type="error"
+            showIcon
+            className="mb-4"
+            action={
+              <Button size="small" type="primary" onClick={refresh}>
+                Retry
+              </Button>
+            }
+          />
         )}
-      </div>
+      </Card>
+
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Spin size="large" />
+        </div>
+      ) : filteredBookings.length === 0 ? (
+        <Card>
+          <Empty
+            description={
+              searchQuery
+                ? "No bookings found matching your search"
+                : "No active bookings found"
+            }
+            className="py-12"
+          />
+        </Card>
+      ) : (
+        <>
+          <div className="space-y-4">
+            {filteredBookings.map(renderBookingCard)}
+          </div>
+
+          {totalElements > pageSize && (
+            <div className="flex justify-center mt-6">
+              <Pagination
+                current={currentPage + 1}
+                total={totalElements}
+                pageSize={pageSize}
+                showSizeChanger
+                showQuickJumper
+                showTotal={(total, range) =>
+                  `${range[0]}-${range[1]} of ${total} bookings`
+                }
+                onChange={(page, size) => {
+                  setCurrentPage(page - 1);
+                  setPageSize(size || 10);
+                }}
+                onShowSizeChange={(current, size) => {
+                  setCurrentPage(0);
+                  setPageSize(size);
+                }}
+              />
+            </div>
+          )}
+        </>
+      )}
 
       {/* QR Code Modal */}
       <Modal
-        title="Ticket QR Code"
+        title="Booking QR Code"
         open={qrModalVisible}
         onCancel={() => setQrModalVisible(false)}
-        footer={null}
+        footer={[
+          <Button key="close" onClick={() => setQrModalVisible(false)}>
+            Close
+          </Button>,
+        ]}
         centered
-        width={400}
       >
-        {selectedTicket && (
-          <div className="text-center p-6">
+        {selectedBooking && (
+          <div className="text-center">
             <Typography.Title level={4} className="mb-4">
-              {selectedTicket.movieTitle}
+              {selectedBooking.movieTitle}
             </Typography.Title>
-            <div className="flex justify-center">
-            <QRCode
-              value={`TICKET:${selectedTicket.ticketCode}`}
-              size={200}
-              className="mb-4"
-            />
+
+            <div className="mb-4">
+              <QRCode
+                value={selectedBooking.qrCode || selectedBooking.bookingCode}
+                size={200}
+              />
             </div>
-            <Typography.Text type="secondary" className="block mb-2">
-              Ticket Code: {selectedTicket.ticketCode}
+
+            <Typography.Text className="text-gray-600">
+              Booking Code: {selectedBooking.bookingCode}
             </Typography.Text>
-            <Typography.Text type="secondary" className="block">
-              Show this QR code at the cinema entrance
-            </Typography.Text>
+
+            <div className="mt-4 text-sm text-gray-500">
+              <p>Show this QR code at the cinema for check-in</p>
+              <p>
+                Valid for:{" "}
+                {formatDateTime(
+                  `${selectedBooking.showDate} ${selectedBooking.startTime}`
+                )}
+              </p>
+            </div>
           </div>
         )}
       </Modal>
     </div>
   );
-};
-
-export default BookedTickets;
+}

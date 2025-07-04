@@ -30,7 +30,6 @@ function handleLogoutAndRedirect() {
   }
 }
 
-
 const axiosClient = axios.create({
   baseURL: "http://localhost:8080/cinema/api",
   headers: {
@@ -82,11 +81,11 @@ axiosClient.interceptors.response.use(
         return Promise.reject(error);
       }
 
-      //Nếu refreshToken bị lỗi error.response.status === 403
-      if (error.response.status === 403) {
-        handleLogoutAndRedirect();
-        return Promise.reject(error);
-      }
+      // //Nếu refreshToken bị lỗi error.response.status === 403
+      // if (error.response.status === 403) {
+      //   handleLogoutAndRedirect();
+      //   return Promise.reject(error);
+      // }
 
       if (isRefreshing) {
         // Nếu đang refresh, chờ token mới rồi retry
