@@ -54,7 +54,7 @@ export class MovieDetailsApiService {
       console.error("❌ API Error:", error);
       
       return {
-        data: {} as MovieDetails,
+        data: null,
         success: false,
         message: error instanceof Error ? error.message : "Failed to fetch movie details"
       };

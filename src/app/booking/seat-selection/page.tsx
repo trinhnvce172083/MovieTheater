@@ -1,184 +1,190 @@
 "use client";
 
-import { BookingApiService } from "@/api/booking-api";
-import ROUTES from "@/constants/routes";
-import { decodeJwt } from "@/hooks/decodeJwt";
-import { App, message } from "antd";
+import { App, Button, message } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
+import { useBooking } from "@/hooks/useBooking";
+import type { Seat } from "@/app/booking/seat-selection/seatType";
+import { RootState } from "@/store";
+import {
+  initializeBooking,
+  setMovieInfo,
+  setScheduleInfo,
+  updateSelectedSeats,
+} from "@/store/slices/bookingSlice";
+import { ScheduleApiService } from "@/api/schedule-api";
+import { MovieApiService } from "@/api/movie-api";
+
 import BookingInfo from "./components/BookingInfo";
 import SeatLoading from "./components/SeatLoading";
 import TheaterLayout from "./components/theater-layout";
-import type { Seat } from "./seatType";
+import ROUTES from "@/constants/routes";
 import { useSeatSelection } from "./useSeatSelection";
 
 export default function SeatSelectionPage() {
   const MAX_SEATS = 10;
-  const { selectedSeats, selectSeat } = useSeatSelection(MAX_SEATS);
-  const [seats, setSeats] = React.useState<Seat[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [scheduleId, setScheduleId] = React.useState<string | null>(null);
-  const [roomId, setRoomId] = React.useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [messageApi, contextHolder] = message.useMessage();
+  const dispatch = useDispatch();
 
-  // Lấy scheduleId và roomId từ URL params
+  const {
+    scheduleId,
+    roomId,
+    movieInfo,
+    scheduleInfo,
+  } = useSelector((state: RootState) => state.booking);
+
+  const { seats, loading, error, fetchSeatStatus, createBooking } = useBooking({
+    scheduleId,
+    roomId,
+  });
+
+  const { selectedSeats, setSelectedSeats, selectSeat } =
+    useSeatSelection(MAX_SEATS);
+
   useEffect(() => {
     const scheduleIdParam = searchParams.get("scheduleId");
     const roomIdParam = searchParams.get("roomId");
 
     if (scheduleIdParam && roomIdParam) {
-      setScheduleId(scheduleIdParam);
-      setRoomId(roomIdParam);
-    } else {
-      messageApi.error("Schedule or room information not found!");
-      router.push("/movies");
+      dispatch(
+        initializeBooking({
+          scheduleId: scheduleIdParam,
+          roomId: roomIdParam,
+        })
+      );
     }
-  }, [searchParams, router, messageApi]);
+  }, [searchParams, dispatch]);
 
-  // Lấy dữ liệu ghế từ API
   useEffect(() => {
-    if (!scheduleId || !roomId) return;
+    if (scheduleId) {
+      const fetchRelatedInfo = async () => {
+        try {
+          console.log("🔍 Fetching schedule info for scheduleId:", scheduleId);
+          
+          // Lấy thông tin schedule trực tiếp bằng scheduleId
+          const scheduleResponse = await ScheduleApiService.getScheduleById(Number(scheduleId));
+          console.log("📅 Schedule response:", scheduleResponse);
+          
+          if (scheduleResponse.success && scheduleResponse.data) {
+            const scheduleData = scheduleResponse.data;
+            dispatch(setScheduleInfo({
+              scheduleId: scheduleData.scheduleId,
+              displayTime: scheduleData.displayTime,
+              displayDate: scheduleData.displayDate,
+              cinemaRoomName: scheduleData.cinemaRoomName,
+              movieTitle: scheduleData.movieName,
+              movieId: scheduleData.movieId,
+            }));
 
-    const fetchSeatData = async () => {
-      try {
-        setLoading(true);
-
-        // Gọi 2 API song song
-        const [statusResponse, layoutResponse] = await Promise.all([
-          BookingApiService.getSeatStatus(scheduleId),
-          BookingApiService.getSeatLayout(roomId),
-        ]);
-
-        console.log("Status Response:", statusResponse);
-        console.log("Layout Response:", layoutResponse);
-
-        if (statusResponse.success && layoutResponse.success) {
-          const statusData = statusResponse.data;
-
-          interface SeatStatus {
-            seatId: number;
-            seatNumber: string;
-            seatRow: string;
-            status: string;
+            // Lấy thông tin movie nếu có movieId
+            if (scheduleData.movieId) {
+              console.log("🎬 Fetching movie info for movieId:", scheduleData.movieId);
+              const movieResponse = await MovieApiService.getMovieById(Number(scheduleData.movieId));
+              console.log("🎬 Movie response:", movieResponse);
+              
+              if (movieResponse.success && movieResponse.data) {
+                const movieData = movieResponse.data;
+                dispatch(setMovieInfo({
+                  movieId: Number(movieData.movieId),
+                  title: movieData.title,
+                  duration: movieData.duration,
+                  posterUrl: movieData.posterUrl,
+                }));
+                console.log("✅ Movie info set successfully:", movieData.title);
+              } else {
+                console.error("❌ Failed to get movie info:", movieResponse.message);
+                messageApi.error("Failed to load movie details.");
+              }
+            } else {
+              console.warn("⚠️ No movieId found in schedule data");
+            }
+          } else {
+            console.error("❌ Failed to get schedule info:", scheduleResponse.message);
+            messageApi.error("Failed to load schedule details.");
           }
-
-          let seatStatusList: SeatStatus[] = [];
-
-          // Lấy danh sách trạng thái ghế (có thể nằm trong object "seats")
-          if (
-            statusData &&
-            typeof statusData === "object" &&
-            "seats" in statusData &&
-            Array.isArray((statusData as { seats: unknown[] }).seats)
-          ) {
-            seatStatusList = (statusData as { seats: SeatStatus[] }).seats;
-          } else if (Array.isArray(statusData)) {
-            seatStatusList = statusData as unknown as SeatStatus[];
-          }
-
-          const seatLayouts = layoutResponse.data;
-
-          // Tạo một Map để tra cứu loại ghế nhanh chóng bằng seatId
-          const typeMap = new Map<number, string>();
-          seatLayouts.forEach((layoutSeat) => {
-            typeMap.set(layoutSeat.seatId, layoutSeat.seatType);
-          });
-
-          // Gộp dữ liệu từ 2 API
-          const mappedSeats: Seat[] = seatStatusList.map((statusSeat) => {
-            const seatId = Number(statusSeat.seatId);
-            return {
-              id: seatId,
-              number: String(statusSeat.seatNumber),
-              row: String(statusSeat.seatRow),
-              status: String(statusSeat.status || "available").toUpperCase(),
-              type: (typeMap.get(seatId) || "STANDARD").toUpperCase(),
-            };
-          });
-
-          console.log("Final Mapped seats:", mappedSeats);
-          setSeats(mappedSeats);
-        } else {
-          let errorMsg = "";
-          if (!statusResponse.success)
-            errorMsg += `Error loading seat status: ${statusResponse.message}. `;
-          if (!layoutResponse.success)
-            errorMsg += `Error loading room layout: ${layoutResponse.message}.`;
-          messageApi.error(errorMsg || "Unable to load seat data");
+        } catch (e) {
+          console.error("❌ Failed to fetch related info", e);
+          messageApi.error("Failed to load movie and schedule details.");
         }
-      } catch (error) {
-        console.error("Error fetching seat data:", error);
-        messageApi.error("Server connection error when loading seat data.");
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchSeatData();
-  }, [scheduleId, roomId, messageApi]);
+      fetchSeatStatus();
+      fetchRelatedInfo();
+    }
+  }, [scheduleId, dispatch, fetchSeatStatus, messageApi]);
 
   const handleSelectSeat = (seat: Seat) => {
-    selectSeat(seat, () => {
-      messageApi.warning(
-        `You can only select a maximum of ${MAX_SEATS} seats!`
-      );
-    });
+    selectSeat(
+      seat,
+      seats,
+      () => messageApi.warning(`You can select up to ${MAX_SEATS} seats only.`),
+      () => messageApi.warning("You can only select seats in the same row!")
+    );
   };
 
   const handleContinue = async () => {
     if (selectedSeats.length === 0) {
-      messageApi.warning("Please select at least one seat!");
+      messageApi.warning("Please select at least one seat.");
       return;
     }
-
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      messageApi.error("You need to login to book tickets!");
-      router.push("/auth/Login");
-      return;
-    }
-
-    const decodedToken = decodeJwt(token);
-    const userId = decodedToken?.accountId;
-
-    if (!userId) {
-      messageApi.error("Invalid user information. Please login again.");
-      return;
-    }
-
     try {
-      // Tạo booking
-      const response = await BookingApiService.createBooking({
-        scheduleId: Number(scheduleId),
-        seatIds: selectedSeats.map((seat) => seat.id.toString()),
-        userId: userId,
-      });
+      const bookingData = await createBooking(selectedSeats);
 
-      if (response.success) {
-        messageApi.success("Booking successful!");
+      if (bookingData) {
+        messageApi.success("Booking created successfully! Redirecting...");
+        dispatch(updateSelectedSeats(selectedSeats));
+
         const params = new URLSearchParams({
-          scheduleId: scheduleId ?? "",
-          roomId: roomId ?? "",
-          seats: JSON.stringify(
-            selectedSeats.map((seat) => ({
-              id: seat.id,
-              row: seat.row,
-              number: seat.number,
-              type: seat.type,
-            }))
-          ),
-        }).toString();
-        router.push(`${ROUTES.CORNCHIP}?${params}`);
-      } else {
-        messageApi.error(response.message || "Unable to create booking");
+          scheduleId: scheduleId || "",
+          roomId: roomId || "",
+          seats: JSON.stringify(selectedSeats),
+        });
+        router.push(`${ROUTES.CORNCHIP}?${params.toString()}`);
       }
-    } catch (error) {
-      console.error("Error creating booking:", error);
-      messageApi.error("Error when creating booking");
+    } catch (error: any) {
+      if (error.response && error.response.status === 409) {
+        messageApi.error(
+          "Some selected seats are no longer available. Please choose again."
+        );
+        setSelectedSeats([]);
+        fetchSeatStatus();
+      } else {
+        const errorMessage =
+          error.response?.data?.message ||
+          error.message ||
+          "An error occurred while creating the booking.";
+        messageApi.error(errorMessage);
+      }
     }
   };
+
+  if (error) {
+    return (
+      <App>
+        {contextHolder}
+        <div className="container mx-auto flex h-full flex-col items-center justify-center p-4 text-center">
+          <div className="rounded-lg bg-red-900/20 p-8">
+            <h2 className="text-2xl font-bold text-red-500">
+              Oops! Something went wrong.
+            </h2>
+            <p className="mt-2 text-red-300">{error}</p>
+            <Button
+              type="primary"
+              danger
+              onClick={() => window.location.reload()}
+              className="mt-6"
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </App>
+    );
+  }
 
   if (loading) {
     return (
@@ -192,10 +198,10 @@ export default function SeatSelectionPage() {
   return (
     <App>
       {contextHolder}
-      <div className="py-8">
-        <div className="container mx-auto px-4 flex flex-col md:flex-row gap-8">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col md:flex-row gap-8">
           {/* Left: Seat layout */}
-          <div className="flex-1">
+          <div className="flex-1 p-6 bg-white/90 rounded-2xl shadow-lg">
             <TheaterLayout
               seats={seats}
               selectedSeats={selectedSeats}
@@ -209,6 +215,8 @@ export default function SeatSelectionPage() {
               loading={loading}
               onBack={() => router.back()}
               onContinue={handleContinue}
+              movieInfo={movieInfo}
+              scheduleInfo={scheduleInfo}
             />
           </div>
         </div>

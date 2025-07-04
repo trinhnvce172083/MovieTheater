@@ -8,7 +8,7 @@ interface SeatComponentProps {
 }
 
 const getSeatColor = (seat: Seat) => {
-  const type = seat.type?.toUpperCase() || "";
+  const type = seat.seatType?.toUpperCase() || "";
   if (seat.status === "TEMPORARILY_RESERVED")
     return "bg-orange-200 border-orange-400";
   if (seat.status === "OCCUPIED") return "bg-gray-400 border-gray-600";
@@ -45,8 +45,8 @@ const SeatComponent: React.FC<SeatComponentProps> = ({
   if (seat.status === "TEMPORARILY_RESERVED")
     tooltip = "Seat temporarily reserved";
   else if (seat.status === "OCCUPIED") tooltip = "Seat occupied";
-  else if (seat.type?.toUpperCase() === "COUPLE") tooltip = "Couple seat";
-  else if (seat.type?.toUpperCase() === "VIP") tooltip = "VIP seat";
+  else if (seat.seatType?.toUpperCase() === "COUPLE") tooltip = "Couple seat";
+  else if (seat.seatType?.toUpperCase() === "VIP") tooltip = "VIP seat";
   else tooltip = "Standard seat";
   return (
     <button
@@ -55,7 +55,7 @@ const SeatComponent: React.FC<SeatComponentProps> = ({
       disabled={seat.status !== "AVAILABLE"}
       title={tooltip}
     >
-      {seat.number}
+      {seat.seatNumber}
     </button>
   );
 };

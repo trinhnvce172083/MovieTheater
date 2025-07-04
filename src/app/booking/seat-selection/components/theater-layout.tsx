@@ -8,7 +8,7 @@ interface TheaterLayoutProps {
 }
 
 const getSeatColor = (seat: Seat) => {
-  const type = seat.type?.toUpperCase() || "";
+  const type = seat.seatType?.toUpperCase() || "";
   if (seat.status === "TEMPORARILY_RESERVED")
     return "bg-orange-200 border-orange-400";
   if (seat.status === "OCCUPIED") return "bg-gray-400 border-gray-600";
@@ -45,8 +45,8 @@ const SeatComponent: React.FC<{
   if (seat.status === "TEMPORARILY_RESERVED")
     tooltip = "Seat temporarily reserved";
   else if (seat.status === "OCCUPIED") tooltip = "Seat occupied";
-  else if (seat.type?.toUpperCase() === "COUPLE") tooltip = "Couple seat";
-  else if (seat.type?.toUpperCase() === "VIP") tooltip = "VIP seat";
+  else if (seat.seatType?.toUpperCase() === "COUPLE") tooltip = "Couple seat";
+  else if (seat.seatType?.toUpperCase() === "VIP") tooltip = "VIP seat";
   else tooltip = "Standard seat";
   return (
     <button
@@ -55,7 +55,7 @@ const SeatComponent: React.FC<{
       disabled={seat.status !== "AVAILABLE"}
       title={tooltip}
     >
-      {seat.number}
+      {seat.seatNumber}
     </button>
   );
 };
@@ -68,8 +68,9 @@ const TheaterLayout: React.FC<TheaterLayoutProps> = ({
   // Group by row
   const rows: Record<string, Seat[]> = {};
   seats.forEach((seat) => {
-    if (!rows[seat.row]) rows[seat.row] = [];
-    rows[seat.row].push(seat);
+    const rowKey = typeof seat.seatRow === 'number' ? seat.seatRow.toString() : seat.seatRow;
+    if (!rows[rowKey]) rows[rowKey] = [];
+    rows[rowKey].push(seat);
   });
   const allRows = Object.keys(rows).sort((a, b) => Number(a) - Number(b));
 
@@ -79,7 +80,7 @@ const TheaterLayout: React.FC<TheaterLayoutProps> = ({
         Screen
       </div>
       <div className="space-y-3">
-        {allRows.map((row) => {
+        {allRows.map((row, index) => {
           const rowSeats = rows[row];
           const mid = Math.floor(rowSeats.length / 2);
           const left = rowSeats.slice(0, mid);
@@ -87,15 +88,15 @@ const TheaterLayout: React.FC<TheaterLayoutProps> = ({
           return (
             <div key={row} className="flex items-center justify-center gap-2">
               <span className="w-8 text-center font-bold text-lg text-gray-700">
-                {row}
+                {String.fromCharCode(65 + index)}
               </span>
               <div className="flex gap-4">
                 <div className="flex gap-2">
                   {left.map((seat) => (
                     <SeatComponent
-                      key={seat.id}
+                      key={seat.seatId}
                       seat={seat}
-                      isSelected={selectedSeats.some((s) => s.id === seat.id)}
+                      isSelected={selectedSeats.some((s) => s.seatId === seat.seatId)}
                       onSelect={onSelectSeat}
                     />
                   ))}
@@ -104,9 +105,9 @@ const TheaterLayout: React.FC<TheaterLayoutProps> = ({
                 <div className="flex gap-2">
                   {right.map((seat) => (
                     <SeatComponent
-                      key={seat.id}
+                      key={seat.seatId}
                       seat={seat}
-                      isSelected={selectedSeats.some((s) => s.id === seat.id)}
+                      isSelected={selectedSeats.some((s) => s.seatId === seat.seatId)}
                       onSelect={onSelectSeat}
                     />
                   ))}

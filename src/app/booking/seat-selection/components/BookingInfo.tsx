@@ -3,11 +3,29 @@ import { Card, Typography, Button } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import type { Seat } from "../seatType";
 
+interface MovieInfo {
+  movieId: number;
+  title: string;
+  duration: number;
+  posterUrl: string;
+}
+
+interface ScheduleInfo {
+  scheduleId: number;
+  displayTime: string;
+  displayDate: string;
+  cinemaRoomName: string;
+  movieTitle: string;
+  movieId: number;
+}
+
 interface BookingInfoProps {
   selectedSeats: Seat[];
   loading: boolean;
   onBack: () => void;
   onContinue: () => void;
+  movieInfo?: MovieInfo;
+  scheduleInfo?: ScheduleInfo;
 }
 
 const BookingInfo: React.FC<BookingInfoProps> = ({
@@ -15,18 +33,25 @@ const BookingInfo: React.FC<BookingInfoProps> = ({
   loading,
   onBack,
   onContinue,
+  movieInfo,
+  scheduleInfo,
 }) => (
   <Card className="shadow-lg p-6 bg-white/90 rounded-2xl">
     <div className="mb-4">
       <Typography.Text className="text-black block text-lg font-semibold">
-        Movie Information
+        {movieInfo?.title || scheduleInfo?.movieTitle || "Movie Information"}
       </Typography.Text>
       <Typography.Text className="text-gray-600 block">
-        Showtime: Loading...
+        Showtime: {scheduleInfo?.displayTime || "Loading..."}
       </Typography.Text>
       <Typography.Text className="text-gray-600 block">
-        Room: Loading...
+        Room: {scheduleInfo?.cinemaRoomName || "Loading..."}
       </Typography.Text>
+      {movieInfo?.duration && (
+        <Typography.Text className="text-gray-600 block">
+          Duration: {movieInfo.duration} minutes
+        </Typography.Text>
+      )}
     </div>
     <div className="mb-4">
       <Typography.Text className="text-black font-medium">
@@ -38,25 +63,16 @@ const BookingInfo: React.FC<BookingInfoProps> = ({
         ) : (
           selectedSeats.map((seat) => (
             <span
-              key={seat.id}
+              key={seat.seatId}
               className="bg-purple-500 text-white px-3 py-1 rounded-lg text-sm"
             >
-              {seat.row}
-              {seat.number}
+              {seat.seatNumber}
             </span>
           ))
         )}
       </div>
     </div>
-    <div className="mb-6">
-      <Typography.Text className="text-black font-medium">
-        Total Amount:
-      </Typography.Text>
-      <span className="text-xl text-black font-bold ml-2">
-        {new Intl.NumberFormat("vi-VN").format(0)} VND
-      </span>
-    </div>
-    <div className="flex justify-between items-center gap-4">
+    <div className="flex justify-between items-center gap-4 mt-6">
       <Button
         type="default"
         size="large"
@@ -79,3 +95,4 @@ const BookingInfo: React.FC<BookingInfoProps> = ({
 );
 
 export default BookingInfo;
+

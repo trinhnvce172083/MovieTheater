@@ -6,6 +6,12 @@ import concessionApi from '@/api/concessionApi';
 import ConcessionsList from './ConcessionsList';
 import OrderSummary from './OrderSummary';
 import Image from 'next/image';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { useRouter } from 'next/navigation';
+import ROUTES from '@/constants/routes';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 interface Concession {
   id: number;
@@ -15,19 +21,23 @@ interface Concession {
   imageUrl?: string;
 }
 
-const mockMovieDetails = {
-  title: 'SPIDER-MAN: NO WAY HOME',
-  date: '10:00 28/05/2025',
-  details: 'Screening room 02 - Seat H18',
-  image: '/popcorn.jpg'
-};
-
 export default function CornChipPage() {
   const [concessions, setConcessions] = useState<Concession[]>([]);
   const [quantities, setQuantities] = useState<{[key: number]: number}>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const bookingData = useSelector((state: RootState) => state.booking);
+  const router = useRouter();
 
+  // // Kiểm tra dữ liệu booking
+  // useEffect(() => {
+  //   if (!bookingData.scheduleId || bookingData.selectedSeats.length === 0) {
+  //     router.replace(ROUTES.MOVIES);
+  //     return;
+  //   }
+  // }, [bookingData.scheduleId, bookingData.selectedSeats.length, router]);
+
+  // Lấy danh sách concessions
   useEffect(() => {
     const fetchConcessions = async () => {
       try {
@@ -38,37 +48,54 @@ export default function CornChipPage() {
           id: item.id ?? item.concessionId
         }));
         setConcessions(fetchedConcessions);
+        
+        // Khởi tạo số lượng về 0 cho mỗi item
         const initialQuantities = fetchedConcessions.reduce(
-          (acc, item, idx) => ({ ...acc, [item.id ?? idx]: 0 }),
+          (acc, item) => ({ ...acc, [item.id]: 0 }),
           {}
         );
         setQuantities(initialQuantities);
         setError(null);
       } catch (error) {
-        setError("Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.");
+        setError("Failed to load concessions. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
+
     fetchConcessions();
   }, []);
 
-  const handleQuantityChange = (id, delta) => {
+  // Xử lý thay đổi số lượng
+  const handleQuantityChange = (id: number, delta: number) => {
     setQuantities(prev => ({
       ...prev,
       [id]: Math.max(0, (prev[id] || 0) + delta)
     }));
   };
 
+  // Tính tổng tiền đồ ăn
   const totalOrder = concessions.reduce((total, item) => {
     return total + (quantities[item.id] || 0) * item.price;
   }, 0);
 
+  // Tạo thông tin phim từ Redux state
+  const movieDetails = {
+    title: bookingData.movieInfo?.title || bookingData.scheduleInfo?.movieTitle || 'Unknown Movie',
+    date: bookingData.scheduleInfo ? 
+      `${bookingData.scheduleInfo.displayTime} ${bookingData.scheduleInfo.displayDate}` : 
+      'Loading...',
+    details: bookingData.scheduleInfo ? 
+      `${bookingData.scheduleInfo.cinemaRoomName} - ${bookingData.selectedSeats.map(seat => seat.seatNumber).join(', ')}` :
+      'Loading...',
+    image: bookingData.movieInfo?.posterUrl || '/popcorn.jpg'
+  };
+
   return (
     <>
       <Header />
-      <div className="bg-gray-900 text-white min-h-screen p-8">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="bg-[#151a23] text-white min-h-screen px-8 pt-2">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 bg-[#151a23] rounded-xl">
           <ConcessionsList
             concessions={concessions}
             quantities={quantities}
@@ -76,8 +103,14 @@ export default function CornChipPage() {
             loading={loading}
             error={error}
           />
-          <div className="lg:col-span-1">
-            <OrderSummary movieDetails={mockMovieDetails} totalOrder={totalOrder} />
+          <div className="lg:col-span-1 h-full flex items-stretch">
+            <OrderSummary 
+              movieDetails={movieDetails} 
+              totalOrder={totalOrder}
+              bookingData={bookingData}
+              concessions={concessions}
+              quantities={quantities}
+            />
           </div>
         </div>
       </div>
