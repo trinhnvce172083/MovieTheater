@@ -72,10 +72,12 @@ export interface GetMoviesParams {
 export const getMovies = async (params: GetMoviesParams = {}) => {
   try {
     // Use the correct API endpoint
+    console.log('Calling API with params:', params);
     const response = await axiosClient.get("/movies", { params });
+    console.log('API Response:', response.data);
     return response.data;
   } catch (error) {
-    console.log("API failed, using mock data", error);
+    console.error("API failed, using mock data", error);
     // Fallback to mock data if API fails
     return await mockGetMovies(params);
   }

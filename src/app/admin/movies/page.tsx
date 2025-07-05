@@ -78,7 +78,7 @@ export default function AdminMovieManagement() {
   const fetchMovies = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('Fetching movies...');
+      console.log('🎬 Starting to fetch movies...');
       
       const params = {
         page: 0, // Get all data for client-side pagination
@@ -87,24 +87,25 @@ export default function AdminMovieManagement() {
         sortDirection: "asc" as const,
       };
       
+      console.log('📡 Calling API with params:', params);
       const response = await getMovies(params);
-      console.log('Movies API Response:', response);
+      console.log('📥 Movies API Response:', response);
       
       if (response && response.content && Array.isArray(response.content)) {
+        console.log('✅ Setting movies from API content:', response.content.length, 'movies');
         setMovieData(response.content);
         setIsUsingApiData(true);
-        console.log('API movies set:', response.content);
       } else if (response && Array.isArray(response)) {
+        console.log('✅ Setting movies from API direct array:', response.length, 'movies');
         setMovieData(response);
         setIsUsingApiData(true);
-        console.log('API movies set (direct array):', response);
       } else {
-        console.log('API returned no valid content, using empty array');
+        console.log('❌ API returned invalid data structure:', response);
         setMovieData([]);
         setIsUsingApiData(false);
       }
     } catch (error) {
-      console.error('Error fetching movies:', error);
+      console.error('❌ Error fetching movies:', error);
       message.warning('Failed to fetch movies from server');
       setMovieData([]);
       setIsUsingApiData(false);
@@ -131,12 +132,14 @@ export default function AdminMovieManagement() {
   }, [movieData]);
 
   useEffect(() => {
+    console.log('🎬 Component mounted, calling fetchMovies');
     fetchMovies();
   }, [fetchMovies]);
 
   useEffect(() => {
+    console.log('📊 Movie data changed, calling fetchStatistics. Movie count:', movieData.length);
     fetchStatistics();
-  }, [fetchStatistics]);
+  }, [fetchStatistics, movieData.length]);
 
   // Reset current page when filters change
   useEffect(() => {
@@ -146,8 +149,11 @@ export default function AdminMovieManagement() {
   // Filter and search logic
   const filteredData = useMemo(() => {
     try {
+      console.log('🔍 Filtering data. Movie data length:', movieData.length);
+      console.log('🔍 Current movieData:', movieData.slice(0, 2)); // Log first 2 movies
+      
       if (!movieData || !Array.isArray(movieData)) {
-        console.log('movieData is not an array:', movieData);
+        console.log('❌ movieData is not an array:', movieData);
         return [];
       }
 
@@ -268,7 +274,7 @@ export default function AdminMovieManagement() {
       const movieData = {
         ...values,
         releaseDate: values.releaseDate ? values.releaseDate.format('YYYY-MM-DD') : undefined,
-        genres: Array.isArray(values.genres) ? values.genres.join(', ') : values.genres,
+        genre: Array.isArray(values.genres) ? values.genres.join(', ') : values.genres, // Convert genres array to single genre string
         duration: parseInt(values.duration),
         price: values.price ? parseFloat(values.price) : undefined,
         imdbRating: values.imdbRating ? parseFloat(values.imdbRating) : undefined,
@@ -276,6 +282,11 @@ export default function AdminMovieManagement() {
         isFeatured: Boolean(values.isFeatured),
         isActive: Boolean(values.isActive),
       };
+
+      // Remove the genres array field since we converted it to genre string
+      delete movieData.genres;
+
+      console.log('🔧 Final movieData being sent to API:', movieData);
 
       // Remove undefined fields
       Object.keys(movieData).forEach(key => {
@@ -550,11 +561,12 @@ export default function AdminMovieManagement() {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* <Button
+              <Button
                 icon={<ReloadOutlined />}
                 size="middle"
                 className="h-10 px-4"
                 onClick={() => {
+                  console.log('🔄 Manual refresh triggered');
                   fetchMovies();
                   message.info("Refreshing movie data...");
                 }}
@@ -562,7 +574,7 @@ export default function AdminMovieManagement() {
                 title="Refresh data from server"
               >
                 Refresh Data
-              </Button> */}
+              </Button>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -654,7 +666,22 @@ export default function AdminMovieManagement() {
             {!isUsingApiData && (
               <Alert
                 message="API Connection Issue"
-                description="Unable to connect to the movie API. Please try refreshing or contact your administrator."
+                description={
+                  <div>
+                    <p>Unable to connect to the movie API. Please try refreshing or contact your administrator.</p>
+                    <p><strong>Debug info:</strong> Check browser console for detailed error logs.</p>
+                    <Button 
+                      size="small" 
+                      onClick={() => {
+                        console.log('🔧 Current movie data:', movieData);
+                        console.log('🔧 Is using API data:', isUsingApiData);
+                        console.log('🔧 Loading state:', loading);
+                      }}
+                    >
+                      Log Debug Info
+                    </Button>
+                  </div>
+                }
                 type="warning"
                 className="m-6 mb-0"
                 showIcon
@@ -731,7 +758,7 @@ export default function AdminMovieManagement() {
           initialValues={{
             status: "COMING_SOON",
             rating: "PG-13",
-            genres: [],
+            genres: [], // Keep as genres for form UI, will convert to genre for API
             isActive: true,
             isFeatured: false,
           }}
@@ -746,14 +773,6 @@ export default function AdminMovieManagement() {
                 <Input placeholder="Enter movie title" className="h-10" />
               </Form.Item>
             </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="originalTitle"
-                label="Original Title"
-              >
-                <Input placeholder="Enter original title (if different)" className="h-10" />
-              </Form.Item>
-            </Col>
           </Row>
 
           <Row gutter={16}>
@@ -764,15 +783,6 @@ export default function AdminMovieManagement() {
                 rules={[{ type: 'url', message: 'Please enter a valid URL' }]}
               >
                 <Input placeholder="Enter poster URL" className="h-10" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="backdropUrl"
-                label="Backdrop URL"
-                rules={[{ type: 'url', message: 'Please enter a valid URL' }]}
-              >
-                <Input placeholder="Enter backdrop URL" className="h-10" />
               </Form.Item>
             </Col>
           </Row>
@@ -981,8 +991,8 @@ export default function AdminMovieManagement() {
               </Form.Item>
             </Col>
             <Col xs={24} sm={8}>
-              <Form.Item name="isActive" label="Active" valuePropName="checked" initialValue={true}>
-                <Switch defaultChecked />
+              <Form.Item name="isActive" label="Active" valuePropName="checked">
+                <Switch />
               </Form.Item>
             </Col>
           </Row>
