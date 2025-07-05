@@ -42,6 +42,11 @@ public interface ConcessionService {
     List<Concession> getDrinks();
 
     /**
+     * Get combo concessions
+     */
+    List<Concession> getComboConcessions();
+
+    /**
      * Check if concession is available for order
      */
     boolean isAvailableForOrder(Long concessionId, Integer quantity);

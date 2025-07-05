@@ -87,6 +87,14 @@ public class ConcessionServiceImpl implements ConcessionService {
         return concessionRepository.findInStockConcessions();
     }
 
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Concession> getComboConcessions() {
+        log.info("Fetching combo concessions");
+        return getConcessionsByCategory(ConcessionCategory.COMBO);
+    }
+
     // ==================== CRUD OPERATIONS ====================
 
     @Override

@@ -31,36 +31,24 @@ public class ConcessionOrderRequest {
     @Schema(description = "Số lượng", example = "2", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer quantity;
 
-    @DecimalMin(value = "0.0", message = "Giá phải lớn hơn 0")
-    @Schema(description = "Giá đơn vị (tự động lấy từ database nếu không có)", example = "45000", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-    private BigDecimal unitPrice;
-
     @Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự")
     @Schema(description = "Ghi chú đặc biệt", example = "Ít đường")
     private String notes;
 
-    // Helper methods
-    public BigDecimal getTotalPrice() {
-        if (unitPrice != null && quantity != null) {
-            return unitPrice.multiply(new BigDecimal(quantity));
-        }
-        return BigDecimal.ZERO;
-    }
+    // Helper methods for validation
 
-    public String getFormattedUnitPrice() {
-        if (unitPrice != null) {
-            return String.format("%,.0f VND", unitPrice);
-        }
-        return "";
-    }
-
-    public String getFormattedTotalPrice() {
-        BigDecimal total = getTotalPrice();
-        return String.format("%,.0f VND", total);
-    }
-
+    /**
+     * Check if the order request is valid
+     */
     public boolean isValidOrder() {
         return concessionId != null &&
                 quantity != null && quantity > 0;
+    }
+
+    /**
+     * Get order summary for logging
+     */
+    public String getOrderSummary() {
+        return String.format("Concession ID: %d, Quantity: %d", concessionId, quantity);
     }
 }

@@ -12,6 +12,7 @@ import com.swp.MovieTheaterService.service.BookingService;
 import com.swp.MovieTheaterService.service.ConcessionService;
 import com.swp.MovieTheaterService.service.PromotionService;
 import com.swp.MovieTheaterService.service.SeatReservationService;
+import com.swp.MovieTheaterService.service.LoyaltyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -51,6 +52,7 @@ public class BookingServiceImpl implements BookingService {
     private final ConcessionService concessionService;
     private final PromotionService promotionService;
     private final SeatReservationService seatReservationService;
+    private final LoyaltyService loyaltyService;
 
     // Booking expiration time in minutes
     private static final int BOOKING_EXPIRATION_MINUTES = 15;
@@ -166,7 +168,8 @@ public class BookingServiceImpl implements BookingService {
                     validateConcessionOrder(concessionOrder);
                 }
 
-                concessionAmount = request.getTotalConcessionAmount().doubleValue();
+                // Calculate total concession amount from database prices
+                concessionAmount = calculateConcessionAmount(request.getConcessionOrders());
                 request.setConcessionAmount(concessionAmount);
                 log.info("Calculated concession amount: {}", concessionAmount);
             }
@@ -614,6 +617,25 @@ public class BookingServiceImpl implements BookingService {
         
         Booking updatedBooking = bookingRepository.save(booking);
 
+        // 🎯 CỘNG ĐIỂM CHO USER SAU KHI PAYMENT THÀNH CÔNG
+        if (booking.getAccount() != null) {
+            try {
+                log.info("🎁 Cộng điểm cho user {} từ booking {}",
+                        booking.getAccount().getEmail(), booking.getBookingId());
+
+                // Cộng điểm dựa trên số tiền đã thanh toán (finalAmount)
+                loyaltyService.earnPointsFromBooking(booking.getAccount(), booking);
+
+                log.info("✅ Đã cộng điểm thành công cho user: {}", booking.getAccount().getEmail());
+            } catch (Exception e) {
+                log.error("❌ Lỗi khi cộng điểm cho user {}: {}",
+                        booking.getAccount().getEmail(), e.getMessage());
+                // Không throw exception để không ảnh hưởng đến payment
+            }
+        } else {
+            log.info("ℹ️ Booking của guest - không cộng điểm");
+        }
+
         log.info("Payment processed successfully for booking ID: {} - Seats converted to OCCUPIED", booking.getBookingId());
         return bookingMapper.toResponse(updatedBooking);
     }
@@ -742,10 +764,6 @@ public class BookingServiceImpl implements BookingService {
             // Validate promotion for this booking
             boolean isValid = promotionService.validatePromotionForBooking(
                 promotionCode, 
-                account, 
-                schedule.getMovie().getMovieId(),
-                schedule.getCinemaRoom().getCinemaRoomId(), 
-                schedule.getShowDate(), 
                 booking.getTotalAmount()
             );
 
@@ -1341,7 +1359,7 @@ public class BookingServiceImpl implements BookingService {
 
             bookingSeats.add(bookingSeat);
 
-            log.debug("Created booking seat: {} - Base price: {}, Multiplier: {}, Final price: {} | Seat remains TEMPORARILY_RESERVED",
+            log.debug("Created booking seat: {} - Base price: {}, Multiplier: {}, Final price: {}",
                     seat.getSeatNumber(), basePrice, seat.getPriceMultiplier(), correctSeatPrice);
         }
 
@@ -1367,13 +1385,17 @@ public class BookingServiceImpl implements BookingService {
                         String.format("Không đủ số lượng cho %s", concession.getFullName()));
             }
 
+            // Get unit price from concession entity (not from DTO)
+            BigDecimal unitPrice = concession.getPrice();
+            BigDecimal totalPrice = unitPrice.multiply(new BigDecimal(order.getQuantity()));
+
             // Create booking concession entity
             BookingConcession bookingConcession = BookingConcession.builder()
                     .booking(booking)
                     .concession(concession)
                     .quantity(order.getQuantity())
-                    .unitPrice(order.getUnitPrice())
-                    .totalPrice(order.getTotalPrice())
+                    .unitPrice(unitPrice)
+                    .totalPrice(totalPrice)
                     .notes(order.getNotes())
                     .isActive(true)
                     .createdAt(LocalDateTime.now())
@@ -1386,7 +1408,8 @@ public class BookingServiceImpl implements BookingService {
             concessionService.updateStock(order.getConcessionId(), order.getQuantity());
 
             log.debug("Created concession order: {} x {} = {}",
-                    concession.getFullName(), order.getQuantity(), order.getFormattedTotalPrice());
+                    concession.getFullName(), order.getQuantity(),
+                    String.format("%,.0f VND", totalPrice));
         }
 
         bookingConcessionRepository.saveAll(bookingConcessions);
@@ -1513,8 +1536,7 @@ public class BookingServiceImpl implements BookingService {
                     promotionCode, totalAmount);
 
             // Validate promotion exists and is active
-            if (!promotionService.validatePromotionForBooking(promotionCode, null, 
-                    request.getScheduleId(), null, null, totalAmount)) {
+            if (!promotionService.validatePromotionForBooking(promotionCode, totalAmount)) {
                 log.warn("Promotion validation failed for code: {}", promotionCode);
                 return 0.0;
             }
@@ -1546,36 +1568,47 @@ public class BookingServiceImpl implements BookingService {
 
         // Validate concession exists and is available
         Concession concession = concessionService.getConcessionById(order.getConcessionId());
-
-        if (!concession.isInStock()) {
+        if (!concession.getIsAvailable() || !concession.getIsActive()) {
             throw new AppException(ErrorCode.CONCESSION_OUT_OF_STOCK,
                     String.format("Món %s hiện không có sẵn", concession.getFullName()));
         }
 
-        // Validate quantity availability
+        // Validate stock availability
         if (!concessionService.isAvailableForOrder(order.getConcessionId(), order.getQuantity())) {
             throw new AppException(ErrorCode.CONCESSION_OUT_OF_STOCK,
-                    String.format("Không đủ số lượng cho %s (yêu cầu: %d, còn lại: %d)",
-                            concession.getFullName(),
-                            order.getQuantity(),
-                            concession.getStockQuantity()));
+                    String.format("Không đủ số lượng cho %s", concession.getFullName()));
         }
 
-        // Set price from database if not provided or validate if provided
-        if (order.getUnitPrice() == null) {
-            // Auto-set price from database
-            order.setUnitPrice(concession.getPrice());
-            log.debug("Auto-set price for concession {}: {}", 
-                    concession.getFullName(), concession.getPrice());
-        } else if (order.getUnitPrice().compareTo(concession.getPrice()) != 0) {
-            log.warn("Price mismatch for concession {}: expected {}, got {}",
-                    concession.getFullName(), concession.getPrice(), order.getUnitPrice());
-            // Update to correct price
-            order.setUnitPrice(concession.getPrice());
+        log.debug("Validated concession order: {} x {}",
+                concession.getFullName(), order.getQuantity());
+    }
+
+    /**
+     * Calculate total concession amount from database prices
+     */
+    private Double calculateConcessionAmount(List<ConcessionOrderRequest> concessionOrders) {
+        if (concessionOrders == null || concessionOrders.isEmpty()) {
+            return 0.0;
         }
 
-        log.debug("Validated concession order: {} x {} = {}",
-                concession.getFullName(), order.getQuantity(), order.getFormattedTotalPrice());
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        for (ConcessionOrderRequest order : concessionOrders) {
+            // Get concession from database to get current price
+            Concession concession = concessionService.getConcessionById(order.getConcessionId());
+            BigDecimal unitPrice = concession.getPrice();
+            BigDecimal orderTotal = unitPrice.multiply(new BigDecimal(order.getQuantity()));
+            totalAmount = totalAmount.add(orderTotal);
+
+            log.debug("Concession {}: {} x {} = {}",
+                    concession.getFullName(),
+                    order.getQuantity(),
+                    String.format("%,.0f VND", unitPrice),
+                    String.format("%,.0f VND", orderTotal));
+        }
+
+        log.info("Total concession amount: {}", String.format("%,.0f VND", totalAmount));
+        return totalAmount.doubleValue();
     }
 
     /**

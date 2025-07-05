@@ -120,8 +120,9 @@ public enum ErrorCode {
     PROMOTION_CODE_USED(1808, "Mã khuyến mãi đã được sử dụng", HttpStatus.BAD_REQUEST),
     PROMOTION_CODE_EXPIRED(1809, "Mã khuyến mãi đã hết hạn", HttpStatus.BAD_REQUEST),
     PROMOTION_CODE_INVALID(1810, "Mã khuyến mãi không hợp lệ", HttpStatus.BAD_REQUEST),
-    PROMOTION_APPLICATION_FAILED(1806, "Áp dụng khuyến mãi thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
-    PROMOTION_REMOVAL_FAILED(1807, "Xóa khuyến mãi thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
+    PROMOTION_CODE_EXISTS(1811, "Mã khuyến mãi đã tồn tại", HttpStatus.CONFLICT),
+    PROMOTION_APPLICATION_FAILED(1812, "Áp dụng khuyến mãi thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
+    PROMOTION_REMOVAL_FAILED(1813, "Xóa khuyến mãi thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // ==================== RATE LIMITING (1900-1999) ====================
     RATE_LIMIT_EXCEEDED(1900, "Quá nhiều yêu cầu, vui lòng thử lại sau", HttpStatus.TOO_MANY_REQUESTS),

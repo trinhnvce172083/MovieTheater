@@ -376,6 +376,523 @@ INSERT IGNORE INTO movietheater_schedule (
  false, false, false, 'Vietnamese', 'English', 140, 0, false, 'AFTERNOON', NOW(), NOW()),
 (@materialists_id, @vip_room, CURDATE(), '21:00:00', '22:55:00', 234000, true, 'SCHEDULED', 
  false, false, false, 'Vietnamese', 'English', 60, 0, false, 'EVENING', NOW(), NOW());
+ 
+-- Promotion table (simplified structure)
+CREATE TABLE IF NOT EXISTS movietheater_promotion
+(
+    promotion_id
+    BIGINT
+    AUTO_INCREMENT
+    PRIMARY
+    KEY,
+    promotion_code
+    VARCHAR
+(
+    20
+) UNIQUE NOT NULL,
+    promotion_name VARCHAR
+(
+    100
+) NOT NULL,
+    description TEXT,
+    discount_type VARCHAR
+(
+    20
+) NOT NULL, -- PERCENTAGE, FIXED, POINTS
+    discount_value DOUBLE NOT NULL,
+    max_discount_amount DOUBLE,
+    min_purchase_amount DOUBLE,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    max_usage_count INT NOT NULL DEFAULT 1000,
+    current_usage_count INT NOT NULL DEFAULT 0,
+    max_usage_per_user INT NOT NULL DEFAULT 1,
+    is_featured BOOLEAN NOT NULL DEFAULT FALSE,
+    banner_image_url VARCHAR
+(
+    255
+),
+    points_required INT DEFAULT 0,
+    code_validity_hours INT DEFAULT 24,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR
+(
+    50
+),
+    updated_by VARCHAR
+(
+    50
+),
+    INDEX idx_promotion_code
+(
+    promotion_code
+),
+    INDEX idx_active
+(
+    is_active
+),
+    INDEX idx_start_date
+(
+    start_date
+),
+    INDEX idx_end_date
+(
+    end_date
+),
+    INDEX idx_discount_type
+(
+    discount_type
+),
+    INDEX idx_featured
+(
+    is_featured
+),
+    INDEX idx_points_required
+(
+    points_required
+)
+    );
+
+-- Sample promotion data
+INSERT INTO movietheater_promotion (promotion_code, promotion_name, description, discount_type, discount_value,
+                                    max_discount_amount, min_purchase_amount, start_date, end_date,
+                                    max_usage_count, current_usage_count, max_usage_per_user, is_featured,
+                                    banner_image_url, points_required, code_validity_hours, is_active,
+                                    created_at, updated_at, created_by)
+VALUES
+-- Percentage discount promotion
+('SUMMER2025', 'Khuyến mãi hè 2025', 'Giảm giá 20% cho tất cả các vé trong tháng 7', 'PERCENTAGE', 20.0,
+ 50000, 100000, '2025-07-01', '2025-07-31',
+ 1000, 0, 2, TRUE,
+ 'https://example.com/banners/summer2025.jpg', 0, 24, TRUE,
+ NOW(), NOW(), 'SYSTEM'),
+
+-- Fixed amount discount promotion
+('WELCOME50K', 'Chào mừng khách hàng mới', 'Giảm 50,000 VNĐ cho đơn hàng đầu tiên', 'FIXED', 50000,
+ 50000, 150000, '2025-06-01', '2025-12-31',
+ 500, 0, 1, FALSE,
+ 'https://example.com/banners/welcome.jpg', 0, 24, TRUE,
+ NOW(), NOW(), 'SYSTEM'),
+
+-- Points-based promotion
+('POINTS100', 'Đổi điểm ưu đãi', 'Đổi 100 điểm để giảm 30,000 VNĐ', 'POINTS', 30000,
+ 30000, 50000, '2025-06-01', '2025-12-31',
+ 200, 0, 5, TRUE,
+ 'https://example.com/banners/points.jpg', 100, 24, TRUE,
+ NOW(), NOW(), 'SYSTEM'),
+
+-- VIP promotion
+('VIP30', 'Ưu đãi VIP', 'Giảm 30% cho khách hàng VIP', 'PERCENTAGE', 30.0,
+ 100000, 200000, '2025-06-01', '2025-12-31',
+ 100, 0, 3, TRUE,
+ 'https://example.com/banners/vip.jpg', 0, 24, TRUE,
+ NOW(), NOW(), 'SYSTEM'),
+
+-- Student promotion
+('STUDENT15', 'Ưu đãi sinh viên', 'Giảm 15% cho sinh viên', 'PERCENTAGE', 15.0,
+ 30000, 80000, '2025-06-01', '2025-12-31',
+ 2000, 0, 2, FALSE,
+ 'https://example.com/banners/student.jpg', 0, 24, TRUE,
+ NOW(), NOW(), 'SYSTEM');
+
+-- User Promotion Code table (for tracking individual user codes)
+CREATE TABLE IF NOT EXISTS movietheater_user_promotion_code
+(
+    user_promotion_code_id
+    BIGINT
+    AUTO_INCREMENT
+    PRIMARY
+    KEY,
+    account_id
+    BIGINT
+    NOT
+    NULL,
+    promotion_id
+    BIGINT
+    NOT
+    NULL,
+    unique_code
+    VARCHAR
+(
+    50
+) UNIQUE NOT NULL,
+    is_used BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    points_spent INT DEFAULT 0,
+    purchased_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    used_at DATETIME,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_account_id
+(
+    account_id
+),
+    INDEX idx_promotion_id
+(
+    promotion_id
+),
+    INDEX idx_unique_code
+(
+    unique_code
+),
+    INDEX idx_is_used
+(
+    is_used
+),
+    INDEX idx_is_active
+(
+    is_active
+),
+    INDEX idx_expires_at
+(
+    expires_at
+),
+    FOREIGN KEY
+(
+    account_id
+) REFERENCES movietheater_account
+(
+    account_id
+),
+    FOREIGN KEY
+(
+    promotion_id
+) REFERENCES movietheater_promotion
+(
+    promotion_id
+)
+    );
+
+-- Concession table
+CREATE TABLE IF NOT EXISTS movietheater_concession
+(
+    concession_id
+    BIGINT
+    AUTO_INCREMENT
+    PRIMARY
+    KEY,
+    name
+    VARCHAR
+(
+    100
+) NOT NULL,
+    description TEXT,
+    category VARCHAR
+(
+    50
+) NOT NULL, -- POPCORN, DRINK, FOOD, COMBO
+    price DECIMAL
+(
+    10,
+    2
+) NOT NULL,
+    image_url VARCHAR
+(
+    255
+),
+    flavor VARCHAR
+(
+    50
+),
+    size VARCHAR
+(
+    50
+),
+    stock_quantity INT NOT NULL DEFAULT 0,
+    is_available BOOLEAN NOT NULL DEFAULT TRUE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    display_order INT DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR
+(
+    50
+),
+    updated_by VARCHAR
+(
+    50
+),
+    INDEX idx_category
+(
+    category
+),
+    INDEX idx_available
+(
+    is_available
+),
+    INDEX idx_active
+(
+    is_active
+),
+    INDEX idx_display_order
+(
+    display_order
+)
+    );
+
+-- Sample concession data
+INSERT INTO movietheater_concession (name, description, category, price, image_url, flavor, size,
+                                     stock_quantity, is_available, is_active, display_order,
+                                     created_at, updated_at, created_by)
+VALUES
+-- Popcorn
+('Bắp rang bơ', 'Bắp rang bơ vị truyền thống, thơm ngon, giòn rụm', 'POPCORN', 35000,
+ 'https://example.com/images/popcorn-butter.jpg', 'Truyền thống', 'Lớn',
+ 100, TRUE, TRUE, 1,
+ NOW(), NOW(), 'SYSTEM'),
+
+('Bắp rang phô mai', 'Bắp rang phô mai đậm đà, béo ngậy', 'POPCORN', 40000,
+ 'https://example.com/images/popcorn-cheese.jpg', 'Phô mai', 'Lớn',
+ 80, TRUE, TRUE, 2,
+ NOW(), NOW(), 'SYSTEM'),
+
+('Bắp rang caramel', 'Bắp rang caramel ngọt ngào, giòn tan', 'POPCORN', 45000,
+ 'https://example.com/images/popcorn-caramel.jpg', 'Caramel', 'Lớn',
+ 60, TRUE, TRUE, 3,
+ NOW(), NOW(), 'SYSTEM'),
+
+-- Drinks
+('Coca Cola', 'Nước ngọt Coca Cola mát lạnh', 'DRINK', 25000,
+ 'https://example.com/images/coca-cola.jpg', 'Cola', 'Lớn',
+ 150, TRUE, TRUE, 4,
+ NOW(), NOW(), 'SYSTEM'),
+
+('Pepsi', 'Nước ngọt Pepsi sảng khoái', 'DRINK', 25000,
+ 'https://example.com/images/pepsi.jpg', 'Cola', 'Lớn',
+ 120, TRUE, TRUE, 5,
+ NOW(), NOW(), 'SYSTEM'),
+
+('Sprite', 'Nước ngọt Sprite thanh mát', 'DRINK', 25000,
+ 'https://example.com/images/sprite.jpg', 'Chanh', 'Lớn',
+ 100, TRUE, TRUE, 6,
+ NOW(), NOW(), 'SYSTEM'),
+
+('Nước suối', 'Nước suối tinh khiết', 'DRINK', 15000,
+ 'https://example.com/images/water.jpg', 'Không vị', '500ml',
+ 200, TRUE, TRUE, 7,
+ NOW(), NOW(), 'SYSTEM'),
+
+-- Food
+('Hot dog', 'Bánh hot dog với xúc xích và rau củ', 'FOOD', 55000,
+ 'https://example.com/images/hotdog.jpg', 'Truyền thống', 'Tiêu chuẩn',
+ 50, TRUE, TRUE, 8,
+ NOW(), NOW(), 'SYSTEM'),
+
+('Khoai tây chiên', 'Khoai tây chiên giòn rụm', 'FOOD', 45000,
+ 'https://example.com/images/fries.jpg', 'Muối', 'Lớn',
+ 80, TRUE, TRUE, 9,
+ NOW(), NOW(), 'SYSTEM'),
+
+('Gà rán', 'Gà rán giòn với sốt đặc biệt', 'FOOD', 75000,
+ 'https://example.com/images/fried-chicken.jpg', 'Truyền thống', '3 miếng',
+ 40, TRUE, TRUE, 10,
+ NOW(), NOW(), 'SYSTEM'),
+
+-- Combos
+('Combo Bắp + Nước', 'Bắp rang bơ lớn + Coca Cola lớn', 'COMBO', 55000,
+ 'https://example.com/images/combo-popcorn-drink.jpg', 'Truyền thống', 'Lớn',
+ 60, TRUE, TRUE, 11,
+ NOW(), NOW(), 'SYSTEM'),
+
+('Combo VIP', 'Bắp rang phô mai + Coca Cola + Khoai tây chiên', 'COMBO', 95000,
+ 'https://example.com/images/combo-vip.jpg', 'Phô mai', 'Lớn',
+ 30, TRUE, TRUE, 12,
+ NOW(), NOW(), 'SYSTEM');
+
+-- Booking table
+CREATE TABLE IF NOT EXISTS movietheater_booking
+(
+    booking_id
+    BIGINT
+    AUTO_INCREMENT
+    PRIMARY
+    KEY,
+    account_id
+    BIGINT
+    NOT
+    NULL,
+    schedule_id
+    BIGINT
+    NOT
+    NULL,
+    promotion_id
+    BIGINT,
+    total_amount
+    DECIMAL
+(
+    10,
+    2
+) NOT NULL,
+    discount_amount DECIMAL
+(
+    10,
+    2
+) DEFAULT 0.00,
+    final_amount DECIMAL
+(
+    10,
+    2
+) NOT NULL,
+    booking_status VARCHAR
+(
+    20
+) NOT NULL DEFAULT 'PENDING', -- PENDING, CONFIRMED, CANCELLED, COMPLETED
+    payment_status VARCHAR
+(
+    20
+) NOT NULL DEFAULT 'PENDING', -- PENDING, PAID, FAILED, REFUNDED
+    payment_method VARCHAR
+(
+    20
+),
+    transaction_id VARCHAR
+(
+    100
+),
+    booking_code VARCHAR
+(
+    20
+) UNIQUE NOT NULL,
+    customer_name VARCHAR
+(
+    100
+) NOT NULL,
+    customer_phone VARCHAR
+(
+    15
+),
+    customer_email VARCHAR
+(
+    100
+),
+    special_requests TEXT,
+    booking_notes TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR
+(
+    50
+),
+    updated_by VARCHAR
+(
+    50
+),
+    INDEX idx_account_id
+(
+    account_id
+),
+    INDEX idx_schedule_id
+(
+    schedule_id
+),
+    INDEX idx_promotion_id
+(
+    promotion_id
+),
+    INDEX idx_booking_status
+(
+    booking_status
+),
+    INDEX idx_payment_status
+(
+    payment_status
+),
+    INDEX idx_booking_code
+(
+    booking_code
+),
+    INDEX idx_created_at
+(
+    created_at
+),
+    FOREIGN KEY
+(
+    account_id
+) REFERENCES movietheater_account
+(
+    account_id
+),
+    FOREIGN KEY
+(
+    schedule_id
+) REFERENCES movietheater_schedule
+(
+    schedule_id
+),
+    FOREIGN KEY
+(
+    promotion_id
+) REFERENCES movietheater_promotion
+(
+    promotion_id
+)
+    );
+
+-- Booking Concession table (for tracking concessions in bookings)
+CREATE TABLE IF NOT EXISTS movietheater_booking_concession
+(
+    booking_concession_id
+    BIGINT
+    AUTO_INCREMENT
+    PRIMARY
+    KEY,
+    booking_id
+    BIGINT
+    NOT
+    NULL,
+    concession_id
+    BIGINT
+    NOT
+    NULL,
+    quantity
+    INT
+    NOT
+    NULL
+    DEFAULT
+    1,
+    unit_price
+    DECIMAL
+(
+    10,
+    2
+) NOT NULL,
+    total_price DECIMAL
+(
+    10,
+    2
+) NOT NULL,
+    special_instructions TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_booking_id
+(
+    booking_id
+),
+    INDEX idx_concession_id
+(
+    concession_id
+),
+    FOREIGN KEY
+(
+    booking_id
+) REFERENCES movietheater_booking
+(
+    booking_id
+),
+    FOREIGN KEY
+(
+    concession_id
+) REFERENCES movietheater_concession
+(
+    concession_id
+)
+    );
+
 ----TẠO GHẾ----------------------------------------------------------------
 INSERT INTO movietheater_seat (
     cinema_room_id, seat_number, seat_row, seat_column,
@@ -892,3 +1409,4 @@ SELECT
     CONCAT('✅ ', (SELECT COUNT(*) FROM movietheater_cinema_room WHERE is_active = true), ' rooms ready') as rooms_status,
     CONCAT('✅ ', (SELECT COUNT(*) FROM movietheater_movie WHERE status = 'NOW_SHOWING'), ' movies ready for auto-schedule') as movies_status,
     '🚀 System Ready!' as final_status; 
+

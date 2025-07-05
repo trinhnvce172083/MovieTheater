@@ -5,6 +5,7 @@ import com.swp.MovieTheaterService.enums.ConcessionCategory;
 import com.swp.MovieTheaterService.service.ConcessionService;
 import com.swp.MovieTheaterService.service.ImageManagementService;
 import com.swp.MovieTheaterService.utils.ImageUtils;
+import com.swp.MovieTheaterService.dto.cinema.ConcessionCreateRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +83,20 @@ public class ConcessionController {
         
         log.info("Found {} drinks", drinks.size());
         return ResponseEntity.ok(drinks);
+    }
+
+    /**
+     * Get combo concessions
+     */
+    @GetMapping("/combos")
+    @Operation(summary = "Get combos", description = "Get all available combo concessions")
+    public ResponseEntity<List<Concession>> getComboConcessions() {
+        log.info("GET /api/concessions/combos - Getting combo concessions");
+
+        List<Concession> combos = concessionService.getComboConcessions();
+
+        log.info("Found {} combo concessions", combos.size());
+        return ResponseEntity.ok(combos);
     }
 
     /**
@@ -172,13 +188,16 @@ public class ConcessionController {
         
         List<Concession> popcorns = concessionService.getPopcornFlavors();
         List<Concession> drinks = concessionService.getDrinks();
+        List<Concession> combos = concessionService.getComboConcessions();
         
         Map<String, List<Concession>> menu = Map.of(
             "popcorns", popcorns,
-            "drinks", drinks
+                "drinks", drinks,
+                "combos", combos
         );
-        
-        log.info("Menu summary: {} popcorns, {} drinks", popcorns.size(), drinks.size());
+
+        log.info("Menu summary: {} popcorns, {} drinks, {} combos",
+                popcorns.size(), drinks.size(), combos.size());
         return ResponseEntity.ok(menu);
     }
 
@@ -191,17 +210,23 @@ public class ConcessionController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Create concession", description = "Create new concession item (Admin only)")
-    public ResponseEntity<Concession> createConcession(@Valid @RequestBody Concession concession) {
-        log.info("POST /api/concessions - Creating new concession: {}", concession.getFullName());
-        
-        try {
-            Concession savedConcession = concessionService.createConcession(concession);
-            log.info("Created concession with ID: {}", savedConcession.getConcessionId());
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedConcession);
-        } catch (Exception e) {
-            log.error("Error creating concession: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<Concession> createConcession(@Valid @RequestBody ConcessionCreateRequest request) {
+        log.info("POST /api/concessions - Creating new concession: {}", request.getName());
+        Concession concession = new Concession();
+        concession.setName(request.getName());
+        concession.setDescription(request.getDescription());
+        concession.setCategory(ConcessionCategory.valueOf(request.getCategory()));
+        concession.setPrice(request.getPrice());
+        concession.setImageUrl(request.getImageUrl());
+        concession.setFlavor(request.getFlavor());
+        concession.setSize(request.getSize());
+        concession.setStockQuantity(request.getStockQuantity());
+        concession.setIsAvailable(request.getIsAvailable() != null ? request.getIsAvailable() : true);
+        concession.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
+        concession.setDisplayOrder(request.getDisplayOrder());
+        Concession savedConcession = concessionService.createConcession(concession);
+        log.info("Created concession with ID: {}", savedConcession.getConcessionId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedConcession);
     }
 
     /**

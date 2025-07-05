@@ -2,14 +2,15 @@ package com.swp.MovieTheaterService.enums;
 
 /**
  * ConcessionCategory Enum - Loại đồ ăn/uống
- * Simple categories for popcorn and drinks only
+ * Categories for popcorn, drinks, and combos
  * 
  * @author Dũng_Solo
  * @version 1.0.0
  */
 public enum ConcessionCategory {
     POPCORN("Bắp rang", "Bắp rang với các vị khác nhau"),
-    DRINKS("Nước uống", "Các loại nước uống");
+    DRINKS("Nước uống", "Các loại nước uống"),
+    COMBO("Combo", "Combo đồ ăn/uống");
 
     private final String displayName;
     private final String description;

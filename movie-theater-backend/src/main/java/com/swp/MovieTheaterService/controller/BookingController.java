@@ -5,6 +5,7 @@ import com.swp.MovieTheaterService.dto.booking.BookingResponse;
 import com.swp.MovieTheaterService.dto.booking.BookingConcessionResponse;
 import com.swp.MovieTheaterService.dto.booking.ConcessionOrderRequest;
 import com.swp.MovieTheaterService.dto.booking.BookingSummaryResponse;
+import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.service.BookingService;
 import com.swp.MovieTheaterService.service.SeatReservationService;
 import com.swp.MovieTheaterService.config.documentation.OpenApiExamples;
@@ -590,13 +591,87 @@ public class BookingController {
     @GetMapping("/{id}/summary")
     @Operation(summary = "Lấy tóm tắt booking bao gồm ghế và đồ ăn/uống")
     public ResponseEntity<BookingSummaryResponse> getBookingSummary(@PathVariable Long id) {
-        log.info("GET /api/bookings/{}/summary - Getting booking summary", id);
-
+        log.info("Lấy tóm tắt booking ID: {}", id);
         BookingSummaryResponse summary = bookingService.getBookingSummary(id);
-
-        log.info("Generated summary for booking {} - {} seats, {} concessions",
-                id, summary.getSeatCount(), summary.getConcessionItems());
         return ResponseEntity.ok(summary);
+    }
+
+    // ==================== PROMOTION ENDPOINTS ====================
+
+    @PostMapping("/{bookingId}/promotion")
+    @Operation(summary = "Apply promotion to booking", description = "Apply a promotion code to an existing booking")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<BookingResponse> applyPromotionToBooking(
+            @PathVariable Long bookingId,
+            @RequestParam String promotionCode,
+            Authentication authentication) {
+
+        Long userId = authentication != null ? extractUserId(authentication) : null;
+        log.info("Applying promotion {} to booking {} by user {}", promotionCode, bookingId, userId);
+
+        BookingResponse response = bookingService.applyPromotion(bookingId, promotionCode);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{bookingId}/promotion")
+    @Operation(summary = "Remove promotion from booking", description = "Remove applied promotion from booking")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<BookingResponse> removePromotionFromBooking(
+            @PathVariable Long bookingId,
+            Authentication authentication) {
+
+        Long userId = authentication != null ? extractUserId(authentication) : null;
+        log.info("Removing promotion from booking {} by user {}", bookingId, userId);
+
+        BookingResponse response = bookingService.removePromotion(bookingId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{bookingId}/promotion")
+    @Operation(summary = "Get booking promotion info", description = "Get information about promotion applied to booking")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponse<BookingResponse.PromotionInfo>> getBookingPromotion(
+            @PathVariable Long bookingId,
+            Authentication authentication) {
+
+        Long userId = authentication != null ? extractUserId(authentication) : null;
+        log.info("Getting promotion info for booking {} by user {}", bookingId, userId);
+
+        try {
+            BookingResponse booking = bookingService.getBookingById(bookingId);
+            if (booking.getPromotion() != null) {
+                return ResponseEntity.ok(ApiResponse.success("Promotion info retrieved successfully", booking.getPromotion()));
+            } else {
+                return ResponseEntity.ok(ApiResponse.success("No promotion applied to this booking", null));
+            }
+        } catch (Exception e) {
+            log.error("Error getting promotion info: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(ApiResponse.error(400, "PROMOTION_ERROR", "Failed to get promotion info: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/quick")
+    @Operation(summary = "Create quick booking", description = "Create booking with seats only (no concessions/promotions)")
+    public ResponseEntity<BookingResponse> createQuickBooking(
+            @Valid @RequestBody BookingCreateRequest request,
+            Authentication authentication,
+            HttpServletRequest httpRequest) {
+
+        String sessionId = httpRequest.getSession().getId();
+        Long userId = authentication != null ? extractUserId(authentication) : null;
+
+        log.info("Creating quick booking - user: {}, session: {}, schedule: {}",
+                userId, sessionId, request.getScheduleId());
+
+
+        // Use existing method for now - TODO: Update BookingService interface
+        BookingResponse response;
+        if (userId != null) {
+            response = bookingService.createBooking(request, userId);
+        } else {
+            response = bookingService.createGuestBooking(request);
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     // ==================== HELPER METHODS ====================

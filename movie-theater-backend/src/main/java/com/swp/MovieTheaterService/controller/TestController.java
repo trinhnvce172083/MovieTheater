@@ -24,6 +24,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.swp.MovieTheaterService.service.RateLimitService;
 import com.swp.MovieTheaterService.utils.IpUtils;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.HashMap;
+
+import com.swp.MovieTheaterService.service.PromotionService;
+import com.swp.MovieTheaterService.entity.Promotion;
+
 /**
  * Test Controller
  * Simple controller for testing API without authentication
@@ -39,6 +47,9 @@ public class TestController {
 
     @Autowired
     private RateLimitService rateLimitService;
+
+    @Autowired
+    private PromotionService promotionService;
 
     @GetMapping("/public")
     @Operation(summary = "Public endpoint", description = "Test public endpoint")
@@ -297,6 +308,110 @@ public class TestController {
             return ResponseEntity
                     .ok(ApiResponse.success("SUCCESS: All critical fields populated!", request.toString()));
         }
+    }
+
+    @GetMapping("/test-promotion-system")
+    @Operation(summary = "Test promotion system", description = "Test all promotion related functionality")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<Map<String, Object>> testPromotionSystem() {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            // Test 1: Get points-based promotions
+            List<Promotion> pointsPromotions = promotionService.getPointsPromotions();
+            result.put("pointsPromotions", pointsPromotions.size());
+            result.put("pointsPromotionsList", pointsPromotions.stream()
+                    .map(p -> Map.of(
+                            "id", p.getPromotionId(),
+                            "code", p.getPromotionCode(),
+                            "name", p.getPromotionName(),
+                            "pointsRequired", p.getPointsRequired(),
+                            "discountType", p.getDiscountType(),
+                            "discountValue", p.getDiscountValue()
+                    ))
+                    .collect(Collectors.toList()));
+
+            // Test 2: Get redeemable promotions (assuming 1000 points)
+            List<Promotion> redeemablePromotions = promotionService.getRedeemablePromotions(1000);
+            result.put("redeemablePromotions", redeemablePromotions.size());
+            result.put("redeemablePromotionsList", redeemablePromotions.stream()
+                    .map(p -> Map.of(
+                            "id", p.getPromotionId(),
+                            "code", p.getPromotionCode(),
+                            "name", p.getPromotionName(),
+                            "pointsRequired", p.getPointsRequired()
+                    ))
+                    .collect(Collectors.toList()));
+
+            // Test 3: Validate a promotion (assuming we have one)
+            if (!pointsPromotions.isEmpty()) {
+                Promotion testPromotion = pointsPromotions.get(0);
+                boolean isValid = promotionService.validatePromotionForBooking(
+                        testPromotion.getPromotionCode(), 100000.0);
+                result.put("promotionValidation", Map.of(
+                        "code", testPromotion.getPromotionCode(),
+                        "isValid", isValid
+                ));
+            }
+
+            result.put("success", true);
+            result.put("message", "Promotion system test completed successfully");
+
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("error", e.getMessage());
+            result.put("message", "Promotion system test failed");
+        }
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/test-booking-promotion")
+    @Operation(summary = "Test booking with promotion", description = "Test booking system with promotion integration")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<Map<String, Object>> testBookingPromotion() {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            // Test 1: Check if we have any promotions
+            List<Promotion> allPromotions = promotionService.getActivePromotions();
+            result.put("totalPromotions", allPromotions.size());
+
+            // Test 2: Check if we have any bookings
+            // This would require access to booking service
+            result.put("bookingPromotionIntegration", "Available endpoints:");
+            result.put("endpoints", List.of(
+                    "POST /api/bookings/{bookingId}/promotion?promotionCode=CODE",
+                    "DELETE /api/bookings/{bookingId}/promotion",
+                    "GET /api/bookings/{bookingId}/promotion"
+            ));
+
+            // Test 3: Sample promotion data structure
+            if (!allPromotions.isEmpty()) {
+                Promotion sample = allPromotions.get(0);
+                result.put("samplePromotion", Map.of(
+                        "id", sample.getPromotionId(),
+                        "code", sample.getPromotionCode(),
+                        "name", sample.getPromotionName(),
+                        "discountType", sample.getDiscountType(),
+                        "discountValue", sample.getDiscountValue(),
+                        "pointsRequired", sample.getPointsRequired(),
+                        "canBeRedeemedWithPoints", sample.canBeRedeemedWithPoints(),
+                        "isActive", sample.getIsActive(),
+                        "hasBanner", sample.getBannerImageUrl() != null
+                ));
+            }
+
+            result.put("success", true);
+            result.put("message", "Booking promotion integration test completed");
+
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("error", e.getMessage());
+            result.put("message", "Booking promotion test failed");
+        }
+
+        return ResponseEntity.ok(result);
     }
 
     // Simple POJO class for testing

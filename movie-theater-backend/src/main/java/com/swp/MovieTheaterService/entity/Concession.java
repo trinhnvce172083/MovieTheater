@@ -21,7 +21,7 @@ import java.util.List;
  * @version 1.0.0
  */
 @Entity
-@Table(name = "concessions")
+@Table(name = "movietheater_concession")
 @Data
 @Builder
 @NoArgsConstructor

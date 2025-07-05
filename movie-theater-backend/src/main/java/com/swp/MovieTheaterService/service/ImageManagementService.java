@@ -212,26 +212,26 @@ public class ImageManagementService {
     // ==================== PROMOTION IMAGE MANAGEMENT ====================
     
     /**
-     * Upload/Update promotion banner
+     * Upload promotion banner
      */
     @Transactional
-    public FileUploadResponse updatePromotionBanner(Long promotionId, MultipartFile bannerFile) {
-        log.info("Updating banner for promotion ID: {}", promotionId);
+    public FileUploadResponse uploadPromotionBanner(Long promotionId, MultipartFile bannerFile) {
+        log.info("Uploading banner for promotion ID: {}", promotionId);
         
         Promotion promotion = promotionRepository.findById(promotionId)
             .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
         
         try {
             String newBannerUrl = supabaseStorageService.replaceFile(
-                promotion.getBannerUrl(), 
+                    promotion.getBannerImageUrl(),
                 bannerFile, 
                 "promotions/banners"
             );
-            
-            promotion.setBannerUrl(newBannerUrl);
+
+            promotion.setBannerImageUrl(newBannerUrl);
             promotionRepository.save(promotion);
-            
-            log.info("Updated banner for promotion: {} - new URL: {}", promotion.getPromotionName(), newBannerUrl);
+
+            log.info("Uploaded banner for promotion: {} - new URL: {}", promotion.getPromotionName(), newBannerUrl);
             
             return FileUploadResponse.builder()
                 .fileName(bannerFile.getOriginalFilename())
@@ -243,9 +243,17 @@ public class ImageManagementService {
                 .build();
                 
         } catch (Exception e) {
-            log.error("Error updating banner for promotion {}: {}", promotionId, e.getMessage());
+            log.error("Error uploading banner for promotion {}: {}", promotionId, e.getMessage());
             throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
         }
+    }
+
+    /**
+     * Upload/Update promotion banner
+     */
+    @Transactional
+    public FileUploadResponse updatePromotionBanner(Long promotionId, MultipartFile bannerFile) {
+        return uploadPromotionBanner(promotionId, bannerFile);
     }
     
     /**
@@ -257,13 +265,13 @@ public class ImageManagementService {
         
         Promotion promotion = promotionRepository.findById(promotionId)
             .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
-        
-        if (promotion.getBannerUrl() != null) {
-            String filePath = supabaseStorageService.extractFilePathFromUrl(promotion.getBannerUrl());
+
+        if (promotion.getBannerImageUrl() != null) {
+            String filePath = supabaseStorageService.extractFilePathFromUrl(promotion.getBannerImageUrl());
             boolean deleted = supabaseStorageService.deleteFile(filePath);
             
             if (deleted) {
-                promotion.setBannerUrl(null);
+                promotion.setBannerImageUrl(null);
                 promotionRepository.save(promotion);
                 log.info("Deleted banner for promotion: {}", promotion.getPromotionName());
             }
@@ -283,8 +291,8 @@ public class ImageManagementService {
         
         Promotion promotion = promotionRepository.findById(promotionId)
             .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
-        
-        return promotion.getBannerUrl();
+
+        return promotion.getBannerImageUrl();
     }
     
     /**
@@ -295,7 +303,7 @@ public class ImageManagementService {
         
         Promotion promotion = promotionRepository.findById(promotionId)
             .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
-        
-        return promotion.getBannerUrl() != null && !promotion.getBannerUrl().trim().isEmpty();
+
+        return promotion.getBannerImageUrl() != null && !promotion.getBannerImageUrl().trim().isEmpty();
     }
 }

@@ -191,7 +191,7 @@ public class BookingResponse {
         private Long promotionId;
         private String promotionCode;
         private String promotionName;
-        private String discountType;
+        private com.swp.MovieTheaterService.enums.DiscountType discountType;
         private Double discountValue;
         private Double appliedDiscount;
     }

@@ -65,6 +65,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // Test endpoints
             "/test/**",
             "/api/test/**",
+            "/api/test/echo",
+            "/api/test/auth",
 
             // Movie endpoints (public read access)
             "/api/movies",
@@ -95,6 +97,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/cinema-rooms/*/seats", // for /api/cinema-rooms/{cinemaRoomId}/seats
             "/api/cinema-rooms/layout/**",
 
+            // Concession endpoints (public read access)
+            "/api/concessions/popcorn",
+            "/api/concessions/drinks",
+            "/api/concessions/category/*",
+            "/api/concessions/in-stock",
+            "/api/concessions/menu",
+            "/api/concessions/*/availability",
+
             // Booking endpoints (guest booking support)
             "/api/bookings/guest",
             "/api/bookings/guest/**",
@@ -110,11 +120,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/seats/release-reservation",
             "/api/seats/status/*",
 
-            // Promotion endpoints (public access)
+            // Promotion endpoints (public read access only)
             "/api/promotions",
             "/api/promotions/active",
             "/api/promotions/*", // for /api/promotions/{promotionId}
-            "/api/promotions/validate",
+            "/api/promotions/code/*", // for /api/promotions/code/{code}
+            "/api/promotions/type/*", // for /api/promotions/type/{type}
+            "/api/promotions/movie/*", // for /api/promotions/movie/{movieId}
+            "/api/promotions/point-based",
+            "/api/promotions/*/banner", // for /api/promotions/{id}/banner
+            "/api/promotions/*/banner/exists", // for /api/promotions/{id}/banner/exists
             "/api/promotions/public/**",
 
             // Loyalty endpoints (public info)
@@ -127,6 +142,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/payment/vnpay/return",
             "/api/payment/vnpay/ipn",
             "/api/payments/calculate-fee",
+
+            // Promotion validation (public access)
+            "/api/promotions/validate",
+            "/api/promotions/validate-code",
 
             // Documentation & API
             "/v3/api-docs/**",

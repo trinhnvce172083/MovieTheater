@@ -120,9 +120,9 @@ public class BookingCreateRequest {
     public BigDecimal getTotalConcessionAmount() {
         if (concessionOrders == null)
             return BigDecimal.ZERO;
-        return concessionOrders.stream()
-                .map(ConcessionOrderRequest::getTotalPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Note: Total price calculation is now handled in service layer
+        // This method returns 0 as price will be calculated from database
+        return BigDecimal.ZERO;
     }
 
     // Helper methods for service layer
