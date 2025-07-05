@@ -714,8 +714,7 @@ export default function CinemaRoomManagement() {
                 showSizeChanger
                 showQuickJumper={false}
                 pageSizeOptions={["5", "10", "20", "50"]}
-                className="professional-pagination"
-                size="small"
+                size="default"
               />
             </div>
           </div>
@@ -904,15 +903,6 @@ export default function CinemaRoomManagement() {
         
         .professional-table .ant-table-tbody > tr:hover > td {
           background: #f8faff;
-        }
-        
-        .professional-pagination .ant-pagination-item-active {
-          background: #1677ff;
-          border-color: #1677ff;
-        }
-        
-        .professional-pagination .ant-pagination-item-active a {
-          color: white;
         }
         
         .professional-modal .ant-modal-header {

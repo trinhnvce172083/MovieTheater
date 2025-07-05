@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { getMovies, createMovie, deleteMovie, getMovieStatistics, type Movie } from "../../../api/admin/getAllMovies";
+import { testAuthAndAPI, testLogin } from "../../../api/admin/testAuth";
 import {
   Card,
   Table,
@@ -63,6 +64,7 @@ export default function AdminMovieManagement() {
   const [pageSize, setPageSize] = useState(10);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isUsingApiData, setIsUsingApiData] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // Add refresh trigger
 
   const [form] = Form.useForm();
   const router = useRouter();
@@ -74,11 +76,58 @@ export default function AdminMovieManagement() {
     avgDuration: 0,
   });
 
+  // Test login function
+  const handleTestLogin = async () => {
+    try {
+      console.log('🔑 Testing admin login...');
+      await testLogin();
+      message.success('Login successful! Refreshing movie data...');
+      // Refresh movies after login
+      fetchMovies();
+    } catch (error) {
+      console.error('Login test failed:', error);
+      message.error('Login failed. Check console for details.');
+    }
+  };
+
+  // Test API connection
+  const handleTestAPI = async () => {
+    try {
+      console.log('🧪 Testing API connection...');
+      await testAuthAndAPI();
+      message.success('API connection successful!');
+      fetchMovies();
+    } catch (error) {
+      console.error('API test failed:', error);
+      message.error('API test failed. Check console for details.');
+    }
+  };
+
+  // Check if user has authentication token
+  const checkAuthToken = (): boolean => {
+    const token = localStorage.getItem('accessToken') ||
+                 localStorage.getItem('access_token') ||
+                 localStorage.getItem('authToken') ||
+                 sessionStorage.getItem('accessToken');
+    
+    console.log("🔍 Auth check - Token found:", token ? "YES" : "NO");
+    if (token) {
+      console.log('Token preview:', token.substring(0, 20) + '...');
+      return true;
+    }
+    
+    return false;
+  };
+
   // Fetch movies from API
   const fetchMovies = useCallback(async () => {
     try {
       setLoading(true);
       console.log('🎬 Starting to fetch movies...');
+      
+      // Check authentication first
+      const hasAuth = checkAuthToken();
+      console.log('🔐 Authentication status:', hasAuth ? 'AUTHENTICATED' : 'NOT AUTHENTICATED');
       
       const params = {
         page: 0, // Get all data for client-side pagination
@@ -87,32 +136,46 @@ export default function AdminMovieManagement() {
         sortDirection: "asc" as const,
       };
       
-      console.log('📡 Calling API with params:', params);
       const response = await getMovies(params);
-      console.log('📥 Movies API Response:', response);
+      console.log('📥 Movies API Response type:', Array.isArray(response) ? 'Array' : 'Object with pagination');
+      console.log('📊 Movies count in response:', Array.isArray(response) ? response.length : response?.content?.length || 0);
       
+      // Check if we got API data or mock data based on response structure and auth status
       if (response && response.content && Array.isArray(response.content)) {
-        console.log('✅ Setting movies from API content:', response.content.length, 'movies');
+        console.log('📥 Setting movie data from paginated response, count:', response.content.length);
         setMovieData(response.content);
-        setIsUsingApiData(true);
+        
+        // Check if this looks like real API data
+        // Real API data should have 12+ movies (based on your database), mock has 8
+        const hasApiStructure = 'totalElements' in response && 'totalPages' in response;
+        const hasValidAuth = hasAuth;
+        const hasCorrectDataCount = response.content.length >= 12; // Your DB has 12 movies
+        const isRealApiData = hasApiStructure && hasValidAuth && hasCorrectDataCount;
+        
+        console.log('🔍 API Detection Details:');
+        console.log('  - Has API structure:', hasApiStructure);
+        console.log('  - Has valid auth:', hasValidAuth);
+        console.log('  - Has correct data count (>=12):', hasCorrectDataCount);
+        console.log('  - Final decision - Real API Data:', isRealApiData);
+        setIsUsingApiData(isRealApiData);
       } else if (response && Array.isArray(response)) {
-        console.log('✅ Setting movies from API direct array:', response.length, 'movies');
+        console.log('📥 Setting movie data from direct array response, count:', response.length);
         setMovieData(response);
-        setIsUsingApiData(true);
+        // Direct array response is likely mock data
+        setIsUsingApiData(false);
       } else {
-        console.log('❌ API returned invalid data structure:', response);
+        console.log('❌ Invalid response structure');
         setMovieData([]);
         setIsUsingApiData(false);
       }
     } catch (error) {
       console.error('❌ Error fetching movies:', error);
-      message.warning('Failed to fetch movies from server');
       setMovieData([]);
       setIsUsingApiData(false);
     } finally {
       setLoading(false);
     }
-  }, []); // Remove dependencies to avoid unnecessary re-fetches
+  }, []);
 
   // Fetch statistics
   const fetchStatistics = useCallback(async () => {
@@ -132,12 +195,10 @@ export default function AdminMovieManagement() {
   }, [movieData]);
 
   useEffect(() => {
-    console.log('🎬 Component mounted, calling fetchMovies');
     fetchMovies();
-  }, [fetchMovies]);
+  }, [fetchMovies, refreshTrigger]);
 
   useEffect(() => {
-    console.log('📊 Movie data changed, calling fetchStatistics. Movie count:', movieData.length);
     fetchStatistics();
   }, [fetchStatistics, movieData.length]);
 
@@ -149,11 +210,7 @@ export default function AdminMovieManagement() {
   // Filter and search logic
   const filteredData = useMemo(() => {
     try {
-      console.log('🔍 Filtering data. Movie data length:', movieData.length);
-      console.log('🔍 Current movieData:', movieData.slice(0, 2)); // Log first 2 movies
-      
       if (!movieData || !Array.isArray(movieData)) {
-        console.log('❌ movieData is not an array:', movieData);
         return [];
       }
 
@@ -196,7 +253,6 @@ export default function AdminMovieManagement() {
   const createMovieHandler = async (movieData: Omit<Movie, 'movieId'>) => {
     try {
       setLoading(true);
-      console.log('Creating movie with data:', movieData);
       
       // Validate required fields
       if (!movieData.title || !movieData.releaseDate) {
@@ -204,26 +260,67 @@ export default function AdminMovieManagement() {
         return false;
       }
       
+      // Use the createMovie API function
       const response = await createMovie(movieData);
-      console.log('Create response:', response);
-      message.success('Movie created successfully');
-      await fetchMovies(); // Refresh the list
-      return true;
-    } catch (error) {
-      console.error('Error creating movie:', error);
       
-      // Handle specific error cases
+      if (response) {
+        console.log('✅ Movie creation response received:', response);
+        message.success('Movie created successfully');
+        
+        // Directly add the new movie to the current state as immediate feedback
+        setMovieData(prevMovies => {
+          const newMovies = [...prevMovies, response];
+          console.log('📊 Updated movieData state directly, new count:', newMovies.length);
+          return newMovies;
+        });
+        
+        // Force a refresh of the movie list with proper state management
+        console.log('🔄 Refreshing movie list after creation...');
+        await fetchMovies();
+        // Also trigger a manual re-render by updating statistics
+        console.log('📊 Refreshing statistics after creation...');
+        await fetchStatistics();
+        // Force component re-render by updating page state and refresh trigger
+        setCurrentPage(1);
+        setRefreshTrigger(prev => prev + 1);
+        console.log('🎉 Movie creation and refresh completed');
+        return true;
+      } else {
+        message.error('Failed to create movie - no response from server');
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error in createMovieHandler:', error);
+      
+      // Handle API errors properly like members management
       if (error && typeof error === 'object' && 'response' in error) {
         const apiError = error as ApiErrorResponse;
-        if (apiError.response?.status === 409) {
-          message.error('A movie with this title already exists. Please use a different title.');
-        } else if (apiError.response?.status === 400) {
-          message.error('Invalid movie data. Please check all fields and try again.');
-        } else {
-          message.error('Failed to create movie. Please try again.');
+        const status = apiError.response?.status;
+        
+        switch (status) {
+          case 400:
+            message.error('Validation error. Please check all required fields are filled correctly.');
+            break;
+          case 401:
+            message.error('Authentication failed. Please login again.');
+            break;
+          case 403:
+            message.error('Access denied. You may not have admin permissions.');
+            break;
+          case 409:
+            message.error('A movie with this title already exists. Please use a different title.');
+            break;
+          case 422:
+            message.error('Invalid data format. Please check your input.');
+            break;
+          case 500:
+            message.error('Server error. Please try again later.');
+            break;
+          default:
+            message.error(`Failed to create movie: ${status || 'Unknown error'}`);
         }
       } else {
-        message.error('Failed to create movie. Please try again.');
+        message.error('Failed to create movie. Please check your network connection.');
       }
       return false;
     } finally {
@@ -234,7 +331,6 @@ export default function AdminMovieManagement() {
   const deleteMovieHandler = async (id: number, title: string) => {
     try {
       setLoading(true);
-      console.log('Deleting movie:', id);
       await deleteMovie(id);
       message.success(`Deleted "${title}" successfully`);
       await fetchMovies(); // Refresh the list
@@ -242,18 +338,32 @@ export default function AdminMovieManagement() {
     } catch (error) {
       console.error('Error deleting movie:', error);
       
-      // Handle specific error cases
+      // Handle specific error cases like members management
       if (error && typeof error === 'object' && 'response' in error) {
         const apiError = error as ApiErrorResponse;
-        if (apiError.response?.status === 404) {
-          message.error('Movie not found. It might have been already deleted.');
-        } else if (apiError.response?.status === 409) {
-          message.error('Cannot delete this movie. It may have active schedules or bookings.');
-        } else {
-          message.error(`Failed to delete "${title}". Please try again.`);
+        const status = apiError.response?.status;
+        
+        switch (status) {
+          case 404:
+            message.error('Movie not found. It might have been already deleted.');
+            break;
+          case 401:
+            message.error('Authentication failed. Please login again.');
+            break;
+          case 403:
+            message.error('Access denied. You may not have admin permissions.');
+            break;
+          case 409:
+            message.error('Cannot delete this movie. It may have active schedules or bookings.');
+            break;
+          case 500:
+            message.error('Server error. Please try again later.');
+            break;
+          default:
+            message.error(`Failed to delete "${title}": ${status || 'Unknown error'}`);
         }
       } else {
-        message.error(`Failed to delete "${title}". Please try again.`);
+        message.error(`Failed to delete "${title}". Please check your network connection.`);
       }
       return false;
     } finally {
@@ -268,42 +378,71 @@ export default function AdminMovieManagement() {
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
-      console.log('Form values:', values);
+      console.log('🎬 Form values received:', values);
       
-      // Transform form data to match API expectations
+      // Transform form data to match backend Movie entity structure
       const movieData = {
-        ...values,
-        releaseDate: values.releaseDate ? values.releaseDate.format('YYYY-MM-DD') : undefined,
-        genre: Array.isArray(values.genres) ? values.genres.join(', ') : values.genres, // Convert genres array to single genre string
-        duration: parseInt(values.duration),
-        price: values.price ? parseFloat(values.price) : undefined,
-        imdbRating: values.imdbRating ? parseFloat(values.imdbRating) : undefined,
-        // Ensure boolean fields are properly converted
+        title: values.title,
+        originalTitle: values.originalTitle || values.title, // Use title as fallback
+        description: values.description || null,
+        duration: values.duration ? parseInt(values.duration) : null,
+        genres: Array.isArray(values.genres) ? values.genres.join(', ') : values.genres, // Backend expects 'genres'
+        director: values.director || null,
+        cast: values.cast || null,
+        language: values.language || "English", // Default to English
+        country: values.country || "USA", // Default to USA
+        releaseDate: values.releaseDate ? values.releaseDate.format('YYYY-MM-DD') : null,
+        endDate: values.endDate ? values.endDate.format('YYYY-MM-DD') : null,
+        rating: values.rating || "PG-13",
+        posterUrl: values.posterUrl || null,
+        backdropUrl: values.backdropUrl || null,
+        trailerUrl: values.trailerUrl || null,
+        isActive: Boolean(values.isActive !== false), // Default to true
         isFeatured: Boolean(values.isFeatured),
-        isActive: Boolean(values.isActive),
+        price: values.price ? parseFloat(values.price) : 0,
+        status: values.status || "COMING_SOON",
+        imdbRating: values.imdbRating ? parseFloat(values.imdbRating) : null,
+        productionCompany: values.productionCompany || null,
+        budget: values.budget ? parseInt(values.budget) : null,
+        boxOffice: values.boxOffice ? parseInt(values.boxOffice) : null,
       };
 
-      // Remove the genres array field since we converted it to genre string
-      delete movieData.genres;
+      console.log('🔧 Transformed movieData for backend:', movieData);
 
-      console.log('🔧 Final movieData being sent to API:', movieData);
+      // Remove truly null/undefined fields but keep false booleans and 0 numbers
+      const cleanedMovieData: Omit<Movie, 'movieId'> = {
+        title: movieData.title,
+        duration: movieData.duration,
+        releaseDate: movieData.releaseDate,
+        rating: movieData.rating,
+        status: movieData.status,
+        // Add optional fields only if they have values
+        ...(movieData.genres && { genres: movieData.genres }),
+        ...(movieData.description && { description: movieData.description }),
+        ...(movieData.posterUrl && { posterUrl: movieData.posterUrl }),
+        ...(movieData.trailerUrl && { trailerUrl: movieData.trailerUrl }),
+        ...(movieData.director && { director: movieData.director }),
+        ...(movieData.cast && { cast: movieData.cast }),
+        ...(movieData.language && { language: movieData.language }),
+        ...(movieData.country && { country: movieData.country }),
+        ...(movieData.productionCompany && { productionCompany: movieData.productionCompany }),
+        ...(movieData.price !== null && movieData.price !== undefined && { price: movieData.price }),
+        ...(movieData.imdbRating !== null && movieData.imdbRating !== undefined && { imdbRating: movieData.imdbRating }),
+        ...(movieData.boxOffice !== null && movieData.boxOffice !== undefined && { boxOffice: movieData.boxOffice }),
+        ...(typeof movieData.isFeatured === 'boolean' && { isFeatured: movieData.isFeatured }),
+      };
 
-      // Remove undefined fields
-      Object.keys(movieData).forEach(key => {
-        if (movieData[key] === undefined) {
-          delete movieData[key];
-        }
-      });
+      console.log('🧹 Cleaned movieData being sent to API:', cleanedMovieData);
 
-      console.log('Creating new movie');
-      const success = await createMovieHandler(movieData);
+      const success = await createMovieHandler(cleanedMovieData);
 
       if (success) {
         setIsModalVisible(false);
         form.resetFields();
+        console.log('🎉 Movie creation completed successfully');
       }
     } catch (error) {
-      console.error('Form validation failed:', error);
+      console.error('❌ Form validation failed:', error);
       message.error('Please check all required fields and try again.');
     }
   };
@@ -490,6 +629,7 @@ export default function AdminMovieManagement() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
+
         {/* Statistics Cards */}
         <Row gutter={[16, 16]} className="mb-6">
           <Col xs={12} sm={12} lg={6}>
@@ -551,29 +691,32 @@ export default function AdminMovieManagement() {
         >
           {/* Header Section */}
           <div className="px-6 py-5 border-b border-gray-100 bg-white flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-            <div>
-              <Title level={2} className="m-0 text-gray-900 text-xl xl:text-2xl">
-                Movie Management
-              </Title>
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-1">
+                <Title level={2} className="m-0 text-gray-900 text-xl xl:text-2xl">
+                  Movie Management
+                </Title>
+              </div>
               <Text type="secondary" className="text-sm xl:text-base">
                 Manage and organize your cinema&apos;s movie collection
               </Text>
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Temporary admin test buttons */}
               <Button
-                icon={<ReloadOutlined />}
-                size="middle"
-                className="h-10 px-4"
-                onClick={() => {
-                  console.log('🔄 Manual refresh triggered');
-                  fetchMovies();
-                  message.info("Refreshing movie data...");
-                }}
-                loading={loading}
-                title="Refresh data from server"
+                onClick={handleTestLogin}
+                size="small"
+                className="bg-orange-500 hover:bg-orange-600 text-white border-0"
               >
-                Refresh Data
+                Test Admin Login
+              </Button>
+              <Button
+                onClick={handleTestAPI}
+                size="small"
+                className="bg-purple-500 hover:bg-purple-600 text-white border-0"
+              >
+                Test API
               </Button>
               <Button
                 type="primary"
@@ -581,6 +724,7 @@ export default function AdminMovieManagement() {
                 size="middle"
                 className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
                 onClick={() => setIsModalVisible(true)}
+                title="Add new movie"
               >
                 Add New Movie
               </Button>
@@ -663,31 +807,6 @@ export default function AdminMovieManagement() {
 
           {/* Table Section */}
           <div className="bg-white">
-            {!isUsingApiData && (
-              <Alert
-                message="API Connection Issue"
-                description={
-                  <div>
-                    <p>Unable to connect to the movie API. Please try refreshing or contact your administrator.</p>
-                    <p><strong>Debug info:</strong> Check browser console for detailed error logs.</p>
-                    <Button 
-                      size="small" 
-                      onClick={() => {
-                        console.log('🔧 Current movie data:', movieData);
-                        console.log('🔧 Is using API data:', isUsingApiData);
-                        console.log('🔧 Loading state:', loading);
-                      }}
-                    >
-                      Log Debug Info
-                    </Button>
-                  </div>
-                }
-                type="warning"
-                className="m-6 mb-0"
-                showIcon
-              />
-            )}
-            
             <Table
               dataSource={paginatedData}
               columns={columns}
@@ -699,9 +818,7 @@ export default function AdminMovieManagement() {
               loading={loading}
               rowKey="movieId"
               locale={{
-                emptyText: isUsingApiData 
-                  ? "No movies found" 
-                  : "No movies available. Please check your connection."
+                emptyText: loading ? "Loading movies..." : "No movies found"
               }}
             />
 
@@ -723,8 +840,7 @@ export default function AdminMovieManagement() {
                 showSizeChanger
                 showQuickJumper={false}
                 pageSizeOptions={["5", "10", "20", "50"]}
-                className="professional-pagination"
-                size="small"
+                size="default"
               />
             </div>
           </div>
@@ -763,6 +879,7 @@ export default function AdminMovieManagement() {
             isFeatured: false,
           }}
         >
+          {/* Essential Movie Information */}
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
@@ -773,16 +890,13 @@ export default function AdminMovieManagement() {
                 <Input placeholder="Enter movie title" className="h-10" />
               </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
-                name="posterUrl"
-                label="Poster URL"
-                rules={[{ type: 'url', message: 'Please enter a valid URL' }]}
+                name="releaseDate"
+                label="Release Date"
+                rules={[{ required: true, message: "Please select release date" }]}
               >
-                <Input placeholder="Enter poster URL" className="h-10" />
+                <DatePicker className="w-full h-10" />
               </Form.Item>
             </Col>
           </Row>
@@ -802,72 +916,10 @@ export default function AdminMovieManagement() {
               </Form.Item>
             </Col>
           </Row>
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="productionCompany"
-                label="Production Company"
-                rules={[{ required: true, message: "Please enter production company" }]}
-              >
-                <Input placeholder="Enter production company" className="h-10" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="releaseDate"
-                label="Release Date"
-                rules={[{ required: true, message: "Please select release date" }]}
-              >
-                <DatePicker className="w-full h-10" />
-              </Form.Item>
-            </Col>
-          </Row>
 
+          {/* Core Movie Details */}
           <Row gutter={16}>
             <Col xs={24} sm={8}>
-              <Form.Item
-                name="director"
-                label="Director"
-              >
-                <Input placeholder="Enter director name" className="h-10" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Form.Item
-                name="language"
-                label="Language"
-              >
-                <Input placeholder="e.g., English, Vietnamese" className="h-10" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Form.Item
-                name="country"
-                label="Country"
-              >
-                <Input placeholder="e.g., USA, Vietnam" className="h-10" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24}>
-              <Form.Item
-                name="cast"
-                label="Cast"
-              >
-                <TextArea 
-                  rows={2} 
-                  placeholder="Enter main cast members (comma separated)"
-                  showCount
-                  maxLength={300}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={6}>
               <Form.Item
                 name="duration"
                 label="Duration (minutes)"
@@ -884,7 +936,7 @@ export default function AdminMovieManagement() {
                 />
               </Form.Item>
             </Col>
-            <Col xs={24} sm={6}>
+            <Col xs={24} sm={8}>
               <Form.Item
                 name="rating"
                 label="Rating"
@@ -899,7 +951,7 @@ export default function AdminMovieManagement() {
                 </Select>
               </Form.Item>
             </Col>
-            <Col xs={24} sm={6}>
+            <Col xs={24} sm={8}>
               <Form.Item
                 name="price"
                 label="Ticket Price (VND)"
@@ -913,20 +965,6 @@ export default function AdminMovieManagement() {
                   className="w-full h-10"
                   min={0}
                   controls={false}
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={6}>
-              <Form.Item
-                name="imdbRating"
-                label="IMDB Rating"
-              >
-                <InputNumber 
-                  placeholder="0.0 - 10.0" 
-                  className="w-full h-10"
-                  min={0}
-                  max={10}
-                  step={0.1}
                 />
               </Form.Item>
             </Col>
@@ -975,23 +1013,27 @@ export default function AdminMovieManagement() {
             </Col>
             <Col xs={24} sm={8}>
               <Form.Item
-                name="trailerUrl"
-                label="Trailer URL"
-                rules={[{ type: 'url', message: 'Please enter a valid URL' }]}
+                name="director"
+                label="Director"
               >
-                <Input placeholder="Enter trailer URL" className="h-10" />
+                <Input placeholder="Enter director name" className="h-10" />
               </Form.Item>
             </Col>
           </Row>
 
+          {/* Media & Settings */}
           <Row gutter={16}>
-            <Col xs={24} sm={8}>
-              <Form.Item name="isFeatured" label="Featured Movie" valuePropName="checked">
-                <Switch />
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="posterUrl"
+                label="Poster URL (Optional)"
+                rules={[{ type: 'url', message: 'Please enter a valid URL' }]}
+              >
+                <Input placeholder="Enter poster URL" className="h-10" />
               </Form.Item>
             </Col>
-            <Col xs={24} sm={8}>
-              <Form.Item name="isActive" label="Active" valuePropName="checked">
+            <Col xs={24} sm={12}>
+              <Form.Item name="isFeatured" label="Featured Movie" valuePropName="checked">
                 <Switch />
               </Form.Item>
             </Col>
@@ -999,36 +1041,7 @@ export default function AdminMovieManagement() {
         </Form>
       </Modal>
 
-      <style jsx global>{`
-        .professional-table .ant-table-thead > tr > th {
-          background: #fafafa;
-          border-bottom: 2px solid #f0f0f0;
-          font-weight: 600;
-          color: #262626;
-        }
-        
-        .professional-table .ant-table-tbody > tr:hover > td {
-          background: #f8faff;
-        }
-        
-        .professional-pagination .ant-pagination-item-active {
-          background: #1677ff;
-          border-color: #1677ff;
-        }
-        
-        .professional-pagination .ant-pagination-item-active a {
-          color: white;
-        }
-        
-        .professional-modal .ant-modal-header {
-          border-bottom: 1px solid #f0f0f0;
-          padding: 24px 24px 16px;
-        }
-        
-        .professional-modal .ant-modal-body {
-          padding: 24px;
-        }
-      `}</style>
+
     </div>
   );
 }

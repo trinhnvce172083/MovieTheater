@@ -221,7 +221,6 @@ const MemberFormModal: React.FC<MemberFormModalProps> = ({
                 className="h-10"
                 disabled={!!editingMember}
               >
-                <Option value="ADMIN">Admin</Option>
                 <Option value="EMPLOYEE">Employee</Option>
                 <Option value="MEMBER">Member</Option>
                 <Option value="CUSTOMER">Customer</Option>

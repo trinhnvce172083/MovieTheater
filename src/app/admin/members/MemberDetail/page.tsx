@@ -327,7 +327,10 @@ const MemberDetailPage: React.FC = () => {
         <div className="grid grid-cols-12 gap-10 mb-12">
           {/* Profile Summary Card */}
           <div className="col-span-12 lg:col-span-4">
-            <Card className="text-center border-0 shadow-sm bg-white/80 backdrop-blur-sm" bodyStyle={{ padding: '40px 32px' }}>
+            <Card 
+              className="text-center border-0 shadow-sm bg-white/80 backdrop-blur-sm" 
+              styles={{ body: { padding: '40px 32px' } }}
+            >
               <div className="mb-8">
                 <div className="relative inline-block">
                   <Avatar
@@ -387,12 +390,14 @@ const MemberDetailPage: React.FC = () => {
                 </div>
               } 
               className="border-0 shadow-sm bg-white/80 backdrop-blur-sm"
-              headStyle={{ 
-                backgroundColor: 'transparent', 
-                borderBottom: '1px solid #f1f5f9',
-                padding: '24px 32px 16px 32px'
+              styles={{ 
+                header: { 
+                  backgroundColor: 'transparent', 
+                  borderBottom: '1px solid #f1f5f9',
+                  padding: '24px 32px 16px 32px'
+                },
+                body: { padding: '32px' }
               }}
-              bodyStyle={{ padding: '32px' }}
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
@@ -464,12 +469,14 @@ const MemberDetailPage: React.FC = () => {
                 </div>
               }
               className="border-0 shadow-sm bg-white/80 backdrop-blur-sm"
-              headStyle={{ 
-                backgroundColor: 'transparent', 
-                borderBottom: '1px solid #f1f5f9',
-                padding: '24px 32px 16px 32px'
+              styles={{ 
+                header: { 
+                  backgroundColor: 'transparent', 
+                  borderBottom: '1px solid #f1f5f9',
+                  padding: '24px 32px 16px 32px'
+                },
+                body: { padding: '32px' }
               }}
-              bodyStyle={{ padding: '32px' }}
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">

@@ -204,8 +204,7 @@ export default function AdminMemberManagement() {
                 showSizeChanger
                 showQuickJumper={false}
                 pageSizeOptions={["5", "10", "20", "50"]}
-                className="professional-pagination"
-                size="small"
+                size="default"
               />
             </div>
           </div>
