@@ -109,11 +109,43 @@ public class SecurityConfig {
                                 // =================== PUBLIC READ ACCESS ===================
                                 // GET operations for movies, schedules, cinema-rooms (public read)
                                 .requestMatchers(HttpMethod.GET,
-                                        "/api/movies/**", // GET movies (public read)
-                                        "/api/schedules/**", // GET schedules (public read)
-                                        "/api/cinema-rooms/**", // GET cinema-rooms (public read)
-                                        "/api/concessions/**", // GET concessions (public read)
-                                        "/api/promotions/**", // GET promotions (public read)
+                                        // Public movie endpoints (cụ thể)
+                                        "/api/movies", // GET all movies
+                                        "/api/movies/search", // GET search movies
+                                        "/api/movies/filter", // GET filter movies
+                                        "/api/movies/now-showing", // GET now showing movies
+                                        "/api/movies/coming-soon", // GET coming soon movies
+                                        "/api/movies/popular", // GET popular movies
+                                        "/api/movies/genre/*", // GET movies by genre
+                                        "/api/movies/status-options", // GET status options
+                                        "/api/movies/*", // GET movie by ID (cụ thể hơn)
+
+                                        // Public schedule endpoints
+                                        "/api/schedules", // GET all schedules
+                                        "/api/schedules/search", // GET search schedules
+                                        "/api/schedules/filter", // GET filter schedules
+                                        "/api/schedules/by-movie/*", // GET schedules by movie
+                                        "/api/schedules/by-cinema-room/*", // GET schedules by room
+                                        "/api/schedules/by-date", // GET schedules by date
+                                        "/api/schedules/available-dates", // GET available dates
+                                        "/api/schedules/available-times", // GET available times
+                                        "/api/schedules/*", // GET schedule by ID
+
+                                        // Public cinema room endpoints
+                                        "/api/cinema-rooms", // GET all rooms
+                                        "/api/cinema-rooms/search", // GET search rooms
+                                        "/api/cinema-rooms/filter", // GET filter rooms
+                                        "/api/cinema-rooms/*", // GET room by ID
+
+                                        // Public concession endpoints
+                                        "/api/concessions", // GET all concessions
+                                        "/api/concessions/search", // GET search concessions
+                                        "/api/concessions/filter", // GET filter concessions
+                                        "/api/concessions/category/*", // GET concessions by category
+                                        "/api/concessions/*", // GET concession by ID
+
+                                        // Public promotion endpoints
+                                        "/api/promotions", // GET all promotions
                                         "/api/promotions/active", // GET active promotions
                                         "/api/promotions/code/*", // GET promotion by code
                                         "/api/promotions/type/*", // GET promotions by type
@@ -153,24 +185,76 @@ public class SecurityConfig {
                                 ).hasRole("ADMIN")
 
                                 // =================== ADMIN MOVIE MANAGEMENT ===================
-                                .requestMatchers(HttpMethod.POST, "/api/movies/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.PUT, "/api/movies/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.DELETE, "/api/movies/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/api/movies/statistics").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/api/movies/status-update-stats").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.POST, "/api/movies/auto-update-status").hasRole("ADMIN")
+                                // Admin movie endpoints (ưu tiên trước public endpoints)
+                                // .requestMatchers(HttpMethod.POST, 
+                                //         "/api/movies", // POST - Create movie
+                                //         "/api/movies/with-images", // POST - Create with images
+                                //         "/api/movies/*/poster", // POST - Upload poster
+                                //         "/api/movies/*/backdrop", // POST - Upload backdrop
+                                //         "/api/movies/*/with-images" // POST - Update with images
+                                // ).hasRole("ADMIN")
+                                // 
+                                // .requestMatchers(HttpMethod.PUT, 
+                                //         "/api/movies/*", // PUT - Update movie
+                                //         "/api/movies/*/with-images" // PUT - Update with images
+                                // ).hasRole("ADMIN")
+                                // 
+                                // .requestMatchers(HttpMethod.DELETE, 
+                                //         "/api/movies/*", // DELETE - Delete movie
+                                //         "/api/movies/*/poster", // DELETE - Delete poster
+                                //         "/api/movies/*/backdrop" // DELETE - Delete backdrop
+                                // ).hasRole("ADMIN")
+                                // 
+                                // .requestMatchers(HttpMethod.GET, 
+                                //         "/api/movies/statistics", // GET - Movie statistics
+                                //         "/api/movies/status-update-stats" // GET - Status update stats
+                                // ).hasRole("ADMIN")
+                                // 
+                                // .requestMatchers(HttpMethod.POST, 
+                                //         "/api/movies/auto-update-status" // POST - Auto update status
+                                // ).hasRole("ADMIN")
 
                                 // =================== ADMIN SCHEDULE MANAGEMENT ===================
-                                .requestMatchers(HttpMethod.POST, "/api/schedules/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.PUT, "/api/schedules/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.DELETE, "/api/schedules/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/api/schedules/statistics").hasRole("ADMIN")
+                                // Admin schedule endpoints (ưu tiên trước public endpoints)
+                                .requestMatchers(HttpMethod.POST,
+                                        "/api/schedules", // POST - Create schedule
+                                        "/api/schedules/batch", // POST - Create batch schedules
+                                        "/api/schedules/auto-generate" // POST - Auto generate schedules
+                                ).hasRole("ADMIN")
+
+                                .requestMatchers(HttpMethod.PUT,
+                                        "/api/schedules/*", // PUT - Update schedule
+                                        "/api/schedules/*/status" // PUT - Update schedule status
+                                ).hasRole("ADMIN")
+
+                                .requestMatchers(HttpMethod.DELETE,
+                                        "/api/schedules/*", // DELETE - Delete schedule
+                                        "/api/schedules/batch/*" // DELETE - Delete batch schedules
+                                ).hasRole("ADMIN")
+
+                                .requestMatchers(HttpMethod.GET,
+                                        "/api/schedules/statistics" // GET - Schedule statistics
+                                ).hasRole("ADMIN")
 
                                 // =================== ADMIN CINEMA ROOM MANAGEMENT ===================
-                                .requestMatchers(HttpMethod.POST, "/api/cinema-rooms/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.PUT, "/api/cinema-rooms/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.DELETE, "/api/cinema-rooms/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/api/cinema-rooms/statistics").hasRole("ADMIN")
+                                // Admin cinema room endpoints (ưu tiên trước public endpoints)
+                                .requestMatchers(HttpMethod.POST,
+                                        "/api/cinema-rooms", // POST - Create cinema room
+                                        "/api/cinema-rooms/with-seats" // POST - Create with seats
+                                ).hasRole("ADMIN")
+
+                                .requestMatchers(HttpMethod.PUT,
+                                        "/api/cinema-rooms/*", // PUT - Update cinema room
+                                        "/api/cinema-rooms/*/seats" // PUT - Update seats
+                                ).hasRole("ADMIN")
+
+                                .requestMatchers(HttpMethod.DELETE,
+                                        "/api/cinema-rooms/*" // DELETE - Delete cinema room
+                                ).hasRole("ADMIN")
+
+                                .requestMatchers(HttpMethod.GET,
+                                        "/api/cinema-rooms/statistics" // GET - Cinema room statistics
+                                ).hasRole("ADMIN")
 
                                 // =================== ADMIN CONCESSION MANAGEMENT ===================
                                 .requestMatchers(HttpMethod.POST,
@@ -299,6 +383,9 @@ public class SecurityConfig {
                                         "/api/test/test-member", // Test member access
                                         "/api/test/test-employee" // Test employee access
                                 ).authenticated()
+
+                                // =================== DEBUG: PERMIT ALL MOVIE ENDPOINTS ===================
+                                .requestMatchers("/api/movies/**").permitAll()
 
                                 // =================== DEFAULT ===================
                                 // Tất cả requests khác cần authentication

@@ -414,6 +414,62 @@ public class TestController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/debug-token")
+    @Operation(summary = "Debug token info", description = "Debug JWT token information")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<Map<String, Object>> debugToken() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Map<String, Object> debugInfo = new HashMap<>();
+
+        debugInfo.put("username", auth.getName());
+        debugInfo.put("authorities", auth.getAuthorities().stream()
+                .map(Object::toString)
+                .collect(java.util.stream.Collectors.toList()));
+        debugInfo.put("isAuthenticated", auth.isAuthenticated());
+        debugInfo.put("principal", auth.getPrincipal().getClass().getSimpleName());
+
+        // Get user details if available
+        if (auth.getPrincipal() instanceof org.springframework.security.core.userdetails.UserDetails) {
+            org.springframework.security.core.userdetails.UserDetails userDetails =
+                    (org.springframework.security.core.userdetails.UserDetails) auth.getPrincipal();
+            debugInfo.put("userDetails", Map.of(
+                    "username", userDetails.getUsername(),
+                    "authorities", userDetails.getAuthorities().stream()
+                            .map(Object::toString)
+                            .collect(java.util.stream.Collectors.toList()),
+                    "enabled", userDetails.isEnabled(),
+                    "accountNonExpired", userDetails.isAccountNonExpired(),
+                    "accountNonLocked", userDetails.isAccountNonLocked(),
+                    "credentialsNonExpired", userDetails.isCredentialsNonExpired()
+            ));
+        }
+
+        return ResponseEntity.ok(debugInfo);
+    }
+
+    @GetMapping("/debug-role")
+    @Operation(summary = "Debug role access", description = "Test different role access patterns")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<Map<String, Object>> debugRole() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Map<String, Object> roleInfo = new HashMap<>();
+
+        roleInfo.put("username", auth.getName());
+        roleInfo.put("hasRoleAdmin", auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
+        roleInfo.put("hasRoleMember", auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_MEMBER")));
+        roleInfo.put("hasRoleEmployee", auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_EMPLOYEE")));
+        roleInfo.put("hasRoleCustomer", auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER")));
+        roleInfo.put("allAuthorities", auth.getAuthorities().stream()
+                .map(Object::toString)
+                .collect(java.util.stream.Collectors.toList()));
+
+        return ResponseEntity.ok(roleInfo);
+    }
+
     // Simple POJO class for testing
     public static class TestMinimalRequest {
         public String username;

@@ -26,7 +26,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -54,7 +53,6 @@ public class MovieController {
     private final MovieStatusScheduler movieStatusScheduler;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create new movie", description = "Create a new movie (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<MovieResponse> createMovie(@RequestBody MovieCreateRequest request) {
@@ -65,7 +63,6 @@ public class MovieController {
     }
 
     @PostMapping(value = "/with-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create movie with images", description = "Create a new movie with poster and backdrop images (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<MovieResponse> createMovieWithImages(
@@ -104,7 +101,6 @@ public class MovieController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update movie", description = """
             Update an existing movie with smart field updating (Admin only)
 
@@ -142,7 +138,6 @@ public class MovieController {
     }
 
     @PutMapping(value = "/{id}/with-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update movie with images", description = "Update movie data and upload new images (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<MovieResponse> updateMovieWithImages(
@@ -190,7 +185,6 @@ public class MovieController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete movie", description = "Delete a movie (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> deleteMovie(@PathVariable Long id) {
@@ -280,7 +274,6 @@ public class MovieController {
     }
 
     @GetMapping("/statistics")
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get movie statistics", description = "Get movie statistics (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<MovieService.MovieStatistics> getMovieStatistics() {
@@ -291,7 +284,6 @@ public class MovieController {
     }
 
     @PostMapping("/auto-update-status")
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Auto update movie status", description = "Manually trigger auto update movie status based on current date (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Map<String, Object>> autoUpdateMovieStatus() {
@@ -309,7 +301,6 @@ public class MovieController {
     }
 
     @GetMapping("/status-update-stats")
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get movie status update statistics", description = "Get statistics about movie status updates (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<MovieStatusScheduler.MovieStatusUpdateStats> getStatusUpdateStats() {
@@ -339,7 +330,6 @@ public class MovieController {
     // =============== IMAGE MANAGEMENT ENDPOINTS ===============
     
     @PostMapping("/{id}/poster")
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Upload movie poster", description = "Upload poster image for a movie (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<String> uploadMoviePoster(
@@ -352,7 +342,6 @@ public class MovieController {
     }
     
     @PostMapping("/{id}/backdrop")
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Upload movie backdrop", description = "Upload backdrop image for a movie (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<String> uploadMovieBackdrop(
@@ -365,7 +354,6 @@ public class MovieController {
     }
     
     @DeleteMapping("/{id}/poster")
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete movie poster", description = "Delete poster image of a movie (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<String> deleteMoviePoster(@PathVariable Long id) {
@@ -376,7 +364,6 @@ public class MovieController {
     }
     
     @DeleteMapping("/{id}/backdrop")
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete movie backdrop", description = "Delete backdrop image of a movie (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<String> deleteMovieBackdrop(@PathVariable Long id) {
