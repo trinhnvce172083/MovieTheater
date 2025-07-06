@@ -5,7 +5,6 @@ export const refreshToken = async (refreshToken: string) => {
     const response = await axiosClient.post("/auth/refresh-token", {
       refreshToken,
     });
-    console.log("Token refreshed successfully:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error refreshing token:", error);

@@ -10,6 +10,8 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useRouter } from 'next/navigation';
 import ROUTES from '@/constants/routes';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 interface Concession {
   id: number;
@@ -27,13 +29,13 @@ export default function CornChipPage() {
   const bookingData = useSelector((state: RootState) => state.booking);
   const router = useRouter();
 
-  // Kiểm tra dữ liệu booking
-  useEffect(() => {
-    if (!bookingData.scheduleId || bookingData.selectedSeats.length === 0) {
-      router.replace(ROUTES.MOVIES);
-      return;
-    }
-  }, [bookingData.scheduleId, bookingData.selectedSeats.length, router]);
+  // // Kiểm tra dữ liệu booking
+  // useEffect(() => {
+  //   if (!bookingData.scheduleId || bookingData.selectedSeats.length === 0) {
+  //     router.replace(ROUTES.MOVIES);
+  //     return;
+  //   }
+  // }, [bookingData.scheduleId, bookingData.selectedSeats.length, router]);
 
   // Lấy danh sách concessions
   useEffect(() => {
@@ -92,8 +94,8 @@ export default function CornChipPage() {
   return (
     <>
       <Header />
-      <div className="bg-gray-900 text-white min-h-screen p-8">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="bg-[#151a23] text-white min-h-screen px-8 pt-2">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 bg-[#151a23] rounded-xl">
           <ConcessionsList
             concessions={concessions}
             quantities={quantities}
@@ -101,11 +103,13 @@ export default function CornChipPage() {
             loading={loading}
             error={error}
           />
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 h-full flex items-stretch">
             <OrderSummary 
               movieDetails={movieDetails} 
               totalOrder={totalOrder}
               bookingData={bookingData}
+              concessions={concessions}
+              quantities={quantities}
             />
           </div>
         </div>

@@ -3,8 +3,17 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import ROUTES from '@/constants/routes';
+import { ArrowLeft } from 'lucide-react';
 
-export default function OrderSummary({ movieDetails, totalOrder, bookingData }) {
+interface OrderSummaryProps {
+  movieDetails: any;
+  totalOrder: number;
+  bookingData: any;
+  concessions: any[];
+  quantities: { [key: number]: number };
+}
+
+const OrderSummary = ({ movieDetails, totalOrder, bookingData, concessions, quantities }: OrderSummaryProps) => {
   const router = useRouter();
 
   const handleCheckout = () => {
@@ -15,37 +24,52 @@ export default function OrderSummary({ movieDetails, totalOrder, bookingData }) 
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-      {movieDetails.image && (
-        <div className="mb-4 flex justify-center">
-          <div className="w-full rounded-lg flex items-center justify-center overflow-hidden">
-            <Image
-              src={movieDetails.image}
-              alt={movieDetails.title}
-              width={400}
-              height={600}
-              style={{ width: '100%', height: 'auto', maxWidth: '100%', objectFit: 'cover', borderRadius: '0.5rem', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}
-              priority
-            />
-          </div>
-        </div>
-      )}
-      <h2 className="text-xl font-bold mb-4">Order Summary</h2>
+    <div className="bg-white text-black rounded-xl shadow-lg p-6 h-full flex flex-col">
+      {/* Ảnh phim */}
       <div className="mb-4">
+        <img src={movieDetails.image || '/popcorn.jpg'} alt={movieDetails.title} className="w-full h-32 object-cover rounded" />
+      </div>
+      <div className="font-bold text-lg mb-2">Order Summary</div>
+      <div className="mb-2">
         <div className="font-semibold">{movieDetails.title}</div>
-        <div className="text-sm text-gray-400">{movieDetails.date}</div>
-        <div className="text-sm text-gray-400">{movieDetails.details}</div>
+        <div className="text-sm text-gray-500">{movieDetails.date}</div>
+        <div className="text-sm text-gray-500">{movieDetails.details}</div>
       </div>
-      <div className="flex justify-between items-center mt-6">
-        <span className="font-semibold">Total:</span>
-        <span className="text-lg font-bold text-yellow-400">{totalOrder.toLocaleString('vi-VN')} VND</span>
+      {/* Danh sách món đã chọn */}
+      <div className="mb-2">
+        {concessions.filter(item => quantities[item.id] > 0).length > 0 ? (
+          concessions.filter(item => quantities[item.id] > 0).map(item => (
+            <div key={item.id} className="flex items-center gap-2 mb-2">
+              <img src={item.imageUrl || '/popcorn.jpg'} alt={item.name} className="w-8 h-8 object-cover rounded bg-white border" />
+              <span className="flex-1">{item.name} x {quantities[item.id]}</span>
+              <span>{(item.price * quantities[item.id]).toLocaleString()} VND</span>
+            </div>
+          ))
+        ) : (
+          <div className="text-gray-400 text-sm">Chưa chọn món nào</div>
+        )}
       </div>
-      <Button 
-        className="mt-6 w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded transition"
-        onClick={handleCheckout}
-      >
-        Checkout
-      </Button>
+      <div className="font-bold text-right text-lg mt-4 mb-2">
+        Total: <span className="text-yellow-600">{totalOrder.toLocaleString()} VND</span>
+      </div>
+      <div className="flex gap-4 mt-4">
+        <Button
+          variant="outline"
+          size="lg"
+          className="bg-white text-black border-gray-300 hover:bg-gray-100"
+          onClick={() => router.push('/booking/seat-selection')}
+        >
+          <ArrowLeft />
+        </Button>
+        <Button 
+          className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 rounded"
+          onClick={handleCheckout}
+        >
+          Checkout
+        </Button>
+      </div>
     </div>
   );
-} 
+};
+
+export default OrderSummary; 

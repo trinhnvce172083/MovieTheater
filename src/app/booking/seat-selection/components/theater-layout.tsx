@@ -75,7 +75,7 @@ const TheaterLayout: React.FC<TheaterLayoutProps> = ({
   const allRows = Object.keys(rows).sort((a, b) => Number(a) - Number(b));
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
+    <div className="bg-gray-50 rounded-lg w-full max-w-3xl mx-auto p-4">
       <div className="w-3/4 h-8 bg-gray-300 mx-auto mb-8 rounded-lg flex items-center justify-center text-gray-600 font-medium shadow">
         Screen
       </div>
