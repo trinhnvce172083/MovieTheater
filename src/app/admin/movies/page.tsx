@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { getMovies, createMovie, deleteMovie, getMovieStatistics, type Movie } from "../../../api/admin/getAllMovies";
-import { testAuthAndAPI, testLogin } from "../../../api/admin/testAuth";
 import {
   Card,
   Table,
@@ -77,32 +76,6 @@ export default function AdminMovieManagement() {
   });
 
   // Test login function
-  const handleTestLogin = async () => {
-    try {
-      console.log('🔑 Testing admin login...');
-      await testLogin();
-      message.success('Login successful! Refreshing movie data...');
-      // Refresh movies after login
-      fetchMovies();
-    } catch (error) {
-      console.error('Login test failed:', error);
-      message.error('Login failed. Check console for details.');
-    }
-  };
-
-  // Test API connection
-  const handleTestAPI = async () => {
-    try {
-      console.log('🧪 Testing API connection...');
-      await testAuthAndAPI();
-      message.success('API connection successful!');
-      fetchMovies();
-    } catch (error) {
-      console.error('API test failed:', error);
-      message.error('API test failed. Check console for details.');
-    }
-  };
-
   // Check if user has authentication token
   const checkAuthToken = (): boolean => {
     const token = localStorage.getItem('accessToken') ||
@@ -110,66 +83,42 @@ export default function AdminMovieManagement() {
                  localStorage.getItem('authToken') ||
                  sessionStorage.getItem('accessToken');
     
-    console.log("🔍 Auth check - Token found:", token ? "YES" : "NO");
-    if (token) {
-      console.log('Token preview:', token.substring(0, 20) + '...');
-      return true;
-    }
-    
-    return false;
+    return !!token;
   };
 
   // Fetch movies from API
   const fetchMovies = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🎬 Starting to fetch movies...');
       
-      // Check authentication first
       const hasAuth = checkAuthToken();
-      console.log('🔐 Authentication status:', hasAuth ? 'AUTHENTICATED' : 'NOT AUTHENTICATED');
       
       const params = {
-        page: 0, // Get all data for client-side pagination
-        size: 100, // Get more data at once
+        page: 0,
+        size: 100,
         sortBy: "title",
         sortDirection: "asc" as const,
       };
       
       const response = await getMovies(params);
-      console.log('📥 Movies API Response type:', Array.isArray(response) ? 'Array' : 'Object with pagination');
-      console.log('📊 Movies count in response:', Array.isArray(response) ? response.length : response?.content?.length || 0);
       
-      // Check if we got API data or mock data based on response structure and auth status
       if (response && response.content && Array.isArray(response.content)) {
-        console.log('📥 Setting movie data from paginated response, count:', response.content.length);
         setMovieData(response.content);
         
-        // Check if this looks like real API data
-        // Real API data should have 12+ movies (based on your database), mock has 8
         const hasApiStructure = 'totalElements' in response && 'totalPages' in response;
         const hasValidAuth = hasAuth;
-        const hasCorrectDataCount = response.content.length >= 12; // Your DB has 12 movies
+        const hasCorrectDataCount = response.content.length >= 12;
         const isRealApiData = hasApiStructure && hasValidAuth && hasCorrectDataCount;
         
-        console.log('🔍 API Detection Details:');
-        console.log('  - Has API structure:', hasApiStructure);
-        console.log('  - Has valid auth:', hasValidAuth);
-        console.log('  - Has correct data count (>=12):', hasCorrectDataCount);
-        console.log('  - Final decision - Real API Data:', isRealApiData);
         setIsUsingApiData(isRealApiData);
       } else if (response && Array.isArray(response)) {
-        console.log('📥 Setting movie data from direct array response, count:', response.length);
         setMovieData(response);
-        // Direct array response is likely mock data
         setIsUsingApiData(false);
       } else {
-        console.log('❌ Invalid response structure');
         setMovieData([]);
         setIsUsingApiData(false);
       }
     } catch (error) {
-      console.error('❌ Error fetching movies:', error);
       setMovieData([]);
       setIsUsingApiData(false);
     } finally {
@@ -183,8 +132,6 @@ export default function AdminMovieManagement() {
       const stats = await getMovieStatistics();
       setStatistics(stats);
     } catch (error) {
-      console.error("Error fetching statistics:", error);
-      // Use fallback statistics
       const totalMovies = movieData.length;
       const activeMovies = movieData.filter(m => m.status === "NOW_SHOWING").length;
       const totalPrice = movieData.reduce((sum, m) => sum + (m.price || 0), 0);
@@ -224,7 +171,6 @@ export default function AdminMovieManagement() {
 
           const matchesStatus = !filterStatus || movie.status === filterStatus;
 
-          // Handle genres
           const movieGenres = movie.genre 
             ? movie.genre.split(',').map(g => g.trim())
             : (movie.genres ? movie.genres.split(',').map(g => g.trim()) : []);
@@ -232,12 +178,10 @@ export default function AdminMovieManagement() {
 
           return matchesSearch && matchesStatus && matchesGenre;
         } catch (error) {
-          console.error('Error filtering movie:', movie, error);
           return false;
         }
       });
     } catch (error) {
-      console.error('Error in filteredData calculation:', error);
       return [];
     }
   }, [searchTerm, filterStatus, filterGenre, movieData]);
@@ -260,39 +204,27 @@ export default function AdminMovieManagement() {
         return false;
       }
       
-      // Use the createMovie API function
       const response = await createMovie(movieData);
       
       if (response) {
-        console.log('✅ Movie creation response received:', response);
         message.success('Movie created successfully');
         
-        // Directly add the new movie to the current state as immediate feedback
         setMovieData(prevMovies => {
           const newMovies = [...prevMovies, response];
-          console.log('📊 Updated movieData state directly, new count:', newMovies.length);
           return newMovies;
         });
         
-        // Force a refresh of the movie list with proper state management
-        console.log('🔄 Refreshing movie list after creation...');
         await fetchMovies();
-        // Also trigger a manual re-render by updating statistics
-        console.log('📊 Refreshing statistics after creation...');
         await fetchStatistics();
-        // Force component re-render by updating page state and refresh trigger
         setCurrentPage(1);
         setRefreshTrigger(prev => prev + 1);
-        console.log('🎉 Movie creation and refresh completed');
         return true;
       } else {
         message.error('Failed to create movie - no response from server');
         return false;
       }
     } catch (error) {
-      console.error('❌ Error in createMovieHandler:', error);
       
-      // Handle API errors properly like members management
       if (error && typeof error === 'object' && 'response' in error) {
         const apiError = error as ApiErrorResponse;
         const status = apiError.response?.status;
@@ -333,12 +265,10 @@ export default function AdminMovieManagement() {
       setLoading(true);
       await deleteMovie(id);
       message.success(`Deleted "${title}" successfully`);
-      await fetchMovies(); // Refresh the list
+      await fetchMovies();
       return true;
     } catch (error) {
-      console.error('Error deleting movie:', error);
       
-      // Handle specific error cases like members management
       if (error && typeof error === 'object' && 'response' in error) {
         const apiError = error as ApiErrorResponse;
         const status = apiError.response?.status;
@@ -378,7 +308,6 @@ export default function AdminMovieManagement() {
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
-      console.log('🎬 Form values received:', values);
       
       // Transform form data to match backend Movie entity structure
       const movieData = {
@@ -407,8 +336,6 @@ export default function AdminMovieManagement() {
         boxOffice: values.boxOffice ? parseInt(values.boxOffice) : null,
       };
 
-      console.log('🔧 Transformed movieData for backend:', movieData);
-
       // Remove truly null/undefined fields but keep false booleans and 0 numbers
       const cleanedMovieData: Omit<Movie, 'movieId'> = {
         title: movieData.title,
@@ -432,17 +359,13 @@ export default function AdminMovieManagement() {
         ...(typeof movieData.isFeatured === 'boolean' && { isFeatured: movieData.isFeatured }),
       };
 
-      console.log('🧹 Cleaned movieData being sent to API:', cleanedMovieData);
-
       const success = await createMovieHandler(cleanedMovieData);
 
       if (success) {
         setIsModalVisible(false);
         form.resetFields();
-        console.log('🎉 Movie creation completed successfully');
       }
     } catch (error) {
-      console.error('❌ Form validation failed:', error);
       message.error('Please check all required fields and try again.');
     }
   };
@@ -703,21 +626,6 @@ export default function AdminMovieManagement() {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Temporary admin test buttons */}
-              <Button
-                onClick={handleTestLogin}
-                size="small"
-                className="bg-orange-500 hover:bg-orange-600 text-white border-0"
-              >
-                Test Admin Login
-              </Button>
-              <Button
-                onClick={handleTestAPI}
-                size="small"
-                className="bg-purple-500 hover:bg-purple-600 text-white border-0"
-              >
-                Test API
-              </Button>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
