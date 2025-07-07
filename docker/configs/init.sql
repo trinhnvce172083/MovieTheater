@@ -314,8 +314,8 @@ INSERT IGNORE INTO movietheater_cinema_room (
 ) VALUES 
 -- 3 phòng Standard chính
 ('Standard Room 1', 120, 'STANDARD', true, 'Phòng chiếu tiêu chuẩn với hệ thống âm thanh Dolby Atmos', 10, 12, true, true, false, 1.0, false, false, false, NOW(), NOW()),
-('Standard Room 2', 120, 'STANDARD', true, 'Phòng chiếu lớn với sức chứa tối đa', 14, 10, true, true, false, 1.0, false, false, false, NOW(), NOW()),
-('Standard Room 3', 120, 'STANDARD', true, 'Phòng chiếu nhỏ gọn với thiết kế hiện đại', 10, 10, true, false, false, 1.0, false, false, false, NOW(), NOW()),
+('Standard Room 2', 120, 'STANDARD', true, 'Phòng chiếu lớn với sức chứa tối đa', 10, 12, true, true, false, 1.0, false, false, false, NOW(), NOW()),
+('Standard Room 3', 120, 'STANDARD', true, 'Phòng chiếu nhỏ gọn với thiết kế hiện đại', 10, 12, true, false, false, 1.0, false, false, false, NOW(), NOW()),
 
 -- 1 phòng đặc biệt
 ('VIP Cinema Room', 60, 'VIP', true, 'Trải nghiệm VIP sang trọng với ghế massage và bàn ăn', 6, 10, true, true, true, 1.8, false, false, true, NOW(), NOW());
@@ -655,41 +655,26 @@ VALUES
  NOW(), NOW(), 'SYSTEM'),
 
 -- Drinks
-('Coca Cola', 'Nước ngọt Coca Cola mát lạnh', 'DRINK', 25000,
+('Coca Cola', 'Nước ngọt Coca Cola mát lạnh', 'DRINKS', 25000,
  'https://example.com/images/coca-cola.jpg', 'Cola', 'Lớn',
  150, TRUE, TRUE, 4,
  NOW(), NOW(), 'SYSTEM'),
 
-('Pepsi', 'Nước ngọt Pepsi sảng khoái', 'DRINK', 25000,
+('Pepsi', 'Nước ngọt Pepsi sảng khoái', 'DRINKS', 25000,
  'https://example.com/images/pepsi.jpg', 'Cola', 'Lớn',
  120, TRUE, TRUE, 5,
  NOW(), NOW(), 'SYSTEM'),
 
-('Sprite', 'Nước ngọt Sprite thanh mát', 'DRINK', 25000,
+('Sprite', 'Nước ngọt Sprite thanh mát', 'DRINKS', 25000,
  'https://example.com/images/sprite.jpg', 'Chanh', 'Lớn',
  100, TRUE, TRUE, 6,
  NOW(), NOW(), 'SYSTEM'),
 
-('Nước suối', 'Nước suối tinh khiết', 'DRINK', 15000,
+('Nước suối', 'Nước suối tinh khiết', 'DRINKS', 15000,
  'https://example.com/images/water.jpg', 'Không vị', '500ml',
  200, TRUE, TRUE, 7,
  NOW(), NOW(), 'SYSTEM'),
 
--- Food
-('Hot dog', 'Bánh hot dog với xúc xích và rau củ', 'FOOD', 55000,
- 'https://example.com/images/hotdog.jpg', 'Truyền thống', 'Tiêu chuẩn',
- 50, TRUE, TRUE, 8,
- NOW(), NOW(), 'SYSTEM'),
-
-('Khoai tây chiên', 'Khoai tây chiên giòn rụm', 'FOOD', 45000,
- 'https://example.com/images/fries.jpg', 'Muối', 'Lớn',
- 80, TRUE, TRUE, 9,
- NOW(), NOW(), 'SYSTEM'),
-
-('Gà rán', 'Gà rán giòn với sốt đặc biệt', 'FOOD', 75000,
- 'https://example.com/images/fried-chicken.jpg', 'Truyền thống', '3 miếng',
- 40, TRUE, TRUE, 10,
- NOW(), NOW(), 'SYSTEM'),
 
 -- Combos
 ('Combo Bắp + Nước', 'Bắp rang bơ lớn + Coca Cola lớn', 'COMBO', 55000,

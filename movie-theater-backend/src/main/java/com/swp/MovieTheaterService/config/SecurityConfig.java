@@ -131,11 +131,22 @@ public class SecurityConfig {
                                         "/api/schedules/available-times", // GET available times
                                         "/api/schedules/*", // GET schedule by ID
 
-                                        // Public cinema room endpoints
-                                        "/api/cinema-rooms", // GET all rooms
-                                        "/api/cinema-rooms/search", // GET search rooms
-                                        "/api/cinema-rooms/filter", // GET filter rooms
-                                        "/api/cinema-rooms/*", // GET room by ID
+                                        // Public cinema room endpoints (read-only access)
+                                        "/api/cinema-rooms", // GET all cinema rooms
+                                        "/api/cinema-rooms/search", // GET search cinema rooms
+                                        "/api/cinema-rooms/type/*", // GET cinema rooms by type
+                                        "/api/cinema-rooms/features/3d", // GET 3D cinema rooms
+                                        "/api/cinema-rooms/features/dolby-atmos", // GET Dolby Atmos rooms
+                                        "/api/cinema-rooms/features/recliner", // GET recliner rooms
+                                        "/api/cinema-rooms/capacity", // GET rooms by capacity
+                                        "/api/cinema-rooms/available", // GET available rooms
+                                        "/api/cinema-rooms/premium", // GET premium rooms
+                                        "/api/cinema-rooms/*", // GET cinema room by ID
+                                        "/api/cinema-rooms/*/seats", // GET seat layout
+                                        "/api/cinema-rooms/*/seats/booked", // GET booked seats
+                                        "/api/cinema-rooms/*/seats/available", // GET available seats
+                                        "/api/cinema-rooms/*/seats/status", // GET seat status overview
+                                        "/api/cinema-rooms/layout/**", // GET layout endpoints
 
                                         // Public concession endpoints
                                         "/api/concessions", // GET all concessions
@@ -240,7 +251,10 @@ public class SecurityConfig {
                                 // Admin cinema room endpoints (ưu tiên trước public endpoints)
                                 .requestMatchers(HttpMethod.POST,
                                         "/api/cinema-rooms", // POST - Create cinema room
-                                        "/api/cinema-rooms/with-seats" // POST - Create with seats
+                                        "/api/cinema-rooms/with-seats", // POST - Create with seats
+                                        "/api/cinema-rooms/*/seats/generate", // POST - Generate default seat layout
+                                        "/api/cinema-rooms/seats/layout", // POST - Create custom seat layout
+                                        "/api/cinema-rooms/*/seats/reset" // POST - Reset seat layout
                                 ).hasRole("ADMIN")
 
                                 .requestMatchers(HttpMethod.PUT,

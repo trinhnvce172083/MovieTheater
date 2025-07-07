@@ -295,7 +295,7 @@ public class EmailServiceImpl implements EmailService {
 
             Map<String, Object> variables = new HashMap<>();
             variables.put("resetToken", resetToken);
-            variables.put("resetUrl", websiteUrl + "/reset-password?token=" + resetToken);
+            variables.put("resetUrl", frontendUrl + "/reset-password/" + resetToken);
             variables.put("companyName", companyName);
             variables.put("supportEmail", supportEmail);
 

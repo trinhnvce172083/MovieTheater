@@ -67,7 +67,7 @@ spring:
     resources:
       add-mappings: true
   mvc:
-    throw-exception-if-no-handler-found: false
+
     static-path-pattern: /static/**
 
   # Email configuration

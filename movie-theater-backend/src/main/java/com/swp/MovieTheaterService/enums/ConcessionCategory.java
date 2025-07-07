@@ -12,6 +12,7 @@ public enum ConcessionCategory {
     DRINKS("Nước uống", "Các loại nước uống"),
     COMBO("Combo", "Combo đồ ăn/uống");
 
+
     private final String displayName;
     private final String description;
 

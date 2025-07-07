@@ -90,12 +90,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/schedules/available-times",
             "/api/schedules/filter",
 
-            // Cinema Room endpoints (public read access)
-            "/api/cinema-rooms",
-            "/api/cinema-rooms/public/**",
-            "/api/cinema-rooms/*", // for /api/cinema-rooms/{cinemaRoomId}
-            "/api/cinema-rooms/*/seats", // for /api/cinema-rooms/{cinemaRoomId}/seats
-            "/api/cinema-rooms/layout/**",
+            // Cinema Room endpoints (public read access) - REMOVED CONFLICTING PATTERNS
+            // These are now handled by SecurityConfig with specific role-based access
+            // Note: Cinema room endpoints are now properly configured in SecurityConfig
 
             // Concession endpoints (public read access)
             "/api/concessions/popcorn",
