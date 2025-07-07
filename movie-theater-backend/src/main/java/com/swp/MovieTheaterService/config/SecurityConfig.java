@@ -27,17 +27,16 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Security Configuration for Movie Theater System v2.0.0 (SRS Compliant)
- * Role-Based Access Control theo Software Requirements Specification
+ * Security Configuration for Movie Theater System v2.1.0 (Optimized)
  *
- * ROLES theo SRS:
- * - ADMIN: Quyền cao nhất - CRUD tất cả modules
- * - EMPLOYEE: Quản lý bán vé, đặt vé, tìm kiếm thành viên
- * - MEMBER: Customer + đặt vé, quản lý tài khoản
- * - CUSTOMER: Xem phim, khuyến mãi, giá vé, đăng ký (không cần auth)
+ * ROLES:
+ * - ADMIN: Full system access - CRUD all modules
+ * - EMPLOYEE: Ticket sales, booking management, member search
+ * - MEMBER: Customer privileges + booking, account management
+ * - CUSTOMER: Public access - view movies, promotions, prices
  *
  * @author Dũng_Solo
- * @version 2.0.0 (SRS Compliant)
+ * @version 2.1.0 (Optimized)
  */
 @Configuration
 @EnableWebSecurity
@@ -45,444 +44,210 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-        private final JwtAuthenticationFilter jwtAuthenticationFilter;
-        private final UserDetailsService userDetailsService;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final UserDetailsService userDetailsService;
 
-        /**
-         * Configure Security Filter Chain với Role-Based Access theo SRS
-         */
-        @Bean
-        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-                return http
-                        .csrf(AbstractHttpConfigurer::disable)
-                        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(this::configureAuthorization)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
 
-                        .authorizeHttpRequests(authz -> authz
-                                // =================== PUBLIC ENDPOINTS (CUSTOMER không cần auth)
-                                // ===================
-                                // Theo SRS: Customer có thể xem movie list, promotions, ticket prices,
-                                // showtimes
-                                .requestMatchers(
-                                        // Authentication endpoints
-                                        "/api/auth/login",
-                                        "/api/auth/register",
-                                        "/api/auth/refresh-token",
-                                        "/api/auth/forgot-password",
-                                        "/api/auth/reset-password",
-                                        "/api/auth/verify-email",
-                                        "/api/auth/resend-verification",
-                                        "/api/auth/check-email",
-                                        "/api/auth/check-username",
-                                        "/api/auth/test*", // Test endpoints
+    /**
+     * Configure authorization rules in a more organized way
+     */
+    private void configureAuthorization(org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry authz) {
+        authz
+                // Public endpoints - no authentication required
+                .requestMatchers(combineArrays(
+                        Endpoints.PUBLIC_AUTH,
+                        Endpoints.PUBLIC_CONTENT,
+                        Endpoints.PUBLIC_PAYMENT,
+                        Endpoints.DOCUMENTATION,
+                        Endpoints.TEST_ENDPOINTS
+                )).permitAll()
 
-                                        // Public movie information
-                                        "/api/movies/public/**", // View movie list
-                                        "/api/schedules/public/**", // View showtimes
-                                        "/api/cinema-rooms/public/**", // View ticket prices
-                                        "/api/promotions/public/**", // View promotions
+                // Public read access for content
+                .requestMatchers(HttpMethod.GET,
+                        "/api/schedules", "/api/schedules/**",
+                        "/api/cinema-rooms", "/api/cinema-rooms/**",
+                        "/api/concessions", "/api/concessions/**"
+                ).permitAll()
 
-                                        // Documentation & monitoring
-                                        "/v3/api-docs/**",
-                                        "/api-docs/**",
-                                        "/swagger-ui/**",
-                                        "/swagger-ui.html",
-                                        "/swagger-resources/**",
-                                        "/webjars/**",
-                                        "/actuator/health",
-                                        "/actuator/info",
+                // TEMPORARY: Enable all promotion endpoints for debugging
+                .requestMatchers("/api/promotions/**").permitAll()
 
-                                        // Payment public endpoints
-                                        "/api/payments/methods", // Get payment methods
-                                        "/api/payments/vnpay/callback", // VNPay callback
-                                        "/api/payment/vnpay/return", // VNPay return (correct URL)
-                                        "/api/payment/vnpay/ipn", // VNPay IPN
-                                        "/api/payments/calculate-fee", // Calculate payment fee
+                // Admin-only endpoints
+                .requestMatchers(Endpoints.ADMIN_MANAGEMENT).hasRole("ADMIN")
 
-                                        // Promotion validation (public access) - Moved to PUBLIC POST ACCESS
+                // TEMPORARY: Enable all movie endpoints for debugging
+                .requestMatchers("/api/movies/**").permitAll()
 
-                                        // Test endpoints
-                                        "/api/test/**",
-                                        "/api/test/echo",
-                                        "/api/test/auth")
-                                .permitAll()
+                // Admin content management (excluding movies and promotions for now)
+                .requestMatchers(HttpMethod.POST, "/api/schedules/**",
+                        "/api/cinema-rooms/**", "/api/concessions/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/schedules/**",
+                        "/api/cinema-rooms/**", "/api/concessions/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/schedules/**",
+                        "/api/cinema-rooms/**", "/api/concessions/**").hasRole("ADMIN")
 
-                                // =================== PUBLIC READ ACCESS ===================
-                                // GET operations for movies, schedules, cinema-rooms (public read)
-                                .requestMatchers(HttpMethod.GET,
-                                        // Public movie endpoints (cụ thể)
-                                        "/api/movies", // GET all movies
-                                        "/api/movies/search", // GET search movies
-                                        "/api/movies/filter", // GET filter movies
-                                        "/api/movies/now-showing", // GET now showing movies
-                                        "/api/movies/coming-soon", // GET coming soon movies
-                                        "/api/movies/popular", // GET popular movies
-                                        "/api/movies/genre/*", // GET movies by genre
-                                        "/api/movies/status-options", // GET status options
-                                        "/api/movies/*", // GET movie by ID (cụ thể hơn)
+                // Employee operations
+                .requestMatchers(Endpoints.EMPLOYEE_OPERATIONS).hasAnyRole("EMPLOYEE", "ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/concessions/*/stock").hasAnyRole("EMPLOYEE", "ADMIN")
 
-                                        // Public schedule endpoints
-                                        "/api/schedules", // GET all schedules
-                                        "/api/schedules/search", // GET search schedules
-                                        "/api/schedules/filter", // GET filter schedules
-                                        "/api/schedules/by-movie/*", // GET schedules by movie
-                                        "/api/schedules/by-cinema-room/*", // GET schedules by room
-                                        "/api/schedules/by-date", // GET schedules by date
-                                        "/api/schedules/available-dates", // GET available dates
-                                        "/api/schedules/available-times", // GET available times
-                                        "/api/schedules/*", // GET schedule by ID
+                // Member operations
+                .requestMatchers(Endpoints.MEMBER_OPERATIONS).hasAnyRole("MEMBER", "ADMIN")
 
-                                        // Public cinema room endpoints (read-only access)
-                                        "/api/cinema-rooms", // GET all cinema rooms
-                                        "/api/cinema-rooms/search", // GET search cinema rooms
-                                        "/api/cinema-rooms/type/*", // GET cinema rooms by type
-                                        "/api/cinema-rooms/features/3d", // GET 3D cinema rooms
-                                        "/api/cinema-rooms/features/dolby-atmos", // GET Dolby Atmos rooms
-                                        "/api/cinema-rooms/features/recliner", // GET recliner rooms
-                                        "/api/cinema-rooms/capacity", // GET rooms by capacity
-                                        "/api/cinema-rooms/available", // GET available rooms
-                                        "/api/cinema-rooms/premium", // GET premium rooms
-                                        "/api/cinema-rooms/*", // GET cinema room by ID
-                                        "/api/cinema-rooms/*/seats", // GET seat layout
-                                        "/api/cinema-rooms/*/seats/booked", // GET booked seats
-                                        "/api/cinema-rooms/*/seats/available", // GET available seats
-                                        "/api/cinema-rooms/*/seats/status", // GET seat status overview
-                                        "/api/cinema-rooms/layout/**", // GET layout endpoints
+                // General authenticated endpoints
+                .requestMatchers(Endpoints.AUTHENTICATED_OPERATIONS).authenticated()
 
-                                        // Public concession endpoints
-                                        "/api/concessions", // GET all concessions
-                                        "/api/concessions/search", // GET search concessions
-                                        "/api/concessions/filter", // GET filter concessions
-                                        "/api/concessions/category/*", // GET concessions by category
-                                        "/api/concessions/*", // GET concession by ID
+                // File and Image endpoints - Admin and authenticated users
+                .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll() // Public read access for images
+                .requestMatchers(HttpMethod.POST, "/api/files/**", "/api/images/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                .requestMatchers(HttpMethod.PUT, "/api/files/**", "/api/images/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                .requestMatchers(HttpMethod.DELETE, "/api/files/**", "/api/images/**").hasRole("ADMIN")
 
-                                        // Public promotion endpoints
-                                        "/api/promotions", // GET all promotions
-                                        "/api/promotions/active", // GET active promotions
-                                        "/api/promotions/code/*", // GET promotion by code
-                                        "/api/promotions/type/*", // GET promotions by type
-                                        "/api/promotions/movie/*", // GET movie promotions
-                                        "/api/promotions/point-based", // GET point-based promotions
-                                        "/api/promotions/*/banner", // GET promotion banner URL (public)
-                                        "/api/promotions/*/banner/exists" // GET check if banner exists (public)
-                                ).permitAll()
+                // Email endpoints - Admin and Marketing roles
+                .requestMatchers(Endpoints.EMAIL_OPERATIONS).hasAnyRole("ADMIN", "MARKETING")
 
-                                // =================== PUBLIC POST ACCESS ===================
-                                // Public POST operations that don't require authentication
-                                .requestMatchers(HttpMethod.POST,
-                                        "/api/promotions/validate", // POST - Validate promotion code (public)
-                                        "/api/promotions/validate-code" // POST - Validate unique code (public)
-                                ).permitAll()
+                // Loyalty endpoints - Members and Admin
+                .requestMatchers("/api/loyalty/**").hasAnyRole("MEMBER", "ADMIN")
 
-                                // =================== ADMIN ENDPOINTS ===================
-                                // Theo SRS: Admin có quyền cao nhất - add, edit, delete all modules
-                                .requestMatchers(
-                                        // Employee Management (SRS 3.1.7)
-                                        "/api/admin/employees/**", // Employee CRUD
-                                        "/api/employees/management/**", // Employee management
+                // Default - require authentication
+                .anyRequest().authenticated();
+    }
 
-                                        // User Management
-                                        "/api/admin/users/**", // User management
-                                        "/api/users/admin/**", // User administration
+    /**
+     * Optimized CORS configuration
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
 
-                                        // System Analytics & Reports
-                                        "/api/admin/analytics/**", // System analytics
-                                        "/api/reports/**", // Business reports
-                                        "/api/analytics/**", // Analytics dashboard
-                                        
-                                        // Auto Schedule Management (Admin only)
-                                        "/api/auto-schedule/**" // Auto Schedule Controller - all operations
+        // Use applyPermitDefaultValues for common settings
+        configuration.applyPermitDefaultValues();
 
-                                        // Concession Management (Admin CRUD) - Moved to ADMIN CONCESSION MANAGEMENT section
-                                ).hasRole("ADMIN")
+        // Override with specific settings
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:3000",
+                "http://localhost:8080",
+                "https://*.vercel.app"
+        ));
 
-                                // =================== ADMIN MOVIE MANAGEMENT ===================
-                                // Admin movie endpoints (ưu tiên trước public endpoints)
-                                // .requestMatchers(HttpMethod.POST, 
-                                //         "/api/movies", // POST - Create movie
-                                //         "/api/movies/with-images", // POST - Create with images
-                                //         "/api/movies/*/poster", // POST - Upload poster
-                                //         "/api/movies/*/backdrop", // POST - Upload backdrop
-                                //         "/api/movies/*/with-images" // POST - Update with images
-                                // ).hasRole("ADMIN")
-                                // 
-                                // .requestMatchers(HttpMethod.PUT, 
-                                //         "/api/movies/*", // PUT - Update movie
-                                //         "/api/movies/*/with-images" // PUT - Update with images
-                                // ).hasRole("ADMIN")
-                                // 
-                                // .requestMatchers(HttpMethod.DELETE, 
-                                //         "/api/movies/*", // DELETE - Delete movie
-                                //         "/api/movies/*/poster", // DELETE - Delete poster
-                                //         "/api/movies/*/backdrop" // DELETE - Delete backdrop
-                                // ).hasRole("ADMIN")
-                                // 
-                                // .requestMatchers(HttpMethod.GET, 
-                                //         "/api/movies/statistics", // GET - Movie statistics
-                                //         "/api/movies/status-update-stats" // GET - Status update stats
-                                // ).hasRole("ADMIN")
-                                // 
-                                // .requestMatchers(HttpMethod.POST, 
-                                //         "/api/movies/auto-update-status" // POST - Auto update status
-                                // ).hasRole("ADMIN")
+        configuration.setAllowedMethods(Arrays.asList(
+                "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+        ));
 
-                                // =================== ADMIN SCHEDULE MANAGEMENT ===================
-                                // Admin schedule endpoints (ưu tiên trước public endpoints)
-                                .requestMatchers(HttpMethod.POST,
-                                        "/api/schedules", // POST - Create schedule
-                                        "/api/schedules/batch", // POST - Create batch schedules
-                                        "/api/schedules/auto-generate" // POST - Auto generate schedules
-                                ).hasRole("ADMIN")
+        configuration.setAllowedHeaders(Arrays.asList(
+                "Authorization", "Content-Type", "X-Requested-With",
+                "Accept", "Origin", "Access-Control-Request-Method",
+                "Access-Control-Request-Headers"
+        ));
 
-                                .requestMatchers(HttpMethod.PUT,
-                                        "/api/schedules/*", // PUT - Update schedule
-                                        "/api/schedules/*/status" // PUT - Update schedule status
-                                ).hasRole("ADMIN")
+        configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Authorization"));
 
-                                .requestMatchers(HttpMethod.DELETE,
-                                        "/api/schedules/*", // DELETE - Delete schedule
-                                        "/api/schedules/batch/*" // DELETE - Delete batch schedules
-                                ).hasRole("ADMIN")
+        // Cache preflight requests for better performance
+        configuration.setMaxAge(3600L);
 
-                                .requestMatchers(HttpMethod.GET,
-                                        "/api/schedules/statistics" // GET - Schedule statistics
-                                ).hasRole("ADMIN")
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 
-                                // =================== ADMIN CINEMA ROOM MANAGEMENT ===================
-                                // Admin cinema room endpoints (ưu tiên trước public endpoints)
-                                .requestMatchers(HttpMethod.POST,
-                                        "/api/cinema-rooms", // POST - Create cinema room
-                                        "/api/cinema-rooms/with-seats", // POST - Create with seats
-                                        "/api/cinema-rooms/*/seats/generate", // POST - Generate default seat layout
-                                        "/api/cinema-rooms/seats/layout", // POST - Create custom seat layout
-                                        "/api/cinema-rooms/*/seats/reset" // POST - Reset seat layout
-                                ).hasRole("ADMIN")
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);
+    }
 
-                                .requestMatchers(HttpMethod.PUT,
-                                        "/api/cinema-rooms/*", // PUT - Update cinema room
-                                        "/api/cinema-rooms/*/seats" // PUT - Update seats
-                                ).hasRole("ADMIN")
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
 
-                                .requestMatchers(HttpMethod.DELETE,
-                                        "/api/cinema-rooms/*" // DELETE - Delete cinema room
-                                ).hasRole("ADMIN")
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
 
-                                .requestMatchers(HttpMethod.GET,
-                                        "/api/cinema-rooms/statistics" // GET - Cinema room statistics
-                                ).hasRole("ADMIN")
+    /**
+     * Utility method to combine string arrays
+     */
+    private String[] combineArrays(String[]... arrays) {
+        return Arrays.stream(arrays)
+                .flatMap(Arrays::stream)
+                .toArray(String[]::new);
+    }
 
-                                // =================== ADMIN CONCESSION MANAGEMENT ===================
-                                .requestMatchers(HttpMethod.POST,
-                                        "/api/concessions", // POST - Create concession
-                                        "/api/concessions/*/image", // POST - Upload concession image
-                                        "/api/concessions/with-image" // POST - Create with image
-                                ).hasRole("ADMIN")
+    // Constants for better maintainability
+    private static final class Endpoints {
+        // Public endpoints
+        static final String[] PUBLIC_AUTH = {
+                "/api/auth/login", "/api/auth/register", "/api/auth/refresh-token",
+                "/api/auth/forgot-password", "/api/auth/reset-password", "/api/auth/verify-email",
+                "/api/auth/resend-verification", "/api/auth/check-email", "/api/auth/check-username"
+        };
 
-                                .requestMatchers(HttpMethod.PUT,
-                                        "/api/concessions/*", // PUT - Update concession
-                                        "/api/concessions/*/image", // PUT - Update concession image
-                                        "/api/concessions/*/with-image" // PUT - Update with image
-                                ).hasRole("ADMIN")
+        static final String[] PUBLIC_CONTENT = {
+                "/api/movies/public/**", "/api/schedules/public/**",
+                "/api/cinema-rooms/public/**", "/api/promotions/public/**"
+        };
 
-                                .requestMatchers(HttpMethod.DELETE,
-                                        "/api/concessions/*", // DELETE - Delete concession
-                                        "/api/concessions/*/image" // DELETE - Delete concession image
-                                ).hasRole("ADMIN")
+        static final String[] PUBLIC_PAYMENT = {
+                "/api/payments/methods", "/api/payments/vnpay/callback",
+                "/api/payment/vnpay/return", "/api/payment/vnpay/ipn", "/api/payments/calculate-fee"
+        };
 
-                                // =================== ADMIN PROMOTION MANAGEMENT ===================
-                                .requestMatchers(HttpMethod.POST,
-                                        "/api/promotions", // POST - Create promotion
-                                        "/api/promotions/*/activate", // POST - Activate promotion
-                                        "/api/promotions/*/deactivate", // POST - Deactivate promotion
-                                        "/api/promotions/*/banner" // POST - Upload promotion banner
-                                ).hasRole("ADMIN")
-                                
-                                .requestMatchers(HttpMethod.PUT,
-                                        "/api/promotions/*", // PUT - Update promotion
-                                        "/api/promotions/*/banner" // PUT - Update promotion banner
-                                ).hasRole("ADMIN")
-                                
-                                .requestMatchers(HttpMethod.DELETE,
-                                        "/api/promotions/*", // DELETE - Delete promotion
-                                        "/api/promotions/*/banner" // DELETE - Delete promotion banner
-                                ).hasRole("ADMIN")
-                                
-                                .requestMatchers(HttpMethod.GET,
-                                        "/api/promotions/usage/*", // GET - Promotion usage stats (Admin only)
-                                        "/api/promotions/expiring" // GET - Expiring promotions (Admin only)
-                                ).hasRole("ADMIN")
+        static final String[] DOCUMENTATION = {
+                "/v3/api-docs/**", "/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
+                "/swagger-resources/**", "/webjars/**", "/actuator/health", "/actuator/info"
+        };
 
-                                // =================== EMPLOYEE ENDPOINTS ===================
-                                // Theo SRS: Employee quản lý ticket selling, booking, search members
-                                .requestMatchers(
-                                        // Ticket Selling Management (SRS 3.1.5)
-                                        "/api/staff/ticket-selling/**", // Ticket selling
-                                        "/api/employees/ticket-selling/**", // Selling
-                                        // management
+        static final String[] TEST_ENDPOINTS = {
+                "/api/test/**", "/api/test/echo", "/api/test/auth"
+        };
 
-                                        // Ticket Booking Management (SRS 3.1.6)
-                                        "/api/staff/ticket-booking/**", // Booking management
-                                        "/api/employees/booking-management/**", // Booking
-                                        // operations
+        // Admin endpoints
+        static final String[] ADMIN_MANAGEMENT = {
+                "/api/admin/**", "/api/employees/management/**", "/api/users/admin/**",
+                "/api/reports/**", "/api/analytics/**", "/api/auto-schedule/**"
+        };
 
-                                        // Member Management/Search (SRS 3.1.2.3)
-                                        "/api/staff/members/**", // Member search & view
-                                        "/api/employees/members/**", // Member management
+        // Employee endpoints
+        static final String[] EMPLOYEE_OPERATIONS = {
+                "/api/staff/**", "/api/employees/ticket-selling/**", "/api/employees/booking-management/**",
+                "/api/employees/members/**", "/api/checkin/**", "/api/payment/staff/**"
+        };
 
-                                        // Check-in Operations
-                                        "/api/staff/checkin/**", // Ticket validation
-                                        "/api/checkin/**", // Check-in system
+        // Member endpoints
+        static final String[] MEMBER_OPERATIONS = {
+                "/api/members/**", "/api/user/profile/**", "/api/loyalty/**", "/api/payment/members/**"
+        };
 
-                                        // Payment Processing
-                                        "/api/staff/payment/**", // Payment handling
-                                        "/api/payment/staff/**", // Staff payment ops
-                                        
-                                        // Concession Stock Management
-                                        "/api/concessions/*/stock" // PATCH - Update stock
-                                ).hasAnyRole("EMPLOYEE", "ADMIN")
+        // General authenticated endpoints
+        static final String[] AUTHENTICATED_OPERATIONS = {
+                "/api/user/**", "/api/auth/profile/**", "/api/auth/change-password/**",
+                "/api/auth/logout", "/api/bookings/**", "/api/payments/create",
+                "/api/payments/verify/**", "/api/payments/status/**"
+        };
 
-                                // =================== MEMBER ENDPOINTS ===================
-                                // Theo SRS: Member có tất cả quyền Customer + booking, account
-                                // management
-                                .requestMatchers(
-                                        // Account Management (SRS 3.1.3)
-                                        "/api/members/account/**", // Account management
-                                        "/api/members/profile/**", // Profile management
-                                        "/api/user/profile/**", // User profile
+        // File and Image endpoints
+        static final String[] FILE_IMAGE_OPERATIONS = {
+                "/api/files/**", "/api/images/**"
+        };
 
-                                        // Booking History & Management (SRS 3.1.3.1)
-                                        "/api/members/booking-history/**", // Booking history
-                                        "/api/members/tickets/**", // Ticket management
-
-                                        // Score/Loyalty Management (SRS 3.1.3.2)
-                                        "/api/members/loyalty/**", // Loyalty points
-                                        "/api/loyalty/**", // Loyalty system
-
-                                        // Payment for Members
-                                        "/api/payment/members/**", // Member payments
-                                        "/api/members/payment/**", // Payment history
-                                        
-                                        // Promotion for Members
-                                        "/api/promotions/apply", // Apply promotion to booking
-                                        "/api/promotions/user-eligible" // Get eligible promotions
-                                ).hasAnyRole("MEMBER", "ADMIN")
-
-                                // =================== GENERAL AUTHENTICATED ENDPOINTS
-                                // ===================
-                                // Endpoints cần authentication nhưng không phân biệt role cụ thể
-                                .requestMatchers(
-                                        "/api/user/**", // General user operations
-                                        "/api/auth/profile/**", // Auth profile
-                                        "/api/auth/change-password/**", // Password change
-                                        "/api/auth/logout", // Logout endpoint
-                                        
-                                        // Booking Ticket (SRS 3.1.4) - Allow all authenticated users
-                                        "/api/bookings", // Ticket booking for all authenticated users
-                                        "/api/bookings/*", // Specific booking operations
-                                        "/api/bookings/*/concessions", // Booking concessions
-                                        "/api/bookings/*/concessions/*", // Concession management
-                                        "/api/bookings/*/summary", // Booking summary
-                                        "/api/members/bookings/**", // Member booking
-                                        
-                                        // Payment endpoints for authenticated users
-                                        "/api/payments/create", // Create payment
-                                        "/api/payments/verify/**", // Verify payment
-                                        "/api/payments/status/**", // Get payment status
-                                        
-                                        // Promotion endpoints for authenticated users
-                                        "/api/promotions/purchase", // POST - Purchase point-based promotion
-                                        "/api/promotions/my-codes", // GET - Get user's promotion codes
-
-                                        // Test endpoints for authenticated users
-                                        "/api/test/test-admin", // Test admin access
-                                        "/api/test/test-member", // Test member access
-                                        "/api/test/test-employee" // Test employee access
-                                ).authenticated()
-
-                                // =================== DEBUG: PERMIT ALL MOVIE ENDPOINTS ===================
-                                .requestMatchers("/api/movies/**").permitAll()
-
-                                // =================== DEFAULT ===================
-                                // Tất cả requests khác cần authentication
-                                .anyRequest().authenticated())
-
-                        .sessionManagement(session -> session
-                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                        .authenticationProvider(authenticationProvider())
-
-                        // Add JWT filter before UsernamePasswordAuthenticationFilter
-                        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-
-                        .build();
-        }
-
-        /**
-         * CORS Configuration for Frontend integration
-         */
-        @Bean
-        public CorsConfigurationSource corsConfigurationSource() {
-                CorsConfiguration configuration = new CorsConfiguration();
-
-                // Allow frontend origins
-                configuration.setAllowedOriginPatterns(Arrays.asList(
-                        "http://localhost:3000", // NextJS development
-                        // "http://localhost:3001", // Alternative port
-                        // "https://movie-theater-frontend.vercel.app", // Production frontend
-                        // "https://*.vercel.app", // Vercel deployments
-                        "http://localhost:8080" // Backend for testing
-                ));
-
-                // Allow necessary HTTP methods
-                configuration.setAllowedMethods(Arrays.asList(
-                        "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-
-                // Allow necessary headers
-                configuration.setAllowedHeaders(Arrays.asList(
-                        "Authorization",
-                        "Content-Type",
-                        "X-Requested-With",
-                        "Accept",
-                        "Origin",
-                        "Access-Control-Request-Method",
-                        "Access-Control-Request-Headers"));
-
-                // Allow credentials (cookies, authorization headers)
-                configuration.setAllowCredentials(true);
-
-                // Expose Authorization header để frontend đọc token
-                configuration.setExposedHeaders(List.of("Authorization"));
-
-                // Apply to all paths
-                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                source.registerCorsConfiguration("/**", configuration);
-
-                return source;
-        }
-
-        /**
-         * Password Encoder Bean
-         */
-        @Bean
-        public PasswordEncoder passwordEncoder() {
-                return new BCryptPasswordEncoder(12); // Strength 12 for better security
-        }
-
-        /**
-         * Authentication Provider Bean
-         */
-        @Bean
-        public AuthenticationProvider authenticationProvider() {
-                DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-                authProvider.setUserDetailsService(userDetailsService);
-                authProvider.setPasswordEncoder(passwordEncoder());
-                return authProvider;
-        }
-
-        /**
-         * Authentication Manager Bean
-         */
-        @Bean
-        public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-                return config.getAuthenticationManager();
-        }
+        // Email endpoints
+        static final String[] EMAIL_OPERATIONS = {
+                "/api/emails/**"
+        };
+    }
 }

@@ -583,7 +583,7 @@ CREATE TABLE IF NOT EXISTS movietheater_concession
     category VARCHAR
 (
     50
-) NOT NULL, -- POPCORN, DRINK, FOOD, COMBO
+) NOT NULL, -- POPCORN, DRINKS, FOOD, COMBO
     price DECIMAL
 (
     10,
