@@ -61,7 +61,7 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
           return (
             <div>
               <span style={{ color: '#1677ff', fontWeight: 600 }}>
-                {formatVND(record.discountValue)} OFF
+                {Number(record.discountValue).toLocaleString('vi-VN')}₫ OFF
               </span>
               <div style={{ fontSize: 12, color: '#888' }}>Fixed Amount</div>
             </div>

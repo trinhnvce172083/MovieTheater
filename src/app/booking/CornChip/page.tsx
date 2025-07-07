@@ -19,6 +19,7 @@ interface Concession {
   description?: string;
   price: number;
   imageUrl?: string;
+  category: string;
 }
 
 export default function CornChipPage() {
@@ -45,7 +46,8 @@ export default function CornChipPage() {
         const response = await concessionApi.getAll();
         const fetchedConcessions = (response.data.data || response.data).map(item => ({
           ...item,
-          id: item.id ?? item.concessionId
+          id: item.id ?? item.concessionId,
+          category: item.category
         }));
         setConcessions(fetchedConcessions);
         
