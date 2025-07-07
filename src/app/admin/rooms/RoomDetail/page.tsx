@@ -88,8 +88,7 @@ export default function RoomDetailPage() {
       setLoading(true);
       const response = await axiosClient.get(`/api/cinema-rooms/${id}`);
       setRoomData(response.data);
-    } catch (error) {
-      console.error('Error fetching room detail:', error);
+    } catch {
       message.warning('Using sample data - API not available');
       // Use sample data as fallback
       setRoomData(sampleRoom);

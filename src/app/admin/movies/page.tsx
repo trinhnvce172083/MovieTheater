@@ -22,7 +22,6 @@ import {
   Col,
   Typography,
   Avatar,
-  Alert,
   InputNumber,
   Switch,
 } from "antd";
@@ -62,7 +61,6 @@ export default function AdminMovieManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isUsingApiData, setIsUsingApiData] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0); // Add refresh trigger
 
   const [form] = Form.useForm();
@@ -75,23 +73,10 @@ export default function AdminMovieManagement() {
     avgDuration: 0,
   });
 
-  // Test login function
-  // Check if user has authentication token
-  const checkAuthToken = (): boolean => {
-    const token = localStorage.getItem('accessToken') ||
-                 localStorage.getItem('access_token') ||
-                 localStorage.getItem('authToken') ||
-                 sessionStorage.getItem('accessToken');
-    
-    return !!token;
-  };
-
   // Fetch movies from API
   const fetchMovies = useCallback(async () => {
     try {
       setLoading(true);
-      
-      const hasAuth = checkAuthToken();
       
       const params = {
         page: 0,
@@ -104,23 +89,13 @@ export default function AdminMovieManagement() {
       
       if (response && response.content && Array.isArray(response.content)) {
         setMovieData(response.content);
-        
-        const hasApiStructure = 'totalElements' in response && 'totalPages' in response;
-        const hasValidAuth = hasAuth;
-        const hasCorrectDataCount = response.content.length >= 12;
-        const isRealApiData = hasApiStructure && hasValidAuth && hasCorrectDataCount;
-        
-        setIsUsingApiData(isRealApiData);
       } else if (response && Array.isArray(response)) {
         setMovieData(response);
-        setIsUsingApiData(false);
       } else {
         setMovieData([]);
-        setIsUsingApiData(false);
       }
-    } catch (error) {
+    } catch {
       setMovieData([]);
-      setIsUsingApiData(false);
     } finally {
       setLoading(false);
     }
@@ -131,13 +106,34 @@ export default function AdminMovieManagement() {
     try {
       const stats = await getMovieStatistics();
       setStatistics(stats);
-    } catch (error) {
+    } catch {
+      // Fallback to local calculation if API fails
+      if (movieData.length === 0) {
+        setStatistics({ totalMovies: 0, activeMovies: 0, totalRevenue: 0, avgDuration: 0 });
+        return;
+      }
+
       const totalMovies = movieData.length;
-      const activeMovies = movieData.filter(m => m.status === "NOW_SHOWING").length;
-      const totalPrice = movieData.reduce((sum, m) => sum + (m.price || 0), 0);
-      const avgDuration = Math.round(movieData.reduce((sum, m) => sum + (m.duration || 0), 0) / (movieData.length || 1));
       
-      setStatistics({ totalMovies, activeMovies, totalRevenue: totalPrice, avgDuration });
+      // Check for multiple possible "now showing" status values
+      const activeMovies = movieData.filter(m => 
+        m.status === "NOW_SHOWING" || 
+        m.status === "Now Showing" || 
+        m.status === "ACTIVE" ||
+        m.status === "now_showing"
+      ).length;
+      
+      // Calculate total revenue from box office data, fallback to price sum
+      const totalRevenue = movieData.reduce((sum, m) => {
+        if (m.boxOffice && m.boxOffice > 0) return sum + m.boxOffice;
+        if (m.revenue && m.revenue > 0) return sum + m.revenue;
+        return sum + (m.price || 0);
+      }, 0);
+      
+      const totalDuration = movieData.reduce((sum, m) => sum + (m.duration || 0), 0);
+      const avgDuration = Math.round(totalDuration / movieData.length);
+      
+      setStatistics({ totalMovies, activeMovies, totalRevenue, avgDuration });
     }
   }, [movieData]);
 
@@ -146,8 +142,28 @@ export default function AdminMovieManagement() {
   }, [fetchMovies, refreshTrigger]);
 
   useEffect(() => {
-    fetchStatistics();
-  }, [fetchStatistics, movieData.length]);
+    // Calculate statistics after movieData is loaded
+    if (movieData.length > 0) {
+      const totalMovies = movieData.length;
+      const activeMovies = movieData.filter(m => 
+        m.status === "NOW_SHOWING" || 
+        m.status === "Now Showing" || 
+        m.status === "ACTIVE" ||
+        m.status === "now_showing"
+      ).length;
+      
+      const totalRevenue = movieData.reduce((sum, m) => {
+        if (m.boxOffice && m.boxOffice > 0) return sum + m.boxOffice;
+        if (m.revenue && m.revenue > 0) return sum + m.revenue;
+        return sum + (m.price || 0);
+      }, 0);
+      
+      const totalDuration = movieData.reduce((sum, m) => sum + (m.duration || 0), 0);
+      const avgDuration = Math.round(totalDuration / movieData.length);
+      
+      setStatistics({ totalMovies, activeMovies, totalRevenue, avgDuration });
+    }
+  }, [movieData]);
 
   // Reset current page when filters change
   useEffect(() => {
@@ -173,15 +189,15 @@ export default function AdminMovieManagement() {
 
           const movieGenres = movie.genre 
             ? movie.genre.split(',').map(g => g.trim())
-            : (movie.genres ? movie.genres.split(',').map(g => g.trim()) : []);
+            : (movie.genres ? (typeof movie.genres === 'string' ? movie.genres.split(',').map(g => g.trim()) : movie.genres) : []);
           const matchesGenre = !filterGenre || movieGenres.includes(filterGenre);
 
           return matchesSearch && matchesStatus && matchesGenre;
-        } catch (error) {
+        } catch {
           return false;
         }
       });
-    } catch (error) {
+    } catch {
       return [];
     }
   }, [searchTerm, filterStatus, filterGenre, movieData]);
@@ -315,7 +331,7 @@ export default function AdminMovieManagement() {
         originalTitle: values.originalTitle || values.title, // Use title as fallback
         description: values.description || null,
         duration: values.duration ? parseInt(values.duration) : null,
-        genres: Array.isArray(values.genres) ? values.genres.join(', ') : values.genres, // Backend expects 'genres'
+        genres: Array.isArray(values.genres) ? values.genres.join(', ') : values.genres, // Backend expects comma-separated string
         director: values.director || null,
         cast: values.cast || null,
         language: values.language || "English", // Default to English
@@ -334,30 +350,13 @@ export default function AdminMovieManagement() {
         productionCompany: values.productionCompany || null,
         budget: values.budget ? parseInt(values.budget) : null,
         boxOffice: values.boxOffice ? parseInt(values.boxOffice) : null,
+        revenue: values.revenue ? parseInt(values.revenue) : null,
       };
 
       // Remove truly null/undefined fields but keep false booleans and 0 numbers
-      const cleanedMovieData: Omit<Movie, 'movieId'> = {
-        title: movieData.title,
-        duration: movieData.duration,
-        releaseDate: movieData.releaseDate,
-        rating: movieData.rating,
-        status: movieData.status,
-        // Add optional fields only if they have values
-        ...(movieData.genres && { genres: movieData.genres }),
-        ...(movieData.description && { description: movieData.description }),
-        ...(movieData.posterUrl && { posterUrl: movieData.posterUrl }),
-        ...(movieData.trailerUrl && { trailerUrl: movieData.trailerUrl }),
-        ...(movieData.director && { director: movieData.director }),
-        ...(movieData.cast && { cast: movieData.cast }),
-        ...(movieData.language && { language: movieData.language }),
-        ...(movieData.country && { country: movieData.country }),
-        ...(movieData.productionCompany && { productionCompany: movieData.productionCompany }),
-        ...(movieData.price !== null && movieData.price !== undefined && { price: movieData.price }),
-        ...(movieData.imdbRating !== null && movieData.imdbRating !== undefined && { imdbRating: movieData.imdbRating }),
-        ...(movieData.boxOffice !== null && movieData.boxOffice !== undefined && { boxOffice: movieData.boxOffice }),
-        ...(typeof movieData.isFeatured === 'boolean' && { isFeatured: movieData.isFeatured }),
-      };
+      const cleanedMovieData: Omit<Movie, 'movieId'> = Object.fromEntries(
+        Object.entries(movieData).filter(([, value]) => value !== null && value !== undefined)
+      ) as Omit<Movie, 'movieId'>;
 
       const success = await createMovieHandler(cleanedMovieData);
 
@@ -365,7 +364,7 @@ export default function AdminMovieManagement() {
         setIsModalVisible(false);
         form.resetFields();
       }
-    } catch (error) {
+    } catch {
       message.error('Please check all required fields and try again.');
     }
   };
@@ -573,6 +572,7 @@ export default function AdminMovieManagement() {
                 prefix={<GlobalOutlined className="text-green-600" />}
                 valueStyle={{ color: "#52c41a", fontSize: "1.5rem" }}
               />
+              
             </Card>
           </Col>
           <Col xs={12} sm={12} lg={6}>
@@ -591,6 +591,7 @@ export default function AdminMovieManagement() {
                 }
                 valueStyle={{ color: "#52c41a", fontSize: "1.2rem" }}
               />
+              
             </Card>
           </Col>
           <Col xs={12} sm={12} lg={6}>
@@ -602,6 +603,7 @@ export default function AdminMovieManagement() {
                 prefix={<ClockCircleOutlined className="text-purple-600" />}
                 valueStyle={{ color: "#722ed1", fontSize: "1.5rem" }}
               />
+              
             </Card>
           </Col>
         </Row>
@@ -800,9 +802,28 @@ export default function AdminMovieManagement() {
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
+                name="originalTitle"
+                label="Original Title"
+              >
+                <Input placeholder="Original title (if different)" className="h-10" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
                 name="releaseDate"
                 label="Release Date"
                 rules={[{ required: true, message: "Please select release date" }]}
+              >
+                <DatePicker className="w-full h-10" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="endDate"
+                label="End Date (Optional)"
               >
                 <DatePicker className="w-full h-10" />
               </Form.Item>
@@ -929,9 +950,109 @@ export default function AdminMovieManagement() {
             </Col>
           </Row>
 
-          {/* Media & Settings */}
+          {/* Additional Movie Information */}
+          <Row gutter={16}>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="language"
+                label="Language"
+              >
+                <Input placeholder="e.g., English, Vietnamese" className="h-10" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="country"
+                label="Country"
+              >
+                <Input placeholder="e.g., USA, Vietnam" className="h-10" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="imdbRating"
+                label="IMDB Rating (0-10)"
+                rules={[{ type: 'number', min: 0, max: 10, message: "Rating must be between 0-10" }]}
+              >
+                <InputNumber 
+                  placeholder="e.g., 8.5" 
+                  className="w-full h-10"
+                  min={0}
+                  max={10}
+                  step={0.1}
+                  controls={false}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
           <Row gutter={16}>
             <Col xs={24} sm={12}>
+              <Form.Item
+                name="productionCompany"
+                label="Production Company"
+              >
+                <Input placeholder="Enter production company" className="h-10" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="cast"
+                label="Cast"
+              >
+                <Input placeholder="Main cast members (separated by commas)" className="h-10" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="budget"
+                label="Budget (USD)"
+                rules={[{ type: 'number', min: 0, message: "Budget must be positive" }]}
+              >
+                <InputNumber 
+                  placeholder="Production budget" 
+                  className="w-full h-10"
+                  min={0}
+                  controls={false}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="boxOffice"
+                label="Box Office (USD)"
+                rules={[{ type: 'number', min: 0, message: "Box office must be positive" }]}
+              >
+                <InputNumber 
+                  placeholder="Box office earnings" 
+                  className="w-full h-10"
+                  min={0}
+                  controls={false}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="revenue"
+                label="Total Revenue (USD)"
+                rules={[{ type: 'number', min: 0, message: "Revenue must be positive" }]}
+              >
+                <InputNumber 
+                  placeholder="Total revenue" 
+                  className="w-full h-10"
+                  min={0}
+                  controls={false}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* Media & Settings */}
+          <Row gutter={16}>
+            <Col xs={24} sm={8}>
               <Form.Item
                 name="posterUrl"
                 label="Poster URL (Optional)"
@@ -940,8 +1061,34 @@ export default function AdminMovieManagement() {
                 <Input placeholder="Enter poster URL" className="h-10" />
               </Form.Item>
             </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="backdropUrl"
+                label="Backdrop URL (Optional)"
+                rules={[{ type: 'url', message: 'Please enter a valid URL' }]}
+              >
+                <Input placeholder="Enter backdrop URL" className="h-10" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item
+                name="trailerUrl"
+                label="Trailer URL (Optional)"
+                rules={[{ type: 'url', message: 'Please enter a valid URL' }]}
+              >
+                <Input placeholder="Enter trailer URL" className="h-10" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item name="isFeatured" label="Featured Movie" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item name="isActive" label="Active Movie" valuePropName="checked">
                 <Switch />
               </Form.Item>
             </Col>

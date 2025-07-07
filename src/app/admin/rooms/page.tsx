@@ -164,7 +164,6 @@ export default function CinemaRoomManagement() {
   const fetchRooms = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🔄 Fetching rooms from API...');
       const response = await axiosClient.get('/cinema-rooms', {
         params: {
           page: currentPage - 1, // Backend uses 0-based pagination
@@ -172,17 +171,15 @@ export default function CinemaRoomManagement() {
           sortBy: 'cinemaRoomName',
           sortDirection: 'asc'
         }
-      });      console.log('✅ Rooms fetched successfully:', response.data);
+      });
       setRoomData(response.data.content || []);
       setTotalElements(response.data.page?.totalElements || 0);
       setIsUsingApiData(true);
-      setBackendStatus('connected');} catch (error) {
-      console.error('❌ Error fetching rooms:', error);
-      
+      setBackendStatus('connected');
+    } catch (error) {
       // Provide detailed error information
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response: { status: number; data: unknown; statusText: string } };
-        console.error('Response error:', axiosError.response.status, axiosError.response.data);
         if (axiosError.response.status === 500) {
           message.error('Server error occurred. Please check if the backend server is running on localhost:8080');
         } else if (axiosError.response.status === 401) {
@@ -193,10 +190,8 @@ export default function CinemaRoomManagement() {
           message.error(`API Error: ${axiosError.response.status} - ${axiosError.response.statusText}`);
         }
       } else if (error && typeof error === 'object' && 'request' in error) {
-        console.error('Network error:', error);
         message.error('Cannot connect to backend server. Please ensure the server is running on localhost:8080');
       } else {
-        console.error('Unknown error:', error);
         message.error('An unexpected error occurred');
       }      message.warning('Using sample data as fallback');
       // Use sample data as fallback
@@ -225,8 +220,7 @@ export default function CinemaRoomManagement() {
         }
       });      setRoomData(response.data.content || []);
       setTotalElements(response.data.page?.totalElements || 0);
-    } catch (error) {
-      console.error('Error searching rooms:', error);
+    } catch {
       message.error('Failed to search rooms');
     } finally {
       setLoading(false);
@@ -239,8 +233,7 @@ export default function CinemaRoomManagement() {
       message.success('Room created successfully');
       fetchRooms();
       return true;
-    } catch (error) {
-      console.error('Error creating room:', error);
+    } catch {
       message.error('Failed to create room');
       return false;
     } finally {
@@ -255,8 +248,7 @@ export default function CinemaRoomManagement() {
       message.success('Room updated successfully');
       fetchRooms();
       return true;
-    } catch (error) {
-      console.error('Error updating room:', error);
+    } catch {
       message.error('Failed to update room');
       return false;
     } finally {
@@ -270,8 +262,7 @@ export default function CinemaRoomManagement() {
       await axiosClient.delete(`/cinema-rooms/${id}`);
       message.success('Room deleted successfully');
       fetchRooms();
-    } catch (error) {
-      console.error('Error deleting room:', error);
+    } catch {
       message.error('Failed to delete room');
     } finally {
       setLoading(false);
@@ -354,8 +345,8 @@ export default function CinemaRoomManagement() {
           form.resetFields();
         }
       }
-    } catch (error) {
-      console.error('Form validation failed:', error);
+    } catch {
+      // Form validation failed
     }
   };
   const handleModalCancel = () => {

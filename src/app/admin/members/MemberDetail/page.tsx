@@ -82,8 +82,7 @@ const MemberDetailPage: React.FC = () => {
         accountId: response.data.accountId || 4,
         role: response.data.role || 'ADMIN'
       };
-    } catch (error) {
-      console.error('Failed to fetch current user:', error);
+    } catch {
       // Return fallback admin user
       return {
         accountId: 4,
@@ -124,7 +123,6 @@ const MemberDetailPage: React.FC = () => {
       }
       return null;
     } catch (error) {
-      console.error('Failed to fetch user detail:', error);
       throw error;
     }
   };
@@ -161,19 +159,9 @@ const MemberDetailPage: React.FC = () => {
 
       // Admins can view all users (including other admins)
       // No restriction on viewing - admins can see everyone's details
-      console.log('Permission check:', {
-        targetUserRole: userDetailData.role,
-        currentUserId: currentUserData.accountId,
-        targetUserId: userDetailData.accountId,
-        currentUserIdString: String(currentUserData.accountId),
-        targetUserIdString: String(userDetailData.accountId),
-        idsMatch: String(currentUserData.accountId) === String(userDetailData.accountId),
-        message: 'Admin can view all user details'
-      });      // Store current user and user detail data
       setUserDetail(userDetailData);
       setIsUsingApiData(true);
-    } catch (error: unknown) {
-      console.error('Error loading user detail:', error);
+    } catch {
       setError("Failed to load user details. Please try again.");
       setIsUsingApiData(false);
     } finally {
