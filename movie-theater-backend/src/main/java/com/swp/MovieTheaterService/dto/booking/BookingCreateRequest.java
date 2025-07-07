@@ -55,11 +55,10 @@ public class BookingCreateRequest {
     @Schema(description = "Mã khuyến mãi (optional)", example = "WELCOME10")
     private String promotionCode;
 
-    @NotNull(message = "Phương thức thanh toán không được để trống")
     @Pattern(regexp = "^(CASH|CARD|ONLINE|WALLET)$", message = "Phương thức thanh toán không hợp lệ")
-    @Schema(description = "Phương thức thanh toán", example = "ONLINE", allowableValues = { "CASH", "CARD", "ONLINE",
-            "WALLET" }, required = true)
-    private String paymentMethod = "ONLINE";
+    @Schema(description = "Phương thức thanh toán (sẽ được xử lý bởi frontend Redux)", example = "ONLINE", allowableValues = {"CASH", "CARD", "ONLINE",
+            "WALLET"})
+    private String paymentMethod;
 
     @Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự")
     @Schema(description = "Ghi chú thêm", example = "Member booking")
@@ -99,6 +98,14 @@ public class BookingCreateRequest {
                     customerEmail != null && !customerEmail.trim().isEmpty() &&
                     customerPhone != null && !customerPhone.trim().isEmpty();
         }
+        return true;
+    }
+
+    /**
+     * Check if this is a valid member booking (customer info can be auto-populated from account)
+     */
+    public boolean isValidMemberBooking() {
+        // For member bookings, customer info is optional as it will be auto-populated
         return true;
     }
 
@@ -180,12 +187,19 @@ public class BookingCreateRequest {
             throw new IllegalArgumentException("Thông tin khách hàng không hợp lệ cho đặt vé khách");
         }
 
+        // For member bookings, customer info validation is handled in service layer
+        if (!Boolean.TRUE.equals(isGuestBooking) && !isValidMemberBooking()) {
+            throw new IllegalArgumentException("Thông tin booking không hợp lệ cho thành viên");
+        }
+
         if (hasConcessionOrders() && !isValidConcessionOrders()) {
             throw new IllegalArgumentException("Đơn hàng đồ ăn/uống không hợp lệ");
         }
 
-        if (paymentMethod == null || paymentMethod.trim().isEmpty()) {
-            throw new IllegalArgumentException("Phương thức thanh toán không được để trống");
+        // Payment method is optional, will be handled by frontend Redux
+        if (paymentMethod != null && !paymentMethod.trim().isEmpty() &&
+                !paymentMethod.matches("^(CASH|CARD|ONLINE|WALLET)$")) {
+            throw new IllegalArgumentException("Phương thức thanh toán không hợp lệ");
         }
     }
 }

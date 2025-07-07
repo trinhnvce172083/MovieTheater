@@ -116,6 +116,11 @@ public class BookingServiceImpl implements BookingService {
         // 1. Validate request completely
         request.validateForBooking();
 
+        // 1.1. Additional validation for member booking
+        if (account != null && Boolean.TRUE.equals(request.getIsGuestBooking())) {
+            throw new IllegalArgumentException("Không thể tạo guest booking cho user đã đăng nhập");
+        }
+
         // 2. Auto-generate sessionId if not provided
         request.ensureSessionId();
         log.info("Using sessionId: {}", request.getSessionId());
@@ -293,6 +298,12 @@ public class BookingServiceImpl implements BookingService {
      */
     private Booking createBookingEntity(BookingCreateRequest request, Account account,
             Schedule schedule, Double totalAmount, Double discountAmount, Double finalAmount) {
+
+        // Auto-populate customer information from account if available
+        String customerName = getCustomerName(request, account);
+        String customerEmail = getCustomerEmail(request, account);
+        String customerPhone = getCustomerPhone(request, account);
+        
         Booking booking = Booking.builder()
                 .bookingCode(generateBookingCode())
                 .bookingDate(LocalDateTime.now())
@@ -301,9 +312,9 @@ public class BookingServiceImpl implements BookingService {
                 .finalAmount(finalAmount)
                 .bookingStatus(BookingStatus.PENDING)
                 .paymentMethod(request.getPaymentMethod())
-                .customerName(request.getCustomerName())
-                .customerEmail(request.getCustomerEmail())
-                .customerPhone(request.getCustomerPhone())
+                .customerName(customerName)
+                .customerEmail(customerEmail)
+                .customerPhone(customerPhone)
                 .seatCount(request.getSeatIds().size())
                 .notes(request.getNotes())
                 .qrCode(generateQRCodeInternal())
@@ -331,6 +342,80 @@ public class BookingServiceImpl implements BookingService {
         }
 
         return booking;
+    }
+
+    /**
+     * Get customer name from request or account
+     */
+    private String getCustomerName(BookingCreateRequest request, Account account) {
+        // Priority: request > account > null
+        if (request.getCustomerName() != null && !request.getCustomerName().trim().isEmpty()) {
+            return request.getCustomerName().trim();
+        }
+
+        if (account != null && account.getFullName() != null && !account.getFullName().trim().isEmpty()) {
+            return account.getFullName().trim();
+        }
+
+        // For guest bookings, customer name is required
+        if (Boolean.TRUE.equals(request.getIsGuestBooking())) {
+            throw new IllegalArgumentException("Tên khách hàng là bắt buộc cho đặt vé khách vãng lai");
+        }
+
+        // For member bookings, try to get from account
+        if (account != null) {
+            return account.getUsername(); // Fallback to username if no full name
+        }
+
+        throw new IllegalArgumentException("Không thể xác định tên khách hàng");
+    }
+
+    /**
+     * Get customer email from request or account
+     */
+    private String getCustomerEmail(BookingCreateRequest request, Account account) {
+        // Priority: request > account > null
+        if (request.getCustomerEmail() != null && !request.getCustomerEmail().trim().isEmpty()) {
+            return request.getCustomerEmail().trim();
+        }
+
+        if (account != null && account.getEmail() != null && !account.getEmail().trim().isEmpty()) {
+            return account.getEmail().trim();
+        }
+
+        // For guest bookings, email is required
+        if (Boolean.TRUE.equals(request.getIsGuestBooking())) {
+            throw new IllegalArgumentException("Email khách hàng là bắt buộc cho đặt vé khách vãng lai");
+        }
+
+        // For member bookings, email should be available from account
+        if (account != null) {
+            return account.getEmail();
+        }
+
+        throw new IllegalArgumentException("Không thể xác định email khách hàng");
+    }
+
+    /**
+     * Get customer phone from request or account
+     */
+    private String getCustomerPhone(BookingCreateRequest request, Account account) {
+        // Priority: request > account > null
+        if (request.getCustomerPhone() != null && !request.getCustomerPhone().trim().isEmpty()) {
+            return request.getCustomerPhone().trim();
+        }
+
+        if (account != null && account.getPhoneNumber() != null && !account.getPhoneNumber().trim().isEmpty()) {
+            return account.getPhoneNumber().trim();
+        }
+
+        // For guest bookings, phone is required
+        if (Boolean.TRUE.equals(request.getIsGuestBooking())) {
+            throw new IllegalArgumentException("Số điện thoại khách hàng là bắt buộc cho đặt vé khách vãng lai");
+        }
+
+        // For member bookings, phone might be optional
+        return null; // Allow null for member bookings
     }
 
     @Override
