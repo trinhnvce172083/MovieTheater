@@ -86,7 +86,7 @@ export default function RoomDetailPage() {
   const fetchRoomDetail = async (id: string) => {
     try {
       setLoading(true);
-      const response = await axiosClient.get(`/api/cinema-rooms/${id}`);
+      const response = await axiosClient.get(`/cinema-rooms/${id}`);
       setRoomData(response.data);
     } catch {
       message.warning('Using sample data - API not available');
