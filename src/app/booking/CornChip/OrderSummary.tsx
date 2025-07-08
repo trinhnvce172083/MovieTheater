@@ -19,7 +19,6 @@ const OrderSummary = ({ movieDetails, totalOrder, bookingData, concessions, quan
   const handleCheckout = () => {
     // Logic to proceed to payment
     // You can pass bookingData to the payment page via Redux or query params
-    console.log("Proceeding to checkout with:", bookingData);
     router.push(ROUTES.PAYMENT);
   };
 

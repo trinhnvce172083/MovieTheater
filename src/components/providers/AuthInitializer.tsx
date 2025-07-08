@@ -26,17 +26,14 @@ export default function AuthInitializer() {
           if (payload && payload.exp && Number(payload.exp) > currentTime) {
             // Token is valid, restore auth state
             dispatch(login({ token: accessToken }));
-            console.log("🔐 Auth restored from localStorage for user:", payload.sub || payload.username);
           } else {
             // Token is expired, clear it
-            console.log("⚠️ Token expired, clearing localStorage");
             localStorage.removeItem("accessToken");
             localStorage.removeItem("refreshToken");
             localStorage.removeItem("userInfo");
             localStorage.removeItem("isLoggedIn");
           }
         } catch (error) {
-          console.error("❌ Invalid token in localStorage, clearing:", error);
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
           localStorage.removeItem("userInfo");

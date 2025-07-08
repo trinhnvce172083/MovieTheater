@@ -37,9 +37,10 @@ import {
   ClockCircleOutlined,
   GlobalOutlined,
   HomeOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
-import axiosClient from "@/api/axiosClient";
+import { getAllRooms, createRoom, updateRoom, deleteRoom, searchRooms } from "@/api/admin/getAllRooms";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -104,132 +105,52 @@ export default function CinemaRoomManagement() {
   >("checking");
   const [form] = Form.useForm();
   const router = useRouter();
-  // Sample data for testing (when API is not available)
-  const sampleRoomData = useMemo<CinemaRoomResponse[]>(
-    () => [
-      {
-        cinemaRoomId: 1,
-        cinemaRoomName: "Premium Hall A",
-        seatQuantity: 48,
-        roomType: "VIP",
-        isActive: true,
-        description:
-          "Premium cinema hall with luxury seating and enhanced viewing experience",
-        rows: 6,
-        columns: 8,
-        has3D: true,
-        hasDolbyAtmos: true,
-        hasReclinerSeats: true,
-        priceMultiplier: 1.5,
-        createdAt: "2024-01-15T10:00:00",
-        updatedAt: "2024-06-20T14:30:00",
-      },
-      {
-        cinemaRoomId: 2,
-        cinemaRoomName: "Standard Hall B",
-        seatQuantity: 40,
-        roomType: "STANDARD",
-        isActive: true,
-        description:
-          "Standard cinema hall with comfortable seating for regular movie viewing",
-        rows: 5,
-        columns: 8,
-        has3D: false,
-        hasDolbyAtmos: false,
-        hasReclinerSeats: false,
-        priceMultiplier: 1.0,
-        createdAt: "2024-01-20T09:00:00",
-        updatedAt: "2024-06-18T11:15:00",
-      },
-      {
-        cinemaRoomId: 3,
-        cinemaRoomName: "VIP Theater",
-        seatQuantity: 32,
-        roomType: "VIP",
-        isActive: true,
-        description:
-          "Exclusive VIP theater with premium amenities and personalized service",
-        rows: 4,
-        columns: 8,
-        has3D: true,
-        hasDolbyAtmos: true,
-        hasReclinerSeats: true,
-        priceMultiplier: 2.0,
-        createdAt: "2024-02-01T08:00:00",
-        updatedAt: "2024-06-22T16:45:00",
-      },
-      {
-        cinemaRoomId: 4,
-        cinemaRoomName: "Standard Hall C",
-        seatQuantity: 60,
-        roomType: "STANDARD",
-        isActive: false,
-        description: "Large standard cinema hall currently under maintenance",
-        rows: 6,
-        columns: 10,
-        has3D: false,
-        hasDolbyAtmos: false,
-        hasReclinerSeats: false,
-        priceMultiplier: 1.0,
-        createdAt: "2024-03-10T12:00:00",
-        updatedAt: "2024-06-21T09:30:00",
-      },
-    ],
-    []
-  ); // API Functions
+  
+  // Price multiplier defaults for each room type
+  const ROOM_TYPE_MULTIPLIERS = {
+    STANDARD: 1.0,
+    VIP: 1.5,
+    IMAX: 2.5,
+    '4DX': 3.0
+  };
+
+  // Handle room type change to auto-set price multiplier
+  const handleRoomTypeChange = (roomType: string) => {
+    const multiplier = ROOM_TYPE_MULTIPLIERS[roomType as keyof typeof ROOM_TYPE_MULTIPLIERS];
+    if (multiplier) {
+      form.setFieldsValue({
+        priceMultiplier: multiplier
+      });
+    }
+  };
+  
+  // API Functions
   const fetchRooms = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axiosClient.get("/cinema-rooms", {
-        params: {
-          page: currentPage - 1, // Backend uses 0-based pagination
-          size: pageSize,
-          sortBy: "cinemaRoomName",
-          sortDirection: "asc",
-        },
-      });
-      setRoomData(response.data.content || []);
-      setTotalElements(response.data.page?.totalElements || 0);
+      const response = await getAllRooms(
+        currentPage - 1, // Backend uses 0-based pagination
+        pageSize,
+        "cinemaRoomName",
+        "asc"
+      );
+      setRoomData(response.content || []);
+      setTotalElements(response.page?.totalElements || 0);
       setIsUsingApiData(true);
       setBackendStatus("connected");
     } catch (error) {
-      // Provide detailed error information
-      if (error && typeof error === "object" && "response" in error) {
-        const axiosError = error as {
-          response: { status: number; data: unknown; statusText: string };
-        };
-        if (axiosError.response.status === 500) {
-          message.error(
-            "Server error occurred. Please check if the backend server is running on localhost:8080"
-          );
-        } else if (axiosError.response.status === 401) {
-          message.error("Authentication failed. Please login again.");
-        } else if (axiosError.response.status === 403) {
-          message.error("Access denied. You may not have admin permissions.");
-        } else {
-          message.error(
-            `API Error: ${axiosError.response.status} - ${axiosError.response.statusText}`
-          );
-        }
-      } else if (error && typeof error === "object" && "request" in error) {
-        message.error(
-          "Cannot connect to backend server. Please ensure the server is running on localhost:8080"
-        );
-      } else {
-        message.error("An unexpected error occurred");
-      }
-      message.warning("Using sample data as fallback");
-      // Use sample data as fallback
-      setRoomData(sampleRoomData);
-      setTotalElements(sampleRoomData.length);
+      console.error("Failed to fetch rooms:", error);
+      message.error("Failed to connect to backend server");
+      setRoomData([]);
+      setTotalElements(0);
       setIsUsingApiData(false);
       setBackendStatus("disconnected");
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, sampleRoomData]);
+  }, [currentPage, pageSize]);
 
-  const searchRooms = useCallback(
+  const searchRoomsFunction = useCallback(
     async (keyword: string) => {
       if (!keyword.trim()) {
         fetchRooms();
@@ -238,31 +159,36 @@ export default function CinemaRoomManagement() {
 
       try {
         setLoading(true);
-        const response = await axiosClient.get("/cinema-rooms/search", {
-          params: {
-            keyword,
-            page: currentPage - 1,
-            size: pageSize,
-          },
-        });
-        setRoomData(response.data.content || []);
-        setTotalElements(response.data.page?.totalElements || 0);
-      } catch {
+        const response = await searchRooms(
+          keyword,
+          currentPage - 1,
+          pageSize
+        );
+        setRoomData(response.content || []);
+        setTotalElements(response.page?.totalElements || 0);
+        setIsUsingApiData(true);
+        setBackendStatus("connected");
+      } catch (error) {
+        console.error("Failed to search rooms:", error);
         message.error("Failed to search rooms");
+        setRoomData([]);
+        setTotalElements(0);
+        setIsUsingApiData(false);
+        setBackendStatus("disconnected");
       } finally {
         setLoading(false);
       }
     },
     [currentPage, pageSize, fetchRooms]
   );
-  const createRoom = async (roomData: RoomCreateRequest) => {
+  const createRoomFunction = async (roomData: RoomCreateRequest) => {
     try {
       setLoading(true);
-      await axiosClient.post("/cinema-rooms", roomData);
+      await createRoom(roomData);
       message.success("Room created successfully");
       fetchRooms();
       return true;
-    } catch {
+    } catch (error) {
       message.error("Failed to create room");
       return false;
     } finally {
@@ -270,14 +196,14 @@ export default function CinemaRoomManagement() {
     }
   };
 
-  const updateRoom = async (id: number, roomData: RoomCreateRequest) => {
+  const updateRoomFunction = async (id: number, roomData: RoomCreateRequest) => {
     try {
       setLoading(true);
-      await axiosClient.put(`/cinema-rooms/${id}`, roomData);
+      await updateRoom(id, roomData);
       message.success("Room updated successfully");
       fetchRooms();
       return true;
-    } catch {
+    } catch (error) {
       message.error("Failed to update room");
       return false;
     } finally {
@@ -285,13 +211,13 @@ export default function CinemaRoomManagement() {
     }
   };
 
-  const deleteRoom = async (id: number) => {
+  const deleteRoomFunction = async (id: number) => {
     try {
       setLoading(true);
-      await axiosClient.delete(`/cinema-rooms/${id}`);
+      await deleteRoom(id);
       message.success("Room deleted successfully");
       fetchRooms();
-    } catch {
+    } catch (error) {
       message.error("Failed to delete room");
     } finally {
       setLoading(false);
@@ -304,14 +230,14 @@ export default function CinemaRoomManagement() {
   useEffect(() => {
     const delayedSearch = setTimeout(() => {
       if (searchTerm) {
-        searchRooms(searchTerm);
+        searchRoomsFunction(searchTerm);
       } else {
         fetchRooms();
       }
     }, 500);
 
     return () => clearTimeout(delayedSearch);
-  }, [searchTerm, searchRooms, fetchRooms]);
+  }, [searchTerm, searchRoomsFunction, fetchRooms]);
 
   // Filter and search logic
   const filteredData = useMemo(() => {
@@ -357,7 +283,7 @@ export default function CinemaRoomManagement() {
   };
 
   const handleDelete = (record: CinemaRoomResponse) => {
-    deleteRoom(record.cinemaRoomId);
+    deleteRoomFunction(record.cinemaRoomId);
   };
 
   const handleModalOk = async () => {
@@ -365,20 +291,20 @@ export default function CinemaRoomManagement() {
       const values = await form.validateFields();
 
       if (editingRoom) {
-        const success = await updateRoom(editingRoom.cinemaRoomId, values);
+        const success = await updateRoomFunction(editingRoom.cinemaRoomId, values);
         if (success) {
           setIsModalVisible(false);
           setEditingRoom(null);
           form.resetFields();
         }
       } else {
-        const success = await createRoom(values);
+        const success = await createRoomFunction(values);
         if (success) {
           setIsModalVisible(false);
           form.resetFields();
         }
       }
-    } catch {
+    } catch (error) {
       // Form validation failed
     }
   };
@@ -386,6 +312,20 @@ export default function CinemaRoomManagement() {
     setIsModalVisible(false);
     setEditingRoom(null);
     form.resetFields();
+  };
+
+  const handleAddNewRoom = () => {
+    form.resetFields();
+    // Set default values for new room
+    form.setFieldsValue({
+      roomType: undefined,
+      priceMultiplier: 1.0,
+      isActive: true,
+      has3D: false,
+      hasDolbyAtmos: false,
+      hasReclinerSeats: false
+    });
+    setIsModalVisible(true);
   };
 
   const columns: ColumnsType<CinemaRoomResponse> = [
@@ -500,7 +440,7 @@ export default function CinemaRoomManagement() {
             />
           </Tooltip>{" "}
           <Tooltip
-            title={isUsingApiData ? "Edit" : "Edit disabled in demo mode"}
+            title={isUsingApiData ? "Edit" : "Edit disabled - backend not connected"}
           >
             <Button
               type="text"
@@ -516,7 +456,7 @@ export default function CinemaRoomManagement() {
             />
           </Tooltip>
           <Tooltip
-            title={isUsingApiData ? "Delete" : "Delete disabled in demo mode"}
+            title={isUsingApiData ? "Delete" : "Delete disabled - backend not connected"}
           >
             <Popconfirm
               title="Delete Room"
@@ -550,9 +490,9 @@ export default function CinemaRoomManagement() {
         {/* Backend Status Alert */}
         {!isUsingApiData && (
           <Alert
-            message="Demo Mode Active"
-            description="Backend server is not available. Currently showing sample data. To connect to real data, ensure the backend server is running on localhost:8080"
-            type="warning"
+            message="Backend Connection Failed"
+            description="Backend server is not available. Please ensure the backend server is running on localhost:8080/cinema/api"
+            type="error"
             showIcon
             closable
             className="mb-4"
@@ -643,8 +583,8 @@ export default function CinemaRoomManagement() {
                   Room Management
                 </Title>
                 {backendStatus === "disconnected" && (
-                  <Tag color="orange" className="text-xs">
-                    Demo Mode
+                  <Tag color="red" className="text-xs">
+                    Disconnected
                   </Tag>
                 )}
                 {backendStatus === "checking" && (
@@ -675,7 +615,7 @@ export default function CinemaRoomManagement() {
                 icon={<PlusOutlined />}
                 size="middle"
                 className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
-                onClick={() => setIsModalVisible(true)}
+                onClick={handleAddNewRoom}
                 disabled={!isUsingApiData}
                 title={
                   !isUsingApiData
@@ -820,12 +760,15 @@ export default function CinemaRoomManagement() {
                 label="Room Type"
                 rules={[{ required: true, message: "Please select room type" }]}
               >
-                {" "}
-                <Select placeholder="Select room type" className="h-10">
-                  <Option value="STANDARD">Standard</Option>
-                  <Option value="VIP">VIP</Option>
-                  <Option value="IMAX">IMAX</Option>
-                  <Option value="4DX">4DX</Option>
+                <Select 
+                  placeholder="Select room type" 
+                  className="h-10"
+                  onChange={handleRoomTypeChange}
+                >
+                  <Option value="STANDARD">Standard (1.0x)</Option>
+                  <Option value="VIP">VIP (1.5x)</Option>
+                  <Option value="IMAX">IMAX (2.5x)</Option>
+                  <Option value="4DX">4DX (3.0x)</Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -926,7 +869,14 @@ export default function CinemaRoomManagement() {
             <Col xs={24} sm={12}>
               <Form.Item
                 name="priceMultiplier"
-                label="Price Multiplier"
+                label={
+                  <span>
+                    Price Multiplier (Hệ số nhân giá){" "}
+                    <Tooltip title="Giá vé cuối cùng = Giá vé cơ bản × Price Multiplier. Ví dụ: 100,000 VNĐ × 1.5 = 150,000 VNĐ">
+                      <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                    </Tooltip>
+                  </span>
+                }
                 rules={[
                   { required: true, message: "Please enter price multiplier" },
                   {
@@ -936,13 +886,15 @@ export default function CinemaRoomManagement() {
                     message: "Multiplier must be between 0.1 and 10",
                   },
                 ]}
+                extra="Tự động điền khi chọn Room Type. Có thể chỉnh sửa thủ công."
               >
                 <InputNumber
-                  placeholder="Enter price multiplier"
+                  placeholder="Auto-filled based on room type"
                   className="w-full h-10"
                   min={0.1}
                   max={10}
                   step={0.1}
+                  addonAfter="x"
                 />
               </Form.Item>
             </Col>

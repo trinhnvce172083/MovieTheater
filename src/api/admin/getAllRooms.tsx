@@ -155,7 +155,7 @@ export const getAllRooms = async (
       params: { page, size, sortBy, sortDirection }
     });
     return response.data;
-  } catch {
+  } catch (error) {
     // Return mock data as fallback
     const start = page * size;
     const end = start + size;
@@ -181,7 +181,7 @@ export const getRoomById = async (id: number): Promise<CinemaRoom> => {
   try {
     const response = await axiosClient.get(`/cinema-rooms/${id}`);
     return response.data;
-  } catch {
+  } catch (error) {
     const mockRoom = mockRooms.find(room => room.cinemaRoomId === id);
     if (!mockRoom) {
       throw new Error('Room not found');
@@ -229,7 +229,7 @@ export const searchRooms = async (
       params: { keyword, page, size }
     });
     return response.data;
-  } catch {
+  } catch (error) {
     // Filter mock data by keyword
     const filtered = mockRooms.filter(room => 
       room.cinemaRoomName.toLowerCase().includes(keyword.toLowerCase()) ||
@@ -261,7 +261,7 @@ export const getRoomsByType = async (type: string): Promise<CinemaRoom[]> => {
   try {
     const response = await axiosClient.get(`/cinema-rooms/type/${type}`);
     return response.data;
-  } catch {
+  } catch (error) {
     return mockRooms.filter(room => room.roomType === type);
   }
 };
@@ -270,7 +270,7 @@ export const getRoomStatistics = async (): Promise<CinemaRoomStatistics> => {
   try {
     const response = await axiosClient.get('/cinema-rooms/statistics');
     return response.data;
-  } catch {
+  } catch (error) {
     // Calculate mock statistics
     const totalRooms = mockRooms.length;
     const activeRooms = mockRooms.filter(r => r.isActive).length;

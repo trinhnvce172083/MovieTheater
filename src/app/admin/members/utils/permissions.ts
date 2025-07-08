@@ -18,14 +18,6 @@ export const canEdit = (currentUser: CurrentUser | null, targetUser: MemberData)
   const currentUserId = String(currentUser.id);
   const targetUserId = String(targetUser.id);
   
-  console.log('Checking edit permission:', {
-    currentUserId,
-    targetUserId,
-    match: currentUserId === targetUserId,
-    currentUserRole: currentUser.role,
-    targetUserType: targetUser.type
-  });
-  
   return currentUserId === targetUserId;
 };
 

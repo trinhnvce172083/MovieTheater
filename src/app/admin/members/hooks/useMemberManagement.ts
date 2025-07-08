@@ -53,23 +53,17 @@ export const useMemberManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      console.log("Fetching users...");
       const response = await getAllUsers();
-      console.log('API Response:', response);
 
       if (!response || !response.content || !Array.isArray(response.content)) {
-        console.warn("Invalid API response structure:", response);
         setMemberData([]);
         return;
       }
 
       const transformedData: MemberData[] = response.content.map(transformApiUserToMemberData);
-      console.log('Transformed data:', transformedData);
       setMemberData(transformedData || []);
       setIsUsingApiData(true);
     } catch (error) {
-      console.error("Error fetching users:", error);
-      console.log("Using fallback data due to API error");
       message.warning("Using sample data - please check your connection or login status");
       setMemberData([]);
       setIsUsingApiData(false);
@@ -87,7 +81,6 @@ export const useMemberManagement = () => {
   const filteredData = useMemo(() => {
     try {
       if (!memberData || !Array.isArray(memberData)) {
-        console.log("memberData is not an array:", memberData);
         return [];
       }
 
@@ -110,12 +103,10 @@ export const useMemberManagement = () => {
 
           return matchesSearch && matchesStatus && matchesType;
         } catch (error) {
-          console.error("Error filtering member:", member, error);
           return false;
         }
       });
     } catch (error) {
-      console.error("Error in filteredData calculation:", error);
       return [];
     }
   }, [filters.searchTerm, filters.filterStatus, filters.filterType, memberData]);
@@ -148,7 +139,6 @@ export const useMemberManagement = () => {
             join.getFullYear() === now.getFullYear()
           );
         } catch (error) {
-          console.error('Error processing date for member:', m, error);
           return false;
         }
       })?.length || 0;
@@ -160,14 +150,12 @@ export const useMemberManagement = () => {
           }
           return acc;
         } catch (error) {
-          console.error('Error processing type for member:', m, error);
           return acc;
         }
       }, {}) || {};
 
       return { totalMembers, activeMembers, newMembers, types };
     } catch (error) {
-      console.error("Error calculating statistics:", error);
       return { totalMembers: 0, activeMembers: 0, newMembers: 0, types: {} };
     }
   }, [memberData]);
@@ -176,7 +164,6 @@ export const useMemberManagement = () => {
   const createMember = async (memberData: MemberCreateRequest): Promise<boolean> => {
     try {
       setLoading(true);
-      console.log('Creating member with data:', memberData);
       
       // Validation
       if (!memberData.fullName || !memberData.email || !memberData.username) {
@@ -213,7 +200,6 @@ export const useMemberManagement = () => {
       await fetchUsers();
       return true;
     } catch (error) {
-      console.error("Error creating member:", error);
       handleApiError(error as ApiErrorResponse);
       return false;
     } finally {
@@ -224,14 +210,11 @@ export const useMemberManagement = () => {
   const updateMember = async (id: string, memberData: MemberCreateRequest): Promise<boolean> => {
     try {
       setLoading(true);
-      console.log("Updating member:", id, memberData);
       const response = await axiosClient.put(`/admin/users/${id}`, memberData);
-      console.log("Update response:", response.data);
       message.success("Member updated successfully");
       await fetchUsers();
       return true;
     } catch (error) {
-      console.error("Error updating member:", error);
       handleApiError(error as ApiErrorResponse);
       return false;
     } finally {
@@ -242,14 +225,11 @@ export const useMemberManagement = () => {
   const deleteMember = async (id: string, name: string): Promise<boolean> => {
     try {
       setLoading(true);
-      console.log("Deleting member:", id);
       const response = await axiosClient.delete(`/admin/users/${id}`);
-      console.log("Delete response:", response.data);
       message.success(`Deleted member "${name}" successfully`);
       await fetchUsers();
       return true;
     } catch (error) {
-      console.error("Error deleting member:", error);
       handleApiError(error as ApiErrorResponse);
       return false;
     } finally {

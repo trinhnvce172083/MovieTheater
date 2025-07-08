@@ -28,7 +28,7 @@ import {
   StarOutlined,
 } from "@ant-design/icons";
 import { useRouter, useSearchParams } from "next/navigation";
-import axiosClient from "@/api/axiosClient";
+import { getRoomById } from "@/api/admin/getAllRooms";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -86,9 +86,9 @@ export default function RoomDetailPage() {
   const fetchRoomDetail = async (id: string) => {
     try {
       setLoading(true);
-      const response = await axiosClient.get(`/cinema-rooms/${id}`);
-      setRoomData(response.data);
-    } catch {
+      const roomData = await getRoomById(parseInt(id));
+      setRoomData(roomData);
+    } catch (error) {
       message.warning('Using sample data - API not available');
       // Use sample data as fallback
       setRoomData(sampleRoom);

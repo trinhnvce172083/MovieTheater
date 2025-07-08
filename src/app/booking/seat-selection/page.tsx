@@ -63,11 +63,9 @@ export default function SeatSelectionPage() {
     if (scheduleId) {
       const fetchRelatedInfo = async () => {
         try {
-          console.log("🔍 Fetching schedule info for scheduleId:", scheduleId);
           
           // Lấy thông tin schedule trực tiếp bằng scheduleId
           const scheduleResponse = await ScheduleApiService.getScheduleById(Number(scheduleId));
-          console.log("📅 Schedule response:", scheduleResponse);
           
           if (scheduleResponse.success && scheduleResponse.data) {
             const scheduleData = scheduleResponse.data;
@@ -82,9 +80,7 @@ export default function SeatSelectionPage() {
 
             // Lấy thông tin movie nếu có movieId
             if (scheduleData.movieId) {
-              console.log("🎬 Fetching movie info for movieId:", scheduleData.movieId);
               const movieResponse = await MovieApiService.getMovieById(Number(scheduleData.movieId));
-              console.log("🎬 Movie response:", movieResponse);
               
               if (movieResponse.success && movieResponse.data) {
                 const movieData = movieResponse.data;
@@ -94,21 +90,17 @@ export default function SeatSelectionPage() {
                   duration: movieData.duration,
                   posterUrl: movieData.posterUrl,
                 }));
-                console.log("✅ Movie info set successfully:", movieData.title);
               } else {
-                console.error("❌ Failed to get movie info:", movieResponse.message);
-                messageApi.error("Failed to load movie details.");
+                messageApi.error("Failed to load movie details");
               }
             } else {
-              console.warn("⚠️ No movieId found in schedule data");
+              // No movieId found in schedule data
             }
           } else {
-            console.error("❌ Failed to get schedule info:", scheduleResponse.message);
-            messageApi.error("Failed to load schedule details.");
+            messageApi.error("Failed to load schedule details");
           }
         } catch (e) {
-          console.error("❌ Failed to fetch related info", e);
-          messageApi.error("Failed to load movie and schedule details.");
+          messageApi.error("Failed to load movie and schedule details");
         }
       };
 

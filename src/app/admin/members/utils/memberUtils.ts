@@ -1,7 +1,14 @@
 import { ApiUser, MemberData } from '../types';
 
 /**
- * Transform API user data to table display format
+ * Transform API   const token = localStorage.getItem("accessToken") ||
+               localStorage.getItem('access_token') ||
+               localStorage.getItem('authToken') ||
+               sessionStorage.getItem('accessToken');
+  
+  if (token) {
+    return true;
+  }e display format
  */
 export const transformApiUserToMemberData = (user: unknown, index: number): MemberData => {
   try {
@@ -21,7 +28,6 @@ export const transformApiUserToMemberData = (user: unknown, index: number): Memb
       dob: userObj.dateOfBirth || '',
     };
   } catch (error) {
-    console.error('Error processing user:', user, error);
     const inactiveStatus = 'inactive' as const;
     return {
       key: index.toString(),
@@ -60,7 +66,6 @@ export const getCurrentUserFromStorage = () => {
       username: 'PhoenixZ'
     };
   } catch (error) {
-    console.error('Error parsing user info:', error);
     return {
       id: '4',
       role: 'ADMIN',
@@ -78,16 +83,7 @@ export const checkAuthToken = (): boolean => {
                localStorage.getItem('authToken') ||
                sessionStorage.getItem('accessToken');
   
-  console.log("🔍 Auth check - Token found:", token ? "YES" : "NO");
   if (token) {
-    console.log('Token source:',
-      localStorage.getItem("accessToken") ? "localStorage(accessToken)" :
-      localStorage.getItem("access_token") ? "localStorage(access_token)" :
-      localStorage.getItem("authToken") ? "localStorage(authToken)" :
-      sessionStorage.getItem("accessToken") ? "sessionStorage(accessToken)" :
-      "unknown"
-    );
-    console.log('Token preview:', token.substring(0, 20) + '...');
     return true;
   }
   

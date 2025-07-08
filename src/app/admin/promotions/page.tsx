@@ -849,12 +849,10 @@ export default function ProfessionalPromotionManagement() {
                   size="middle"
                   onClick={() => {
                     setSearchTerm("");
-                    setCurrentPage(1);
-                    message.success("Filters cleared successfully");
+                    fetchPromotions(0, pageSize);
                   }}
-                  disabled={!searchTerm}
                 >
-                  Clear Filters
+                  Reset
                 </Button>
               </Col>
             </Row>

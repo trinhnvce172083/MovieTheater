@@ -73,7 +73,6 @@ export default function AdminMemberManagement() {
         setEditingMember(null);
       }
     } catch (error) {
-      console.error('Form submission failed:', error);
       message.error('Please check all required fields and try again.');
     }
   };
