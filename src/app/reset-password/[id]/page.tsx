@@ -2,6 +2,7 @@
 
 import React from "react";
 import ResetPasswordForm from "./ResetPasswordForm";
+import ROUTES from "@/constants/routes";
 
 const ResetPassword: React.FC = () => {
   return (
@@ -18,7 +19,7 @@ const ResetPassword: React.FC = () => {
         <ResetPasswordForm token="" />
         <div className="mt-6 text-center">
           <a
-            href="/login"
+            href={ROUTES.LOGIN}
             className="text-gray-600 text-sm hover:text-gray-800 transition-colors duration-200"
           >
             Back to Login
