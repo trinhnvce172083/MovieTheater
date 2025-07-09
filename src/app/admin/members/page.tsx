@@ -7,13 +7,13 @@ import { useRouter } from 'next/navigation';
 
 // Local imports
 import { useMemberManagement } from './hooks/useMemberManagement';
-import { 
-  MemberStatisticsCard, 
-  MemberFilters, 
+import {
+  MemberStatisticsCard,
+  MemberFilters,
   MemberFormModal,
   LockUserModal,
   UnlockUserModal,
-  createMemberColumns 
+  createMemberColumns
 } from './components';
 import { MemberData, MemberCreateRequest } from './types';
 
@@ -23,7 +23,7 @@ export default function AdminMemberManagement() {
   const router = useRouter();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMember, setEditingMember] = useState<MemberData | null>(null);
-  
+
   // Modal states for lock/unlock
   const [lockModalVisible, setLockModalVisible] = useState(false);
   const [unlockModalVisible, setUnlockModalVisible] = useState(false);
@@ -36,14 +36,14 @@ export default function AdminMemberManagement() {
     filteredData,
     statistics,
     currentUser,
-    
+
     // State
     loading,
     showAuthWarning,
     isUsingApiData,
     filters,
     pagination,
-    
+
     // Actions
     setFilters,
     setPagination,
@@ -149,7 +149,7 @@ export default function AdminMemberManagement() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
-        
+
         {/* Demo Data Warning */}
         {!isUsingApiData && (
           <Alert
@@ -217,9 +217,9 @@ export default function AdminMemberManagement() {
           </div>
 
           {/* Filters Section */}
-          <MemberFilters 
-            filters={filters} 
-            onFiltersChange={setFilters} 
+          <MemberFilters
+            filters={filters}
+            onFiltersChange={setFilters}
           />
 
           {/* Table Section */}
@@ -235,7 +235,7 @@ export default function AdminMemberManagement() {
               loading={loading}
               rowKey="key"
             />
-            
+
             {/* Pagination */}
             <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <Text type="secondary" className="text-sm">
@@ -248,9 +248,9 @@ export default function AdminMemberManagement() {
                 pageSize={pagination.pageSize}
                 total={filteredData.length}
                 onChange={(page, size) => {
-                  setPagination({ 
-                    currentPage: page, 
-                    pageSize: size || pagination.pageSize 
+                  setPagination({
+                    currentPage: page,
+                    pageSize: size || pagination.pageSize
                   });
                 }}
                 showSizeChanger
@@ -269,22 +269,8 @@ export default function AdminMemberManagement() {
         editingMember={editingMember}
         onSubmit={handleModalSubmit}
         onCancel={handleModalCancel}
-<<<<<<< HEAD
-        width={600}
-        className="professional-modal"
-        okText={editingMember ? "Update Member" : "Add Member"}
-        cancelText="Cancel"
-      >
-        <MemberForm
-          initialValues={editingMember}
-          onFinish={handleModalOk}
-          loading={loading}
-        />
-      </Modal>
-=======
         loading={loading}
       />
->>>>>>> ee9f592098ddb54141ddf8d238bb87e99df9a954
 
       {/* Lock User Modal */}
       <LockUserModal

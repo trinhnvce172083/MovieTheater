@@ -71,17 +71,17 @@ export default function AdminConcessionsPage() {
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card>
-            <Statistic title="Highest Price" value={filteredData.length ? Math.max(...filteredData.map(c => c.price)) : 0} precision={0} prefix={<ArrowUpOutlined />} valueStyle={{ color: '#cf1322' }}/>
+            <Statistic title="Highest Price" value={filteredData.length ? Math.max(...filteredData.map(c => c.price)) : 0} precision={0} prefix={<ArrowUpOutlined />} valueStyle={{ color: '#cf1322' }} />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card>
-            <Statistic title="Lowest Price" value={filteredData.length ? Math.min(...filteredData.map(c => c.price)) : 0} precision={0} prefix={<ArrowDownOutlined />} valueStyle={{ color: '#3f8600' }}/>
+            <Statistic title="Lowest Price" value={filteredData.length ? Math.min(...filteredData.map(c => c.price)) : 0} precision={0} prefix={<ArrowDownOutlined />} valueStyle={{ color: '#3f8600' }} />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card>
-            <Statistic title="Average Price" value={filteredData.length ? (filteredData.reduce((a, b) => a + b.price, 0) / filteredData.length) : 0} prefix={<DollarCircleOutlined />}/>
+            <Statistic title="Average Price" value={filteredData.length ? (filteredData.reduce((a, b) => a + b.price, 0) / filteredData.length) : 0} prefix={<DollarCircleOutlined />} />
           </Card>
         </Col>
       </Row>
@@ -94,7 +94,7 @@ export default function AdminConcessionsPage() {
           </div>
           <Space>
             <Tooltip title="Reload data">
-              <Button icon={<ReloadOutlined />} onClick={() => window.location.reload()} loading={loading}/>
+              <Button icon={<ReloadOutlined />} onClick={() => window.location.reload()} loading={loading} />
             </Tooltip>
             <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
               Add New Concession
@@ -103,41 +103,31 @@ export default function AdminConcessionsPage() {
         </div>
 
         <div style={{ marginBottom: 16 }}>
-<<<<<<< HEAD
-          <Input
-            placeholder="Search by name or description..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: '100%' }}
-            prefix={<SearchOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
-          />
-=======
-            <Row gutter={[12, 12]}>
-                <Col xs={24} sm={16} lg={18}>
-                    <Input
-                        placeholder="Search by name or description..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ width: '100%' }}
-                        prefix={<SearchOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
-                        allowClear
-                    />
-                </Col>
-                <Col xs={24} sm={8} lg={6}>
-                    <Button
-                        icon={<ReloadOutlined />}
-                        style={{ width: '100%' }}
-                        onClick={() => {
-                            setSearchTerm("");
-                            message.success("Search cleared successfully");
-                        }}
-                        disabled={!searchTerm}
-                    >
-                        Clear Search
-                    </Button>
-                </Col>
-            </Row>
->>>>>>> ee9f592098ddb54141ddf8d238bb87e99df9a954
+          <Row gutter={[12, 12]}>
+            <Col xs={24} sm={16} lg={18}>
+              <Input
+                placeholder="Search by name or description..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ width: '100%' }}
+                prefix={<SearchOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
+                allowClear
+              />
+            </Col>
+            <Col xs={24} sm={8} lg={6}>
+              <Button
+                icon={<ReloadOutlined />}
+                style={{ width: '100%' }}
+                onClick={() => {
+                  setSearchTerm("");
+                  message.success("Search cleared successfully");
+                }}
+                disabled={!searchTerm}
+              >
+                Clear Search
+              </Button>
+            </Col>
+          </Row>
         </div>
 
         <ConcessionTable

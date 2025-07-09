@@ -77,16 +77,16 @@ export default function AdminMovieManagement() {
   const fetchMovies = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       const params = {
         page: 0,
         size: 100,
         sortBy: "title",
         sortDirection: "asc" as const,
       };
-      
+
       const response = await getMovies(params);
-      
+
       if (response && response.content && Array.isArray(response.content)) {
         setMovieData(response.content);
       } else if (response && Array.isArray(response)) {
@@ -114,25 +114,25 @@ export default function AdminMovieManagement() {
       }
 
       const totalMovies = movieData.length;
-      
+
       // Check for multiple possible "now showing" status values
-      const activeMovies = movieData.filter(m => 
-        m.status === "NOW_SHOWING" || 
-        m.status === "Now Showing" || 
+      const activeMovies = movieData.filter(m =>
+        m.status === "NOW_SHOWING" ||
+        m.status === "Now Showing" ||
         m.status === "ACTIVE" ||
         m.status === "now_showing"
       ).length;
-      
+
       // Calculate total revenue from box office data, fallback to price sum
       const totalRevenue = movieData.reduce((sum, m) => {
         if (m.boxOffice && m.boxOffice > 0) return sum + m.boxOffice;
         if (m.revenue && m.revenue > 0) return sum + m.revenue;
         return sum + (m.price || 0);
       }, 0);
-      
+
       const totalDuration = movieData.reduce((sum, m) => sum + (m.duration || 0), 0);
       const avgDuration = Math.round(totalDuration / movieData.length);
-      
+
       setStatistics({ totalMovies, activeMovies, totalRevenue, avgDuration });
     }
   }, [movieData]);
@@ -145,22 +145,22 @@ export default function AdminMovieManagement() {
     // Calculate statistics after movieData is loaded
     if (movieData.length > 0) {
       const totalMovies = movieData.length;
-      const activeMovies = movieData.filter(m => 
-        m.status === "NOW_SHOWING" || 
-        m.status === "Now Showing" || 
+      const activeMovies = movieData.filter(m =>
+        m.status === "NOW_SHOWING" ||
+        m.status === "Now Showing" ||
         m.status === "ACTIVE" ||
         m.status === "now_showing"
       ).length;
-      
+
       const totalRevenue = movieData.reduce((sum, m) => {
         if (m.boxOffice && m.boxOffice > 0) return sum + m.boxOffice;
         if (m.revenue && m.revenue > 0) return sum + m.revenue;
         return sum + (m.price || 0);
       }, 0);
-      
+
       const totalDuration = movieData.reduce((sum, m) => sum + (m.duration || 0), 0);
       const avgDuration = Math.round(totalDuration / movieData.length);
-      
+
       setStatistics({ totalMovies, activeMovies, totalRevenue, avgDuration });
     }
   }, [movieData]);
@@ -187,7 +187,7 @@ export default function AdminMovieManagement() {
 
           const matchesStatus = !filterStatus || movie.status === filterStatus;
 
-          const movieGenres = movie.genre 
+          const movieGenres = movie.genre
             ? movie.genre.split(',').map(g => g.trim())
             : (movie.genres ? (typeof movie.genres === 'string' ? movie.genres.split(',').map(g => g.trim()) : movie.genres) : []);
           const matchesGenre = !filterGenre || movieGenres.includes(filterGenre);
@@ -213,23 +213,23 @@ export default function AdminMovieManagement() {
   const createMovieHandler = async (movieData: Omit<Movie, 'movieId'>) => {
     try {
       setLoading(true);
-      
+
       // Validate required fields
       if (!movieData.title || !movieData.releaseDate) {
         message.error('Please fill in all required fields: Title and Release Date');
         return false;
       }
-      
+
       const response = await createMovie(movieData);
-      
+
       if (response) {
         message.success('Movie created successfully');
-        
+
         setMovieData(prevMovies => {
           const newMovies = [...prevMovies, response];
           return newMovies;
         });
-        
+
         await fetchMovies();
         await fetchStatistics();
         setCurrentPage(1);
@@ -240,11 +240,11 @@ export default function AdminMovieManagement() {
         return false;
       }
     } catch (error) {
-      
+
       if (error && typeof error === 'object' && 'response' in error) {
         const apiError = error as ApiErrorResponse;
         const status = apiError.response?.status;
-        
+
         switch (status) {
           case 400:
             message.error('Validation error. Please check all required fields are filled correctly.');
@@ -284,11 +284,11 @@ export default function AdminMovieManagement() {
       await fetchMovies();
       return true;
     } catch (error) {
-      
+
       if (error && typeof error === 'object' && 'response' in error) {
         const apiError = error as ApiErrorResponse;
         const status = apiError.response?.status;
-        
+
         switch (status) {
           case 404:
             message.error('Movie not found. It might have been already deleted.');
@@ -324,7 +324,7 @@ export default function AdminMovieManagement() {
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
-      
+
       // Transform form data to match backend Movie entity structure
       const movieData = {
         title: values.title,
@@ -464,14 +464,14 @@ export default function AdminMovieManagement() {
               status === "NOW_SHOWING"
                 ? "success"
                 : status === "COMING_SOON"
-                ? "processing"
-                : "default"
+                  ? "processing"
+                  : "default"
             }
             className="font-medium text-xs"
           >
-            {status === "NOW_SHOWING" ? "Now Showing" : 
-             status === "COMING_SOON" ? "Coming Soon" : 
-             status === "ENDED" ? "Ended" : status}
+            {status === "NOW_SHOWING" ? "Now Showing" :
+              status === "COMING_SOON" ? "Coming Soon" :
+                status === "ENDED" ? "Ended" : status}
           </Tag>
         </div>
 
@@ -486,10 +486,10 @@ export default function AdminMovieManagement() {
       render: (price: number) => (
         <div className="text-center">
           <span className="font-mono text-sm font-semibold text-green-600">
-            {new Intl.NumberFormat('vi-VN', { 
-              style: 'currency', 
+            {new Intl.NumberFormat('vi-VN', {
+              style: 'currency',
               currency: 'VND',
-              minimumFractionDigits: 0 
+              minimumFractionDigits: 0
             }).format(price || 0)}
           </span>
         </div>
@@ -572,7 +572,7 @@ export default function AdminMovieManagement() {
                 prefix={<GlobalOutlined className="text-green-600" />}
                 valueStyle={{ color: "#52c41a", fontSize: "1.5rem" }}
               />
-              
+
             </Card>
           </Col>
           <Col xs={12} sm={12} lg={6}>
@@ -581,17 +581,17 @@ export default function AdminMovieManagement() {
                 title="Total Revenue"
                 value={statistics.totalRevenue}
                 prefix={<DollarOutlined className="text-green-600" />}
-                formatter={(value) => 
-                  new Intl.NumberFormat('vi-VN', { 
-                    style: 'currency', 
+                formatter={(value) =>
+                  new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
                     currency: 'VND',
                     minimumFractionDigits: 0,
-                    maximumFractionDigits: 0 
+                    maximumFractionDigits: 0
                   }).format(Number(value))
                 }
                 valueStyle={{ color: "#52c41a", fontSize: "1.2rem" }}
               />
-              
+
             </Card>
           </Col>
           <Col xs={12} sm={12} lg={6}>
@@ -603,7 +603,7 @@ export default function AdminMovieManagement() {
                 prefix={<ClockCircleOutlined className="text-purple-600" />}
                 valueStyle={{ color: "#722ed1", fontSize: "1.5rem" }}
               />
-              
+
             </Card>
           </Col>
         </Row>
@@ -777,24 +777,6 @@ export default function AdminMovieManagement() {
         cancelText="Cancel"
         maskClosable={false}
       >
-<<<<<<< HEAD
-        <MovieForm
-          initialValues={editingMovie}
-          onFinish={handleModalOk}
-          loading={loading}
-        />
-      </Modal>
-      <ShowtimePickerModal
-        open={showModal}
-        onClose={() => setShowModal(false)}
-        onContinue={(schedule) => {
-          setShowModal(false);
-          router.push(`/booking/seat-selection?scheduleId=${schedule.scheduleId}`);
-        }}
-        movieTitle="Tên phim"
-        movieId={1}
-      />
-=======
         <Form
           form={form}
           layout="vertical"
@@ -854,8 +836,8 @@ export default function AdminMovieManagement() {
                 name="description"
                 label="Description"
               >
-                <TextArea 
-                  rows={3} 
+                <TextArea
+                  rows={3}
                   placeholder="Enter movie description"
                   showCount
                   maxLength={500}
@@ -875,8 +857,8 @@ export default function AdminMovieManagement() {
                   { type: 'number', min: 1, max: 500, message: "Duration must be between 1-500 minutes" }
                 ]}
               >
-                <InputNumber 
-                  placeholder="Duration" 
+                <InputNumber
+                  placeholder="Duration"
                   className="w-full h-10"
                   min={1}
                   max={500}
@@ -907,8 +889,8 @@ export default function AdminMovieManagement() {
                   { type: 'number', min: 0, message: "Price must be positive" }
                 ]}
               >
-                <InputNumber 
-                  placeholder="Ticket price" 
+                <InputNumber
+                  placeholder="Ticket price"
                   className="w-full h-10"
                   min={0}
                   controls={false}
@@ -992,8 +974,8 @@ export default function AdminMovieManagement() {
                 label="IMDB Rating (0-10)"
                 rules={[{ type: 'number', min: 0, max: 10, message: "Rating must be between 0-10" }]}
               >
-                <InputNumber 
-                  placeholder="e.g., 8.5" 
+                <InputNumber
+                  placeholder="e.g., 8.5"
                   className="w-full h-10"
                   min={0}
                   max={10}
@@ -1030,8 +1012,8 @@ export default function AdminMovieManagement() {
                 label="Budget (USD)"
                 rules={[{ type: 'number', min: 0, message: "Budget must be positive" }]}
               >
-                <InputNumber 
-                  placeholder="Production budget" 
+                <InputNumber
+                  placeholder="Production budget"
                   className="w-full h-10"
                   min={0}
                   controls={false}
@@ -1044,8 +1026,8 @@ export default function AdminMovieManagement() {
                 label="Box Office (USD)"
                 rules={[{ type: 'number', min: 0, message: "Box office must be positive" }]}
               >
-                <InputNumber 
-                  placeholder="Box office earnings" 
+                <InputNumber
+                  placeholder="Box office earnings"
                   className="w-full h-10"
                   min={0}
                   controls={false}
@@ -1058,8 +1040,8 @@ export default function AdminMovieManagement() {
                 label="Total Revenue (USD)"
                 rules={[{ type: 'number', min: 0, message: "Revenue must be positive" }]}
               >
-                <InputNumber 
-                  placeholder="Total revenue" 
+                <InputNumber
+                  placeholder="Total revenue"
                   className="w-full h-10"
                   min={0}
                   controls={false}
@@ -1114,7 +1096,6 @@ export default function AdminMovieManagement() {
         </Form>
       </Modal>
 
->>>>>>> ee9f592098ddb54141ddf8d238bb87e99df9a954
 
     </div>
   );

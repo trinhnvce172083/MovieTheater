@@ -92,9 +92,9 @@ const MovieDetailPage: React.FC = () => {
       if (isNaN(numericMovieId)) {
         throw new Error('Invalid movie ID');
       }
-      
+
       const movieData = await getMovieById(numericMovieId);
-      
+
       // Enhance with additional mock data if needed
       const enhancedMovie = {
         ...movieData,
@@ -133,7 +133,7 @@ const MovieDetailPage: React.FC = () => {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
@@ -150,7 +150,7 @@ const MovieDetailPage: React.FC = () => {
         isFeatured: Boolean(movie.isFeatured),
         isActive: Boolean(movie.isActive),
       };
-      
+
       editForm.setFieldsValue(formData);
       setEditModalVisible(true);
     }
@@ -160,7 +160,7 @@ const MovieDetailPage: React.FC = () => {
     try {
       // Transform form data to match backend expectations using smart update
       const movieData: Partial<Movie> = {};
-      
+
       // Only include fields that have been changed
       if (values.title !== undefined) movieData.title = values.title;
       if (values.originalTitle !== undefined) movieData.originalTitle = values.originalTitle;
@@ -277,9 +277,9 @@ const MovieDetailPage: React.FC = () => {
         <div className="mb-12">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
-              <Button 
-                type="text" 
-                icon={<ArrowLeftOutlined />} 
+              <Button
+                type="text"
+                icon={<ArrowLeftOutlined />}
                 onClick={() => router.back()}
                 className="text-gray-500 hover:text-gray-700 hover:bg-gray-50 border-0 px-4 py-2"
                 size="large"
@@ -295,11 +295,11 @@ const MovieDetailPage: React.FC = () => {
                 </Text>
               </div>
             </div>
-            
+
             <div className="flex space-x-4">
-              <Button 
+              <Button
                 size="large"
-                icon={<EditOutlined />} 
+                icon={<EditOutlined />}
                 onClick={handleEdit}
                 className="px-8 h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-0 shadow-sm font-medium text-white"
               >
@@ -322,8 +322,8 @@ const MovieDetailPage: React.FC = () => {
         <div className="grid grid-cols-12 gap-10 mb-12">
           {/* Movie Poster & Basic Info */}
           <div className="col-span-12 lg:col-span-4">
-            <Card 
-              className="text-center border-0 shadow-sm bg-white/80 backdrop-blur-sm" 
+            <Card
+              className="text-center border-0 shadow-sm bg-white/80 backdrop-blur-sm"
               styles={{ body: { padding: '40px 32px' } }}
             >
               <div className="mb-8">
@@ -338,7 +338,7 @@ const MovieDetailPage: React.FC = () => {
                   className="mx-auto border-4 border-white shadow-lg"
                   fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+b3YvGDTrm/5LFq5iS1S9k1r9Y/V1Yds6T2cWECEGBAQEBAQEB"
                 />
-                
+
                 <div className="mt-6 space-y-4">
                   <Tag color={getStatusColor(movie.status)} className="text-sm px-4 py-2 rounded-full">
                     {movie.status.replace("_", " ")}
@@ -360,7 +360,7 @@ const MovieDetailPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="pt-6 border-t border-gray-100 text-sm text-gray-400 space-y-2">
                 <div className="font-mono">ID: #{movie.movieId}</div>
                 <div>Released {dayjs(movie.releaseDate).format("MMMM D, YYYY")}</div>
@@ -368,7 +368,7 @@ const MovieDetailPage: React.FC = () => {
             </Card>
 
             {/* Quick Stats */}
-            <Card 
+            <Card
               title={
                 <div className="flex items-center text-gray-700">
                   <StarOutlined className="mr-3 text-gray-400" />
@@ -376,9 +376,9 @@ const MovieDetailPage: React.FC = () => {
                 </div>
               }
               className="mt-6 border-0 shadow-sm bg-white/80 backdrop-blur-sm"
-              styles={{ 
-                header: { 
-                  backgroundColor: 'transparent', 
+              styles={{
+                header: {
+                  backgroundColor: 'transparent',
                   borderBottom: '1px solid #f1f5f9',
                   padding: '24px 32px 16px 32px'
                 },
@@ -425,7 +425,7 @@ const MovieDetailPage: React.FC = () => {
           {/* Movie Details */}
           <div className="col-span-12 lg:col-span-8 space-y-8">
             {/* Basic Information */}
-            <Card 
+            <Card
               title={
                 <div className="flex items-center text-gray-700">
                   <PlayCircleOutlined className="mr-3 text-gray-400" />
@@ -433,9 +433,9 @@ const MovieDetailPage: React.FC = () => {
                 </div>
               }
               className="border-0 shadow-sm bg-white/80 backdrop-blur-sm"
-              styles={{ 
-                header: { 
-                  backgroundColor: 'transparent', 
+              styles={{
+                header: {
+                  backgroundColor: 'transparent',
                   borderBottom: '1px solid #f1f5f9',
                   padding: '24px 32px 16px 32px'
                 },
@@ -468,7 +468,7 @@ const MovieDetailPage: React.FC = () => {
                         ))}
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
                         Director
@@ -489,7 +489,7 @@ const MovieDetailPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-6">
                     <div>
                       <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
@@ -559,7 +559,7 @@ const MovieDetailPage: React.FC = () => {
 
             {/* Financial Performance */}
             {(movie.boxOffice || movie.revenue || movie.budget) && (
-              <Card 
+              <Card
                 title={
                   <div className="flex items-center text-gray-700">
                     <TrophyOutlined className="mr-3 text-gray-400" />
@@ -567,9 +567,9 @@ const MovieDetailPage: React.FC = () => {
                   </div>
                 }
                 className="border-0 shadow-sm bg-white/80 backdrop-blur-sm"
-                styles={{ 
-                  header: { 
-                    backgroundColor: 'transparent', 
+                styles={{
+                  header: {
+                    backgroundColor: 'transparent',
                     borderBottom: '1px solid #f1f5f9',
                     padding: '24px 32px 16px 32px'
                   },
@@ -619,19 +619,19 @@ const MovieDetailPage: React.FC = () => {
             <div className="text-gray-500 text-sm">
               Last updated: {movie.updatedAt ? dayjs(movie.updatedAt).format("MMM D, YYYY [at] h:mm A") : "Never"}
             </div>
-            
+
             <div className="flex space-x-4">
-              <Button 
+              <Button
                 size="large"
                 onClick={() => router.back()}
                 className="px-8 h-12 text-gray-600 border-gray-200 hover:border-gray-300 hover:text-gray-700 font-medium"
               >
                 Close
               </Button>
-              
-              <Button 
+
+              <Button
                 size="large"
-                icon={<EditOutlined />} 
+                icon={<EditOutlined />}
                 onClick={handleEdit}
                 className="px-8 h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-0 shadow-sm font-medium text-white"
               >
@@ -663,12 +663,6 @@ const MovieDetailPage: React.FC = () => {
           }
         }}
       >
-<<<<<<< HEAD
-        <EditMovieForm
-          initialValues={movie}
-          onFinish={handleEditSubmit}
-        />
-=======
         <div className="p-8">
           <Form
             form={editForm}
@@ -685,16 +679,16 @@ const MovieDetailPage: React.FC = () => {
               >
                 <Input className="h-12" />
               </Form.Item>
-              <Form.Item 
-                name="originalTitle" 
+              <Form.Item
+                name="originalTitle"
                 label={<span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Original Title</span>}
               >
                 <Input className="h-12" />
               </Form.Item>
             </div>
 
-            <Form.Item 
-              name="description" 
+            <Form.Item
+              name="description"
               label={<span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Description</span>}
             >
               <Input.TextArea rows={4} className="resize-none" />
@@ -763,20 +757,20 @@ const MovieDetailPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Form.Item 
-                name="director" 
+              <Form.Item
+                name="director"
                 label={<span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Director</span>}
               >
                 <Input className="h-12" />
               </Form.Item>
-              <Form.Item 
-                name="language" 
+              <Form.Item
+                name="language"
                 label={<span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Language</span>}
               >
                 <Input className="h-12" />
               </Form.Item>
-              <Form.Item 
-                name="country" 
+              <Form.Item
+                name="country"
                 label={<span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Country</span>}
               >
                 <Input className="h-12" />
@@ -784,14 +778,14 @@ const MovieDetailPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Form.Item 
-                name="productionCompany" 
+              <Form.Item
+                name="productionCompany"
                 label={<span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Production Company</span>}
               >
                 <Input className="h-12" />
               </Form.Item>
-              <Form.Item 
-                name="imdbRating" 
+              <Form.Item
+                name="imdbRating"
                 label={<span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">IMDB Rating</span>}
               >
                 <InputNumber
@@ -804,28 +798,28 @@ const MovieDetailPage: React.FC = () => {
               </Form.Item>
             </div>
 
-            <Form.Item 
-              name="cast" 
+            <Form.Item
+              name="cast"
               label={<span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Cast</span>}
             >
               <Input.TextArea rows={2} className="resize-none" />
             </Form.Item>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Form.Item 
-                name="posterUrl" 
+              <Form.Item
+                name="posterUrl"
                 label={<span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Poster URL</span>}
               >
                 <Input className="h-12" />
               </Form.Item>
-              <Form.Item 
-                name="backdropUrl" 
+              <Form.Item
+                name="backdropUrl"
                 label={<span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Backdrop URL</span>}
               >
                 <Input className="h-12" />
               </Form.Item>
-              <Form.Item 
-                name="trailerUrl" 
+              <Form.Item
+                name="trailerUrl"
                 label={<span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Trailer URL</span>}
               >
                 <Input className="h-12" />
@@ -833,22 +827,22 @@ const MovieDetailPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <Form.Item 
-                name="isFeatured" 
+              <Form.Item
+                name="isFeatured"
                 label={<span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Featured</span>}
                 valuePropName="checked"
               >
                 <Switch />
               </Form.Item>
-              <Form.Item 
-                name="isActive" 
+              <Form.Item
+                name="isActive"
                 label={<span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active</span>}
                 valuePropName="checked"
               >
                 <Switch />
               </Form.Item>
-              <Form.Item 
-                name="budget" 
+              <Form.Item
+                name="budget"
                 label={<span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Budget</span>}
               >
                 <InputNumber
@@ -857,8 +851,8 @@ const MovieDetailPage: React.FC = () => {
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                 />
               </Form.Item>
-              <Form.Item 
-                name="boxOffice" 
+              <Form.Item
+                name="boxOffice"
                 label={<span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Box Office</span>}
               >
                 <InputNumber
@@ -870,16 +864,16 @@ const MovieDetailPage: React.FC = () => {
             </div>
 
             <div className="flex justify-end space-x-4 pt-6 border-t border-gray-100">
-              <Button 
+              <Button
                 size="large"
                 onClick={() => setEditModalVisible(false)}
                 className="px-8 h-12 text-gray-600 border-gray-200 hover:border-gray-300 hover:text-gray-700 font-medium"
               >
                 Cancel
               </Button>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
+              <Button
+                type="primary"
+                htmlType="submit"
                 icon={<SaveOutlined />}
                 size="large"
                 className="px-8 h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-0 shadow-sm font-medium"
@@ -889,7 +883,6 @@ const MovieDetailPage: React.FC = () => {
             </div>
           </Form>
         </div>
->>>>>>> ee9f592098ddb54141ddf8d238bb87e99df9a954
       </Modal>
 
       {/* Delete Confirmation Modal */}
@@ -904,14 +897,14 @@ const MovieDetailPage: React.FC = () => {
         onCancel={() => setDeleteModalVisible(false)}
         footer={
           <div className="flex justify-end space-x-4 pt-4 border-t border-gray-100">
-            <Button 
+            <Button
               size="large"
               onClick={() => setDeleteModalVisible(false)}
               className="px-8 h-12 text-gray-600 border-gray-200 hover:border-gray-300 hover:text-gray-700 font-medium"
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               danger
               size="large"
               onClick={handleDelete}
