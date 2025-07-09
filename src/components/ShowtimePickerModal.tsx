@@ -74,9 +74,7 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({
 
       try {
         const dateStr = selectedDate.format('YYYY-MM-DD');
-        console.log(`Fetching schedules for movieId: ${movieId}, date: ${dateStr}`);
         const response = await ScheduleApiService.getSchedulesForMovie(movieId, dateStr);
-        console.log("API Response:", response);
 
         if (response.success) {
           setSchedules(response.data);
@@ -84,7 +82,6 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({
           setError(response.message || 'Failed to load schedules.');
         }
       } catch (error) {
-        console.error("Failed to fetch schedules:", error);
         setError('An error occurred while fetching schedules.');
       } finally {
         setLoading(false);

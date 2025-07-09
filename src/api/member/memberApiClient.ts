@@ -270,7 +270,17 @@ export class MemberApiClient {
 
       // Transform response to match our interface
       const bookings: PaginatedResponse<MemberBooking> = {
-        content: response.data.content.map(this.transformBookingResponse),
+        content: (response.data.content || [])
+          .filter((item: any) => !!item)
+          .map((item: any) => {
+            try {
+              return this.transformBookingResponse(item);
+            } catch (e) {
+              console.error("transformBookingResponse error", e, item);
+              return null;
+            }
+          })
+          .filter((item: any) => !!item),
         page: response.data.page,
       };
 
@@ -502,6 +512,36 @@ export class MemberApiClient {
    * Transform booking response to our interface
    */
   private transformBookingResponse(item: unknown): MemberBooking {
+    if (!item || typeof item !== 'object') {
+      // Trả về object mặc định nếu item không hợp lệ
+      return {
+        bookingId: '',
+        movieTitle: '',
+        moviePoster: '',
+        movieId: 0,
+        scheduleId: 0,
+        cinemaRoom: '',
+        showDate: '',
+        startTime: '',
+        endTime: '',
+        seats: [],
+        concessions: [],
+        totalAmount: 0,
+        finalAmount: 0,
+        discountAmount: 0,
+        status: 'PENDING',
+        paymentMethod: '',
+        paymentStatus: '',
+        bookingDate: '',
+        bookingCode: '',
+        qrCode: '',
+        isCheckedIn: false,
+        checkInTime: '',
+        canCancel: false,
+        canCheckIn: false,
+        expiresAt: '',
+      };
+    }
     const booking = item as Record<string, any>;
     return {
       bookingId: booking.bookingId || booking.id,

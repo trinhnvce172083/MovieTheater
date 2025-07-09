@@ -15,7 +15,6 @@ export default function MoviesApiPage() {
     useMovieFiltersApi(movies);
 
   const handleBookNow = (movieId: string) => {
-    console.log("Booking movie:", movieId);
     // Navigate to booking page - có thể implement sau
   };
 

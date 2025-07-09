@@ -7,7 +7,6 @@ export const refreshToken = async (refreshToken: string) => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error refreshing token:", error);
     throw error;
   }
 };

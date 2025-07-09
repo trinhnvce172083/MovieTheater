@@ -1,7 +1,8 @@
 import { Movie } from "../admin/getAllMovies";
 
-// Mock data cho movies - phù hợp với database schema
-const mockMovies: Movie[] = [
+// Mock data cho movies - phù hợp với database schema  
+// Use let instead of const so we can mutate the array for CRUD operations
+let mockMovies: Movie[] = [
   {
     movieId: 1,
     title: "Avatar: The Way of Water",
@@ -273,6 +274,9 @@ export const mockGetMovies = async (params: any = {}): Promise<any> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
 
+  console.log('📊 MOCK: mockGetMovies called, current array length:', mockMovies.length);
+  console.log('🎬 MOCK: Current movies in array:', mockMovies.map(m => ({ id: m.movieId, title: m.title })));
+
   let filteredMovies = [...mockMovies];
 
   // Apply search filter
@@ -345,10 +349,19 @@ export const mockCreateMovie = async (movieData: Omit<Movie, 'movieId'>): Promis
     isActive: movieData.isActive ?? true,
     isFeatured: movieData.isFeatured ?? false,
     status: movieData.status ?? "COMING_SOON",
-    versions: movieData.versions ?? ["2D", "3D", "IMAX"],
+    versions: movieData.versions ?? ["2D"],
+    // Map genres field properly
+    genre: movieData.genres || movieData.genre,
+    genres: movieData.genres || movieData.genre,
+    // Add timestamp for tracking
+    createdAt: new Date().toISOString(),
   };
   
+  console.log('🔧 MOCK: Adding new movie to mockMovies array:', newMovie);
+  console.log('📊 MOCK: Current mockMovies array length before add:', mockMovies.length);
   mockMovies.push(newMovie);
+  console.log('📊 MOCK: Current mockMovies array length after add:', mockMovies.length);
+  console.log('✅ MOCK: mockMovies array now contains:', mockMovies.map(m => ({ id: m.movieId, title: m.title })));
   return newMovie;
 };
 

@@ -26,15 +26,6 @@ export default function usePermission() {
       return;
     }
 
-    // STAFF can access /staff and /member
-    if (
-      userInfo?.role === Role.STAFF &&
-      (pathname.startsWith("/staff") || pathname.startsWith("/member"))
-    ) {
-      setLoading(false);
-      return;
-    }
-
     // MEMBER can access /member
     if (userInfo?.role === Role.MEMBER && pathname.startsWith("/member")) {
       setLoading(false);

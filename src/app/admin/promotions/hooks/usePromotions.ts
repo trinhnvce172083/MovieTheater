@@ -54,7 +54,6 @@ export const usePromotions = () => {
       );
       setTotalCount(response.page?.totalElements || 0);
     } catch (error) {
-      console.error("Error fetching promotions:", error);
       toast.error("Không thể tải danh sách khuyến mãi");
     } finally {
       setLoading(false);
@@ -114,7 +113,6 @@ export const usePromotions = () => {
         }
       }, 0);
     } catch (error) {
-      console.error('Error deleting promotion:', error);
       toast.error('Không thể xóa khuyến mãi');
     }
   };
@@ -138,7 +136,6 @@ export const usePromotions = () => {
         }
       }, 0);
     } catch (error) {
-      console.error("Error bulk deleting:", error);
       toast.error("Không thể xóa khuyến mãi");
     }
   };
@@ -235,7 +232,6 @@ export const usePromotions = () => {
       fetchPromotions(currentPage - 1, pageSize);
       return true;
     } catch (error) {
-      console.error("Error saving promotion:", error);
       let errorMessage = "Không thể lưu promotion";
       if (error.message) {
         errorMessage = error.message;

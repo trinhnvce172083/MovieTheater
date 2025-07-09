@@ -78,7 +78,6 @@ export default function RegisterPage() {
   };
 
   const onFinish = async (values: RegisterFormValues) => {
-    console.log("Values received in onFinish:", values);
     try {
       setLoading(true);
 
@@ -96,9 +95,7 @@ export default function RegisterPage() {
         role: "MEMBER",
       };
 
-      console.log("Sending register data:", registerData);
       const response = await authApi.register(registerData);
-      console.log("Register response:", response);
 
       if (response) {
         toast.success("Registration successful! Please log in to continue.");
@@ -107,7 +104,6 @@ export default function RegisterPage() {
         }, 1500);
       }
     } catch (errorInfo: unknown) {
-      console.error("Register error:", errorInfo);
       if (errorInfo instanceof AxiosError) {
         const errorMessage =
           errorInfo.response?.data?.message ||

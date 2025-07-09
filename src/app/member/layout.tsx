@@ -15,13 +15,7 @@ export default function MemberLayout({
 
       {/* Sidebar */}
       <aside className="w-[280px] bg-gradient-to-b from-[#fef1df] to-[#d2e7f5]">
-        <MemberHeader
-          user={{
-            name: "Alexa Rawles",
-            email: "alexarawles@gmail.com",
-            points: 0,
-          }}
-        />
+        <MemberHeader />
       </aside>
 
       {/* Nội dung chính */}

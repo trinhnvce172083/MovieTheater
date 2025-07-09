@@ -101,14 +101,18 @@ axiosClient.interceptors.response.use(
         });
       }
 
+      // Nếu chưa refresh, bắt đầu refresh token
+      // Đánh dấu là đang refresh để tránh nhiều request cùng lúc
       isRefreshing = true;
       return new Promise(async (resolve, reject) => {
         try {
           const data = await refreshToken(storedRefreshToken);
           const newAccessToken = data?.data?.accessToken;
           const newRefreshToken = data?.data?.refreshToken;
+          // Lưu  accessToken mới vào localStorage và Redux store
           if (newAccessToken) {
             localStorage.setItem("accessToken", newAccessToken);
+            // Cập nhật refreshToken nếu có
             if (newRefreshToken)
               localStorage.setItem("refreshToken", newRefreshToken);
             store.dispatch(login({ token: newAccessToken }));
