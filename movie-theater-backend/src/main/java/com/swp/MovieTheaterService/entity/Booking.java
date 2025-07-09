@@ -182,11 +182,17 @@ public class Booking extends BaseEntity {
     }
 
     public boolean canBeCancelled() {
+        if (schedule == null || schedule.getShowDateTime() == null) {
+            return false;
+        }
         return (isPending() || isConfirmed() || isPaid()) &&
                 schedule.getShowDateTime().isAfter(LocalDateTime.now().plusHours(2));
     }
 
     public boolean canBeCheckedIn() {
+        if (schedule == null || schedule.getShowDateTime() == null) {
+            return false;
+        }
         return isPaid() && !isCheckedIn &&
                 schedule.getShowDateTime().isAfter(LocalDateTime.now()) &&
                 schedule.getShowDateTime().isBefore(LocalDateTime.now().plusMinutes(30));

@@ -11,7 +11,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Map;
+
+import com.swp.MovieTheaterService.utils.DateTimeUtils;
 
 /**
  * Payment Service Implementation
@@ -55,6 +58,9 @@ public class PaymentServiceImpl implements PaymentService {
                     .build();
                     
             String paymentUrl = vnPayService.createPaymentUrl(vnpayRequest, request.getIpAddress());
+
+            // Sử dụng DateTimeUtils để tính thời gian hết hạn
+            LocalDateTime expiredAt = DateTimeUtils.createExpirationTime(15);
             
             return PaymentResponse.builder()
                     .success(true)
@@ -66,6 +72,8 @@ public class PaymentServiceImpl implements PaymentService {
                     .paymentMethod("VNPAY")
                     .provider("VNPAY")
                     .status("PENDING")
+                    .createdAt(DateTimeUtils.now())
+                    .expiredAt(expiredAt)
                     .build();
                     
         } catch (AppException e) {

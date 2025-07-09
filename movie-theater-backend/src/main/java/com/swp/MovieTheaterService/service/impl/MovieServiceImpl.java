@@ -9,7 +9,6 @@ import com.swp.MovieTheaterService.dto.movie.MovieUpdateRequest;
 import com.swp.MovieTheaterService.entity.Movie;
 import com.swp.MovieTheaterService.exception.AppException;
 import com.swp.MovieTheaterService.exception.ErrorCode;
-import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.mapper.MovieMapper;
 import com.swp.MovieTheaterService.repository.MovieRepository;
 import com.swp.MovieTheaterService.service.MovieService;
@@ -24,7 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;

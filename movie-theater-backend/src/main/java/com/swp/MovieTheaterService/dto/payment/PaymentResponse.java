@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+import com.swp.MovieTheaterService.utils.DateTimeUtils;
+
 /**
  * Payment Response DTO
  * Data Transfer Object for payment responses
@@ -77,7 +79,15 @@ public class PaymentResponse {
     }
     
     public boolean isExpired() {
-        return expiredAt != null && LocalDateTime.now().isAfter(expiredAt);
+        return DateTimeUtils.isExpired(expiredAt);
+    }
+
+    public long getMinutesUntilExpiration() {
+        return DateTimeUtils.getMinutesUntilExpiration(expiredAt);
+    }
+
+    public String getFormattedExpirationTime() {
+        return DateTimeUtils.formatForDisplay(expiredAt);
     }
     
     public String getDisplayStatus() {

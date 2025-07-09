@@ -13,6 +13,7 @@ import com.swp.MovieTheaterService.service.VNPayService;
 import com.swp.MovieTheaterService.service.LoyaltyService;
 import com.swp.MovieTheaterService.service.EmailService;
 import com.swp.MovieTheaterService.utils.VNPayHashUtils;
+import com.swp.MovieTheaterService.utils.DateTimeUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
@@ -146,14 +147,19 @@ public class VNPayServiceImpl implements VNPayService {
         
         vnp_Params.put("vnp_IpAddr", ipAddress);
 
-        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-        String vnp_CreateDate = formatter.format(cld.getTime());
-        vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
+        // Sử dụng DateTimeUtils để xử lý thời gian một cách nhất quán
+        LocalDateTime now = DateTimeUtils.now();
+        LocalDateTime expireTime = DateTimeUtils.createExpirationTime(15);
 
-        cld.add(Calendar.MINUTE, 15);
-        String vnp_ExpireDate = formatter.format(cld.getTime());
+        String vnp_CreateDate = DateTimeUtils.formatForVNPay(now);
+        String vnp_ExpireDate = DateTimeUtils.formatForVNPay(expireTime);
+        
+        vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
         vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
+
+        log.info("VNPay payment time - Create: {} ({}), Expire: {} ({})",
+                vnp_CreateDate, DateTimeUtils.formatForDisplay(now),
+                vnp_ExpireDate, DateTimeUtils.formatForDisplay(expireTime));
 
         if (requestDTO.getBankCode() != null && !requestDTO.getBankCode().isEmpty()) {
             vnp_Params.put("vnp_BankCode", requestDTO.getBankCode());
