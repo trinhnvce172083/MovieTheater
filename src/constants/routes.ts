@@ -6,6 +6,7 @@ const ROUTES = {
   LOGIN: "/auth/Login",
   REGISTER: "/auth/Register",
   ACCOUNT: "/auth/Account",
+  FORGOT_PASSWORD: "/auth/Forgot-password",
   ACCESS_DENIED: "/access-denied",
 
   // Booking Routes
