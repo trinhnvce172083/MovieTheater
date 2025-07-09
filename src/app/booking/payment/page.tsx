@@ -256,7 +256,7 @@ export default function PaymentPage() {
         footer={null}
         closable={false}
         centered
-        bodyStyle={{ textAlign: 'center', padding: 32 }}
+        styles={{ body:{ textAlign: 'center', padding: 32 }}}
       >
         {paymentModalContent.status === 'success' ? (
           <div>
