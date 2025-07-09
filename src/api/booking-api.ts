@@ -35,6 +35,15 @@ export interface SeatStatusResponse {
 export interface BookingRequest {
   scheduleId: number;
   seatIds: number[];
+  concessions?: {
+    concessionId: number;
+    quantity: number;
+  }[];
+  promotionCode?: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  isGuestBooking?: boolean;
 }
 
 export interface BookingResponse {
@@ -114,21 +123,34 @@ export const BookingApiService = {
   getSeatLayout: (roomId: string | number) =>
     axiosClient.get<Seat[]>(`/cinema-rooms/${roomId}/seats`),
 
+  // Sửa endpoint reserve seats theo backend
   reserveSeats: (data: {
     seatIds: string[];
     scheduleId: string | number;
     sessionId?: string;
-  }) => axiosClient.post<SeatReservationResponse>("/bookings/reserve", data),
+  }) => axiosClient.post<SeatReservationResponse>(`/bookings/schedules/${data.scheduleId}/seats/reserve`, {
+    seatIds: data.seatIds
+  }),
 
+  // Sửa endpoint release seats theo backend
   releaseSeats: (sessionId: string) =>
-    axiosClient.post(`/bookings/release/${sessionId}`),
+    axiosClient.post(`/bookings/sessions/${sessionId}/seats/release`),
 
+  // Sửa endpoint extend reservation theo backend
   extendSeatReservation: (sessionId: string) =>
-    axiosClient.post(`/bookings/extend/${sessionId}`),
+    axiosClient.post(`/bookings/sessions/${sessionId}/seats/extend`),
 
   // Cập nhật để phù hợp với backend
   createBooking: (data: BookingRequest) =>
     axiosClient.post<BookingResponse>("/bookings", data),
+
+  // Tạo booking với concessions
+  createBookingWithConcessions: (data: BookingRequest) =>
+    axiosClient.post<BookingResponse>("/bookings", data),
+
+  // Tạo guest booking
+  createGuestBooking: (data: BookingRequest) =>
+    axiosClient.post<BookingResponse>("/bookings/guest", data),
 
   getBookingSummary: (bookingId: string) =>
     axiosClient.get<BookingResponse>(`/bookings/summary/${bookingId}`),

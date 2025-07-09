@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { useBooking } from "@/hooks/useBooking";
+import { useBooking } from "@/hooks/booking/useBooking";
 import type { Seat } from "@/app/booking/seat-selection/seatType";
 import { RootState } from "@/store";
 import {
@@ -13,6 +13,7 @@ import {
   setMovieInfo,
   setScheduleInfo,
   updateSelectedSeats,
+  resetBooking,
 } from "@/store/slices/bookingSlice";
 import { ScheduleApiService } from "@/api/schedule-api";
 import { MovieApiService } from "@/api/movie-api";
@@ -21,7 +22,7 @@ import BookingInfo from "./components/BookingInfo";
 import SeatLoading from "./components/SeatLoading";
 import TheaterLayout from "./components/theater-layout";
 import ROUTES from "@/constants/routes";
-import { useSeatSelection } from "./useSeatSelection";
+import { useSeatSelection } from "@/hooks/booking/useSeatSelection";
 
 export default function SeatSelectionPage() {
   const MAX_SEATS = 10;
@@ -37,19 +38,32 @@ export default function SeatSelectionPage() {
     scheduleInfo,
   } = useSelector((state: RootState) => state.booking);
 
-  const { seats, loading, error, fetchSeatStatus, createBooking } = useBooking({
-    scheduleId,
-    roomId,
-  });
+  const {
+    seats,
+    selectedSeats,
+    loading,
+    error,
+    fetchSeatStatus,
+    selectSeat,
+    deselectSeat,
+    deselectAllSeats,
+    isSeatSelected,
+    getSelectedSeatIds,
+  } = useSeatSelection(scheduleId, roomId);
 
-  const { selectedSeats, setSelectedSeats, selectSeat } =
-    useSeatSelection(MAX_SEATS);
+  const { createBooking } = useBooking();
 
   useEffect(() => {
     const scheduleIdParam = searchParams.get("scheduleId");
     const roomIdParam = searchParams.get("roomId");
 
-    if (scheduleIdParam && roomIdParam) {
+    // Chỉ reset và khởi tạo booking nếu khác với Redux
+    if (
+      scheduleIdParam &&
+      roomIdParam &&
+      (scheduleIdParam !== scheduleId || roomIdParam !== roomId)
+    ) {
+      dispatch(resetBooking());
       dispatch(
         initializeBooking({
           scheduleId: scheduleIdParam,
@@ -57,7 +71,7 @@ export default function SeatSelectionPage() {
         })
       );
     }
-  }, [searchParams, dispatch]);
+  }, [searchParams, dispatch, scheduleId, roomId]);
 
   useEffect(() => {
     if (scheduleId) {
@@ -65,7 +79,6 @@ export default function SeatSelectionPage() {
         try {
           console.log("🔍 Fetching schedule info for scheduleId:", scheduleId);
           
-          // Lấy thông tin schedule trực tiếp bằng scheduleId
           const scheduleResponse = await ScheduleApiService.getScheduleById(Number(scheduleId));
           console.log("📅 Schedule response:", scheduleResponse);
           
@@ -80,7 +93,6 @@ export default function SeatSelectionPage() {
               movieId: scheduleData.movieId,
             }));
 
-            // Lấy thông tin movie nếu có movieId
             if (scheduleData.movieId) {
               console.log("🎬 Fetching movie info for movieId:", scheduleData.movieId);
               const movieResponse = await MovieApiService.getMovieById(Number(scheduleData.movieId));
@@ -112,18 +124,16 @@ export default function SeatSelectionPage() {
         }
       };
 
-      fetchSeatStatus();
       fetchRelatedInfo();
     }
-  }, [scheduleId, dispatch, fetchSeatStatus, messageApi]);
+  }, [scheduleId, dispatch, messageApi]);
 
   const handleSelectSeat = (seat: Seat) => {
-    selectSeat(
-      seat,
-      seats,
-      () => messageApi.warning(`You can select up to ${MAX_SEATS} seats only.`),
-      () => messageApi.warning("You can only select seats in the same row!")
-    );
+    if (isSeatSelected(seat.seatId)) {
+      deselectSeat(seat.seatId);
+    } else {
+      selectSeat(seat);
+    }
   };
 
   const handleContinue = async () => {
@@ -131,35 +141,13 @@ export default function SeatSelectionPage() {
       messageApi.warning("Please select at least one seat.");
       return;
     }
-    try {
-      const bookingData = await createBooking(selectedSeats);
-
-      if (bookingData) {
-        messageApi.success("Booking created successfully! Redirecting...");
-        dispatch(updateSelectedSeats(selectedSeats));
-
-        const params = new URLSearchParams({
-          scheduleId: scheduleId || "",
-          roomId: roomId || "",
-          seats: JSON.stringify(selectedSeats),
-        });
-        router.push(`${ROUTES.CORNCHIP}?${params.toString()}`);
-      }
-    } catch (error: any) {
-      if (error.response && error.response.status === 409) {
-        messageApi.error(
-          "Some selected seats are no longer available. Please choose again."
-        );
-        setSelectedSeats([]);
-        fetchSeatStatus();
-      } else {
-        const errorMessage =
-          error.response?.data?.message ||
-          error.message ||
-          "An error occurred while creating the booking.";
-        messageApi.error(errorMessage);
-      }
-    }
+    dispatch(updateSelectedSeats(selectedSeats));
+    const params = new URLSearchParams({
+      scheduleId: scheduleId || "",
+      roomId: roomId || "",
+      seats: JSON.stringify(selectedSeats),
+    });
+    router.push(`${ROUTES.BOOKING_CORNCHIP}?${params.toString()}`);
   };
 
   if (error) {
@@ -213,7 +201,13 @@ export default function SeatSelectionPage() {
             <BookingInfo
               selectedSeats={selectedSeats}
               loading={loading}
-              onBack={() => router.back()}
+              onBack={() => {
+                if (movieInfo?.movieId) {
+                  router.push(`/movies/${movieInfo.movieId}`);
+                } else {
+                  router.push(ROUTES.MOVIES);
+                }
+              }}
               onContinue={handleContinue}
               movieInfo={movieInfo}
               scheduleInfo={scheduleInfo}

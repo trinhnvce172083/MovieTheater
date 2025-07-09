@@ -94,7 +94,6 @@ export default function CinemaRoomManagement() {
   const [editingRoom, setEditingRoom] = useState<CinemaRoomResponse | null>(null);
   const [isUsingApiData, setIsUsingApiData] = useState(true);
   const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
-  const [form] = Form.useForm();
   const router = useRouter();
   // Sample data for testing (when API is not available)
   const sampleRoomData = useMemo<CinemaRoomResponse[]>(() => [
@@ -316,19 +315,6 @@ export default function CinemaRoomManagement() {
 
   const handleEdit = (record: CinemaRoomResponse) => {
     setEditingRoom(record);
-    form.setFieldsValue({
-      cinemaRoomName: record.cinemaRoomName,
-      roomType: record.roomType,
-      seatQuantity: record.seatQuantity,
-      rows: record.rows,
-      columns: record.columns,
-      description: record.description,
-      has3D: record.has3D,
-      hasDolbyAtmos: record.hasDolbyAtmos,
-      hasReclinerSeats: record.hasReclinerSeats,
-      priceMultiplier: record.priceMultiplier,
-      isActive: record.isActive,
-    });
     setIsModalVisible(true);
   };
 
@@ -338,7 +324,7 @@ export default function CinemaRoomManagement() {
 
   const handleModalOk = async () => {
     try {
-      const values = await form.validateFields();
+      const values = await (editingRoom ? form.validateFields() : form.validateFields());
       
       if (editingRoom) {
         const success = await updateRoom(editingRoom.cinemaRoomId, values);
@@ -734,12 +720,69 @@ export default function CinemaRoomManagement() {
         okText={editingRoom ? "Update Room" : "Add Room"}
         cancelText="Cancel"
         confirmLoading={loading}
+        destroyOnHidden
       >
-        <Form
-          form={form}
-          layout="vertical"
-          className="mt-6"
-        >
+        <RoomForm
+          initialValues={editingRoom}
+          onFinish={handleModalOk}
+          loading={loading}
+        />
+      </Modal>
+
+      <style jsx global>{`
+        .professional-table .ant-table-thead > tr > th {
+          background: #fafafa;
+          border-bottom: 2px solid #f0f0f0;
+          font-weight: 600;
+          color: #262626;
+        }
+        
+        .professional-table .ant-table-tbody > tr:hover > td {
+          background: #f8faff;
+        }
+        
+        .professional-pagination .ant-pagination-item-active {
+          background: #1677ff;
+          border-color: #1677ff;
+        }
+        
+        .professional-pagination .ant-pagination-item-active a {
+          color: white;
+        }
+        
+        .professional-modal .ant-modal-header {
+          border-bottom: 1px solid #f0f0f0;
+          padding: 24px 24px 16px;
+        }
+          .professional-modal .ant-modal-body {
+          padding: 24px;
+        }
+        
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+const RoomForm = ({ initialValues, onFinish, loading }) => {
+  const [form] = Form.useForm();
+  useEffect(() => {
+    if (initialValues) form.setFieldsValue(initialValues);
+    else form.resetFields();
+  }, [initialValues, form]);
+  return (
+    <Form
+      form={form}
+      layout="vertical"
+      className="mt-6"
+      onFinish={onFinish}
+      initialValues={initialValues}
+    >
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
@@ -895,44 +938,5 @@ export default function CinemaRoomManagement() {
             </Col>
           </Row>
         </Form>
-      </Modal>
-
-      <style jsx global>{`
-        .professional-table .ant-table-thead > tr > th {
-          background: #fafafa;
-          border-bottom: 2px solid #f0f0f0;
-          font-weight: 600;
-          color: #262626;
-        }
-        
-        .professional-table .ant-table-tbody > tr:hover > td {
-          background: #f8faff;
-        }
-        
-        .professional-pagination .ant-pagination-item-active {
-          background: #1677ff;
-          border-color: #1677ff;
-        }
-        
-        .professional-pagination .ant-pagination-item-active a {
-          color: white;
-        }
-        
-        .professional-modal .ant-modal-header {
-          border-bottom: 1px solid #f0f0f0;
-          padding: 24px 24px 16px;
-        }
-          .professional-modal .ant-modal-body {
-          padding: 24px;
-        }
-        
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-      `}</style>
-    </div>
   );
-}
+};

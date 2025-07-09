@@ -38,47 +38,87 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
     },
     {
       title: "Promotion Name",
-      key: "promotion_name",
-      width: 200,
-      render: (_: unknown, record: PromotionDto) => (
-        <div>
-          <div className="font-medium text-gray-900 text-sm">
-            {record.promotionName}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">
-            Code: {record.promotionCode}
+      dataIndex: "promotionName",
+      key: "promotionName",
+      width: 220,
+      render: (text, record) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {record.bannerImageUrl && (
+            <img src={record.bannerImageUrl} alt={record.promotionName} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, background: '#fff', border: '1px solid #eee' }} />
+          )}
+          <div>
+            <div style={{ fontWeight: 600 }}>{record.promotionName}</div>
+            <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{record.description}</div>
           </div>
         </div>
       ),
     },
     {
+      title: "Code",
+      dataIndex: "promotionCode",
+      key: "promotionCode",
+      width: 160,
+      align: "center",
+      render: (text) => (
+        <Tag
+          color="blue"
+          style={{
+            fontWeight: 700,
+            fontSize: 15,
+            padding: '4px 18px',
+            letterSpacing: 1,
+            borderRadius: 12,
+            boxShadow: '0 2px 8px rgba(22,119,255,0.08)',
+            display: 'inline-block',
+            minWidth: 100,
+            textAlign: 'center',
+            margin: 0,
+            marginRight: 28,
+            background: '#e6f4ff',
+            border: '1.5px solid #1677ff',
+          }}
+        >
+          {text}
+        </Tag>
+      ),
+    },
+    {
       title: "Discount",
       key: "discount",
-      width: 120,
-      align: "center",
-      render: (_: unknown, record: PromotionDto) => {
-        if (record.discountType === 'FIXED_AMOUNT') {
-          return (
+      width: 160,
+      align: "left",
+      render: (_: unknown, record: PromotionDto) => (
+        <div style={{ paddingLeft: 12 }}>
+          {/* Hiển thị đầy đủ các loại discount */}
+          {record.discountType === 'FIXED_AMOUNT' || record.discountType === 'FIXED' ? (
             <div>
               <span style={{ color: '#1677ff', fontWeight: 600 }}>
                 {Number(record.discountValue).toLocaleString('vi-VN')}₫ OFF
               </span>
               <div style={{ fontSize: 12, color: '#888' }}>Fixed Amount</div>
             </div>
-          );
-        }
-        if (record.discountType === 'PERCENTAGE') {
-          return (
+          ) : record.discountType === 'PERCENTAGE' ? (
             <div>
               <span style={{ color: '#1677ff', fontWeight: 600 }}>
                 {record.discountValue}% OFF
               </span>
               <div style={{ fontSize: 12, color: '#888' }}>Percentage</div>
             </div>
-          );
-        }
-        return null;
-      },
+          ) : record.discountType === 'BUY_ONE_GET_ONE' || record.discountType === 'BOGO' ? (
+            <div>
+              <span style={{ color: '#1677ff', fontWeight: 600 }}>Mua 1 tặng 1</span>
+              <div style={{ fontSize: 12, color: '#888' }}>BOGO</div>
+            </div>
+          ) : record.discountType === 'POINTS' || record.isPointsPromotion ? (
+            <div>
+              <span style={{ color: '#722ed1', fontWeight: 600 }}>
+                Đổi {record.pointsRequired || record.discountValue} điểm
+              </span>
+              <div style={{ fontSize: 12, color: '#888' }}>Points</div>
+            </div>
+          ) : null}
+        </div>
+      ),
     },
     {
       title: "Validity Period",
@@ -168,6 +208,50 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
       ),
     },
     {
+      title: "Max Discount",
+      key: "max_discount",
+      width: 110,
+      align: "right",
+      render: (_: unknown, record: PromotionDto) => (
+        <div className="text-right text-sm">
+          {record.maxDiscountAmount ? `${Number(record.maxDiscountAmount).toLocaleString('vi-VN')}₫` : '-'}
+        </div>
+      ),
+    },
+    {
+      title: "Max Usage",
+      key: "max_usage",
+      width: 90,
+      align: "center",
+      render: (_: unknown, record: PromotionDto) => (
+        <div className="text-center text-sm">
+          {record.maxUsageCount || '-'}
+        </div>
+      ),
+    },
+    {
+      title: "Max Usage/User",
+      key: "max_usage_user",
+      width: 90,
+      align: "center",
+      render: (_: unknown, record: PromotionDto) => (
+        <div className="text-center text-sm">
+          {record.maxUsagePerUser || '-'}
+        </div>
+      ),
+    },
+    {
+      title: "Points Required",
+      key: "points_required",
+      width: 90,
+      align: "center",
+      render: (_: unknown, record: PromotionDto) => (
+        <div className="text-center text-sm">
+          {record.pointsRequired || '-'}
+        </div>
+      ),
+    },
+    {
       title: "Actions",
       key: "actions",
       width: 120,
@@ -240,6 +324,7 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
           }),
         }}
         rowKey="promotionId"
+        tableLayout="fixed"
       />
     </div>
   );

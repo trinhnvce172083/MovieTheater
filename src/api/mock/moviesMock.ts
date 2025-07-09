@@ -1,4 +1,4 @@
-import { Movie, MoviesResponse } from "../admin/getAllMovies";
+import { Movie } from "../admin/getAllMovies";
 
 // Mock data cho movies - phù hợp với database schema
 const mockMovies: Movie[] = [
@@ -269,7 +269,7 @@ const mockMovies: Movie[] = [
 ];
 
 // Mock API functions
-export const mockGetMovies = async (params: any = {}): Promise<MoviesResponse> => {
+export const mockGetMovies = async (params: any = {}): Promise<any> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
 

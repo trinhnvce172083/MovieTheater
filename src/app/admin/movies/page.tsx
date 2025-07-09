@@ -665,130 +665,13 @@ export default function ProfessionalMovieManagement() {
         okText={editingMovie ? "Update Movie" : "Add Movie"}
         cancelText="Cancel"
       >
-        <Form
-          form={form}
-          layout="vertical"
-          className="mt-6"
-        >
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="title"
-                label="English Title"
-                rules={[{ required: true, message: "Please enter English title" }]}
-              >
-                <Input placeholder="Enter English title" className="h-10" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="vietnameseTitle"
-                label="Vietnamese Title"
-                rules={[{ required: true, message: "Please enter Vietnamese title" }]}
-              >
-                <Input placeholder="Enter Vietnamese title" className="h-10" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="company"
-                label="Production Company"
-                rules={[{ required: true, message: "Please enter production company" }]}
-              >
-                <Input placeholder="Enter production company" className="h-10" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="releaseDate"
-                label="Release Date"
-                rules={[{ required: true, message: "Please select release date" }]}
-              >
-                <DatePicker className="w-full h-10" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={8}>
-              <Form.Item
-                name="duration"
-                label="Duration (minutes)"
-                rules={[{ required: true, message: "Please enter duration" }]}
-              >
-                <Input type="number" placeholder="Duration" className="h-10" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Form.Item
-                name="rating"
-                label="Rating"
-                rules={[{ required: true, message: "Please select rating" }]}
-              >
-                <Select placeholder="Select rating" className="h-10">
-                  <Option value="G">G</Option>
-                  <Option value="PG">PG</Option>
-                  <Option value="PG-13">PG-13</Option>
-                  <Option value="R">R</Option>
-                  <Option value="NC-17">NC-17</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Form.Item
-                name="status"
-                label="Status"
-                rules={[{ required: true, message: "Please select status" }]}
-              >
-                <Select placeholder="Select status" className="h-10">
-                  <Option value="NOW_SHOWING">Now Showing</Option>
-                  <Option value="COMING_SOON">Coming Soon</Option>
-                  <Option value="ENDED">Ended</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="versions"
-                label="Available Versions"
-                rules={[{ required: true, message: "Please select versions" }]}
-              >
-                <Select mode="multiple" placeholder="Select versions" className="h-10">
-                  <Option value="2D">2D</Option>
-                  <Option value="3D">3D</Option>
-                  <Option value="IMAX">IMAX</Option>
-                  <Option value="4DX">4DX</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="genres"
-                label="Genres"
-                rules={[{ required: true, message: "Please select genres" }]}
-              >
-                <Select mode="multiple" placeholder="Select genres" className="h-10">
-                  <Option value="Action">Action</Option>
-                  <Option value="Adventure">Adventure</Option>
-                  <Option value="Fantasy">Fantasy</Option>
-                  <Option value="Sci-Fi">Sci-Fi</Option>
-                  <Option value="Crime">Crime</Option>
-                  <Option value="Drama">Drama</Option>
-                  <Option value="Comedy">Comedy</Option>
-                  <Option value="Horror">Horror</Option>
-                  <Option value="Thriller">Thriller</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </Modal>      <ShowtimePickerModal
+        <MovieForm
+          initialValues={editingMovie}
+          onFinish={handleModalOk}
+          loading={loading}
+        />
+      </Modal>
+      <ShowtimePickerModal
         open={showModal}
         onClose={() => setShowModal(false)}
         onContinue={(schedule) => {

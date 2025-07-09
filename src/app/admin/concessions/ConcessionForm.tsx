@@ -24,7 +24,7 @@ const ConcessionForm: React.FC<ConcessionFormProps> = ({
   setImageFile,
   isEdit
 }) => {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm(); // Create form instance internally
 
   React.useEffect(() => {
     if (visible) {
@@ -41,6 +41,7 @@ const ConcessionForm: React.FC<ConcessionFormProps> = ({
       onOk={() => form.submit()}
       okText="Save"
       confirmLoading={loading}
+      destroyOnHidden
     >
       <Form
         form={form}
