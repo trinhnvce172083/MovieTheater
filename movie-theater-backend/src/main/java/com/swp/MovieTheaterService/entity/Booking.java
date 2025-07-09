@@ -55,6 +55,10 @@ public class Booking extends BaseEntity {
     @Column(name = "booking_status", nullable = false)
     private BookingStatus bookingStatus = BookingStatus.PENDING;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false)
+    private com.swp.MovieTheaterService.enums.PaymentStatus paymentStatus = com.swp.MovieTheaterService.enums.PaymentStatus.PENDING;
+
     @Column(name = "payment_method", length = 20)
     private String paymentMethod; // CASH, CARD, ONLINE, WALLET
 
@@ -130,6 +134,13 @@ public class Booking extends BaseEntity {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (paymentStatus == null) {
+            paymentStatus = com.swp.MovieTheaterService.enums.PaymentStatus.PENDING;
+        }
+    }
 
     // Business methods
     public boolean isPending() {

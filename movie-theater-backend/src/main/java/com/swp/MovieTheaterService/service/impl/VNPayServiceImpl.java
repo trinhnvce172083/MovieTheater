@@ -223,7 +223,8 @@ public class VNPayServiceImpl implements VNPayService {
                 }
 
                 // Update booking status
-                booking.setBookingStatus(BookingStatus.PAID);
+                booking.setBookingStatus(BookingStatus.CONFIRMED);
+                booking.setPaymentStatus(com.swp.MovieTheaterService.enums.PaymentStatus.SUCCESS);
                 booking.setUpdatedAt(LocalDateTime.now());
                 
                 // Set payment info
