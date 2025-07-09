@@ -22,4 +22,5 @@ export interface Seat {
   isCouple?: boolean;
   isWheelchair?: boolean;
   isPremium?: boolean;
+  price?: number;
 }

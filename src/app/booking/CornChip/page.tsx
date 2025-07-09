@@ -1,83 +1,78 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import Header from '@/components/Header/Header';
-import concessionApi from '@/api/concessionApi';
+import { useEffect, useState } from 'react';
 import ConcessionsList from './ConcessionsList';
 import OrderSummary from './OrderSummary';
-import Image from 'next/image';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useRouter } from 'next/navigation';
 import ROUTES from '@/constants/routes';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-
-interface Concession {
-  id: number;
-  name: string;
-  description?: string;
-  price: number;
-  imageUrl?: string;
-}
+import { useConcession } from '@/hooks/booking/useConcession';
 
 export default function CornChipPage() {
-  const [concessions, setConcessions] = useState<Concession[]>([]);
-  const [quantities, setQuantities] = useState<{[key: number]: number}>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const bookingData = useSelector((state: RootState) => state.booking);
   const router = useRouter();
+  
+  const {
+    selectedConcessions,
+    concessionsTotal,
+    loading,
+    error,
+    fetchConcessions,
+    addConcessionToBooking,
+    updateConcessionQuantityInBooking,
+    removeConcessionFromBooking,
+  } = useConcession();
 
-  // // Kiểm tra dữ liệu booking
-  // useEffect(() => {
-  //   if (!bookingData.scheduleId || bookingData.selectedSeats.length === 0) {
-  //     router.replace(ROUTES.MOVIES);
-  //     return;
-  //   }
-  // }, [bookingData.scheduleId, bookingData.selectedSeats.length, router]);
+  const [concessions, setConcessions] = useState([]);
+
+  // Kiểm tra dữ liệu booking
+  useEffect(() => {
+    if (!bookingData.scheduleId || bookingData.selectedSeats.length === 0) {
+      router.replace(ROUTES.MOVIES);
+      return;
+    }
+  }, [bookingData.scheduleId, bookingData.selectedSeats.length, router]);
 
   // Lấy danh sách concessions
   useEffect(() => {
-    const fetchConcessions = async () => {
+    const loadConcessions = async () => {
       try {
-        setLoading(true);
-        const response = await concessionApi.getAll();
-        const fetchedConcessions = (response.data.data || response.data).map(item => ({
+        const concessionsData = await fetchConcessions();
+        const normalized = concessionsData.map((item: any) => ({
           ...item,
-          id: item.id ?? item.concessionId
+          concessionId: item.concessionId ?? item.id,
         }));
-        setConcessions(fetchedConcessions);
-        
-        // Khởi tạo số lượng về 0 cho mỗi item
-        const initialQuantities = fetchedConcessions.reduce(
-          (acc, item) => ({ ...acc, [item.id]: 0 }),
-          {}
-        );
-        setQuantities(initialQuantities);
-        setError(null);
+        setConcessions(normalized);
       } catch (error) {
-        setError("Failed to load concessions. Please try again later.");
-      } finally {
-        setLoading(false);
+        console.error("Failed to load concessions:", error);
       }
     };
-
-    fetchConcessions();
-  }, []);
+    
+    loadConcessions();
+  }, [fetchConcessions]);
 
   // Xử lý thay đổi số lượng
-  const handleQuantityChange = (id: number, delta: number) => {
-    setQuantities(prev => ({
-      ...prev,
-      [id]: Math.max(0, (prev[id] || 0) + delta)
-    }));
-  };
+  const handleQuantityChange = (concessionId: number, delta: number) => {
+    const currentQuantity = selectedConcessions.find(
+      item => item.concessionId === concessionId
+    )?.quantity || 0;
 
-  // Tính tổng tiền đồ ăn
-  const totalOrder = concessions.reduce((total, item) => {
-    return total + (quantities[item.id] || 0) * item.price;
-  }, 0);
+    const newQuantity = Math.max(0, currentQuantity + delta);
+    const concession = concessions.find(item => item.concessionId === concessionId);
+
+    if (newQuantity === 0) {
+      removeConcessionFromBooking(concessionId);
+    } else if (currentQuantity === 0 && concession) {
+      // Nếu chưa có trong giỏ, thêm mới
+      addConcessionToBooking(concession, newQuantity);
+    } else {
+      // Nếu đã có, cập nhật số lượng
+      updateConcessionQuantityInBooking(concessionId, newQuantity);
+    }
+  };
 
   // Tạo thông tin phim từ Redux state
   const movieDetails = {
@@ -93,12 +88,14 @@ export default function CornChipPage() {
 
   return (
     <>
-      <Header />
       <div className="bg-[#151a23] text-white min-h-screen px-8 pt-2">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 bg-[#151a23] rounded-xl">
           <ConcessionsList
             concessions={concessions}
-            quantities={quantities}
+            quantities={selectedConcessions.reduce((acc, item) => ({
+              ...acc,
+              [item.concessionId]: item.quantity
+            }), {})}
             onQuantityChange={handleQuantityChange}
             loading={loading}
             error={error}
@@ -106,10 +103,13 @@ export default function CornChipPage() {
           <div className="lg:col-span-1 h-full flex items-stretch">
             <OrderSummary 
               movieDetails={movieDetails} 
-              totalOrder={totalOrder}
+              totalOrder={bookingData.finalAmount}
               bookingData={bookingData}
-              concessions={concessions}
-              quantities={quantities}
+              concessions={bookingData.selectedConcessions}
+              quantities={bookingData.selectedConcessions.reduce((acc, item) => ({
+                ...acc,
+                [item.concessionId]: item.quantity
+              }), {})}
             />
           </div>
         </div>

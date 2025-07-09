@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import ROUTES from '@/constants/routes';
 import { ArrowLeft } from 'lucide-react';
+import { BookingApiService } from '@/api/booking-api';
+import { message } from 'antd';
 
 interface OrderSummaryProps {
   movieDetails: any;
@@ -17,9 +19,7 @@ const OrderSummary = ({ movieDetails, totalOrder, bookingData, concessions, quan
   const router = useRouter();
 
   const handleCheckout = () => {
-    // Logic to proceed to payment
-    // You can pass bookingData to the payment page via Redux or query params
-    router.push(ROUTES.PAYMENT);
+    router.push('/booking/confirm');
   };
 
   return (
@@ -64,7 +64,7 @@ const OrderSummary = ({ movieDetails, totalOrder, bookingData, concessions, quan
           className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 rounded"
           onClick={handleCheckout}
         >
-          Checkout
+          Continue
         </Button>
       </div>
     </div>
