@@ -23,7 +23,7 @@ const OrderSummary = ({ movieDetails, totalOrder, bookingData, concessions, quan
   };
 
   return (
-    <div className="bg-white text-black rounded-xl shadow-lg p-6 h-full flex flex-col">
+    <div className="bg-white text-black rounded-xl shadow-lg p-4 flex flex-col">
       {/* Ảnh phim */}
       <div className="mb-4">
         <img src={movieDetails.image || '/popcorn.jpg'} alt={movieDetails.title} className="w-full h-32 object-cover rounded" />

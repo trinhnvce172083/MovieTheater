@@ -19,14 +19,13 @@ import {
   Eye,
   BarChart3
 } from 'lucide-react';
-import { Promotion } from '@/types/Admin/promotion';
+import { PromotionDto } from '@/types/Admin/promotion';
 import { getPromotionUsage } from '@/api/admin/getAllPromotions';
-import { PromotionUsageResponse } from '@/types/Admin/promotion';
 
 interface PromotionDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  promotion: Promotion;
+  promotion: PromotionDto;
 }
 
 export default function PromotionDetailModal({ 
@@ -34,7 +33,8 @@ export default function PromotionDetailModal({
   onClose, 
   promotion 
 }: PromotionDetailModalProps) {
-  const [usageData, setUsageData] = useState<PromotionUsageResponse | null>(null);
+  if (!promotion) return null;
+  const [usageData, setUsageData] = useState<any>(null);
   const [loadingUsage, setLoadingUsage] = useState(false);
 
   useEffect(() => {

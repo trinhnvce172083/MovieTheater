@@ -9,14 +9,17 @@ interface PaymentFormProps {
   paymentMethod: PaymentMethod | null;
   onFormChange: (values: CreditCardInfo) => void;
   className?: string;
+  form?: any; // Add optional form prop
 }
 
 const PaymentForm: React.FC<PaymentFormProps> = ({
   paymentMethod,
   onFormChange,
-  className = ""
+  className = "",
+  form: externalForm // Accept form prop
 }) => {
-  const [form] = Form.useForm();
+  const [internalForm] = Form.useForm();
+  const form = externalForm || internalForm; // Use external form if provided
 
   const handleFormChange = () => {
     const values = form.getFieldsValue();

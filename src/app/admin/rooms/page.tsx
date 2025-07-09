@@ -100,10 +100,14 @@ export default function CinemaRoomManagement() {
     null
   );
   const [isUsingApiData, setIsUsingApiData] = useState(true);
+<<<<<<< HEAD
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
+=======
   const [backendStatus, setBackendStatus] = useState<
     "checking" | "connected" | "disconnected"
   >("checking");
   const [form] = Form.useForm();
+>>>>>>> ee9f592098ddb54141ddf8d238bb87e99df9a954
   const router = useRouter();
   
   // Price multiplier defaults for each room type
@@ -266,19 +270,6 @@ export default function CinemaRoomManagement() {
 
   const handleEdit = (record: CinemaRoomResponse) => {
     setEditingRoom(record);
-    form.setFieldsValue({
-      cinemaRoomName: record.cinemaRoomName,
-      roomType: record.roomType,
-      seatQuantity: record.seatQuantity,
-      rows: record.rows,
-      columns: record.columns,
-      description: record.description,
-      has3D: record.has3D,
-      hasDolbyAtmos: record.hasDolbyAtmos,
-      hasReclinerSeats: record.hasReclinerSeats,
-      priceMultiplier: record.priceMultiplier,
-      isActive: record.isActive,
-    });
     setIsModalVisible(true);
   };
 
@@ -288,8 +279,13 @@ export default function CinemaRoomManagement() {
 
   const handleModalOk = async () => {
     try {
+<<<<<<< HEAD
+      const values = await (editingRoom ? form.validateFields() : form.validateFields());
+      
+=======
       const values = await form.validateFields();
 
+>>>>>>> ee9f592098ddb54141ddf8d238bb87e99df9a954
       if (editingRoom) {
         const success = await updateRoomFunction(editingRoom.cinemaRoomId, values);
         if (success) {
@@ -739,8 +735,73 @@ export default function CinemaRoomManagement() {
         okText={editingRoom ? "Update Room" : "Add Room"}
         cancelText="Cancel"
         confirmLoading={loading}
+        destroyOnHidden
       >
+<<<<<<< HEAD
+        <RoomForm
+          initialValues={editingRoom}
+          onFinish={handleModalOk}
+          loading={loading}
+        />
+      </Modal>
+
+      <style jsx global>{`
+        .professional-table .ant-table-thead > tr > th {
+          background: #fafafa;
+          border-bottom: 2px solid #f0f0f0;
+          font-weight: 600;
+          color: #262626;
+        }
+        
+        .professional-table .ant-table-tbody > tr:hover > td {
+          background: #f8faff;
+        }
+        
+        .professional-pagination .ant-pagination-item-active {
+          background: #1677ff;
+          border-color: #1677ff;
+        }
+        
+        .professional-pagination .ant-pagination-item-active a {
+          color: white;
+        }
+        
+        .professional-modal .ant-modal-header {
+          border-bottom: 1px solid #f0f0f0;
+          padding: 24px 24px 16px;
+        }
+          .professional-modal .ant-modal-body {
+          padding: 24px;
+        }
+        
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+const RoomForm = ({ initialValues, onFinish, loading }) => {
+  const [form] = Form.useForm();
+  useEffect(() => {
+    if (initialValues) form.setFieldsValue(initialValues);
+    else form.resetFields();
+  }, [initialValues, form]);
+  return (
+    <Form
+      form={form}
+      layout="vertical"
+      className="mt-6"
+      onFinish={onFinish}
+      initialValues={initialValues}
+    >
+=======
         <Form form={form} layout="vertical" className="mt-6">
+>>>>>>> ee9f592098ddb54141ddf8d238bb87e99df9a954
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
@@ -928,6 +989,8 @@ export default function CinemaRoomManagement() {
             </Col>
           </Row>
         </Form>
+<<<<<<< HEAD
+=======
       </Modal>
       <style jsx global>{`
         .professional-table .ant-table-thead > tr > th {
@@ -957,5 +1020,6 @@ export default function CinemaRoomManagement() {
         }
       `}</style>
     </div>
+>>>>>>> ee9f592098ddb54141ddf8d238bb87e99df9a954
   );
-}
+};

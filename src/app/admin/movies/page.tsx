@@ -777,6 +777,24 @@ export default function AdminMovieManagement() {
         cancelText="Cancel"
         maskClosable={false}
       >
+<<<<<<< HEAD
+        <MovieForm
+          initialValues={editingMovie}
+          onFinish={handleModalOk}
+          loading={loading}
+        />
+      </Modal>
+      <ShowtimePickerModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        onContinue={(schedule) => {
+          setShowModal(false);
+          router.push(`/booking/seat-selection?scheduleId=${schedule.scheduleId}`);
+        }}
+        movieTitle="Tên phim"
+        movieId={1}
+      />
+=======
         <Form
           form={form}
           layout="vertical"
@@ -1096,6 +1114,7 @@ export default function AdminMovieManagement() {
         </Form>
       </Modal>
 
+>>>>>>> ee9f592098ddb54141ddf8d238bb87e99df9a954
 
     </div>
   );

@@ -269,8 +269,22 @@ export default function AdminMemberManagement() {
         editingMember={editingMember}
         onSubmit={handleModalSubmit}
         onCancel={handleModalCancel}
+<<<<<<< HEAD
+        width={600}
+        className="professional-modal"
+        okText={editingMember ? "Update Member" : "Add Member"}
+        cancelText="Cancel"
+      >
+        <MemberForm
+          initialValues={editingMember}
+          onFinish={handleModalOk}
+          loading={loading}
+        />
+      </Modal>
+=======
         loading={loading}
       />
+>>>>>>> ee9f592098ddb54141ddf8d238bb87e99df9a954
 
       {/* Lock User Modal */}
       <LockUserModal

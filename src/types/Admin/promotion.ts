@@ -17,6 +17,7 @@ export interface PromotionDto {
   memberOnly: boolean;
   membershipLevels?: string;
   bannerUrl?: string;
+  bannerImageUrl?: string;
   promotionType: string; // PUBLIC, POINT_BASED
   promotionTypeDisplay: string;
   isExpired: boolean;

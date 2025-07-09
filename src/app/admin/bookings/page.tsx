@@ -518,110 +518,11 @@ export default function ProfessionalBookingManagement() {
         okText={editingBooking ? "Update Booking" : "Add Booking"}
         cancelText="Cancel"
       >
-        <Form
-          form={form}
-          layout="vertical"
-          className="mt-6"
-        >
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="customerName"
-                label="Customer Name"
-                rules={[{ required: true, message: "Please enter customer name" }]}
-              >
-                <Input placeholder="Enter customer name" className="h-10" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="customerEmail"
-                label="Customer Email"
-                rules={[{ required: true, message: "Please enter customer email" }]}
-              >
-                <Input placeholder="Enter customer email" className="h-10" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="movieTitle"
-                label="Movie Title"
-                rules={[{ required: true, message: "Please enter movie title" }]}
-              >
-                <Input placeholder="Enter movie title" className="h-10" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="showtime"
-                label="Showtime"
-                rules={[{ required: true, message: "Please select showtime" }]}
-              >
-                <DatePicker showTime format="YYYY-MM-DD HH:mm" className="w-full h-10" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="seats"
-                label="Seats"
-                rules={[{ required: true, message: "Please select seats" }]}
-              >
-                <Select mode="multiple" placeholder="Select seats" className="h-10">
-                  <Option value="A1">A1</Option>
-                  <Option value="A2">A2</Option>
-                  <Option value="B1">B1</Option>
-                  <Option value="B2">B2</Option>
-                  <Option value="C1">C1</Option>
-                  <Option value="C2">C2</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="totalAmount"
-                label="Total Amount"
-                rules={[{ required: true, message: "Please enter total amount" }]}
-              >
-                <Input type="number" placeholder="Enter amount" className="h-10" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="status"
-                label="Status"
-                rules={[{ required: true, message: "Please select status" }]}
-              >
-                <Select placeholder="Select status" className="h-10">
-                  <Option value="confirmed">Confirmed</Option>
-                  <Option value="pending">Pending</Option>
-                  <Option value="cancelled">Cancelled</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="paymentMethod"
-                label="Payment Method"
-                rules={[{ required: true, message: "Please select payment method" }]}
-              >
-                <Select placeholder="Select payment method" className="h-10">
-                  <Option value="Credit Card">Credit Card</Option>
-                  <Option value="PayPal">PayPal</Option>
-                  <Option value="Cash">Cash</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
+        <BookingForm
+          initialValues={editingBooking}
+          onFinish={handleModalOk}
+          loading={loading}
+        />
       </Modal>
 
       <style jsx global>{`

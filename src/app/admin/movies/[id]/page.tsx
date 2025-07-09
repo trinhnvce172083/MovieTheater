@@ -663,6 +663,12 @@ const MovieDetailPage: React.FC = () => {
           }
         }}
       >
+<<<<<<< HEAD
+        <EditMovieForm
+          initialValues={movie}
+          onFinish={handleEditSubmit}
+        />
+=======
         <div className="p-8">
           <Form
             form={editForm}
@@ -883,6 +889,7 @@ const MovieDetailPage: React.FC = () => {
             </div>
           </Form>
         </div>
+>>>>>>> ee9f592098ddb54141ddf8d238bb87e99df9a954
       </Modal>
 
       {/* Delete Confirmation Modal */}
