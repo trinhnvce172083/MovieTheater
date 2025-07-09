@@ -8,8 +8,10 @@ import {
   HistoryOutlined,
   FileTextOutlined,
   SettingOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import Image from "next/image";
+import { useMemberProfile } from "@/hooks/member";
 
 interface MemberHeaderProps {
   user: {
@@ -40,29 +42,44 @@ const MEMBER_TABS = [
     path: "/member/bookings",
   },
   {
-    key: "managed",
-    label: "Managed Ticket",
+    key: "promotions",
+    label: "Promotions",
     icon: <SettingOutlined />,
+    path: "/member/promotions",
+  },
+  {
+    key: "cancel",
+    label: "Cancel Ticket",
+    icon: <CloseCircleOutlined />,
     path: "/member/tickets",
   },
 ];
 
-const MemberHeader: React.FC<MemberHeaderProps> = ({ user }) => {
+const MemberHeader: React.FC = () => {
   const pathname = usePathname();
+  const { profile } = useMemberProfile();
 
   return (
     <div className="fixed top-0 min-h-screen flex flex-col justify-between p-10">
-      {/* Logo + Menu */}
+      {/* User Info (avatar, username, email từ API) */}
       <div>
         <div className="pt-24 flex flex-col items-center mb-6">
-          {/* Logo */}
-          <Image
-            src="/logo.png"
-            alt="Logo"
-            width={96}
-            height={80}
-            className="w-24 h-20 mb-4"
-          />
+          {/* Avatar, Name, Email */}
+          <div className="flex flex-col items-center mb-6">
+            <div className="w-20 h-20 rounded-full bg-gray-400 flex items-center justify-center mb-2 text-white text-3xl">
+              {profile?.avatarUrl ? (
+                <img
+                  src={profile.avatarUrl}
+                  alt="avatar"
+                  className="w-20 h-20 rounded-full object-cover"
+                />
+              ) : (
+                <span>👤</span>
+              )}
+            </div>
+            <p className="font-bold text-lg">{profile?.fullName || profile?.username || ""}</p>
+            <p className="text-gray-600 text-xs">{profile?.email || ""}</p>
+          </div>
 
           {/* Menu */}
           <div className="flex flex-col gap-y-4 mb-6">
@@ -81,19 +98,6 @@ const MemberHeader: React.FC<MemberHeaderProps> = ({ user }) => {
               </Link>
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* User Info */}
-      <div className="flex flex-col items-center text-center text-sm mt-6">
-        <div className="w-12 h-12 rounded-full bg-gray-400 flex items-center justify-center mb-2 text-white">
-          👤
-        </div>
-        <p className="font-semibold">{user.name}</p>
-        <p className="text-gray-600 text-xs">{user.email}</p>
-        <div className="flex space-x-4 mt-2 text-lg">
-          <span>🔔</span>
-          <span>⚙️</span>
         </div>
       </div>
     </div>
