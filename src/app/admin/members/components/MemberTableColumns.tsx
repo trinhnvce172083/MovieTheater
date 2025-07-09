@@ -50,19 +50,6 @@ const TableActions: React.FC<TableActionsProps> = ({
   const isLocked = record.accountLockedUntil && new Date(record.accountLockedUntil) > new Date();
   const isActive = record.isActive;
 
-  // Debug logging
-  if (record.username === 'PhoenixZ') {
-    console.log('Debug info for current user:', {
-      currentUser,
-      targetUser: record,
-      canLock: canLockUser(currentUser, record),
-      canUnlock: canUnlockUser(currentUser, record),
-      canActivate: canActivateUser(currentUser, record),
-      canDeactivate: canDeactivateUser(currentUser, record),
-      canDelete: canDelete(currentUser, record)
-    });
-  }
-
   return (
     <Space size="small">
       {/* View Details */}

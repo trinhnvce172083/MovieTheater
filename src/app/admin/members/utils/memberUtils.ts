@@ -1,15 +1,5 @@
 import { ApiUser, MemberData } from '../types';
 
-/**
- * Transform API   const token = localStorage.getItem("accessToken") ||
-               localStorage.getItem('access_token') ||
-               localStorage.getItem('authToken') ||
-               sessionStorage.getItem('accessToken');
-  
-  if (token) {
-    return true;
-  }e display format
- */
 export const transformApiUserToMemberData = (user: unknown, index: number): MemberData => {
   try {
     const userObj = user as ApiUser;
@@ -29,7 +19,7 @@ export const transformApiUserToMemberData = (user: unknown, index: number): Memb
       accountLockedUntil: userObj.accountLockedUntil,
       isActive: userObj.isActive,
     };
-  } catch (error) {
+  } catch {
     const inactiveStatus = 'inactive' as const;
     return {
       key: index.toString(),
@@ -68,7 +58,7 @@ export const getCurrentUserFromStorage = () => {
       role: 'ADMIN', 
       username: 'PhoenixZ'
     };
-  } catch (error) {
+  } catch {
     return {
       id: '3', // This should match the accountId from the API
       role: 'ADMIN',
