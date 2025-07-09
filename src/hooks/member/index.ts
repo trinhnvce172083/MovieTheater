@@ -179,7 +179,6 @@ export function useMemberProfile() {
     (request: ProfileUpdateRequest) => MemberApiService.updateProfile(request),
     () => {
       message.success("Profile updated successfully!");
-      profileState.refetch();
     }
   );
 

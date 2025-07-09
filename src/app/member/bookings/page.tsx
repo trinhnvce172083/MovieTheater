@@ -1,429 +1,194 @@
 "use client";
 
-import React, { useState } from "react";
-import {
-  Typography,
-  Card,
-  Button,
-  Tag,
-  Modal,
-  Empty,
-  Spin,
-  Alert,
-  Row,
-  Col,
-  QRCode,
-  Divider,
-  Input,
-  Select,
-  Pagination,
-} from "antd";
-import {
-  CalendarOutlined,
-  EnvironmentOutlined,
-  ClockCircleOutlined,
-  QrcodeOutlined,
-  ReloadOutlined,
-  SearchOutlined,
-  FilterOutlined,
-} from "@ant-design/icons";
-import { useActiveBookings, useBookingActions } from "@/hooks/member";
-import type { MemberBooking, BookingListParams } from "@/types/member";
-import Image from "next/image";
+import { useState } from "react";
+import { Table, Input, Select, Typography, Pagination, Spin, Alert, Button, Empty } from "antd";
+import { useActiveBookings } from "@/hooks/member";
+import { ReloadOutlined } from "@ant-design/icons";
+import type { MemberBooking } from "@/types/member";
 
-const { Search } = Input;
 const { Option } = Select;
 
+const columns = [
+  {
+    title: "#",
+    dataIndex: "bookingId",
+    key: "bookingId",
+    width: 50,
+    render: (text: any, record: any, index: number) => index + 1,
+  },
+  {
+    title: "MOVIE NAME",
+    dataIndex: "movieTitle",
+    key: "movieTitle",
+  },
+  {
+    title: "BOOKING DATE",
+    dataIndex: "bookingDate",
+    key: "bookingDate",
+    render: (date: string) => {
+      return new Date(date).toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    },
+  },
+  {
+    title: "TOTAL AMOUNT",
+    dataIndex: "finalAmount",
+    key: "finalAmount",
+    render: (amount: number) => {
+      return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      }).format(amount);
+    },
+  },
+  {
+    title: "STATUS",
+    dataIndex: "status",
+    key: "status",
+    render: (status: string) => {
+      const statusConfig = {
+        CONFIRMED: { color: "blue", text: "Confirmed" },
+        PAID: { color: "green", text: "Paid" },
+        COMPLETED: { color: "purple", text: "Completed" },
+        PENDING: { color: "orange", text: "Pending" },
+      };
+      const config = statusConfig[status as keyof typeof statusConfig] || { color: "default", text: status };
+      return (
+        <span style={{ color: config.color, fontWeight: 500 }}>{config.text}</span>
+      );
+    },
+  },
+];
+
 export default function BookedTicketsPage() {
-  const [qrModalVisible, setQrModalVisible] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState<MemberBooking | null>(
-    null
-  );
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [current, setCurrent] = useState(1);
+  const [search, setSearch] = useState("");
 
-  // Build params for API call
-  const params: BookingListParams = {
-    page: currentPage,
-    size: pageSize,
-    sortBy: "bookingDate",
-    sortDirection: "DESC",
-    ...(statusFilter !== "all" && { status: [statusFilter as MemberBooking["status"]] }),
-  };
+  // Lấy dữ liệu booking thực tế từ API - đơn giản hóa params
+  const { bookings, loading, error, refresh, totalElements } = useActiveBookings();
 
-  const { bookings, totalElements, loading, error, refresh } =
-    useActiveBookings(params);
-
-  const { cancelBooking, cancelling, checkInBooking, checkingIn } =
-    useBookingActions(() => {
-      refresh(); // Refresh list after action
-      setSelectedBooking(null);
-      setQrModalVisible(false);
-    });
-
-  // Filter bookings by search query
-  const filteredBookings = bookings.filter(
-    (booking) =>
-      !searchQuery ||
-      booking.movieTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.cinemaRoom.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.bookingCode.toLowerCase().includes(searchQuery.toLowerCase())
+  // Lọc dữ liệu theo search
+  const filteredData = bookings.filter((item: MemberBooking) =>
+    item.movieTitle.toLowerCase().includes(search.toLowerCase()) ||
+    item.bookingCode.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleShowQR = (booking: MemberBooking) => {
-    setSelectedBooking(booking);
-    setQrModalVisible(true);
+  // Phân trang
+  const pagedData = filteredData.slice((current - 1) * pageSize, current * pageSize);
+
+  const handlePageChange = (page: number, size?: number) => {
+    setCurrent(page);
+    if (size) setPageSize(size);
   };
 
-  const handleCancelBooking = async (booking: MemberBooking) => {
-    Modal.confirm({
-      title: "Cancel Booking",
-      content: `Are you sure you want to cancel the booking for "${booking.movieTitle}"?`,
-      okText: "Yes, Cancel",
-      okType: "danger",
-      cancelText: "No",
-      onOk: () => cancelBooking({ bookingId: booking.bookingId }),
-    });
-  };
-
-  const handleCheckIn = async (booking: MemberBooking) => {
-    await checkInBooking({
-      bookingId: booking.bookingId,
-      qrCode: booking.qrCode,
-    });
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(price);
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "CONFIRMED":
-        return "blue";
-      case "PAID":
-        return "green";
-      case "PENDING":
-        return "orange";
-      case "CANCELLED":
-        return "red";
-      case "COMPLETED":
-        return "purple";
-      default:
-        return "default";
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "CONFIRMED":
-        return "Confirmed";
-      case "PAID":
-        return "Paid";
-      case "PENDING":
-        return "Pending";
-      case "CANCELLED":
-        return "Cancelled";
-      case "COMPLETED":
-        return "Completed";
-      default:
-        return status;
-    }
-  };
-
-  const renderBookingCard = (booking: MemberBooking) => (
-    <Card
-      key={booking.bookingId}
-      className="mb-4 shadow-sm hover:shadow-md transition-shadow border-l-4 border-l-blue-500"
-    >
-      <Row gutter={16}>
-        {/* Movie Poster */}
-        <Col xs={24} sm={6} md={4}>
-          <div className="w-full h-32 bg-gray-200 rounded-lg flex items-center justify-center mb-4 sm:mb-0">
-            {booking.moviePoster ? (
-              <Image
-                width={128}
-                height={192}
-                src={booking.moviePoster}
-                alt={booking.movieTitle}
-                className="w-full h-full object-cover rounded-lg"
-              />
-            ) : (
-              <span className="text-gray-500 text-xs text-center px-2">
-                Movie Poster
-              </span>
-            )}
+  // Hiển thị loading chỉ khi lần đầu load
+  if (loading && bookings.length === 0) {
+    return (
+      <div style={{ background: "#f7f8fa", minHeight: "100vh", padding: 24 }}>
+        <div style={{ background: "#fff", borderRadius: 8, boxShadow: "0 2px 8px #0001", padding: 24, maxWidth: 1100, margin: "0 auto" }}>
+          <div className="flex justify-center items-center py-12">
+            <Spin size="large" />
           </div>
-        </Col>
+        </div>
+      </div>
+    );
+  }
 
-        {/* Booking Details */}
-        <Col xs={24} sm={18} md={20}>
-          <div className="flex justify-between items-start mb-3">
-            <div>
-              <Typography.Title level={4} className="mb-1">
-                {booking.movieTitle}
-              </Typography.Title>
-              <div className="flex items-center gap-2 mb-2">
-                <Tag color={getStatusColor(booking.status)}>
-                  {getStatusText(booking.status)}
-                </Tag>
-                <span className="text-gray-500 text-sm">
-                  Booking: {booking.bookingCode}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <Row gutter={[16, 8]}>
-            <Col xs={24} md={12}>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <EnvironmentOutlined className="text-blue-500" />
-                  <span className="text-sm">{booking.cinemaRoom}</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <CalendarOutlined className="text-green-500" />
-                  <span className="text-sm">
-                    {formatDateTime(`${booking.showDate} ${booking.startTime}`)}
-                  </span>
-                </div>
-              </div>
-            </Col>
-
-            <Col xs={24} md={12}>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <ClockCircleOutlined className="text-orange-500" />
-                  <span className="text-sm">
-                    Seats:{" "}
-                    {booking.seats
-                      .map((seat) => `${seat.seatRow}${seat.seatNumber}`)
-                      .join(", ")}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold">
-                    Total: {formatPrice(booking.finalAmount)}
-                  </span>
-                  {booking.discountAmount > 0 && (
-                    <span className="text-xs text-green-600">
-                      (Saved: {formatPrice(booking.discountAmount)})
-                    </span>
-                  )}
-                </div>
-              </div>
-            </Col>
-          </Row>
-
-          <Divider className="my-4" />
-
-          <div className="flex flex-wrap gap-2">
-            {booking.canCheckIn && (
-              <Button
-                type="primary"
-                icon={<QrcodeOutlined />}
-                onClick={() => handleCheckIn(booking)}
-                loading={checkingIn}
-                size="small"
-              >
-                Check In
-              </Button>
-            )}
-
-            {booking.qrCode && (
-              <Button
-                icon={<QrcodeOutlined />}
-                onClick={() => handleShowQR(booking)}
-                size="small"
-              >
-                Show QR Code
-              </Button>
-            )}
-
-            {booking.canCancel && (
-              <Button
-                danger
-                onClick={() => handleCancelBooking(booking)}
-                loading={cancelling}
-                size="small"
-              >
-                Cancel Booking
-              </Button>
-            )}
-
-            <span className="text-xs text-gray-500 flex items-center">
-              Booked: {formatDateTime(booking.bookingDate)}
-            </span>
-          </div>
-        </Col>
-      </Row>
-    </Card>
-  );
-
-  return (
-    <div className="max-w-6xl mx-auto p-6">
-      <Typography.Title level={2} className="text-white mb-8 text-center">
-        Active Bookings
-      </Typography.Title>
-
-      <Card className="mb-6">
-        <Row gutter={16} className="mb-4">
-          <Col xs={24} sm={12} md={8}>
-            <Search
-              placeholder="Search by movie, cinema, or booking code"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              prefix={<SearchOutlined />}
-              allowClear
-            />
-          </Col>
-
-          <Col xs={24} sm={12} md={6}>
-            <Select
-              value={statusFilter}
-              onChange={setStatusFilter}
-              className="w-full"
-              prefix={<FilterOutlined />}
-            >
-              <Option value="all">All Status</Option>
-              <Option value="CONFIRMED">Confirmed</Option>
-              <Option value="PAID">Paid</Option>
-              <Option value="PENDING">Pending</Option>
-            </Select>
-          </Col>
-
-          <Col xs={24} sm={12} md={4}>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={refresh}
-              loading={loading}
-              className="w-full"
-            >
-              Refresh
-            </Button>
-          </Col>
-        </Row>
-
-        {error && (
+  if (error) {
+    return (
+      <div style={{ background: "#f7f8fa", minHeight: "100vh", padding: 24 }}>
+        <div style={{ background: "#fff", borderRadius: 8, boxShadow: "0 2px 8px #0001", padding: 24, maxWidth: 1100, margin: "0 auto" }}>
           <Alert
             message="Error Loading Bookings"
             description={error}
             type="error"
             showIcon
-            className="mb-4"
             action={
               <Button size="small" type="primary" onClick={refresh}>
                 Retry
               </Button>
             }
           />
-        )}
-      </Card>
-
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <Spin size="large" />
         </div>
-      ) : filteredBookings.length === 0 ? (
-        <Card>
-          <Empty
-            description={
-              searchQuery
-                ? "No bookings found matching your search"
-                : "No active bookings found"
-            }
-            className="py-12"
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ background: "#f7f8fa", minHeight: "100vh", padding: 24 }}>
+      <div style={{ background: "#fff", borderRadius: 8, boxShadow: "0 2px 8px #0001", padding: 24, maxWidth: 1100, margin: "0 auto" }}>
+        <Typography.Title level={4} style={{ textAlign: "center", marginBottom: 24 }}>
+          Booked ticket
+        </Typography.Title>
+        
+        <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
+          <span style={{ marginRight: 8 }}>Show</span>
+          <Select value={pageSize} style={{ width: 70, marginRight: 8 }} onChange={setPageSize}>
+            {[10, 20, 50].map((num) => (
+              <Option key={num} value={num}>{num}</Option>
+            ))}
+          </Select>
+          <span style={{ marginRight: 16 }}>entries</span>
+          <div style={{ flex: 1 }} />
+          <span style={{ marginRight: 8 }}>Search:</span>
+          <Input
+            value={search}
+            onChange={e => { setSearch(e.target.value); setCurrent(1); }}
+            style={{ width: 200 }}
+            allowClear
+            placeholder="Search by movie name or booking code"
           />
-        </Card>
-      ) : (
-        <>
-          <div className="space-y-4">
-            {filteredBookings.map(renderBookingCard)}
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={refresh}
+            loading={loading}
+            style={{ marginLeft: 8 }}
+          >
+            Refresh
+          </Button>
+        </div>
+        
+        {bookings.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "40px 0" }}>
+            <Empty
+              description="Chưa có vé đã đặt"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
           </div>
-
-          {totalElements > pageSize && (
-            <div className="flex justify-center mt-6">
+        ) : (
+          <>
+            <Table
+              columns={columns}
+              dataSource={pagedData}
+              pagination={false}
+              bordered
+              size="middle"
+              loading={loading}
+              rowKey="bookingId"
+            />
+            
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16 }}>
+              <span style={{ color: "#666" }}>
+                Showing {((current - 1) * pageSize) + 1} to {Math.min(current * pageSize, filteredData.length)} of {filteredData.length} entries
+              </span>
               <Pagination
-                current={currentPage + 1}
-                total={totalElements}
+                current={current}
                 pageSize={pageSize}
-                showSizeChanger
+                total={filteredData.length}
+                onChange={handlePageChange}
+                showSizeChanger={false}
                 showQuickJumper
-                showTotal={(total, range) =>
-                  `${range[0]}-${range[1]} of ${total} bookings`
-                }
-                onChange={(page, size) => {
-                  setCurrentPage(page - 1);
-                  setPageSize(size || 10);
-                }}
-                onShowSizeChange={(current, size) => {
-                  setCurrentPage(0);
-                  setPageSize(size);
-                }}
               />
             </div>
-          )}
-        </>
-      )}
-
-      {/* QR Code Modal */}
-      <Modal
-        title="Booking QR Code"
-        open={qrModalVisible}
-        onCancel={() => setQrModalVisible(false)}
-        footer={[
-          <Button key="close" onClick={() => setQrModalVisible(false)}>
-            Close
-          </Button>,
-        ]}
-        centered
-      >
-        {selectedBooking && (
-          <div className="text-center">
-            <Typography.Title level={4} className="mb-4">
-              {selectedBooking.movieTitle}
-            </Typography.Title>
-
-            <div className="mb-4">
-              <QRCode
-                value={selectedBooking.qrCode || selectedBooking.bookingCode}
-                size={200}
-              />
-            </div>
-
-            <Typography.Text className="text-gray-600">
-              Booking Code: {selectedBooking.bookingCode}
-            </Typography.Text>
-
-            <div className="mt-4 text-sm text-gray-500">
-              <p>Show this QR code at the cinema for check-in</p>
-              <p>
-                Valid for:{" "}
-                {formatDateTime(
-                  `${selectedBooking.showDate} ${selectedBooking.startTime}`
-                )}
-              </p>
-            </div>
-          </div>
+          </>
         )}
-      </Modal>
+      </div>
     </div>
   );
 }
