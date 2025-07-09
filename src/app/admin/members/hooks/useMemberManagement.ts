@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { message } from 'antd';
-import { getAllUsers } from '@/api/admin/getAllUsers';
+import { getAllUsers, lockUser, unlockUser, activateUser, deactivateUser } from '@/api/admin/getAllUsers';
 import axiosClient from '@/api/axiosClient';
 import { 
   MemberData, 
@@ -210,7 +210,7 @@ export const useMemberManagement = () => {
   const updateMember = async (id: string, memberData: MemberCreateRequest): Promise<boolean> => {
     try {
       setLoading(true);
-      const response = await axiosClient.put(`/admin/users/${id}`, memberData);
+      await axiosClient.put(`/admin/users/${id}`, memberData);
       message.success("Member updated successfully");
       await fetchUsers();
       return true;
@@ -225,7 +225,7 @@ export const useMemberManagement = () => {
   const deleteMember = async (id: string, name: string): Promise<boolean> => {
     try {
       setLoading(true);
-      const response = await axiosClient.delete(`/admin/users/${id}`);
+      await axiosClient.delete(`/admin/users/${id}`);
       message.success(`Deleted member "${name}" successfully`);
       await fetchUsers();
       return true;
@@ -280,6 +280,76 @@ export const useMemberManagement = () => {
     }
   };
 
+  // Lock user function
+  const lockUserAccount = async (userId: string, lockDurationHours: number, reason: string, sendNotificationEmail: boolean = true): Promise<boolean> => {
+    try {
+      setLoading(true);
+      const lockData = {
+        reason,
+        lockHours: lockDurationHours,
+        sendNotificationEmail,
+        notes: `Locked by admin: ${reason}`
+      };
+      await lockUser(parseInt(userId), lockData);
+      message.success('User locked successfully');
+      await fetchUsers(); // Refresh data
+      return true;
+    } catch (_error) {
+      message.error('Failed to lock user');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Unlock user function
+  const unlockUserAccount = async (userId: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      await unlockUser(parseInt(userId));
+      message.success('User unlocked successfully');
+      await fetchUsers(); // Refresh data
+      return true;
+    } catch (error) {
+      message.error('Failed to unlock user');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Activate user function
+  const activateUserAccount = async (userId: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      await activateUser(parseInt(userId));
+      message.success('User activated successfully');
+      await fetchUsers(); // Refresh data
+      return true;
+    } catch (error) {
+      message.error('Failed to activate user');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Deactivate user function
+  const deactivateUserAccount = async (userId: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      await deactivateUser(parseInt(userId));
+      message.success('User deactivated successfully');
+      await fetchUsers(); // Refresh data
+      return true;
+    } catch (error) {
+      message.error('Failed to deactivate user');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     // Data
     memberData,
@@ -302,5 +372,9 @@ export const useMemberManagement = () => {
     createMember,
     updateMember,
     deleteMember,
+    lockUserAccount,
+    unlockUserAccount,
+    activateUserAccount,
+    deactivateUserAccount,
   };
 };

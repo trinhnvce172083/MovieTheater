@@ -1,6 +1,14 @@
 import axiosClient from "../axiosClient";
 
 
+// Interface for lock user request
+export interface LockUserRequest {
+  reason: string;
+  lockHours: number;
+  sendNotificationEmail: boolean;
+  notes?: string;
+}
+
 export interface ApiUser {
   accountId: number;
   username: string;
@@ -20,6 +28,7 @@ export interface ApiUser {
   createdAt: string;
   updatedAt: string;
   isAccountLocked: boolean;
+  accountLockedUntil?: string;
   totalBookings: number;
   totalSpent: number;
 }
@@ -29,7 +38,6 @@ export interface UsersResponse {
   page: {
     size: number;
     number: number;
-    size: number;
     totalElements: number;
     totalPages: number;
     first: boolean;
@@ -177,5 +185,60 @@ export const getAllUsers = async (): Promise<UsersResponse> => {
     // Return mock data as fallback for any error
     console.log("🔄 API failed, returning mock data as fallback");
     return mockUsersData;
+  }
+};
+
+// Lock user account
+export const lockUser = async (userId: number, lockData: LockUserRequest): Promise<ApiUser> => {
+  try {
+    const response = await axiosClient.post(`/api/admin/users/${userId}/lock`, lockData);
+    return response.data;
+  } catch (error) {
+    console.error('Lock user error:', error);
+    throw error;
+  }
+};
+
+// Unlock user account
+export const unlockUser = async (userId: number): Promise<ApiUser> => {
+  try {
+    const response = await axiosClient.post(`/api/admin/users/${userId}/unlock`);
+    return response.data;
+  } catch (error) {
+    console.error('Unlock user error:', error);
+    throw error;
+  }
+};
+
+// Activate user account
+export const activateUser = async (userId: number): Promise<ApiUser> => {
+  try {
+    const response = await axiosClient.post(`/api/admin/users/${userId}/activate`);
+    return response.data;
+  } catch (error) {
+    console.error('Activate user error:', error);
+    throw error;
+  }
+};
+
+// Deactivate user account
+export const deactivateUser = async (userId: number): Promise<ApiUser> => {
+  try {
+    const response = await axiosClient.post(`/api/admin/users/${userId}/deactivate`);
+    return response.data;
+  } catch (error) {
+    console.error('Deactivate user error:', error);
+    throw error;
+  }
+};
+
+// Get user by ID
+export const getUserById = async (userId: number): Promise<ApiUser> => {
+  try {
+    const response = await axiosClient.get(`/api/admin/users/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Get user by ID error:', error);
+    throw error;
   }
 };

@@ -11,6 +11,8 @@ import {
   MemberStatisticsCard, 
   MemberFilters, 
   MemberFormModal,
+  LockUserModal,
+  UnlockUserModal,
   createMemberColumns 
 } from './components';
 import { MemberData, MemberCreateRequest } from './types';
@@ -21,6 +23,11 @@ export default function AdminMemberManagement() {
   const router = useRouter();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMember, setEditingMember] = useState<MemberData | null>(null);
+  
+  // Modal states for lock/unlock
+  const [lockModalVisible, setLockModalVisible] = useState(false);
+  const [unlockModalVisible, setUnlockModalVisible] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<MemberData | null>(null);
 
   // Use custom hook for all member management logic
   const {
@@ -43,6 +50,10 @@ export default function AdminMemberManagement() {
     createMember,
     updateMember,
     deleteMember,
+    lockUserAccount,
+    unlockUserAccount,
+    activateUserAccount,
+    deactivateUserAccount,
   } = useMemberManagement();
 
   // Event handlers
@@ -72,7 +83,7 @@ export default function AdminMemberManagement() {
         setIsModalVisible(false);
         setEditingMember(null);
       }
-    } catch (error) {
+    } catch {
       message.error('Please check all required fields and try again.');
     }
   };
@@ -80,6 +91,44 @@ export default function AdminMemberManagement() {
   const handleModalCancel = () => {
     setIsModalVisible(false);
     setEditingMember(null);
+  };
+
+  // Lock/Unlock/Activate/Deactivate handlers
+  const handleLock = (record: MemberData) => {
+    setSelectedMember(record);
+    setLockModalVisible(true);
+  };
+
+  const handleUnlock = async (record: MemberData) => {
+    await unlockUserAccount(record.id);
+  };
+
+  const handleActivate = async (record: MemberData) => {
+    await activateUserAccount(record.id);
+  };
+
+  const handleDeactivate = async (record: MemberData) => {
+    await deactivateUserAccount(record.id);
+  };
+
+  const handleLockConfirm = async (lockData: { reason: string; lockHours: number; sendNotificationEmail: boolean; notes?: string }) => {
+    if (selectedMember) {
+      const success = await lockUserAccount(selectedMember.id, lockData.lockHours, lockData.reason, lockData.sendNotificationEmail);
+      if (success) {
+        setLockModalVisible(false);
+        setSelectedMember(null);
+      }
+    }
+  };
+
+  const handleUnlockConfirm = async () => {
+    if (selectedMember) {
+      const success = await unlockUserAccount(selectedMember.id);
+      if (success) {
+        setUnlockModalVisible(false);
+        setSelectedMember(null);
+      }
+    }
   };
 
   // Table columns configuration
@@ -90,7 +139,11 @@ export default function AdminMemberManagement() {
     pagination.pageSize,
     handleViewDetail,
     handleEdit,
-    handleDelete
+    handleDelete,
+    handleLock,
+    handleUnlock,
+    handleActivate,
+    handleDeactivate
   );
 
   return (
@@ -216,6 +269,38 @@ export default function AdminMemberManagement() {
         editingMember={editingMember}
         onSubmit={handleModalSubmit}
         onCancel={handleModalCancel}
+        loading={loading}
+      />
+
+      {/* Lock User Modal */}
+      <LockUserModal
+        visible={lockModalVisible}
+        user={selectedMember ? {
+          id: parseInt(selectedMember.id),
+          name: selectedMember.name,
+          email: selectedMember.email
+        } : null}
+        onConfirm={handleLockConfirm}
+        onCancel={() => {
+          setLockModalVisible(false);
+          setSelectedMember(null);
+        }}
+      />
+
+      {/* Unlock User Modal */}
+      <UnlockUserModal
+        visible={unlockModalVisible}
+        user={selectedMember ? {
+          id: parseInt(selectedMember.id),
+          name: selectedMember.name,
+          email: selectedMember.email,
+          accountLockedUntil: selectedMember.accountLockedUntil
+        } : null}
+        onConfirm={handleUnlockConfirm}
+        onCancel={() => {
+          setUnlockModalVisible(false);
+          setSelectedMember(null);
+        }}
         loading={loading}
       />
     </div>

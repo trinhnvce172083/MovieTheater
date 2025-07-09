@@ -26,6 +26,8 @@ export const transformApiUserToMemberData = (user: unknown, index: number): Memb
       username: userObj.username || 'N/A',
       address: userObj.address || '',
       dob: userObj.dateOfBirth || '',
+      accountLockedUntil: userObj.accountLockedUntil,
+      isActive: userObj.isActive,
     };
   } catch (error) {
     const inactiveStatus = 'inactive' as const;
@@ -40,6 +42,7 @@ export const transformApiUserToMemberData = (user: unknown, index: number): Memb
       type: 'CUSTOMER',
       avatar: 'https://ui-avatars.com/api/?name=Error&background=random',
       username: 'N/A',
+      isActive: false,
     };
   }
 };
@@ -53,21 +56,21 @@ export const getCurrentUserFromStorage = () => {
     if (userInfo) {
       const parsedUser = JSON.parse(userInfo);
       return {
-        id: parsedUser.accountId || parsedUser.id || '4',
+        id: String(parsedUser.accountId || parsedUser.id || '3'), // Convert to string for consistency
         role: parsedUser.role || 'ADMIN',
-        username: parsedUser.username || 'PhoenixZ'
+        username: parsedUser.username || parsedUser.fullName || 'PhoenixZ'
       };
     }
     
-    // Fallback to default admin user
+    // Fallback to default user (Trần Quang Thuận based on the screenshot)
     return {
-      id: '4',
+      id: '3', // This should match the accountId from the API
       role: 'ADMIN', 
       username: 'PhoenixZ'
     };
   } catch (error) {
     return {
-      id: '4',
+      id: '3', // This should match the accountId from the API
       role: 'ADMIN',
       username: 'PhoenixZ'
     };

@@ -16,6 +16,8 @@ export interface MemberData {
   username?: string;
   address?: string;
   dob?: string;
+  accountLockedUntil?: string;
+  isActive?: boolean;
 }
 
 // Interface for API User Response from backend
@@ -31,6 +33,7 @@ export interface ApiUser {
   avatar?: string;
   address?: string;
   dateOfBirth?: string;
+  accountLockedUntil?: string;
 }
 
 // Interface for creating/updating members
