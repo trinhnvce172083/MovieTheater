@@ -1,10 +1,15 @@
 "use client";
 
 import React from "react";
-import ResetPasswordForm from "./ResetPasswordForm";
 import ROUTES from "@/constants/routes";
+import { useParams } from "next/navigation";
+
+const ResetPasswordForm = React.lazy(() => import("./ResetPasswordForm"));
 
 const ResetPassword: React.FC = () => {
+  const params = useParams<{ id: string }>();
+  const token = params.id;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-6">
       <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-8">
@@ -16,7 +21,7 @@ const ResetPassword: React.FC = () => {
             Enter your new password below
           </p>
         </div>
-        <ResetPasswordForm token="" />
+        <ResetPasswordForm token={token} />
         <div className="mt-6 text-center">
           <a
             href={ROUTES.LOGIN}
@@ -31,3 +36,7 @@ const ResetPassword: React.FC = () => {
 };
 
 export default ResetPassword;
+
+export function ResetPasswordPage({ params }: { params: { id: string } }) {
+  return <ResetPasswordForm token={params.id} />;
+}
