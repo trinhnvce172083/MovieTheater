@@ -65,6 +65,10 @@ const TheaterLayout: React.FC<TheaterLayoutProps> = ({
   selectedSeats,
   onSelectSeat,
 }) => {
+  // Fix lỗi: Nếu seats undefined/null thì trả về thông báo
+  if (!seats || !Array.isArray(seats) || seats.length === 0) {
+    return <div className="text-center text-red-500 py-8">Không có dữ liệu ghế để hiển thị.</div>;
+  }
   // Group by row
   const rows: Record<string, Seat[]> = {};
   seats.forEach((seat) => {
