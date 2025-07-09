@@ -102,8 +102,8 @@ const bookingData = [
 // Booking Management Component
 export default function ProfessionalBookingManagement() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
-  const [filterPaymentMethod, setFilterPaymentMethod] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string | undefined>(undefined);
+  const [filterPaymentMethod, setFilterPaymentMethod] = useState<string | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -424,7 +424,7 @@ export default function ProfessionalBookingManagement() {
               </Col>
               <Col xs={12} sm={6} lg={4} xl={3}>
                 <Select
-                  placeholder="Status"
+                  placeholder="All Status"
                   value={filterStatus}
                   onChange={setFilterStatus}
                   className="w-full h-10 px-4"
@@ -438,7 +438,7 @@ export default function ProfessionalBookingManagement() {
               </Col>
               <Col xs={12} sm={6} lg={3} xl={3}>
                 <Select
-                  placeholder="Payment Method"
+                  placeholder="All Payment Methods"
                   value={filterPaymentMethod}
                   onChange={setFilterPaymentMethod}
                   className="w-full h-10 px-4"
@@ -457,11 +457,14 @@ export default function ProfessionalBookingManagement() {
                   size="middle"
                   onClick={() => {
                     setSearchTerm("");
-                    setFilterStatus("");
-                    setFilterPaymentMethod("");
+                    setFilterStatus(undefined);
+                    setFilterPaymentMethod(undefined);
+                    setCurrentPage(1);
+                    message.success("Filters cleared successfully");
                   }}
+                  disabled={!searchTerm && !filterStatus && !filterPaymentMethod}
                 >
-                  Reset
+                  Clear Filters
                 </Button>
               </Col>
             </Row>
@@ -497,8 +500,7 @@ export default function ProfessionalBookingManagement() {
                 showSizeChanger
                 showQuickJumper={false}
                 pageSizeOptions={["5", "10", "20", "50"]}
-                className="professional-pagination"
-                size="small"
+                size="default"
               />
             </div>
           </div>
@@ -632,15 +634,6 @@ export default function ProfessionalBookingManagement() {
         
         .professional-table .ant-table-tbody > tr:hover > td {
           background: #f8faff;
-        }
-        
-        .professional-pagination .ant-pagination-item-active {
-          background: #1677ff;
-          border-color: #1677ff;
-        }
-        
-        .professional-pagination .ant-pagination-item-active a {
-          color: white;
         }
         
         .professional-modal .ant-modal-header {

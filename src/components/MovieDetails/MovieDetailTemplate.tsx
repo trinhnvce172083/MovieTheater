@@ -33,9 +33,7 @@ export default function MovieDetailTemplate({ movieId }: MovieDetailTemplateProp
     const fetchMovieDetails = async () => {
       try {
         setLoading(true);
-        console.log(`Fetching movie details for ID: ${movieId}`);
         const response = await MovieDetailsApiService.getMovieDetails(movieId);
-        console.log("Movie details received:", response.data);
         
         if (response.success) {
           setMovie(response.data);
@@ -44,7 +42,6 @@ export default function MovieDetailTemplate({ movieId }: MovieDetailTemplateProp
         }
       } catch (err) {
         setError("Lỗi kết nối API");
-        console.error("Error fetching movie details:", err);
       } finally {
         setLoading(false);
       }
@@ -459,7 +456,6 @@ export default function MovieDetailTemplate({ movieId }: MovieDetailTemplateProp
           onContinue={(schedule: Schedule) => {
             setIsModalOpen(false);
             if (!schedule.cinemaRoomId) {
-              console.error("cinemaRoomId is missing from schedule object");
               return;
             }
             router.push(

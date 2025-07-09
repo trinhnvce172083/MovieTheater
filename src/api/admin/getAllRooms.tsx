@@ -1,0 +1,347 @@
+import axiosClient from "../axiosClient";
+
+export interface CinemaRoom {
+  cinemaRoomId: number;
+  cinemaRoomName: string;
+  seatQuantity: number;
+  roomType: 'STANDARD' | 'VIP' | 'IMAX' | '4DX';
+  isActive: boolean;
+  description: string;
+  rows: number;
+  columns: number;
+  has3D: boolean;
+  hasDolbyAtmos: boolean;
+  hasReclinerSeats: boolean;
+  priceMultiplier: number;
+  createdAt: string;
+  updatedAt: string;
+  availableSeats?: number;
+  occupiedSeats?: number;
+  maintenanceSeats?: number;
+  scheduleCount?: number;
+}
+
+export interface CinemaRoomCreateRequest {
+  cinemaRoomName: string;
+  roomType: 'STANDARD' | 'VIP' | 'IMAX' | '4DX';
+  seatQuantity: number;
+  rows: number;
+  columns: number;
+  description?: string;
+  has3D?: boolean;
+  hasDolbyAtmos?: boolean;
+  hasReclinerSeats?: boolean;
+  priceMultiplier: number;
+  isActive?: boolean;
+}
+
+export interface CinemaRoomUpdateRequest {
+  cinemaRoomName?: string;
+  roomType?: 'STANDARD' | 'VIP' | 'IMAX' | '4DX';
+  seatQuantity?: number;
+  rows?: number;
+  columns?: number;
+  description?: string;
+  has3D?: boolean;
+  hasDolbyAtmos?: boolean;
+  hasReclinerSeats?: boolean;
+  priceMultiplier?: number;
+  isActive?: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  content: T[];
+  page: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
+  empty: boolean;
+}
+
+export interface CinemaRoomStatistics {
+  totalRooms: number;
+  activeRooms: number;
+  totalSeats: number;
+  averageSeatsPerRoom: number;
+  vipRooms: number;
+  standardRooms: number;
+  premiumRooms: number;
+  imaxRooms: number;
+  fourDxRooms: number;
+}
+
+// Mock data for fallback
+const mockRooms: CinemaRoom[] = [
+  {
+    cinemaRoomId: 1,
+    cinemaRoomName: "Premium Hall A",
+    seatQuantity: 48,
+    roomType: "VIP",
+    isActive: true,
+    description: "Premium cinema hall with luxury seating and enhanced viewing experience",
+    rows: 6,
+    columns: 8,
+    has3D: true,
+    hasDolbyAtmos: true,
+    hasReclinerSeats: true,
+    priceMultiplier: 1.5,
+    createdAt: "2024-01-15T10:00:00",
+    updatedAt: "2024-06-20T14:30:00",
+  },
+  {
+    cinemaRoomId: 2,
+    cinemaRoomName: "Standard Hall B",
+    seatQuantity: 40,
+    roomType: "STANDARD",
+    isActive: true,
+    description: "Standard cinema hall with comfortable seating for regular movie viewing",
+    rows: 5,
+    columns: 8,
+    has3D: false,
+    hasDolbyAtmos: false,
+    hasReclinerSeats: false,
+    priceMultiplier: 1.0,
+    createdAt: "2024-01-20T09:00:00",
+    updatedAt: "2024-06-18T11:15:00",
+  },
+  {
+    cinemaRoomId: 3,
+    cinemaRoomName: "IMAX Theater",
+    seatQuantity: 80,
+    roomType: "IMAX",
+    isActive: true,
+    description: "Large format IMAX theater with premium viewing experience",
+    rows: 8,
+    columns: 10,
+    has3D: true,
+    hasDolbyAtmos: true,
+    hasReclinerSeats: true,
+    priceMultiplier: 2.5,
+    createdAt: "2024-02-01T08:00:00",
+    updatedAt: "2024-06-22T16:45:00",
+  },
+  {
+    cinemaRoomId: 4,
+    cinemaRoomName: "4DX Experience",
+    seatQuantity: 32,
+    roomType: "4DX",
+    isActive: true,
+    description: "4DX theater with motion seats and environmental effects",
+    rows: 4,
+    columns: 8,
+    has3D: true,
+    hasDolbyAtmos: true,
+    hasReclinerSeats: true,
+    priceMultiplier: 3.0,
+    createdAt: "2024-03-10T12:00:00",
+    updatedAt: "2024-06-21T09:30:00",
+  },
+];
+
+// API Functions
+export const getAllRooms = async (
+  page = 0,
+  size = 10,
+  sortBy = 'cinemaRoomName',
+  sortDirection = 'asc'
+): Promise<PaginatedResponse<CinemaRoom>> => {
+  try {
+    const response = await axiosClient.get('/cinema-rooms', {
+      params: { page, size, sortBy, sortDirection }
+    });
+    return response.data;
+  } catch (error) {
+    // Return mock data as fallback
+    const start = page * size;
+    const end = start + size;
+    const paginatedMockRooms = mockRooms.slice(start, end);
+    
+    return {
+      content: paginatedMockRooms,
+      page: {
+        size,
+        number: page,
+        totalElements: mockRooms.length,
+        totalPages: Math.ceil(mockRooms.length / size)
+      },
+      first: page === 0,
+      last: end >= mockRooms.length,
+      numberOfElements: paginatedMockRooms.length,
+      empty: paginatedMockRooms.length === 0
+    };
+  }
+};
+
+export const getRoomById = async (id: number): Promise<CinemaRoom> => {
+  try {
+    const response = await axiosClient.get(`/cinema-rooms/${id}`);
+    return response.data;
+  } catch (error) {
+    const mockRoom = mockRooms.find(room => room.cinemaRoomId === id);
+    if (!mockRoom) {
+      throw new Error('Room not found');
+    }
+    return mockRoom;
+  }
+};
+
+export const createRoom = async (roomData: CinemaRoomCreateRequest): Promise<CinemaRoom> => {
+  try {
+    const response = await axiosClient.post('/cinema-rooms', roomData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateRoom = async (
+  id: number, 
+  roomData: CinemaRoomUpdateRequest
+): Promise<CinemaRoom> => {
+  try {
+    const response = await axiosClient.put(`/cinema-rooms/${id}`, roomData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteRoom = async (id: number): Promise<void> => {
+  try {
+    await axiosClient.delete(`/cinema-rooms/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const searchRooms = async (
+  keyword: string,
+  page = 0,
+  size = 10
+): Promise<PaginatedResponse<CinemaRoom>> => {
+  try {
+    const response = await axiosClient.get('/cinema-rooms/search', {
+      params: { keyword, page, size }
+    });
+    return response.data;
+  } catch (error) {
+    // Filter mock data by keyword
+    const filtered = mockRooms.filter(room => 
+      room.cinemaRoomName.toLowerCase().includes(keyword.toLowerCase()) ||
+      room.roomType.toLowerCase().includes(keyword.toLowerCase()) ||
+      room.description.toLowerCase().includes(keyword.toLowerCase())
+    );
+    
+    const start = page * size;
+    const end = start + size;
+    const paginatedFiltered = filtered.slice(start, end);
+    
+    return {
+      content: paginatedFiltered,
+      page: {
+        size,
+        number: page,
+        totalElements: filtered.length,
+        totalPages: Math.ceil(filtered.length / size)
+      },
+      first: page === 0,
+      last: end >= filtered.length,
+      numberOfElements: paginatedFiltered.length,
+      empty: paginatedFiltered.length === 0
+    };
+  }
+};
+
+export const getRoomsByType = async (type: string): Promise<CinemaRoom[]> => {
+  try {
+    const response = await axiosClient.get(`/cinema-rooms/type/${type}`);
+    return response.data;
+  } catch (error) {
+    return mockRooms.filter(room => room.roomType === type);
+  }
+};
+
+export const getRoomStatistics = async (): Promise<CinemaRoomStatistics> => {
+  try {
+    const response = await axiosClient.get('/cinema-rooms/statistics');
+    return response.data;
+  } catch (error) {
+    // Calculate mock statistics
+    const totalRooms = mockRooms.length;
+    const activeRooms = mockRooms.filter(r => r.isActive).length;
+    const totalSeats = mockRooms.reduce((sum, room) => sum + room.seatQuantity, 0);
+    const averageSeatsPerRoom = totalRooms > 0 ? totalSeats / totalRooms : 0;
+    const vipRooms = mockRooms.filter(r => r.roomType === 'VIP').length;
+    const standardRooms = mockRooms.filter(r => r.roomType === 'STANDARD').length;
+    const imaxRooms = mockRooms.filter(r => r.roomType === 'IMAX').length;
+    const fourDxRooms = mockRooms.filter(r => r.roomType === '4DX').length;
+    const premiumRooms = vipRooms + imaxRooms + fourDxRooms;
+    
+    return {
+      totalRooms,
+      activeRooms,
+      totalSeats,
+      averageSeatsPerRoom,
+      vipRooms,
+      standardRooms,
+      premiumRooms,
+      imaxRooms,
+      fourDxRooms
+    };
+  }
+};
+
+export const getPremiumRooms = async (): Promise<CinemaRoom[]> => {
+  try {
+    const response = await axiosClient.get('/cinema-rooms/premium');
+    return response.data;
+  } catch {
+    return mockRooms.filter(room => 
+      room.roomType === 'VIP' || room.roomType === 'IMAX' || room.roomType === '4DX'
+    );
+  }
+};
+
+export const getRoomsWithFeature = async (feature: 'has3D' | 'hasDolbyAtmos' | 'hasReclinerSeats'): Promise<CinemaRoom[]> => {
+  try {
+    let endpoint = '';
+    switch (feature) {
+      case 'has3D':
+        endpoint = '/cinema-rooms/features/3d';
+        break;
+      case 'hasDolbyAtmos':
+        endpoint = '/cinema-rooms/features/dolby-atmos';
+        break;
+      case 'hasReclinerSeats':
+        endpoint = '/cinema-rooms/features/recliner';
+        break;
+    }
+    const response = await axiosClient.get(endpoint);
+    return response.data;
+  } catch {
+    return mockRooms.filter(room => room[feature]);
+  }
+};
+
+export const getRoomsByCapacity = async (minSeats?: number, maxSeats?: number): Promise<CinemaRoom[]> => {
+  try {
+    const response = await axiosClient.get('/cinema-rooms/capacity', {
+      params: { minSeats, maxSeats }
+    });
+    return response.data;
+  } catch {
+    return mockRooms.filter(room => {
+      if (minSeats && room.seatQuantity < minSeats) return false;
+      if (maxSeats && room.seatQuantity > maxSeats) return false;
+      return true;
+    });
+  }
+};
+
+// Export mock data for testing
+export { mockRooms };

@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, UserCircle } from "lucide-react";
+import { UserCircle } from "lucide-react";
 import Image from "next/image";
 import {
   DropdownMenu,
@@ -49,10 +49,6 @@ export default function AdminHeader() {
         </span>
       </div>
       <div className="flex items-center gap-6">
-        <button className="relative hover:bg-gray-100 rounded-full p-2 transition">
-          <Bell className="w-6 h-6 text-gray-500" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-        </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <div className="flex items-center gap-2 cursor-pointer select-none">

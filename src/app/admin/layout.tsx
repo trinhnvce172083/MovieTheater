@@ -97,6 +97,7 @@ export default function AdminLayout({
       : '16px 0 64px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255,255,255,0.1)',
     backdropFilter: 'blur(20px)',
     borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+    paddingRight: '10px',
   };  const toggleButtonStyle = {
     position: 'absolute' as const,
     top: '24px',
@@ -284,7 +285,7 @@ export default function AdminLayout({
             background: "rgba(255, 255, 255, 0.95)",
             backdropFilter: "blur(20px)",
             display: "flex",
-            justifyContent: "center",
+            justifyContent: "flex-start",
             alignItems: "flex-start",
             transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
             border: "1px solid rgba(255, 255, 255, 0.2)",
