@@ -80,7 +80,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-row items-center justify-center p-18">
+    <div className="min-h-screen flex flex-row items-center justify-center p-18">
       <Card
         className={cn(
           "w-full max-w-md shadow-lg p-8 bg-white/60 backdrop-blur-sm"
