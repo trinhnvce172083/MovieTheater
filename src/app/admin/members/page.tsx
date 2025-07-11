@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Card, Table, Button, Typography, Alert, Pagination, message } from 'antd';
-import { PlusOutlined, UserOutlined } from '@ant-design/icons';
+import { PlusOutlined, UserOutlined, BugOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 
 // Local imports
@@ -13,6 +13,7 @@ import {
   MemberFormModal,
   LockUserModal,
   UnlockUserModal,
+  DebugPanel,
   createMemberColumns 
 } from './components';
 import { MemberData, MemberCreateRequest } from './types';
@@ -28,6 +29,7 @@ export default function AdminMemberManagement() {
   const [lockModalVisible, setLockModalVisible] = useState(false);
   const [unlockModalVisible, setUnlockModalVisible] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberData | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
 
   // Use custom hook for all member management logic
   const {
@@ -95,6 +97,7 @@ export default function AdminMemberManagement() {
 
   // Lock/Unlock/Activate/Deactivate handlers
   const handleLock = (record: MemberData) => {
+    console.log('Lock button clicked for user:', record);
     setSelectedMember(record);
     setLockModalVisible(true);
   };
@@ -112,6 +115,9 @@ export default function AdminMemberManagement() {
   };
 
   const handleLockConfirm = async (lockData: { reason: string; lockHours: number; sendNotificationEmail: boolean; notes?: string }) => {
+    console.log('Lock confirm called with data:', lockData);
+    console.log('Selected member:', selectedMember);
+    
     if (selectedMember) {
       const success = await lockUserAccount(selectedMember.id, lockData.lockHours, lockData.reason, lockData.sendNotificationEmail);
       if (success) {
@@ -150,6 +156,11 @@ export default function AdminMemberManagement() {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         
+        {/* Debug Panel - Only show in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <DebugPanel visible={showDebug} />
+        )}
+
         {/* Demo Data Warning */}
         {!isUsingApiData && (
           <Alert
@@ -198,6 +209,12 @@ export default function AdminMemberManagement() {
               </Text>
             </div>
             <div className="flex items-center gap-3">
+              <Button
+                type="text"
+                icon={<BugOutlined />}
+                onClick={() => setShowDebug(!showDebug)}
+                title="Toggle Debug Panel"
+              />
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
