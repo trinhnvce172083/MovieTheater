@@ -21,7 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
-
+import org.springframework.beans.factory.annotation.Value;
 import java.util.Map;
 
 /**
@@ -37,6 +37,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Tag(name = "VNPay Payment", description = "VNPay payment processing APIs")
 public class VNPayController {
+
+    @Value("${frontend.paymentResultUrl:http://localhost:3000/booking/payment}")
+    private String paymentResultUrl;
     
     private final VNPayService vnPayService;
 
@@ -83,23 +86,23 @@ public class VNPayController {
         }
     }
 
+
     @GetMapping("/return")
-    @Operation(summary = "Xử lý callback từ VNPay", description = "Xử lý phản hồi từ VNPay sau thanh toán")
+    @Operation(summary = "Xử lý callback từ VNPay",
+            description = "Endpoint nhận callback từ VNPay sau khi thanh toán và redirect về frontend")
     public RedirectView vnpayReturnStatus(@RequestParam Map<String, String> queryParams) {
-        log.info("Nhận callback từ VNPay: {}", queryParams);
-        
+        log.info("Nhận callback từ VNPay với params: {}", queryParams);
         RedirectView redirectView = new RedirectView();
         try {
             String redirectUrl = vnPayService.processPaymentResponseUpdate(queryParams);
+            log.info("Redirect về frontend: {}", redirectUrl);
             redirectView.setUrl(redirectUrl);
         } catch (Exception e) {
             log.error("Lỗi xử lý callback VNPay: {}", e.getMessage());
-            redirectView.setUrl("http://localhost:3000/payment/error");
+            redirectView.setUrl(paymentResultUrl + "?status=error");
         }
-        
         return redirectView;
     }
-
     @PostMapping("/ipn")
     @Operation(summary = "Xử lý IPN từ VNPay", description = "Xử lý thông báo tức thì từ VNPay")
     public ResponseEntity<Map<String, String>> vnpayIPN(@RequestParam Map<String, String> queryParams) {

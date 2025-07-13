@@ -301,6 +301,10 @@ vnpay:
   tmnCode: G6UJ6GM0
   hashSecret: KNWNX1BX0Z31T3MIX7E3KROK063KWANW
   payUrl: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-  returnUrl: http://localhost:8080/api/payment/vnpay/return
-  ipnUrl: http://localhost:8080/api/payment/vnpay/ipn
-  apiUrl: https://sandbox.vnpayment.vn/merchant_webapi/api/transaction 
+  returnUrl: http://localhost:8080/cinema/api/payment/vnpay/return
+  ipnUrl: http://localhost:8080/cinema/api/payment/vnpay/ipn
+  apiUrl: https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
+
+# Frontend Configuration
+frontend:
+  paymentResultUrl: http://localhost:3000/booking/payment 

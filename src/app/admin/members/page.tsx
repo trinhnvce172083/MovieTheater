@@ -209,27 +209,26 @@ export default function AdminMemberManagement() {
               </Text>
             </div>
             <div className="flex items-center gap-3">
-              <Button
-                type="text"
-                icon={<BugOutlined />}
-                onClick={() => setShowDebug(!showDebug)}
-                title="Toggle Debug Panel"
-              />
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                size="middle"
-                className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
-                onClick={() => setIsModalVisible(true)}
-                disabled={!isUsingApiData}
-                title={
-                  !isUsingApiData
-                    ? "Create/Edit functions require backend connection"
-                    : "Add new member"
-                }
-              >
-                Add New Member
-              </Button>
+              {process.env.NODE_ENV === 'development' && (
+                <Button
+                  type="text"
+                  icon={<BugOutlined />}
+                  onClick={() => setShowDebug(!showDebug)}
+                  title="Toggle Debug Panel"
+                />
+              )}
+              {isUsingApiData && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  size="middle"
+                  className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
+                  onClick={() => setIsModalVisible(true)}
+                  title="Add new member"
+                >
+                  Add New Member
+                </Button>
+              )}
             </div>
           </div>
 
@@ -280,46 +279,52 @@ export default function AdminMemberManagement() {
         </Card>
       </div>
 
-      {/* Add/Edit Member Modal */}
-      <MemberFormModal
-        visible={isModalVisible}
-        editingMember={editingMember}
-        onSubmit={handleModalSubmit}
-        onCancel={handleModalCancel}
-        loading={loading}
-      />
+      {/* Add/Edit Member Modal - Only show when API is available */}
+      {isUsingApiData && (
+        <MemberFormModal
+          visible={isModalVisible}
+          editingMember={editingMember}
+          onSubmit={handleModalSubmit}
+          onCancel={handleModalCancel}
+          loading={loading}
+        />
+      )}
 
-      {/* Lock User Modal */}
-      <LockUserModal
-        visible={lockModalVisible}
-        user={selectedMember ? {
-          id: parseInt(selectedMember.id),
-          name: selectedMember.name,
-          email: selectedMember.email
-        } : null}
-        onConfirm={handleLockConfirm}
-        onCancel={() => {
-          setLockModalVisible(false);
-          setSelectedMember(null);
-        }}
-      />
+      {/* Lock User Modal - Only show when API is available */}
+      {isUsingApiData && (
+        <LockUserModal
+          visible={lockModalVisible}
+          user={selectedMember ? {
+            id: parseInt(selectedMember.id),
+            name: selectedMember.name,
+            email: selectedMember.email
+          } : null}
+          onConfirm={handleLockConfirm}
+          onCancel={() => {
+            setLockModalVisible(false);
+            setSelectedMember(null);
+          }}
+        />
+      )}
 
-      {/* Unlock User Modal */}
-      <UnlockUserModal
-        visible={unlockModalVisible}
-        user={selectedMember ? {
-          id: parseInt(selectedMember.id),
-          name: selectedMember.name,
-          email: selectedMember.email,
-          accountLockedUntil: selectedMember.accountLockedUntil
-        } : null}
-        onConfirm={handleUnlockConfirm}
-        onCancel={() => {
-          setUnlockModalVisible(false);
-          setSelectedMember(null);
-        }}
-        loading={loading}
-      />
+      {/* Unlock User Modal - Only show when API is available */}
+      {isUsingApiData && (
+        <UnlockUserModal
+          visible={unlockModalVisible}
+          user={selectedMember ? {
+            id: parseInt(selectedMember.id),
+            name: selectedMember.name,
+            email: selectedMember.email,
+            accountLockedUntil: selectedMember.accountLockedUntil
+          } : null}
+          onConfirm={handleUnlockConfirm}
+          onCancel={() => {
+            setUnlockModalVisible(false);
+            setSelectedMember(null);
+          }}
+          loading={loading}
+        />
+      )}
     </div>
   );
 }
