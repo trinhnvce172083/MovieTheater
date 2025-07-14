@@ -3,7 +3,7 @@
  * Custom React hooks for member API operations with loading states and error handling
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { message } from "antd";
 import { MemberApiService } from "@/api/member";
 import type {
@@ -15,6 +15,7 @@ import type {
   BookingCancelRequest,
   BookingCheckInRequest,
   PaginatedResponse,
+  BookingStatus,
 } from "@/types/member";
 import { MemberApiError } from "@/types/member";
 
@@ -224,8 +225,21 @@ export function useMemberBookings(params: BookingListParams = {}) {
 
   const mountedRef = useRef(true);
 
+  // Memoize params để tránh tạo object mới mỗi lần render
+  const memoizedParams = useMemo(() => params, [
+    params.page,
+    params.size,
+    params.status,
+    params.startDate,
+    params.endDate,
+    params.sortBy,
+    params.sortDirection
+  ]);
+
   const loadBookings = useCallback(
     async (reset: boolean = false) => {
+      console.log("useMemberBookings loadBookings called:", { reset, memoizedParams });
+      
       if (!mountedRef.current) return;
 
       const currentPage = reset ? 0 : state.data?.page.number || 0;
@@ -238,10 +252,17 @@ export function useMemberBookings(params: BookingListParams = {}) {
       }));
 
       try {
-        const response = await MemberApiService.getBookings({
-          ...params,
+        console.log("Calling MemberApiService.getBookings with params:", {
+          ...memoizedParams,
           page: currentPage,
         });
+        
+        const response = await MemberApiService.getBookings({
+          ...memoizedParams,
+          page: currentPage,
+        });
+
+        console.log("MemberApiService.getBookings response:", response);
 
         if (!mountedRef.current) return;
 
@@ -263,6 +284,8 @@ export function useMemberBookings(params: BookingListParams = {}) {
           hasMore,
         }));
       } catch (error) {
+        console.error("useMemberBookings error:", error);
+        
         if (!mountedRef.current) return;
 
         const errorMessage =
@@ -276,11 +299,9 @@ export function useMemberBookings(params: BookingListParams = {}) {
           loadingMore: false,
           error: errorMessage,
         }));
-
-        console.error("useMemberBookings error:", error);
       }
     },
-    [params, state.data?.page.number]
+    [memoizedParams] // Chỉ dependency vào memoizedParams
   );
 
   const loadMore = useCallback(() => {
@@ -293,11 +314,10 @@ export function useMemberBookings(params: BookingListParams = {}) {
     loadBookings(true);
   }, [loadBookings]);
 
-  const paramsKey = JSON.stringify(params);
-
+  // Sử dụng memoizedParams thay vì JSON.stringify
   useEffect(() => {
     loadBookings(true);
-  }, [paramsKey, loadBookings]);
+  }, [memoizedParams]); // Chỉ dependency vào memoizedParams, không cần loadBookings
 
   useEffect(() => {
     return () => {
@@ -324,20 +344,42 @@ export function useMemberBookings(params: BookingListParams = {}) {
  * Hook for booking history
  */
 export function useBookingHistory(params: HistoryParams = {}) {
-  return useMemberBookings({
+  const memoizedParams = useMemo(() => ({
     ...params,
-    status: ["COMPLETED", "CANCELLED"],
-  });
+    status: ["COMPLETED", "CANCELLED"] as BookingStatus[],
+  }), [
+    params.page,
+    params.size,
+    params.status,
+    params.startDate,
+    params.endDate,
+    params.sortBy,
+    params.sortDirection,
+    params.movieTitle,
+    params.cinemaRoom
+  ]);
+  
+  return useMemberBookings(memoizedParams);
 }
 
 /**
  * Hook for active bookings
  */
 export function useActiveBookings(params: BookingListParams = {}) {
-  return useMemberBookings({
+  const memoizedParams = useMemo(() => ({
     ...params,
-    status: ["CONFIRMED", "PAID"],
-  });
+    status: ["CONFIRMED", "PAID"] as BookingStatus[],
+  }), [
+    params.page,
+    params.size,
+    params.status,
+    params.startDate,
+    params.endDate,
+    params.sortBy,
+    params.sortDirection
+  ]);
+  
+  return useMemberBookings(memoizedParams);
 }
 
 /**

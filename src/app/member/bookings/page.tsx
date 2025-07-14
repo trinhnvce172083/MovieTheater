@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Table, Input, Select, Typography, Pagination, Spin, Alert, Button, Empty } from "antd";
-import { useActiveBookings } from "@/hooks/member";
+import { useMemberBookings } from "@/hooks/member";
 import { ReloadOutlined } from "@ant-design/icons";
 import type { MemberBooking } from "@/types/member";
 
@@ -11,56 +11,47 @@ const { Option } = Select;
 const columns = [
   {
     title: "#",
-    dataIndex: "bookingId",
-    key: "bookingId",
+    key: "index",
+    render: (_: any, __: any, idx: number) => idx + 1,
     width: 50,
-    render: (text: any, record: any, index: number) => index + 1,
-  },
-  {
-    title: "MOVIE NAME",
-    dataIndex: "movieTitle",
-    key: "movieTitle",
   },
   {
     title: "BOOKING DATE",
     dataIndex: "bookingDate",
     key: "bookingDate",
     render: (date: string) => {
-      return new Date(date).toLocaleDateString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      if (!date) return "—";
+      const d = new Date(date);
+      const day = d.getDate().toString().padStart(2, '0');
+      const month = (d.getMonth() + 1).toString().padStart(2, '0');
+      const year = d.getFullYear();
+      const hour = d.getHours().toString().padStart(2, '0');
+      const minute = d.getMinutes().toString().padStart(2, '0');
+      return `${day}/${month}/${year} ${hour}:${minute}`;
     },
+  },
+  {
+    title: "MOVIE NAME",
+    dataIndex: "movieTitle",
+    key: "movieTitle",
+    render: v => v || "—",
   },
   {
     title: "TOTAL AMOUNT",
     dataIndex: "finalAmount",
     key: "finalAmount",
-    render: (amount: number) => {
-      return new Intl.NumberFormat("vi-VN", {
-        style: "currency",
-        currency: "VND",
-      }).format(amount);
-    },
+    render: v => v ? new Intl.NumberFormat('vi-VN').format(v) : "—",
   },
   {
     title: "STATUS",
     dataIndex: "status",
     key: "status",
-    render: (status: string) => {
-      const statusConfig = {
-        CONFIRMED: { color: "blue", text: "Confirmed" },
-        PAID: { color: "green", text: "Paid" },
-        COMPLETED: { color: "purple", text: "Completed" },
-        PENDING: { color: "orange", text: "Pending" },
-      };
-      const config = statusConfig[status as keyof typeof statusConfig] || { color: "default", text: status };
-      return (
-        <span style={{ color: config.color, fontWeight: 500 }}>{config.text}</span>
-      );
+    render: (v: string) => {
+      if (!v) return "—";
+      if (v === "COMPLETED" || v === "PAID" || v === "DONE") return <span style={{color: "green"}}>DONE</span>;
+      if (v === "CANCELLED" || v === "FAILED") return <span style={{color: "red"}}>FAILED</span>;
+      if (v === "PENDING" || v === "CONFIRMED") return <span style={{color: "#007bff"}}>WAITING FOR TICKET</span>;
+      return v;
     },
   },
 ];
@@ -70,17 +61,28 @@ export default function BookedTicketsPage() {
   const [current, setCurrent] = useState(1);
   const [search, setSearch] = useState("");
 
-  // Lấy dữ liệu booking thực tế từ API - đơn giản hóa params
-  const { bookings, loading, error, refresh, totalElements } = useActiveBookings();
+  const { bookings, loading, error, refresh, totalElements } = useMemberBookings();
 
-  // Lọc dữ liệu theo search
-  const filteredData = bookings.filter((item: MemberBooking) =>
-    item.movieTitle.toLowerCase().includes(search.toLowerCase()) ||
-    item.bookingCode.toLowerCase().includes(search.toLowerCase())
+  // Reset lại trang khi bookings thay đổi
+  useEffect(() => {
+    setCurrent(1);
+  }, [bookings]);
+
+  // Đảm bảo bookings luôn là mảng
+  const bookingsArray = Array.isArray(bookings) ? bookings : [];
+
+  // Đảm bảo filter không lỗi khi bookings chưa có dữ liệu
+  const filteredData = bookingsArray.filter((item: MemberBooking) =>
+    (item.movieTitle || "").toLowerCase().includes(search.toLowerCase()) ||
+    (item.bookingCode || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  // Phân trang
   const pagedData = filteredData.slice((current - 1) * pageSize, current * pageSize);
+
+  // Log kiểm tra dữ liệu
+  console.log("bookings thực tế:", bookingsArray);
+  console.log("filteredData:", filteredData);
+  console.log("pagedData:", pagedData);
 
   const handlePageChange = (page: number, size?: number) => {
     setCurrent(page);
@@ -120,10 +122,11 @@ export default function BookedTicketsPage() {
     );
   }
 
+  // Render Table theo filteredData.length
   return (
     <div style={{ background: "#f7f8fa", minHeight: "100vh", padding: 24 }}>
       <div style={{ background: "#fff", borderRadius: 8, boxShadow: "0 2px 8px #0001", padding: 24, maxWidth: 1100, margin: "0 auto" }}>
-        <Typography.Title level={4} style={{ textAlign: "center", marginBottom: 24 }}>
+        <Typography.Title level={4} style={{ textAlign: "center", marginBottom: 24, marginTop: 32 }}>
           Booked ticket
         </Typography.Title>
         
@@ -154,7 +157,7 @@ export default function BookedTicketsPage() {
           </Button>
         </div>
         
-        {bookings.length === 0 ? (
+        {filteredData.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
             <Empty
               description="Chưa có vé đã đặt"
@@ -170,7 +173,7 @@ export default function BookedTicketsPage() {
               bordered
               size="middle"
               loading={loading}
-              rowKey="bookingId"
+              rowKey="bookingCode"
             />
             
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16 }}>

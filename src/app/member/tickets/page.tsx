@@ -64,7 +64,7 @@ const ManagedTickets: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <Typography.Title level={2} className="text-white mb-8 text-center">
+      <Typography.Title level={2} className="text-white mb-8 text-center" style={{ marginTop: 32 }}>
         Managed Tickets
       </Typography.Title>
       <div className="bg-white rounded-2xl shadow-xl p-6">

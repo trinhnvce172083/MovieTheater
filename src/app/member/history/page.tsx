@@ -60,7 +60,7 @@ export default function ScoreHistoryPage() {
   return (
     <div style={{ background: "#f7f8fa", minHeight: "100vh", padding: 24 }}>
       <div style={{ background: "#fff", borderRadius: 8, boxShadow: "0 2px 8px #0001", padding: 24, maxWidth: 1400, margin: "0 auto" }}>
-        <Typography.Title level={4} style={{ textAlign: "center", marginBottom: 24 }}>
+        <Typography.Title level={4} style={{ textAlign: "center", marginBottom: 24, marginTop: 32 }}>
           History of score Adding / Using
         </Typography.Title>
         <Row gutter={24} style={{ marginBottom: 24 }}>

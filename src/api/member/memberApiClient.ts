@@ -247,10 +247,13 @@ export class MemberApiClient {
   ): Promise<ApiResponse<PaginatedResponse<MemberBooking>>> {
     const cacheKey = `member:bookings:${JSON.stringify(params)}`;
 
+    console.log("MemberApiClient.getBookings called with params:", params);
+
     try {
       // Check cache for short-lived data
       const cached = this.cache.get<PaginatedResponse<MemberBooking>>(cacheKey);
       if (cached && (!params.page || params.page === 0)) {
+        console.log("Returning cached bookings data");
         return { success: true, data: cached };
       }
 
@@ -264,9 +267,14 @@ export class MemberApiClient {
         ...(params.endDate && { endDate: params.endDate }),
       };
 
+      console.log("Making API call to /bookings/my-bookings with queryParams:", queryParams);
+      console.log("Current accessToken:", localStorage.getItem("accessToken"));
+
       const response = await axiosClient.get("/bookings/my-bookings", {
         params: queryParams,
       });
+
+      console.log("API response:", response.data);
 
       // Transform response to match our interface
       const bookings: PaginatedResponse<MemberBooking> = {
@@ -283,6 +291,8 @@ export class MemberApiClient {
           .filter((item: any) => !!item),
         page: response.data.page,
       };
+
+      console.log("Transformed bookings:", bookings);
 
       // Cache only first page
       if (!params.page || params.page === 0) {

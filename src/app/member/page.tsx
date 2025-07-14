@@ -161,7 +161,7 @@ export default function MemberAccountPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <Typography.Title level={2} className="text-white mb-8 text-center">
+      <Typography.Title level={2} className="text-white mb-8 text-center" style={{ marginTop: 32 }}>
         Account Information
       </Typography.Title>
 
