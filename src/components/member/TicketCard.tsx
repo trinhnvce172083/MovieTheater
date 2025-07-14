@@ -42,7 +42,7 @@ const TicketCard: React.FC<TicketCardProps> = ({
   return (
     <Card 
       className={`shadow-sm hover:shadow-md transition-shadow border-l-4 border-l-blue-500 ${className}`}
-      bodyStyle={{ padding: '24px' }}
+      styles={{ body: { padding: '24px' } }}
     >
       <div className="flex gap-4">
         <MoviePoster 

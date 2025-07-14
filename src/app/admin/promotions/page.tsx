@@ -397,11 +397,11 @@ export default function ProfessionalPromotionManagement() {
 
       // Required fields with validation
       if (!values.promoCode?.trim()) {
-        message.error("Mã promotion là bắt buộc");
+        message.error("Promotion code is required");
         return;
       }
       if (!values.name?.trim()) {
-        message.error("Tên promotion là bắt buộc");
+        message.error("Promotion name is required");
         return;
       }
 
@@ -485,7 +485,7 @@ export default function ProfessionalPromotionManagement() {
       const accessToken = localStorage.getItem("accessToken");
       if (!accessToken) {
         throw new Error(
-          "Không tìm thấy token đăng nhập. Vui lòng đăng nhập lại."
+          "Login token not found. Please login again."
         );
       }
 
@@ -513,10 +513,10 @@ export default function ProfessionalPromotionManagement() {
 
       toast.success(
         editingPromotion
-          ? `Cập nhật promotion thành công: ${
+          ? `Promotion updated successfully: ${
               result.promotionCode || result.promotionName
             }`
-          : `Tạo promotion mới thành công: ${
+          : `New promotion created successfully: ${
               result.promotionCode || result.promotionName
             }`
       );
@@ -533,7 +533,7 @@ export default function ProfessionalPromotionManagement() {
       console.error("Error saving promotion:", error);
 
       // Improved error handling
-      let errorMessage = "Không thể lưu promotion";
+      let errorMessage = "Unable to save promotion";
       if (error.message) {
         errorMessage = error.message;
       }
@@ -544,7 +544,7 @@ export default function ProfessionalPromotionManagement() {
       // If it's a 401 error, might need to refresh token
       if (error.message && error.message.includes("401")) {
         toast.warning(
-          "Phiên đăng nhập có thể đã hết hạn. Vui lòng thử lại sau khi refresh trang."
+          "Login session may have expired. Please try again after refreshing the page."
         );
       }
     }

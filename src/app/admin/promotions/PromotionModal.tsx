@@ -5,13 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { 
-  Promotion, 
-  PromotionCreateRequest, 
-  PromotionUpdateRequest 
-} from '@/types/Admin/promotion';
+import { PromotionDto } from '@/types/Admin/promotion';
+import { PromotionCreateRequest, PromotionUpdateRequest } from '@/api/admin/getAllPromotions';
 import { createPromotion, updatePromotion } from '@/api/admin/getAllPromotions';
 import { toast } from 'react-toastify';
 
@@ -19,7 +14,7 @@ interface PromotionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  promotion?: Promotion | null;
+  promotion?: PromotionDto | null;
 }
 
 export default function PromotionModal({ 
@@ -65,8 +60,8 @@ export default function PromotionModal({
         promotionCode: promotion.promotionCode,
         promotionName: promotion.promotionName,
         description: promotion.description || '',
-        promotionType: promotion.promotionType,
-        discountType: promotion.discountType,
+        promotionType: promotion.promotionType as 'PUBLIC' | 'POINT_BASED',
+        discountType: promotion.discountType as 'PERCENTAGE' | 'FIXED_AMOUNT' | 'BUY_ONE_GET_ONE',
         discountValue: promotion.discountValue,
         maxDiscountAmount: promotion.maxDiscountAmount || 0,
         minPurchaseAmount: promotion.minPurchaseAmount || 0,
@@ -75,7 +70,7 @@ export default function PromotionModal({
         isActive: promotion.isActive,
         maxUsageCount: promotion.maxUsageCount || 0,
         maxUsagePerUser: promotion.maxUsagePerUser || 1,
-        applicableDays: promotion.applicableDays || 'ALL',
+        applicableDays: (promotion.applicableDays || 'ALL') as 'ALL' | 'WEEKDAYS' | 'WEEKENDS',
         applicableTimes: promotion.applicableTimes || 'ALL',
         applicableMovies: promotion.applicableMovies || '',
         applicableRooms: promotion.applicableRooms || '',
@@ -197,12 +192,12 @@ export default function PromotionModal({
 
           <div className="space-y-2">
             <Label htmlFor="description">Mô tả</Label>
-            <Textarea
+            <textarea
               id="description"
+              className="border rounded px-3 py-2 w-full min-h-[80px]"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Mô tả chi tiết về khuyến mãi"
-              rows={3}
+              placeholder="Nhập mô tả khuyến mãi"
             />
           </div>
 
@@ -363,10 +358,11 @@ export default function PromotionModal({
           {/* Membership Settings */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <Switch
+              <input
+                type="checkbox"
                 id="memberOnly"
                 checked={formData.memberOnly}
-                onCheckedChange={(checked) => handleInputChange('memberOnly', checked)}
+                onChange={(e) => handleInputChange('memberOnly', e.target.checked)}
               />
               <Label htmlFor="memberOnly">Chỉ dành cho thành viên</Label>
             </div>
@@ -428,19 +424,21 @@ export default function PromotionModal({
           {/* Display Settings */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-center space-x-2">
-              <Switch
+              <input
+                type="checkbox"
                 id="isActive"
                 checked={formData.isActive}
-                onCheckedChange={(checked) => handleInputChange('isActive', checked)}
+                onChange={(e) => handleInputChange('isActive', e.target.checked)}
               />
               <Label htmlFor="isActive">Kích hoạt</Label>
             </div>
 
             <div className="flex items-center space-x-2">
-              <Switch
+              <input
+                type="checkbox"
                 id="isFeatured"
                 checked={formData.isFeatured}
-                onCheckedChange={(checked) => handleInputChange('isFeatured', checked)}
+                onChange={(e) => handleInputChange('isFeatured', e.target.checked)}
               />
               <Label htmlFor="isFeatured">Nổi bật</Label>
             </div>
