@@ -322,4 +322,4 @@ export default function CinemaRoomManagement() {
       </div>
     </div>
   );
-}
+};

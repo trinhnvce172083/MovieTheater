@@ -7,13 +7,13 @@ import { useRouter } from 'next/navigation';
 
 // Local imports
 import { useMemberManagement } from './hooks/useMemberManagement';
-import { 
-  MemberStatisticsCard, 
-  MemberFilters, 
+import {
+  MemberStatisticsCard,
+  MemberFilters,
   MemberFormModal,
   LockUserModal,
   UnlockUserModal,
-  createMemberColumns 
+  createMemberColumns
 } from './components';
 import { MemberData, MemberCreateRequest } from './types';
 
@@ -23,7 +23,7 @@ export default function AdminMemberManagement() {
   const router = useRouter();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMember, setEditingMember] = useState<MemberData | null>(null);
-  
+
   // Modal states for lock/unlock
   const [lockModalVisible, setLockModalVisible] = useState(false);
   const [unlockModalVisible, setUnlockModalVisible] = useState(false);
@@ -36,14 +36,14 @@ export default function AdminMemberManagement() {
     filteredData,
     statistics,
     currentUser,
-    
+
     // State
     loading,
     showAuthWarning,
     isUsingApiData,
     filters,
     pagination,
-    
+
     // Actions
     setFilters,
     setPagination,
@@ -147,7 +147,7 @@ export default function AdminMemberManagement() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
-        
+
         {/* Demo Data Warning */}
         {!isUsingApiData && (
           <Alert
@@ -214,9 +214,9 @@ export default function AdminMemberManagement() {
           </div>
 
           {/* Filters Section */}
-          <MemberFilters 
-            filters={filters} 
-            onFiltersChange={setFilters} 
+          <MemberFilters
+            filters={filters}
+            onFiltersChange={setFilters}
           />
 
           {/* Table Section */}

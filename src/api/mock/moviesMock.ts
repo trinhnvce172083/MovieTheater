@@ -1,4 +1,4 @@
-import { Movie, MoviesResponse } from "../admin/getAllMovies";
+import { Movie } from "../admin/getAllMovies";
 
 // Mock data cho movies - phù hợp với database schema  
 // Use let instead of const so we can mutate the array for CRUD operations
@@ -270,7 +270,7 @@ let mockMovies: Movie[] = [
 ];
 
 // Mock API functions
-export const mockGetMovies = async (params: any = {}): Promise<MoviesResponse> => {
+export const mockGetMovies = async (params: any = {}): Promise<any> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
 
