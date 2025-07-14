@@ -10,17 +10,14 @@ const generateDates = () => {
   const today = dayjs();
   const currentDayOfWeek = today.day(); // 0 = CN, 1 = T2, ..., 6 = T7
   const dates = [];
-
   // Thêm 7 ngày tiếp theo vào mảng
   for (let i = 0; i < 7; i++) {
     dates.push(dayjs().add(i, 'day'));
   }
-  
   // Sắp xếp lại ngày theo thứ tự mong muốn
   return dates.sort((a, b) => {
     const dayOfWeekA = a.day();
     const dayOfWeekB = b.day();
-    
     // Hàm chuyển đổi thứ tự ưu tiên
     const getPriority = (day: number) => {
       // Nếu là ngày hiện tại, ưu tiên cao nhất
@@ -125,7 +122,7 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({
         </button>
 
         <h2 className="text-3xl font-bold text-white text-center mb-2 tracking-wide">{movieTitle || 'Chọn suất chiếu'}</h2>
-        <p className="text-white text-center mb-8 text-lg">Vui lòng chọn ngày và suất chiếu mong muốn.</p>
+        <p className="text-white text-center mb-8 text-lg">Please select desired date and screen.</p>
 
         {/* 1. Days */}
         <div className="flex justify-center flex-wrap gap-3 mb-8">
@@ -161,7 +158,7 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({
             <div className="space-y-5">
               {/* Time Selection */}
               <div>
-                <h3 className="font-semibold text-lg text-purple-200 mb-3">Chọn khung giờ</h3>
+                <h3 className="font-semibold text-lg text-purple-200 mb-3">Select time slot</h3>
                 <div className="flex flex-wrap gap-3">
                   {Object.keys(groupedSchedules).map((time) => (
                     <button
@@ -186,7 +183,7 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({
               {/* Room Selection (conditional) */}
               {selectedTime && (
                 <div className="border-t border-white/10 pt-5 animate-fadeIn">
-                  <h3 className="font-semibold text-lg text-yellow-200 mb-3">Chọn loại phòng</h3>
+                  <h3 className="font-semibold text-lg text-yellow-200 mb-3">Room type</h3>
                   <div className="flex flex-wrap gap-3">
                     {groupedSchedules[selectedTime].map((schedule) => (
                       <button
@@ -210,7 +207,7 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center text-yellow-300 bg-yellow-500/20 p-4 rounded-lg">
-                <p>Không có suất chiếu cho ngày đã chọn.</p>
+                <p>There are no showtimes available for the selected date.</p>
               </div>
             </div>
           )}
