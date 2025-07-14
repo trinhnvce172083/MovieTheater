@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Statistic, Row, Col } from 'antd';
+import { Card, Statistic } from 'antd';
 import { VideoCameraOutlined, PlayCircleOutlined, ClockCircleOutlined, StarOutlined } from '@ant-design/icons';
 import { MovieStatistics } from '../types';
 
@@ -13,46 +13,45 @@ export const MovieStatisticsCard: React.FC<MovieStatisticsCardProps> = ({
   loading = false 
 }) => {
   return (
-    <Card style={{ marginBottom: 16 }}>
-      <Row gutter={16}>
-        <Col span={6}>
-          <Statistic
-            title="Total Movies"
-            value={statistics.totalMovies}
-            prefix={<VideoCameraOutlined />}
-            loading={loading}
-          />
-        </Col>
-        <Col span={6}>
-          <Statistic
-            title="Now Showing"
-            value={statistics.activeMovies}
-            prefix={<PlayCircleOutlined />}
-            valueStyle={{ color: '#3f8600' }}
-            loading={loading}
-          />
-        </Col>
-        <Col span={6}>
-          <Statistic
-            title="Coming Soon"
-            value={statistics.comingSoonMovies}
-            prefix={<ClockCircleOutlined />}
-            valueStyle={{ color: '#1890ff' }}
-            loading={loading}
-          />
-        </Col>
-        <Col span={6}>
-          <Statistic
-            title="Avg Rating"
-            value={statistics.avgRating}
-            prefix={<StarOutlined />}
-            precision={1}
-            suffix="★"
-            valueStyle={{ color: '#faad14' }}
-            loading={loading}
-          />
-        </Col>
-      </Row>
-    </Card>
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+      <Card className="shadow-sm hover:shadow-md transition-shadow">
+        <Statistic
+          title="Total Movies"
+          value={statistics.totalMovies}
+          prefix={<VideoCameraOutlined className="text-blue-600" />}
+          loading={loading}
+          valueStyle={{ color: '#1f2937', fontSize: '24px', fontWeight: 'bold' }}
+        />
+      </Card>
+      <Card className="shadow-sm hover:shadow-md transition-shadow">
+        <Statistic
+          title="Now Showing"
+          value={statistics.activeMovies}
+          prefix={<PlayCircleOutlined className="text-green-600" />}
+          valueStyle={{ color: '#059669', fontSize: '24px', fontWeight: 'bold' }}
+          loading={loading}
+        />
+      </Card>
+      <Card className="shadow-sm hover:shadow-md transition-shadow">
+        <Statistic
+          title="Coming Soon"
+          value={statistics.comingSoonMovies}
+          prefix={<ClockCircleOutlined className="text-purple-600" />}
+          valueStyle={{ color: '#7c3aed', fontSize: '24px', fontWeight: 'bold' }}
+          loading={loading}
+        />
+      </Card>
+      <Card className="shadow-sm hover:shadow-md transition-shadow">
+        <Statistic
+          title="Avg Rating"
+          value={statistics.avgRating}
+          prefix={<StarOutlined className="text-orange-500" />}
+          precision={1}
+          suffix="★"
+          valueStyle={{ color: '#f59e0b', fontSize: '24px', fontWeight: 'bold' }}
+          loading={loading}
+        />
+      </Card>
+    </div>
   );
 };

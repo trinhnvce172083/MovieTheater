@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Input, Select, Button, Row, Col, Space } from 'antd';
+import { Input, Select, Button, Row, Col } from 'antd';
 import { SearchOutlined, ClearOutlined } from '@ant-design/icons';
 import { RoomFilters } from '../types';
 
@@ -18,18 +18,19 @@ export const RoomFiltersComponent: React.FC<RoomFiltersProps> = ({
   onClearFilters,
 }) => {
   return (
-    <Card style={{ marginBottom: 16 }}>
+    <div className="px-6 py-4 bg-gray-50/50 border-b border-gray-100">
       <Row gutter={16} align="middle">
-        <Col span={8}>
+        <Col xs={24} sm={8} md={8}>
           <Search
             placeholder="Search by room name..."
             value={filters.searchTerm}
             onChange={(e) => onFiltersChange({ searchTerm: e.target.value })}
             prefix={<SearchOutlined />}
             allowClear
+            className="w-full"
           />
         </Col>
-        <Col span={6}>
+        <Col xs={12} sm={6} md={6}>
           <Select
             placeholder="Filter by type"
             value={filters.filterType}
@@ -43,7 +44,7 @@ export const RoomFiltersComponent: React.FC<RoomFiltersProps> = ({
             <Option value="4DX">4DX</Option>
           </Select>
         </Col>
-        <Col span={6}>
+        <Col xs={12} sm={6} md={6}>
           <Select
             placeholder="Filter by status"
             value={filters.filterStatus}
@@ -55,17 +56,16 @@ export const RoomFiltersComponent: React.FC<RoomFiltersProps> = ({
             <Option value="inactive">Inactive</Option>
           </Select>
         </Col>
-        <Col span={4}>
-          <Space>
-            <Button 
-              icon={<ClearOutlined />} 
-              onClick={onClearFilters}
-            >
-              Clear
-            </Button>
-          </Space>
+        <Col xs={24} sm={4} md={4}>
+          <Button 
+            icon={<ClearOutlined />} 
+            onClick={onClearFilters}
+            className="w-full"
+          >
+            Clear Filters
+          </Button>
         </Col>
       </Row>
-    </Card>
+    </div>
   );
 };

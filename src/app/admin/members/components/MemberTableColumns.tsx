@@ -3,7 +3,6 @@ import { Space, Button, Tooltip, Popconfirm, Avatar, Tag } from 'antd';
 import { 
   EyeOutlined, 
   EditOutlined, 
-  DeleteOutlined, 
   UserOutlined,
   LockOutlined,
   UnlockOutlined,
@@ -15,7 +14,6 @@ import { MemberData, CurrentUser } from '../types';
 import { 
   canViewDetails, 
   canEdit, 
-  canDelete, 
   canLockUser, 
   canUnlockUser, 
   canActivateUser, 
@@ -28,7 +26,6 @@ interface TableActionsProps {
   isUsingApiData: boolean;
   onViewDetail: (record: MemberData) => void;
   onEdit: (record: MemberData) => void;
-  onDelete: (record: MemberData) => void;
   onLock: (record: MemberData) => void;
   onUnlock: (record: MemberData) => void;
   onActivate: (record: MemberData) => void;
@@ -41,7 +38,6 @@ const TableActions: React.FC<TableActionsProps> = ({
   isUsingApiData,
   onViewDetail,
   onEdit,
-  onDelete,
   onLock,
   onUnlock,
   onActivate,
@@ -148,26 +144,6 @@ const TableActions: React.FC<TableActionsProps> = ({
         </>
       )}
       
-      {/* Delete */}
-      {canDelete(currentUser, record) && isUsingApiData && (
-        <Tooltip title="Delete">
-          <Popconfirm
-            title="Delete Member"
-            description={`Are you sure you want to delete ${record.name}?`}
-            onConfirm={() => onDelete(record)}
-            okText="Delete"
-            cancelText="Cancel"
-            okButtonProps={{ danger: true }}
-          >
-            <Button
-              type="text"
-              icon={<DeleteOutlined />}
-              size="small"
-              className="text-red-600 hover:bg-red-50"
-            />
-          </Popconfirm>
-        </Tooltip>
-      )}
     </Space>
   );
 };
@@ -179,7 +155,6 @@ export const createMemberColumns = (
   pageSize: number,
   onViewDetail: (record: MemberData) => void,
   onEdit: (record: MemberData) => void,
-  onDelete: (record: MemberData) => void,
   onLock: (record: MemberData) => void,
   onUnlock: (record: MemberData) => void,
   onActivate: (record: MemberData) => void,
@@ -336,7 +311,6 @@ export const createMemberColumns = (
         isUsingApiData={isUsingApiData}
         onViewDetail={onViewDetail}
         onEdit={onEdit}
-        onDelete={onDelete}
         onLock={onLock}
         onUnlock={onUnlock}
         onActivate={onActivate}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Space, Button, Tag, Popconfirm, Tooltip, Divider, Avatar, Rate } from 'antd';
+import { Space, Button, Tag, Popconfirm, Tooltip, Divider, Avatar } from 'antd';
 import { EditOutlined, DeleteOutlined, EyeOutlined, StarOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { MovieResponse } from '../types';
@@ -9,17 +9,15 @@ interface MovieTableColumnsProps {
   onEdit: (movie: MovieResponse) => void;
   onDelete: (movieId: string) => void;
   onView: (movie: MovieResponse) => void;
-  loading?: boolean;
 }
 
 export const createMovieTableColumns = ({
   onEdit,
   onDelete,
   onView,
-  loading = false
 }: MovieTableColumnsProps): ColumnsType<MovieResponse> => [
   {
-    title: 'Movie',
+    title: <div style={{ textAlign: 'center' }}>Movie</div>,
     key: 'movie_info',
     width: 300,
     render: (_, record) => (
@@ -94,11 +92,9 @@ export const createMovieTableColumns = ({
     dataIndex: 'status',
     key: 'status',
     render: (status: string) => (
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <Tag color={getStatusColor(status)} style={{ margin: 0 }}>
-          {formatMovieStatus(status)}
-        </Tag>
-      </div>
+      <Tag color={getStatusColor(status)}>
+        {formatMovieStatus(status)}
+      </Tag>
     ),
     filters: [
       { text: 'Now Showing', value: 'NOW_SHOWING' },
@@ -106,17 +102,6 @@ export const createMovieTableColumns = ({
       { text: 'Ended', value: 'ENDED' },
     ],
     onFilter: (value, record) => record.status === value,
-    width: 120,
-  },
-  {
-    title: 'Features',
-    key: 'features',
-    render: (_, record) => (
-      <Space size={4}>
-        {record.isFeatured && <Tag color="gold">Featured</Tag>}
-        {record.isAdultContent && <Tag color="red">18+</Tag>}
-      </Space>
-    ),
     width: 120,
   },
   {
@@ -134,53 +119,15 @@ export const createMovieTableColumns = ({
   {
     title: 'Actions',
     key: 'actions',
+    align: 'center',
     render: (_, record) => (
-      <Space size={8} style={{ display: 'flex', justifyContent: 'center' }}>
-        <Tooltip title="View Details">
-          <Button
-            type="text"
-            icon={<EyeOutlined />}
-            onClick={() => onView(record)}
-            size="small"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 32,
-              height: 32,
-            }}
-          />
-        </Tooltip>
-        <Divider type="vertical" style={{ margin: 0 }} />
-        <Tooltip title="Edit Movie">
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => onEdit(record)}
-            size="small"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 32,
-              height: 32,
-            }}
-          />
-        </Tooltip>
-        <Divider type="vertical" style={{ margin: 0 }} />
-        <Tooltip title="Delete Movie">
-          <Popconfirm
-            title="Delete Movie"
-            description="Are you sure you want to delete this movie?"
-            onConfirm={() => onDelete(record.movieId)}
-            okText="Yes"
-            cancelText="No"
-            placement="left"
-          >
+      <div className="flex items-center justify-center">
+        <Space size={8}>
+          <Tooltip title="View Details">
             <Button
               type="text"
-              icon={<DeleteOutlined />}
-              danger
+              icon={<EyeOutlined />}
+              onClick={() => onView(record)}
               size="small"
               style={{
                 display: 'flex',
@@ -190,9 +137,50 @@ export const createMovieTableColumns = ({
                 height: 32,
               }}
             />
-          </Popconfirm>
-        </Tooltip>
-      </Space>
+          </Tooltip>
+          <Divider type="vertical" style={{ margin: 0 }} />
+          <Tooltip title="Edit Movie">
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => onEdit(record)}
+              size="small"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 32,
+                height: 32,
+              }}
+            />
+          </Tooltip>
+          <Divider type="vertical" style={{ margin: 0 }} />
+          <Tooltip title="Delete Movie">
+            <Popconfirm
+              title="Delete Movie"
+              description="Are you sure you want to delete this movie?"
+              onConfirm={() => onDelete(record.movieId)}
+              okText="Yes"
+              cancelText="No"
+              placement="left"
+            >
+              <Button
+                type="text"
+                icon={<DeleteOutlined />}
+                danger
+                size="small"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 32,
+                  height: 32,
+                }}
+              />
+            </Popconfirm>
+          </Tooltip>
+        </Space>
+      </div>
     ),
     width: 150,
     fixed: 'right',

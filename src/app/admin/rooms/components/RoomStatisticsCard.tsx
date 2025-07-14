@@ -1,5 +1,4 @@
-import React from 'react';
-import { Card, Statistic, Row, Col } from 'antd';
+import { Card, Statistic } from 'antd';
 import { HomeOutlined, CheckCircleOutlined, UserOutlined, CalculatorOutlined } from '@ant-design/icons';
 import { RoomStatistics } from '../types';
 
@@ -13,42 +12,43 @@ export const RoomStatisticsCard: React.FC<RoomStatisticsCardProps> = ({
   loading = false 
 }) => {
   return (
-    <Card style={{ marginBottom: 16 }}>
-      <Row gutter={16}>
-        <Col span={6}>
-          <Statistic
-            title="Total Rooms"
-            value={statistics.totalRooms}
-            prefix={<HomeOutlined />}
-            loading={loading}
-          />
-        </Col>
-        <Col span={6}>
-          <Statistic
-            title="Active Rooms"
-            value={statistics.activeRooms}
-            prefix={<CheckCircleOutlined />}
-            valueStyle={{ color: '#3f8600' }}
-            loading={loading}
-          />
-        </Col>
-        <Col span={6}>
-          <Statistic
-            title="Total Seats"
-            value={statistics.totalSeats}
-            prefix={<UserOutlined />}
-            loading={loading}
-          />
-        </Col>
-        <Col span={6}>
-          <Statistic
-            title="Average Seats"
-            value={statistics.avgSeats}
-            prefix={<CalculatorOutlined />}
-            loading={loading}
-          />
-        </Col>
-      </Row>
-    </Card>
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+      <Card className="shadow-sm hover:shadow-md transition-shadow">
+        <Statistic
+          title="Total Rooms"
+          value={statistics.totalRooms}
+          prefix={<HomeOutlined className="text-blue-600" />}
+          loading={loading}
+          valueStyle={{ color: '#1f2937', fontSize: '24px', fontWeight: 'bold' }}
+        />
+      </Card>
+      <Card className="shadow-sm hover:shadow-md transition-shadow">
+        <Statistic
+          title="Active Rooms"
+          value={statistics.activeRooms}
+          prefix={<CheckCircleOutlined className="text-green-600" />}
+          valueStyle={{ color: '#059669', fontSize: '24px', fontWeight: 'bold' }}
+          loading={loading}
+        />
+      </Card>
+      <Card className="shadow-sm hover:shadow-md transition-shadow">
+        <Statistic
+          title="Total Seats"
+          value={statistics.totalSeats}
+          prefix={<UserOutlined className="text-purple-600" />}
+          loading={loading}
+          valueStyle={{ color: '#7c3aed', fontSize: '24px', fontWeight: 'bold' }}
+        />
+      </Card>
+      <Card className="shadow-sm hover:shadow-md transition-shadow">
+        <Statistic
+          title="Average Seats"
+          value={statistics.avgSeats}
+          prefix={<CalculatorOutlined className="text-orange-500" />}
+          loading={loading}
+          valueStyle={{ color: '#f59e0b', fontSize: '24px', fontWeight: 'bold' }}
+        />
+      </Card>
+    </div>
   );
 };

@@ -11,15 +11,11 @@ import {
   Typography,
   Pagination,
   Alert,
-  Tag,
-  Row,
-  Col,
 } from "antd";
 import {
   PlusOutlined,
-  ReloadOutlined,
 } from "@ant-design/icons";
-import { getAllRooms, createRoom, updateRoom, deleteRoom, searchRooms } from "@/api/admin/getAllRooms";
+import { getAllRooms, createRoom, updateRoom, deleteRoom } from "@/api/admin/getAllRooms";
 
 // Import organized components
 import {
@@ -31,23 +27,19 @@ import {
 import { CinemaRoomResponse, RoomCreateRequest, RoomFilters } from './types';
 import { filterRooms, calculateRoomStatistics } from './utils';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 export default function CinemaRoomManagement() {
   const [form] = Form.useForm();
   
   // State
-  const [roomData, setRoomData] = useState<CinemaRoomResponse[]>([]);
+  const [allRoomData, setAllRoomData] = useState<CinemaRoomResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [totalElements, setTotalElements] = useState(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingRoom, setEditingRoom] = useState<CinemaRoomResponse | null>(null);
   const [isUsingApiData, setIsUsingApiData] = useState(true);
-  const [backendStatus, setBackendStatus] = useState<
-    "checking" | "connected" | "disconnected"
-  >("checking");
 
   // Filters
   const [filters, setFilters] = useState<RoomFilters>({
@@ -56,28 +48,38 @@ export default function CinemaRoomManagement() {
     filterStatus: undefined,
   });
 
-  // Fetch rooms function
-  const fetchRooms = useCallback(async (page: number = 1, size: number = 10) => {
+  // Fetch rooms function with filters
+  const fetchRooms = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getAllRooms(page - 1, size);
-      setRoomData(response.content);
-      setTotalElements(response.page.totalElements);
+      // Fetch all rooms data (we'll handle pagination on frontend due to no filter API)
+      const response = await getAllRooms(0, 1000); // Get all rooms
+      setAllRoomData(response.content);
       setIsUsingApiData(true);
-      setBackendStatus("connected");
     } catch (error) {
       console.error("Failed to fetch rooms:", error);
       message.error("Failed to connect to backend server");
-      setRoomData([]);
-      setTotalElements(0);
+      setAllRoomData([]);
       setIsUsingApiData(false);
-      setBackendStatus("disconnected");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // CRUD operations
+  // Computed values for filtering and pagination
+  const filteredData = useMemo(() => {
+    return filterRooms(allRoomData, filters);
+  }, [allRoomData, filters]);
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return filteredData.slice(startIndex, endIndex);
+  }, [filteredData, currentPage, pageSize]);
+
+  const statistics = useMemo(() => {
+    return calculateRoomStatistics(allRoomData);
+  }, [allRoomData]);
   const createRoomFunction = async (roomData: RoomCreateRequest) => {
     try {
       setLoading(true);
@@ -85,7 +87,7 @@ export default function CinemaRoomManagement() {
       message.success("Room created successfully");
       fetchRooms();
       return true;
-    } catch (error) {
+    } catch {
       message.error("Failed to create room");
       return false;
     } finally {
@@ -100,7 +102,7 @@ export default function CinemaRoomManagement() {
       message.success("Room updated successfully");
       fetchRooms();
       return true;
-    } catch (error) {
+    } catch {
       message.error("Failed to update room");
       return false;
     } finally {
@@ -114,7 +116,7 @@ export default function CinemaRoomManagement() {
       await deleteRoom(id);
       message.success("Room deleted successfully");
       fetchRooms();
-    } catch (error) {
+    } catch {
       message.error("Failed to delete room");
     } finally {
       setLoading(false);
@@ -153,7 +155,7 @@ export default function CinemaRoomManagement() {
           form.resetFields();
         }
       }
-    } catch (error) {
+    } catch {
       // Form validation failed
     }
   };
@@ -171,25 +173,25 @@ export default function CinemaRoomManagement() {
 
   // Filter handlers
   const updateFilters = useCallback((newFilters: Partial<RoomFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-  }, []);
+    const updatedFilters = { ...filters, ...newFilters };
+    setFilters(updatedFilters);
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
+  }, [filters]);
 
   const clearFilters = useCallback(() => {
-    setFilters({
+    const clearedFilters = {
       searchTerm: '',
       filterType: undefined,
       filterStatus: undefined,
-    });
+    };
+    setFilters(clearedFilters);
+    // Reset to page 1 when clearing filters
+    setCurrentPage(1);
   }, []);
 
   // Computed values
-  const filteredData = useMemo(() => {
-    return filterRooms(roomData, filters);
-  }, [roomData, filters]);
-
-  const statistics = useMemo(() => {
-    return calculateRoomStatistics(roomData);
-  }, [roomData]);
+  // (statistics already computed above)
 
   // Table columns
   const columns = createRoomTableColumns({
@@ -208,27 +210,19 @@ export default function CinemaRoomManagement() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* Backend Status Alert */}
+        
+        {/* Demo Data Warning */}
         {!isUsingApiData && (
           <Alert
-            message="Backend Connection Failed"
-            description="Backend server is not available. Please ensure the backend server is running on localhost:8080/cinema/api"
-            type="error"
+            message="Demo Mode - Using Sample Data"
+            description="You are viewing sample data. Connect to the backend server to enable full CRUD operations."
+            type="warning"
             showIcon
+            className="mb-6"
             closable
-            className="mb-4"
-            action={
-              <Button
-                size="small"
-                type="primary"
-                onClick={() => window.location.reload()}
-              >
-                Retry Connection
-              </Button>
-            }
           />
         )}
-        
+
         {/* Statistics Cards */}
         <RoomStatisticsCard statistics={statistics} loading={loading} />
 
@@ -241,41 +235,17 @@ export default function CinemaRoomManagement() {
           {/* Header Section */}
           <div className="px-6 py-5 border-b border-gray-100 bg-white flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Title
-                  level={2}
-                  className="m-0 text-gray-900 text-xl xl:text-2xl"
-                >
-                  Room Management
-                </Title>
-                {backendStatus === "disconnected" && (
-                  <Tag color="red" className="text-xs">
-                    Disconnected
-                  </Tag>
-                )}
-                {backendStatus === "checking" && (
-                  <Tag color="blue" className="text-xs">
-                    Connecting...
-                  </Tag>
-                )}
-              </div>
+              <h1 className="m-0 text-gray-900 text-xl xl:text-2xl font-semibold">
+                Room Management
+              </h1>
               <Text type="secondary" className="text-sm xl:text-base">
                 Manage and organize your cinema room facilities
               </Text>
+              {!isUsingApiData && (
+                <Text className="text-orange-600 text-sm">⚠️ Currently using offline data</Text>
+              )}
             </div>
             <div className="flex items-center gap-3">
-              {backendStatus === "disconnected" && (
-                <Button
-                  type="default"
-                  icon={<ReloadOutlined />}
-                  size="middle"
-                  className="text-xs xl:text-sm h-10 px-4"
-                  onClick={() => window.location.reload()}
-                  title="Retry connection to backend"
-                >
-                  Retry Connection
-                </Button>
-              )}
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -283,11 +253,7 @@ export default function CinemaRoomManagement() {
                 className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
                 onClick={handleAddNewRoom}
                 disabled={!isUsingApiData}
-                title={
-                  !isUsingApiData
-                    ? "Create/Edit functions require backend connection"
-                    : "Add new room"
-                }
+                title={!isUsingApiData ? "Create/Edit functions require backend connection" : "Add new room"}
               >
                 Add New Room
               </Button>
@@ -305,32 +271,34 @@ export default function CinemaRoomManagement() {
           <div className="bg-white">
             <Spin spinning={loading}>
               <Table
-                dataSource={filteredData}
+                dataSource={paginatedData}
                 columns={columns}
                 pagination={false}
                 scroll={{ x: 950 }}
                 rowClassName="hover:bg-gray-50 transition-colors"
                 className="professional-table"
                 size="small"
+                loading={loading}
                 rowKey="cinemaRoomId"
               />
             </Spin>
-
+            
             {/* Pagination */}
             <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <Text type="secondary" className="text-sm">
-                Showing {(currentPage - 1) * pageSize + 1} to{" "}
-                {Math.min(currentPage * pageSize, totalElements)} of{" "}
-                {totalElements} rooms
+                Showing {Math.max(1, (currentPage - 1) * pageSize + 1)} to{" "}
+                {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+                {filteredData.length} rooms
               </Text>
               <Pagination
                 current={currentPage}
                 pageSize={pageSize}
-                total={totalElements}
+                total={filteredData.length}
                 onChange={(page, size) => {
                   setCurrentPage(page);
                   if (size !== pageSize) {
                     setPageSize(size);
+                    setCurrentPage(1); // Reset to page 1 when page size changes
                   }
                 }}
                 showSizeChanger
@@ -352,27 +320,6 @@ export default function CinemaRoomManagement() {
           form={form}
         />
       </div>
-
-      {/* Add Professional Styling */}
-      <style jsx global>{`
-        .professional-table .ant-table-thead > tr > th {
-          background: #fafafa;
-          border-bottom: 2px solid #f0f0f0;
-          font-weight: 600;
-          color: #262626;
-        }
-
-        .professional-table .ant-table-tbody > tr:hover > td {
-          background: #f8faff;
-        }
-
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-      `}</style>
     </div>
   );
 }
