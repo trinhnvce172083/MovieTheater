@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Form, Input, InputNumber, Switch, Button, message } from 'antd';
-import { LockOutlined, UnlockOutlined } from '@ant-design/icons';
+import { LockOutlined } from '@ant-design/icons';
 
 interface LockUserModalProps {
   visible: boolean;
@@ -32,12 +32,28 @@ const LockUserModal: React.FC<LockUserModalProps> = ({
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      console.log('Lock user form values:', values);
+      
+      // Additional validation
+      if (!values.reason || values.reason.trim().length < 10) {
+        message.error('Reason must be at least 10 characters long');
+        return;
+      }
+      
+      if (!values.lockHours || values.lockHours < 1) {
+        message.error('Lock duration must be at least 1 hour');
+        return;
+      }
+      
       setLoading(true);
       await onConfirm(values);
       form.resetFields();
-      message.success('User locked successfully');
     } catch (error) {
-      console.error('Lock user error:', error);
+      console.error('Lock user form error:', error);
+      if (error instanceof Error && 'errorFields' in error) {
+        // Form validation error - don't show additional message
+        return;
+      }
       message.error('Failed to lock user');
     } finally {
       setLoading(false);
@@ -138,8 +154,10 @@ const LockUserModal: React.FC<LockUserModalProps> = ({
           name="sendNotificationEmail"
           valuePropName="checked"
         >
-          <Switch />
-          <span className="ml-2">Send notification email to user</span>
+          <div>
+            <Switch />
+            <span className="ml-2">Send notification email to user</span>
+          </div>
         </Form.Item>
       </Form>
 

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Card, Table, Button, Typography, Alert, Pagination, message } from 'antd';
-import { PlusOutlined, UserOutlined } from '@ant-design/icons';
+import { Card, Table, Button, Typography, Alert, Pagination, message, Spin } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 
 // Local imports
@@ -17,7 +17,7 @@ import {
 } from './components';
 import { MemberData, MemberCreateRequest } from './types';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 export default function AdminMemberManagement() {
   const router = useRouter();
@@ -49,7 +49,6 @@ export default function AdminMemberManagement() {
     setPagination,
     createMember,
     updateMember,
-    deleteMember,
     lockUserAccount,
     unlockUserAccount,
     activateUserAccount,
@@ -60,10 +59,6 @@ export default function AdminMemberManagement() {
   const handleEdit = (record: MemberData) => {
     setEditingMember(record);
     setIsModalVisible(true);
-  };
-
-  const handleDelete = (record: MemberData) => {
-    deleteMember(record.id, record.name);
   };
 
   const handleViewDetail = (record: MemberData) => {
@@ -95,6 +90,7 @@ export default function AdminMemberManagement() {
 
   // Lock/Unlock/Activate/Deactivate handlers
   const handleLock = (record: MemberData) => {
+    console.log('Lock button clicked for user:', record);
     setSelectedMember(record);
     setLockModalVisible(true);
   };
@@ -112,6 +108,9 @@ export default function AdminMemberManagement() {
   };
 
   const handleLockConfirm = async (lockData: { reason: string; lockHours: number; sendNotificationEmail: boolean; notes?: string }) => {
+    console.log('Lock confirm called with data:', lockData);
+    console.log('Selected member:', selectedMember);
+    
     if (selectedMember) {
       const success = await lockUserAccount(selectedMember.id, lockData.lockHours, lockData.reason, lockData.sendNotificationEmail);
       if (success) {
@@ -139,7 +138,6 @@ export default function AdminMemberManagement() {
     pagination.pageSize,
     handleViewDetail,
     handleEdit,
-    handleDelete,
     handleLock,
     handleUnlock,
     handleActivate,
@@ -164,22 +162,22 @@ export default function AdminMemberManagement() {
 
         {/* Authentication Warning */}
         {showAuthWarning && (
-          <Card className="mb-6 border-orange-200 bg-orange-50">
-            <div className="flex items-center gap-3">
-              <UserOutlined className="text-orange-600" />
-              <div>
-                <strong>Authentication Notice</strong>
-                <p className="text-sm text-gray-600 mb-0">
-                  You are not logged in. Displaying sample data for demonstration.
-                  <a href="/auth/Login" className="text-blue-600 ml-1">Log in here</a> to access real data.
-                </p>
-              </div>
-            </div>
-          </Card>
+          <Alert
+            message="Authentication Notice"
+            description="You are not logged in. Displaying sample data for demonstration. Log in to access real data."
+            type="warning"
+            showIcon
+            className="mb-6"
+            action={
+              <Button size="small" type="link" href="/auth/Login">
+                Login
+              </Button>
+            }
+          />
         )}
 
         {/* Statistics Cards */}
-        <MemberStatisticsCard statistics={statistics} />
+        <MemberStatisticsCard statistics={statistics} loading={loading} />
 
         {/* Main Content Card */}
         <Card
@@ -190,12 +188,15 @@ export default function AdminMemberManagement() {
           {/* Header Section */}
           <div className="px-6 py-5 border-b border-gray-100 bg-white flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
             <div>
-              <Title level={2} className="m-0 text-gray-900 text-xl xl:text-2xl">
+              <h1 className="m-0 text-gray-900 text-xl xl:text-2xl font-semibold">
                 Member Management
-              </Title>
+              </h1>
               <Text type="secondary" className="text-sm xl:text-base">
                 Manage and organize your cinema&apos;s member list
               </Text>
+              {!isUsingApiData && (
+                <Text className="text-orange-600 text-sm">⚠️ Currently using offline data</Text>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <Button
@@ -205,11 +206,7 @@ export default function AdminMemberManagement() {
                 className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
                 onClick={() => setIsModalVisible(true)}
                 disabled={!isUsingApiData}
-                title={
-                  !isUsingApiData
-                    ? "Create/Edit functions require backend connection"
-                    : "Add new member"
-                }
+                title={!isUsingApiData ? "Create/Edit functions require backend connection" : "Add new member"}
               >
                 Add New Member
               </Button>
@@ -224,40 +221,57 @@ export default function AdminMemberManagement() {
 
           {/* Table Section */}
           <div className="bg-white">
-            <Table
-              dataSource={paginatedData}
-              columns={columns}
-              pagination={false}
-              scroll={{ x: 950 }}
-              rowClassName="hover:bg-gray-50 transition-colors"
-              className="professional-table"
-              size="small"
-              loading={loading}
-              rowKey="key"
-            />
-
-            {/* Pagination */}
-            <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <Text type="secondary" className="text-sm">
-                Showing {Math.max(1, (pagination.currentPage - 1) * pagination.pageSize + 1)} to{" "}
-                {Math.min(pagination.currentPage * pagination.pageSize, filteredData.length)} of{" "}
-                {filteredData.length} members
-              </Text>
-              <Pagination
-                current={pagination.currentPage}
-                pageSize={pagination.pageSize}
-                total={filteredData.length}
-                onChange={(page, size) => {
-                  setPagination({
-                    currentPage: page,
-                    pageSize: size || pagination.pageSize
-                  });
-                }}
-                showSizeChanger
-                showQuickJumper={false}
-                pageSizeOptions={["5", "10", "20", "50"]}
-                size="default"
+            <Spin spinning={loading}>
+              <Table
+                dataSource={paginatedData}
+                columns={columns}
+                pagination={false}
+                scroll={{ x: 950 }}
+                rowClassName="hover:bg-gray-50 transition-colors"
+                className="professional-table"
+                size="small"
+                loading={loading}
+                rowKey="key"
               />
+            </Spin>
+            
+            {/* Pagination */}
+            <div className="px-6 py-5 border-t border-gray-100 bg-gray-50">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <Text type="secondary" className="text-sm">
+                    Showing{" "}
+                    <span className="font-medium text-gray-900">
+                      {Math.max(1, (pagination.currentPage - 1) * pagination.pageSize + 1)}
+                    </span>
+                    {" "}to{" "}
+                    <span className="font-medium text-gray-900">
+                      {Math.min(pagination.currentPage * pagination.pageSize, filteredData.length)}
+                    </span>
+                    {" "}of{" "}
+                    <span className="font-medium text-gray-900">
+                      {filteredData.length}
+                    </span>
+                    {" "}members
+                  </Text>
+                </div>
+                <Pagination
+                  current={pagination.currentPage}
+                  pageSize={pagination.pageSize}
+                  total={filteredData.length}
+                  onChange={(page, size) => {
+                    setPagination({ 
+                      currentPage: page, 
+                      pageSize: size || pagination.pageSize 
+                    });
+                  }}
+                  showSizeChanger
+                  showQuickJumper={false}
+                  pageSizeOptions={["5", "10", "20", "50"]}
+                  size="default"
+                  className="flex-shrink-0"
+                />
+              </div>
             </div>
           </div>
         </Card>

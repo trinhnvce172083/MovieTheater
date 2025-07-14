@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getMovieById, updateMovie, deleteMovie } from "../../../../api/admin/getAllMovies";
+import { getMovieById, updateMovie, deleteMovie } from "@/api/admin/getAllMovies";
 import {
   Card,
   Typography,

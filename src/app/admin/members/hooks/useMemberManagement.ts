@@ -284,18 +284,37 @@ export const useMemberManagement = () => {
   const lockUserAccount = async (userId: string, lockDurationHours: number, reason: string, sendNotificationEmail: boolean = true): Promise<boolean> => {
     try {
       setLoading(true);
+      console.log('Locking user with data:', {
+        userId: parseInt(userId),
+        lockData: {
+          reason,
+          lockHours: lockDurationHours,
+          sendNotificationEmail,
+          notes: `Locked by admin: ${reason}`
+        }
+      });
+      
       const lockData = {
         reason,
         lockHours: lockDurationHours,
         sendNotificationEmail,
         notes: `Locked by admin: ${reason}`
       };
+      
       await lockUser(parseInt(userId), lockData);
       message.success('User locked successfully');
       await fetchUsers(); // Refresh data
       return true;
-    } catch (_error) {
-      message.error('Failed to lock user');
+    } catch (error: unknown) {
+      console.error('Lock user error:', error);
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response: { data?: { message?: string }; status: number } };
+        console.error('Error response:', axiosError.response.data);
+        console.error('Error status:', axiosError.response.status);
+        message.error(`Failed to lock user: ${axiosError.response.data?.message || axiosError.response.status}`);
+      } else {
+        message.error('Failed to lock user: Network or server error');
+      }
       return false;
     } finally {
       setLoading(false);
