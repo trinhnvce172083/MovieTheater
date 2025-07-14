@@ -1,110 +1,75 @@
 "use client";
 
-import React, { useState } from "react";
-import { Table, Button, Popconfirm, message, Tag, Typography, Space, Modal } from "antd";
-import type { ColumnsType } from "antd/es/table";
-
-interface ManagedTicket {
-  id: string;
-  movieTitle: string;
-  cinema: string;
-  showtime: string;
-  seats: string[];
-  totalPrice: number;
-  status: "pending" | "confirmed" | "cancelled";
-  bookingDate: string;
-  ticketCode: string;
-}
+import { useEffect, useState } from "react";
+import { Table, Button, Popconfirm, message, Tag, Typography, Modal } from "antd";
+import { MemberApiService } from "@/api/member";
 
 const ManagedTickets: React.FC = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState<ManagedTicket | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
+  const [managedTickets, setManagedTickets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const [managedTickets, setManagedTickets] = useState<ManagedTicket[]>([
-    {
-      id: "1",
-      movieTitle: "Dune: Part Two",
-      cinema: "Lumiere Cinema District 2",
-      showtime: "2024-12-30 18:00",
-      seats: ["D7", "D8"],
-      totalPrice: 320000,
-      status: "pending",
-      bookingDate: "2024-12-23",
-      ticketCode: "LUM240003",
-    },
-  ]);
-
-  const handleEdit = (ticket: ManagedTicket) => {
-    setSelectedTicket(ticket);
-    setEditModalVisible(true);
+  // Lấy danh sách vé thật từ API, không mapping lại object booking
+  const fetchTickets = async () => {
+    setLoading(true);
+    try {
+      const res = await MemberApiService.getBookings({});
+      setManagedTickets(res.data.content || []);
+      console.log("ManagedTickets data:", res.data.content || []);
+    } catch (err: any) {
+      message.error("Lỗi khi tải danh sách vé");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCancel = (ticketId: string) => {
-    setManagedTickets((prev) =>
-      prev.map((ticket) =>
-        ticket.id === ticketId ? { ...ticket, status: "cancelled" } : ticket
-      )
-    );
-    message.success("Ticket cancelled successfully");
+  useEffect(() => {
+    fetchTickets();
+  }, []);
+
+  const handleCancel = async (ticket: any) => {
+    try {
+      await MemberApiService.cancelBooking({ bookingId: ticket.bookingId });
+      message.success("Hủy vé thành công!");
+      fetchTickets();
+    } catch (err: any) {
+      message.error("Hủy vé thất bại!");
+    }
   };
 
-  const columns: ColumnsType<ManagedTicket> = [
-    {
-      title: "Movie",
-      dataIndex: "movieTitle",
-      key: "movieTitle",
-    },
-    {
-      title: "Cinema",
-      dataIndex: "cinema",
-      key: "cinema",
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => (
-        <Tag
-          color={
-            status === "pending"
-              ? "orange"
-              : status === "confirmed"
-              ? "green"
-              : "red"
-          }
-        >
-          {status.toUpperCase()}
-        </Tag>
-      ),
-    },
+  const columns = [
+    { title: "Movie", dataIndex: "movieTitle", key: "movieTitle" },
+    { title: "Cinema Room", dataIndex: "cinemaRoom", key: "cinemaRoom", render: v => v || "—" },
+    { title: "Showtime", dataIndex: "showDate", key: "showDate", render: v => v || "—" },
+    { title: "Seats", key: "seats", render: (_, record) => record.seats?.map((s: any) => s.seatNumber).join(", ") || "—" },
+    { title: "Total Price", dataIndex: "finalAmount", key: "finalAmount", render: v => new Intl.NumberFormat('vi-VN').format(v) },
+    { title: "Status", dataIndex: "status", key: "status", render: v => v || "—" },
     {
       title: "Actions",
       key: "actions",
-      render: (_, record) => (
-        <Space>
-          <Button size="small" onClick={() => handleEdit(record)}>
-            Edit
-          </Button>
-          <Popconfirm title="Cancel?" onConfirm={() => handleCancel(record.id)}>
-            <Button size="small" danger>
-              Cancel
-            </Button>
+      render: (_, record) =>
+        record.canCancel ? (
+          <Popconfirm
+            title="Bạn có chắc muốn hủy vé này?"
+            onConfirm={() => handleCancel(record)}
+            okText="Đồng ý"
+            cancelText="Không"
+          >
+            <Button danger size="small">Hủy vé</Button>
           </Popconfirm>
-        </Space>
-      ),
+        ) : "—",
     },
   ];
 
   return (
     <div className="max-w-6xl mx-auto">
-      <Typography.Title level={2} className="text-white mb-8 text-center">
+      <Typography.Title level={2} className="text-white mb-8 text-center" style={{ marginTop: 32 }}>
         Managed Tickets
       </Typography.Title>
-
       <div className="bg-white rounded-2xl shadow-xl p-6">
-        <Table columns={columns} dataSource={managedTickets} rowKey="id" />
+        <Table columns={columns} dataSource={managedTickets} rowKey="bookingId" loading={loading} />
       </div>
-
       <Modal
         title="Edit Ticket"
         open={editModalVisible}

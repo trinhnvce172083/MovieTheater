@@ -71,7 +71,7 @@ export default function MemberPromotionsPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <Typography.Title level={2} className="mb-2 text-center">
+      <Typography.Title level={2} className="mb-2 text-center" style={{ marginTop: 32 }}>
         Redeem Promotions with Points
       </Typography.Title>
       <div

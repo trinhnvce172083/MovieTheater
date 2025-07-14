@@ -19,7 +19,7 @@ export default function MemberLayout({
       </aside>
 
       {/* Nội dung chính */}
-      <main className="flex-1 p-6 bg-white">{children}</main>
+      <main className="flex-1 p-6 bg-white" style={{ paddingTop: 72 }}>{children}</main>
     </div>
   );
 }
