@@ -5,6 +5,7 @@ import { updateSelectedSeats, setSeatTotal, setScheduleInfo, initializeBooking }
 import { BookingApiService } from "@/api/booking-api";
 import { message } from "antd";
 import type { Seat } from "@/app/booking/seat-selection/seatType";
+import axiosClient from "@/api/axiosClient";
 
 export function useSeatSelection(scheduleId?: string | number, roomId?: string | number) {
   const dispatch = useDispatch();
@@ -21,12 +22,14 @@ export function useSeatSelection(scheduleId?: string | number, roomId?: string |
     setLoading(true);
     setError(null);
     try {
-      // Lấy layout ghế
-      const layoutResponse = await BookingApiService.getSeatLayout(roomId);
+      // Lấy layout ghế từ API mới với đầy đủ thông tin seatType
+      const layoutResponse = await axiosClient.get(`/cinema-rooms/${roomId}/seats`);
       const seatLayout: Seat[] = Array.isArray(layoutResponse.data) ? layoutResponse.data : [];
+      
       // Lấy trạng thái ghế
       const statusResponse = await BookingApiService.getSeatStatus(scheduleId);
       const seatStatus: Seat[] = Array.isArray(statusResponse.data?.seats) ? statusResponse.data.seats : [];
+      
       // Kết hợp layout và status
       const combinedSeats = seatLayout.map(layoutSeat => {
         const statusSeat = seatStatus.find(s => s.seatId === layoutSeat.seatId);
@@ -67,7 +70,7 @@ export function useSeatSelection(scheduleId?: string | number, roomId?: string |
           console.warn("Không thể lấy thông tin schedule để cập nhật roomId", e);
         }
       }
-      return { seats: combinedSeats, lastUpdated: statusResponse.data.lastUpdated };
+      return { seats: combinedSeats, lastUpdated: statusResponse.data?.lastUpdated };
     } catch (err: any) {
       setError(err?.response?.data?.message || err.message || "Không thể lấy trạng thái ghế");
     } finally {
@@ -93,12 +96,11 @@ export function useSeatSelection(scheduleId?: string | number, roomId?: string |
         scheduleId,
         seatIds: seatIds.map(id => id.toString())
       });
-      
       setSessionId(response.data.sessionId);
-      message.success("Đã giữ chỗ tạm thời trong 15 phút");
+      message.success("Seats have been temporarily reserved for 15 minutes");
       return response.data;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "Không thể giữ chỗ";
+      const errorMessage = err.response?.data?.message || err.message || "Unable to reserve seats";
       setError(errorMessage);
       message.error(errorMessage);
       throw new Error(errorMessage);
@@ -110,11 +112,10 @@ export function useSeatSelection(scheduleId?: string | number, roomId?: string |
   // Hủy giữ chỗ
   const releaseSeats = useCallback(async () => {
     if (!sessionId) return;
-    
     try {
       await BookingApiService.releaseSeats(sessionId);
       setSessionId(null);
-      message.info("Đã hủy giữ chỗ tạm thời");
+      // Không cần thông báo khi bỏ giữ chỗ
     } catch (err: any) {
       console.error("Error releasing seats:", err);
     }
@@ -123,75 +124,191 @@ export function useSeatSelection(scheduleId?: string | number, roomId?: string |
   // Gia hạn giữ chỗ
   const extendReservation = useCallback(async (additionalMinutes: number = 5) => {
     if (!sessionId) return;
-    
     try {
       await BookingApiService.extendSeatReservation(sessionId);
-      message.success(`Đã gia hạn giữ chỗ thêm ${additionalMinutes} phút`);
+      // Không cần thông báo khi gia hạn giữ chỗ
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "Không thể gia hạn giữ chỗ";
+      const errorMessage = err.response?.data?.message || err.message || "Unable to extend reservation";
       message.error(errorMessage);
     }
   }, [sessionId]);
 
+  // Hàm tách số từ seatNumber (ví dụ: "J1" -> 1, "A10" -> 10)
+  const extractNumber = useCallback((seatNumber: string) => {
+    const match = seatNumber.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 0;
+  }, []);
+
+  // Hàm xác định ghế đôi dựa trên seatType
+  const isCoupleSeat = useCallback((seat: Seat) => {
+    return seat.seatType === "COUPLE";
+  }, []);
+
+  // Hàm tìm ghế đôi còn lại trong cùng một cặp (theo thứ tự backend trả về)
+  const findCouplePair = useCallback((seat: Seat) => {
+    if (!isCoupleSeat(seat)) return null;
+    const seatRow = seat.seatRow;
+    // Lấy tất cả ghế COUPLE cùng hàng, sắp xếp theo số thứ tự
+    const coupleSeatsInRow = seats
+      .filter(s => s.seatRow === seatRow && isCoupleSeat(s))
+      .sort((a, b) => extractNumber(a.seatNumber) - extractNumber(b.seatNumber));
+    // Nhóm thành từng cặp
+    for (let i = 0; i < coupleSeatsInRow.length; i += 2) {
+      const pair = coupleSeatsInRow.slice(i, i + 2);
+      if (pair.some(s => s.seatId === seat.seatId) && pair.length === 2) {
+        return pair;
+      }
+    }
+    return null;
+  }, [seats, isCoupleSeat, extractNumber]);
+
   // Chọn ghế
   const selectSeat = useCallback((seat: Seat) => {
-    if (seat.status !== "AVAILABLE") {
-      message.warning("Ghế này không khả dụng");
-      return false;
-    }
-
-    const isAlreadySelected = selectedSeats.some(s => s.seatId === seat.seatId);
-    if (isAlreadySelected) {
-      message.warning("Ghế này đã được chọn");
-      return false;
-    }
-
-    // Kiểm tra giới hạn số ghế (tối đa 10 ghế)
-    if (selectedSeats.length >= 10) {
-      message.warning("Bạn chỉ có thể chọn tối đa 10 ghế");
-      return false;
-    }
-
-    const newSelectedSeats = [...selectedSeats, seat];
-    dispatch(updateSelectedSeats(newSelectedSeats));
+    // Nếu chưa có ghế nào được chọn, cho phép chọn bất kỳ hàng nào
+    const currentRow = selectedSeats.length > 0 ? selectedSeats[0].seatRow : seat.seatRow;
     
-    // Tính giá dựa trên thông tin thực tế của ghế
+    // 1. Không cho phép chọn ghế ở 2 hàng khác nhau
+    if (selectedSeats.length > 0 && seat.seatRow !== currentRow) {
+      message.warning("You can only select seats in the same row.");
+      return false;
+    }
+    
+    // 2. Nếu là ghế đôi (COUPLE)
+    if (isCoupleSeat(seat)) {
+      const couplePair = findCouplePair(seat);
+      
+      if (!couplePair) {
+        message.warning("Invalid couple seat configuration.");
+        return false;
+      }
+      
+      // Nếu 1 trong 2 ghế không AVAILABLE
+      if (couplePair.some(s => s.status !== "AVAILABLE")) {
+        message.warning("You must select both seats in a couple pair. Please choose another pair.");
+        return false;
+      }
+      
+      // Nếu đã chọn 1 trong 2 ghế này rồi
+      if (couplePair.some(s => selectedSeats.some(sel => sel.seatId === s.seatId))) {
+        return false;
+      }
+      
+      // Không cho phép chọn quá 10 ghế
+      if (selectedSeats.length + 2 > 10) {
+        message.warning("You can only select up to 10 seats.");
+        return false;
+      }
+      
+      // Không cho phép chọn ghế đôi nếu đã có ghế thường hoặc ngược lại
+      if (selectedSeats.length > 0 && selectedSeats.some(s => !isCoupleSeat(s))) {
+        message.warning("You cannot combine couple seats with other seat types in one booking.");
+        return false;
+      }
+      
+      // Thêm cả 2 ghế vào danh sách chọn
+      const newSelectedSeats = [...selectedSeats, ...couplePair];
+      
+      // Kiểm tra không để ghế trống ở giữa
+      const seatNumbers = newSelectedSeats.map(s => extractNumber(s.seatNumber)).sort((a, b) => a - b);
+      for (let i = 1; i < seatNumbers.length; i++) {
+        if (seatNumbers[i] - seatNumbers[i - 1] > 1) {
+          message.warning("You cannot leave a single empty seat between selected seats.");
+          return false;
+        }
+      }
+      
+      dispatch(updateSelectedSeats(newSelectedSeats));
+      const seatTotal = newSelectedSeats.reduce((total, selectedSeat) => {
+        const multiplier = selectedSeat.priceMultiplier || 1;
+        const basePrice = 150000;
+        return total + (basePrice * multiplier);
+      }, 0);
+      dispatch(setSeatTotal(seatTotal));
+      return true;
+    }
+    
+    // 3. Ghế thường (không phải COUPLE)
+    if (seat.status !== "AVAILABLE") {
+      message.warning("This seat is not available");
+      return false;
+    }
+    
+    if (selectedSeats.some(s => s.seatId === seat.seatId)) {
+      return false;
+    }
+    
+    if (selectedSeats.length >= 10) {
+      message.warning("You can only select up to 10 seats");
+      return false;
+    }
+    
+    // Không cho phép chọn ghế thường nếu đã có ghế đôi
+    if (selectedSeats.length > 0 && selectedSeats.some(s => isCoupleSeat(s))) {
+      message.warning("You cannot combine couple seats with other seat types in one booking.");
+      return false;
+    }
+    
+    // Kiểm tra không để ghế trống ở giữa
+    const newSelectedSeats = [...selectedSeats, seat];
+    const seatNumbers = newSelectedSeats.map(s => extractNumber(s.seatNumber)).sort((a, b) => a - b);
+    for (let i = 1; i < seatNumbers.length; i++) {
+      if (seatNumbers[i] - seatNumbers[i - 1] > 1) {
+        message.warning("You cannot leave a single empty seat between selected seats.");
+        return false;
+      }
+    }
+    
+    dispatch(updateSelectedSeats(newSelectedSeats));
     const seatTotal = newSelectedSeats.reduce((total, selectedSeat) => {
-      // Sử dụng priceMultiplier từ thông tin ghế nếu có
       const multiplier = selectedSeat.priceMultiplier || 1;
-      const basePrice = 150000; // Giá cơ bản
+      const basePrice = 150000;
       return total + (basePrice * multiplier);
     }, 0);
-    
     dispatch(setSeatTotal(seatTotal));
-    
-    message.success(`Đã chọn ghế ${seat.seatNumber} (${seat.seatType})`);
     return true;
-  }, [selectedSeats, dispatch]);
+  }, [selectedSeats, dispatch, seats, isCoupleSeat, findCouplePair, extractNumber]);
 
   // Bỏ chọn ghế
   const deselectSeat = useCallback((seatId: number) => {
-    const newSelectedSeats = selectedSeats.filter(seat => seat.seatId !== seatId);
+    const seatToRemove = selectedSeats.find(seat => seat.seatId === seatId);
+    let newSelectedSeats: Seat[] = [];
+    if (seatToRemove && isCoupleSeat(seatToRemove)) {
+      // Nếu là ghế đôi, bỏ chọn cả cặp
+      const couplePair = findCouplePair(seatToRemove);
+      if (couplePair) {
+        newSelectedSeats = selectedSeats.filter(seat => 
+          !couplePair.some(coupleSeat => coupleSeat.seatId === seat.seatId)
+        );
+      }
+    } else {
+      // Nếu là ghế thường, chỉ bỏ chọn ghế đó
+      newSelectedSeats = selectedSeats.filter(seat => seat.seatId !== seatId);
+    }
+    // Kiểm tra không để ghế trống ở giữa sau khi bỏ chọn
+    if (newSelectedSeats.length > 1) {
+      const seatNumbers = newSelectedSeats.map(s => extractNumber(s.seatNumber)).sort((a, b) => a - b);
+      for (let i = 1; i < seatNumbers.length; i++) {
+        if (seatNumbers[i] - seatNumbers[i - 1] > 1) {
+          message.warning("You cannot deselect seats to create empty seats in between selected seats.");
+          return;
+        }
+      }
+    }
     dispatch(updateSelectedSeats(newSelectedSeats));
-    
-    // Tính lại tổng tiền ghế dựa trên thông tin thực tế
     const seatTotal = newSelectedSeats.reduce((total, selectedSeat) => {
-      // Sử dụng priceMultiplier từ thông tin ghế nếu có
       const multiplier = selectedSeat.priceMultiplier || 1;
-      const basePrice = 150000; // Giá cơ bản
+      const basePrice = 150000;
       return total + (basePrice * multiplier);
     }, 0);
-    
     dispatch(setSeatTotal(seatTotal));
-    
-    message.info("Đã bỏ chọn ghế");
-  }, [selectedSeats, dispatch]);
+    // Không cần thông báo khi bỏ chọn ghế
+  }, [selectedSeats, dispatch, isCoupleSeat, findCouplePair, extractNumber]);
 
   // Bỏ chọn tất cả ghế
   const deselectAllSeats = useCallback(() => {
     dispatch(updateSelectedSeats([]));
     dispatch(setSeatTotal(0));
-    message.info("Đã bỏ chọn tất cả ghế");
+    // Không cần thông báo khi bỏ chọn tất cả ghế
   }, [dispatch]);
 
   // Kiểm tra ghế đã được chọn chưa

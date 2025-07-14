@@ -286,48 +286,28 @@ export default function PromotionDetailModal({
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
-                    <h4 className="font-medium mb-2">Tổng lượt sử dụng</h4>
-                    <p className="text-2xl font-bold">{usageData.totalUsage}</p>
+                    <h4 className="font-medium mb-2">Số lượt sử dụng hiện tại</h4>
+                    <p className="text-2xl font-bold">{usageData.currentUsage}</p>
                   </div>
                   <div>
-                    <h4 className="font-medium mb-2">Tổng doanh thu</h4>
-                    <p className="text-2xl font-bold text-green-600">
-                      {formatCurrency(usageData.totalRevenue)}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Tổng giảm giá</h4>
-                    <p className="text-2xl font-bold text-red-600">
-                      {formatCurrency(usageData.totalDiscount)}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Giá trị đơn hàng TB</h4>
+                    <h4 className="font-medium mb-2">Số lượt tối đa</h4>
                     <p className="text-2xl font-bold">
-                      {formatCurrency(usageData.averageOrderValue)}
+                      {usageData.maxUsage !== undefined ? usageData.maxUsage : 'Không giới hạn'}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">Số lượt mỗi người</h4>
+                    <p className="text-2xl font-bold">
+                      {usageData.maxUserUsage !== undefined ? usageData.maxUserUsage : 'Không giới hạn'}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">Số lượt còn lại</h4>
+                    <p className="text-2xl font-bold">
+                      {usageData.remainingUsage !== undefined ? usageData.remainingUsage : 'Không xác định'}
                     </p>
                   </div>
                 </div>
-
-                {usageData.recentBookings && usageData.recentBookings.length > 0 && (
-                  <div className="mt-6">
-                    <h4 className="font-medium mb-3">Đơn hàng gần đây</h4>
-                    <div className="space-y-2">
-                      {usageData.recentBookings.slice(0, 5).map((booking) => (
-                        <div key={booking.bookingId} className="flex justify-between items-center p-2 border rounded">
-                          <div>
-                            <p className="font-medium">#{booking.bookingId}</p>
-                            <p className="text-sm text-muted-foreground">{booking.customerName}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium">{formatCurrency(booking.orderAmount)}</p>
-                            <p className="text-sm text-red-600">-{formatCurrency(booking.discountAmount)}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           )}
