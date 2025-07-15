@@ -3,9 +3,20 @@
  * https://jestjs.io/docs/configuration
  */
 
-import type {Config} from 'jest';
+import type { Config } from "jest";
 
 const config: Config = {
+  // Thêm preset và transform cho TypeScript
+  preset: "ts-jest",
+  transform: {
+    "^.+\\.(ts|tsx)$": "babel-jest",
+  },
+
+  //Thêm moduleNameMapper cho alias @/
+  moduleNameMapper: {
+    "^@/(.*)$": "<rootDir>/src/$1",
+  },
+
   // All imported modules in your tests should be mocked automatically
   // automock: false,
 
@@ -139,7 +150,7 @@ const config: Config = {
   // setupFiles: [],
 
   // A list of paths to modules that run some code to configure or set up the testing framework before each test
-  // setupFilesAfterEnv: [],
+  // setupFilesAfterEnv: ['<rootDir>/jest.setup.ts']
 
   // The number of seconds after which a test is considered as slow and reported as such in the results.
   // slowTestThreshold: 5,
@@ -148,6 +159,7 @@ const config: Config = {
   // snapshotSerializers: [],
 
   // The test environment that will be used for testing
+  testEnvironment: "jest-environment-jsdom",
   // testEnvironment: "jest-environment-node",
 
   // Options that will be passed to the testEnvironment
