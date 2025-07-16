@@ -10,9 +10,9 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
 
   return (
     <>
-      <AuthInitializer />
-      <main>{children}</main>
-      <BackTop duration={200} visibilityHeight={50} />
+      <AuthInitializer key="auth-initializer" />
+      <main key="main-content">{children}</main>
+      <BackTop key="back-top" duration={200} visibilityHeight={50} />
     </>
   );
 }

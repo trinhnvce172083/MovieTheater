@@ -1,19 +1,16 @@
-"use client";
-
 import React from "react";
 import dynamic from "next/dynamic";
 
-// Dùng dynamic import cho Header và Footer
+// Dynamic imports for Header and Footer
 const Header = dynamic(() => import("@/components/Header/Header"), {
-  loading: () => <div>Loading...</div>,
-  ssr: false,
-});
-const Footer = dynamic(() => import("@/components/Footer"), {
-  loading: () => <div>Loading...</div>,
-  ssr: false,
+  loading: () => <div className="h-16 bg-gray-900 animate-pulse"></div>,
 });
 
-export default function LoginLayout({
+const Footer = dynamic(() => import("@/components/Footer"), {
+  loading: () => <div className="h-32 bg-gray-900 animate-pulse"></div>,
+});
+
+export default function NowShowingLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -31,7 +28,7 @@ export default function LoginLayout({
       </main>
 
       {/* Footer section */}
-      <footer>
+      <footer className="mt-auto">
         <Footer />
       </footer>
     </section>

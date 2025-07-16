@@ -11,6 +11,7 @@ import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { Provider } from "react-redux";
 import { store } from "@/store";
 import { ToastContainer } from 'react-toastify';
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,19 +34,21 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {/* <BackTop duration={100} visibilityHeight={50} /> */}
-        <Provider store={store}>
-          <AntdRegistry>
+        <Provider key="redux-provider" store={store}>
+          <AntdRegistry key="antd-registry">
           <ThemeProvider 
+            key="theme-provider"
             attribute="class" 
             defaultTheme="system" 
             enableSystem
             disableTransitionOnChange
           >
-            <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
+            <ClientLayoutWrapper key="client-layout-wrapper">{children}</ClientLayoutWrapper>
           </ThemeProvider>
           </AntdRegistry>
         </Provider>
-        <ToastContainer />
+        <ToastContainer key="toast-container" />
+        <Toaster key="sonner-toaster" position="top-right" />
       </body>
     </html>
   );
