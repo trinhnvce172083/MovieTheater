@@ -177,22 +177,22 @@ export default function PaymentPage() {
                   </div>
                 )}
                 
-                {paymentResponse.paymentUrl && (
+                {/* {paymentResponse.paymentUrl && (
                   <Button 
                     onClick={() => window.open(paymentResponse.paymentUrl, '_blank')}
                     className="w-full bg-blue-600 hover:bg-blue-700"
                   >
                     Complete Online Payment
                   </Button>
-                )}
+                )} */}
 
-                <Button 
+                {/* <Button 
                   onClick={handleCheckPaymentStatus}
                   variant="outline"
                   className="w-full"
                 >
                   Check Payment Status
-                </Button>
+                </Button> */}
               </div>
             )}
           </div>

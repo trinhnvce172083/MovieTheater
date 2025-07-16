@@ -78,24 +78,42 @@ const TheaterLayout: React.FC<TheaterLayoutProps> = ({
   });
   const allRows = Object.keys(rows).sort((a, b) => Number(a) - Number(b));
 
+  // Tính chiều rộng hàng ghế đầu tiên để kéo dài thanh Screen
+  const firstRowSeats = allRows.length > 0 ? rows[allRows[0]] : [];
+  const seatWidth = 40; // px (w-10)
+  const seatGap = 8; // px (gap-2)
+  const leftLabelWidth = 32; // px (w-8 cho label A)
+  const midGap = 32; // px (w-8 lối đi giữa)
+  const totalSeats = firstRowSeats.length;
+  const mid = Math.floor(totalSeats / 2);
+  // Tổng width = label + (left ghế + gap) + midGap + (right ghế + gap)
+  const leftSeats = mid;
+  const rightSeats = totalSeats - mid;
+  const leftWidth = leftSeats * seatWidth + Math.max(0, leftSeats - 1) * seatGap;
+  const rightWidth = rightSeats * seatWidth + Math.max(0, rightSeats - 1) * seatGap;
+  const screenWidth = leftLabelWidth + leftWidth + midGap + rightWidth;
+
   return (
-    <div className="bg-gray-50 rounded-lg w-full max-w-3xl mx-auto p-4">
-      <div className="w-3/4 h-8 bg-gray-300 mx-auto mb-8 rounded-lg flex items-center justify-center text-gray-600 font-medium shadow">
+    <div className="bg-gray-50 rounded-lg w-full max-w-3xl mx-auto p-4 overflow-x-auto">
+      <div
+        className="h-8 bg-gray-300 mb-8 rounded-lg flex items-center justify-center text-gray-600 font-medium shadow"
+        style={{ minWidth: screenWidth, width: screenWidth }}
+      >
         Screen
       </div>
-      <div className="space-y-3">
+      <div className="space-y-3 min-w-fit">
         {allRows.map((row, index) => {
           const rowSeats = rows[row];
           const mid = Math.floor(rowSeats.length / 2);
           const left = rowSeats.slice(0, mid);
           const right = rowSeats.slice(mid);
           return (
-            <div key={row} className="flex items-center justify-center gap-2">
+            <div key={row} className="flex items-center justify-center gap-2 min-w-fit">
               <span className="w-8 text-center font-bold text-lg text-gray-700">
                 {String.fromCharCode(65 + index)}
               </span>
               <div className="flex gap-4">
-                <div className="flex gap-2">
+                <div className="flex gap-2 min-w-fit">
                   {left.map((seat) => (
                     <SeatComponent
                       key={seat.seatId}
@@ -106,7 +124,7 @@ const TheaterLayout: React.FC<TheaterLayoutProps> = ({
                   ))}
                 </div>
                 <div className="w-8" /> {/* Lối đi ở giữa */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 min-w-fit">
                   {right.map((seat) => (
                     <SeatComponent
                       key={seat.seatId}

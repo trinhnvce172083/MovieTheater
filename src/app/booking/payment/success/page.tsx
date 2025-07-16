@@ -12,8 +12,8 @@ export default function PaymentSuccessPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#151a23] text-white px-4">
       <div className="bg-[#23283a] rounded-xl shadow-lg p-8 w-full max-w-md text-center">
         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold mb-2">Thanh toán thành công!</h2>
-        <p className="mb-4">Cảm ơn bạn đã thanh toán. Mã booking của bạn là:</p>
+        <h2 className="text-2xl font-bold mb-2">Payment successful!</h2>
+        <p className="mb-4">Thank you for your payment. Your booking code is:</p>
         <div className="text-2xl font-mono text-yellow-400 mb-6">{bookingId}</div>
         <div className="flex gap-4 justify-center">
           <Button onClick={() => router.push("/")}>Về trang chủ</Button>
