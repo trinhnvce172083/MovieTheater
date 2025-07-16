@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Table, Button, Popconfirm, message, Tag, Typography, Modal } from "antd";
+import { Table, Button, Popconfirm, message, Tag, Typography, Modal, Card } from "antd";
 import { MemberApiService } from "@/api/member";
 
 const ManagedTickets: React.FC = () => {
@@ -63,18 +63,86 @@ const ManagedTickets: React.FC = () => {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <Typography.Title level={2} className="text-white mb-8 text-center" style={{ marginTop: 32 }}>
+    <div className="max-w-6xl mx-auto p-4 lg:p-6">
+      <Typography.Title level={2} className="text-center mb-6 lg:mb-8 mt-8">
         Managed Tickets
       </Typography.Title>
-      <div className="bg-white rounded-2xl shadow-xl p-6">
-        <Table columns={columns} dataSource={managedTickets} rowKey="bookingId" loading={loading} />
+      
+      <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
+        {/* Mobile Card View */}
+        <div className="lg:hidden space-y-4 mb-6">
+          {managedTickets.map((ticket, index) => (
+            <Card key={ticket.bookingId} className="border rounded-lg">
+              <div className="space-y-3">
+                <div>
+                  <span className="text-xs text-gray-500">Movie:</span>
+                  <p className="font-medium">{ticket.movieTitle}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-xs text-gray-500">Cinema Room:</span>
+                    <p className="text-sm">{ticket.cinemaRoom || "—"}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">Showtime:</span>
+                    <p className="text-sm">{ticket.showDate || "—"}</p>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500">Seats:</span>
+                  <p className="text-sm">{ticket.seats?.map((s: any) => s.seatNumber).join(", ") || "—"}</p>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-xs text-gray-500">Total Price:</span>
+                    <p className="font-medium text-green-600">
+                      {new Intl.NumberFormat('vi-VN').format(ticket.finalAmount)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">Status:</span>
+                    <p className="text-sm">{ticket.status || "—"}</p>
+                  </div>
+                </div>
+                {ticket.canCancel && (
+                  <div className="pt-2">
+                    <Popconfirm
+                      title="Bạn có chắc muốn hủy vé này?"
+                      onConfirm={() => handleCancel(ticket)}
+                      okText="Đồng ý"
+                      cancelText="Không"
+                    >
+                      <Button danger size="small" className="w-full">
+                        Hủy vé
+                      </Button>
+                    </Popconfirm>
+                  </div>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden lg:block">
+          <Table 
+            columns={columns} 
+            dataSource={managedTickets} 
+            rowKey="bookingId" 
+            loading={loading}
+            scroll={{ x: 1000 }}
+            size="middle"
+          />
+        </div>
       </div>
+      
       <Modal
         title="Edit Ticket"
         open={editModalVisible}
         onCancel={() => setEditModalVisible(false)}
         footer={null}
+        width="90%"
+        className="max-w-lg mx-auto"
       >
         {selectedTicket && (
           <div>
