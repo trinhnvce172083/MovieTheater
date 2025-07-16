@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Input, Typography, Button, DatePicker, Radio, Pagination, Row, Col } from "antd";
+import { Table, Input, Typography, Button, DatePicker, Radio, Pagination, Row, Col, Card } from "antd";
 import dayjs from "dayjs";
 
 // Mock data
@@ -58,64 +58,104 @@ export default function ScoreHistoryPage() {
   const pagedData = filteredData.slice((current - 1) * pageSize, current * pageSize);
 
   return (
-    <div style={{ background: "#f7f8fa", minHeight: "100vh", padding: 24 }}>
-      <div style={{ background: "#fff", borderRadius: 8, boxShadow: "0 2px 8px #0001", padding: 24, maxWidth: 1400, margin: "0 auto" }}>
-        <Typography.Title level={4} style={{ textAlign: "center", marginBottom: 24, marginTop: 32 }}>
+    <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
+      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm p-4 lg:p-6">
+        <Typography.Title level={4} className="text-center mb-6 lg:mb-8 mt-8">
           History of score Adding / Using
         </Typography.Title>
-        <Row gutter={24} style={{ marginBottom: 24 }}>
+        
+        {/* Filters */}
+        <Row gutter={[16, 16]} className="mb-6">
           <Col xs={24} md={6}>
-            <div style={{ marginBottom: 8, fontWeight: 500 }}>
-              From date:<span style={{ color: "red" }}>*</span>
+            <div className="mb-2 font-medium">
+              From date:<span className="text-red-500">*</span>
             </div>
             <DatePicker
               value={fromDate}
               format="DD/MM/YYYY"
-              style={{ width: "100%" }}
+              className="w-full"
               onChange={setFromDate}
+              size="middle"
             />
           </Col>
           <Col xs={24} md={6}>
-            <div style={{ marginBottom: 8, fontWeight: 500 }}>
-              To date:<span style={{ color: "red" }}>*</span>
+            <div className="mb-2 font-medium">
+              To date:<span className="text-red-500">*</span>
             </div>
             <DatePicker
               value={toDate}
               format="DD/MM/YYYY"
-              style={{ width: "100%" }}
+              className="w-full"
               onChange={setToDate}
+              size="middle"
             />
           </Col>
-          <Col xs={24} md={6} style={{ display: "flex", alignItems: "center" }}>
+          <Col xs={24} md={6} className="flex items-center">
             <Radio.Group
               value={type}
               onChange={e => setType(e.target.value)}
-              style={{ display: "flex", flexDirection: "column", gap: 8 }}
+              className="flex flex-col gap-2"
             >
               <Radio value="add">History of score adding</Radio>
               <Radio value="use">History of score using</Radio>
             </Radio.Group>
           </Col>
-          <Col xs={24} md={6} style={{ display: "flex", alignItems: "center" }}>
-            <Button type="primary" style={{ marginTop: 24, width: 140 }}>
+          <Col xs={24} md={6} className="flex items-center">
+            <Button type="primary" className="w-full md:w-auto md:mt-6" size="middle">
               ✔ View score
             </Button>
           </Col>
         </Row>
-        <Table
-          columns={columns}
-          dataSource={pagedData}
-          pagination={false}
-          bordered
-          size="middle"
-        />
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
+
+        {/* Mobile Card View */}
+        <div className="lg:hidden space-y-4 mb-6">
+          {pagedData.map((item, index) => (
+            <Card key={item.key} className="border rounded-lg">
+              <div className="space-y-2">
+                <div className="flex justify-between items-start">
+                  <span className="font-medium text-sm text-gray-600">#{((current - 1) * pageSize) + index + 1}</span>
+                  <span className="text-xs text-gray-500">{item.dateCreated}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500">Movie:</span>
+                  <p className="font-medium text-sm">{item.movieName}</p>
+                </div>
+                <div className="flex gap-4">
+                  <div>
+                    <span className="text-xs text-gray-500">Added Score:</span>
+                    <p className="font-medium text-green-600">{item.addedScore}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">Used Score:</span>
+                    <p className="font-medium text-red-600">{item.usedScore || "—"}</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden lg:block">
+          <Table
+            columns={columns}
+            dataSource={pagedData}
+            pagination={false}
+            bordered
+            size="middle"
+            scroll={{ x: 800 }}
+          />
+        </div>
+
+        {/* Pagination */}
+        <div className="flex justify-center lg:justify-end mt-6">
           <Pagination
             current={current}
             pageSize={pageSize}
             total={filteredData.length}
             onChange={setCurrent}
             showSizeChanger={false}
+            size="default"
           />
         </div>
       </div>
