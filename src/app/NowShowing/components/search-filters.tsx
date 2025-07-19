@@ -71,10 +71,10 @@ export function SearchFilters({
   };
 
   return (
-    <div className="bg-black/50 backdrop-blur-sm rounded-lg p-6 mb-8 border border-orange-500/20">
-      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-8 justify-items-center">
+    <div className="bg-black/50 backdrop-blur-sm rounded-lg p-4 sm:p-6 mb-6 sm:mb-8 border border-orange-500/20">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Search */}
-        <div className="relative w-full">
+        <div className="relative w-full sm:col-span-2 lg:col-span-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-orange-300 h-4 w-4" />
           <div className="flex">
             <Input
@@ -82,7 +82,7 @@ export function SearchFilters({
               value={searchTerm}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              className="pl-10 bg-gray-800 border-orange-500/30 text-white placeholder:text-gray-400"
+              className="pl-10 bg-gray-800 border-orange-500/30 text-white placeholder:text-gray-400 text-sm sm:text-base h-10 sm:h-12"
             />
           </div>
           {isSearching && (
@@ -97,7 +97,7 @@ export function SearchFilters({
           value={filters.selectedGenre}
           onValueChange={(value) => onFiltersChange({ selectedGenre: value })}
         >
-          <SelectTrigger className="bg-gray-800 border-orange-500/30 text-white">
+          <SelectTrigger className="bg-gray-800 border-orange-500/30 text-white h-10 sm:h-12 text-sm sm:text-base">
             <SelectValue placeholder="All Genres" />
           </SelectTrigger>
           <SelectContent className="bg-gray-800 border-orange-500/30">
@@ -115,7 +115,7 @@ export function SearchFilters({
           value={filters.selectedRating}
           onValueChange={(value) => onFiltersChange({ selectedRating: value })}
         >
-          <SelectTrigger className="bg-gray-800 border-orange-500/30 text-white">
+          <SelectTrigger className="bg-gray-800 border-orange-500/30 text-white h-10 sm:h-12 text-sm sm:text-base">
             <SelectValue placeholder="All Ratings" />
           </SelectTrigger>
           <SelectContent className="bg-gray-800 border-orange-500/30">
@@ -132,7 +132,7 @@ export function SearchFilters({
           value={filters.sortBy}
           onValueChange={(value) => onFiltersChange({ sortBy: value })}
         >
-          <SelectTrigger className="bg-gray-800 border-orange-500/30 text-white">
+          <SelectTrigger className="bg-gray-800 border-orange-500/30 text-white h-10 sm:h-12 text-sm sm:text-base">
             <SelectValue placeholder="Sort By" />
           </SelectTrigger>
           <SelectContent className="bg-gray-800 border-orange-500/30">
