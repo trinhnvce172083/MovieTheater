@@ -1,351 +1,124 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import {
-  Table,
-  Card,
-  Button,
-  Form,
-  message,
-  Spin,
-  Typography,
-  Pagination,
-  Alert,
-} from "antd";
-import {
-  PlusOutlined,
-} from "@ant-design/icons";
-import { MovieApiService } from "@/api/movie-api";
+import React, { useState } from 'react';
+import { Card, Table, Button, Typography, Alert, Pagination, message, Spin } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 
-// Import organized components
+// Local imports
+import { useMovieManagement } from './hooks/useMovieManagement';
 import {
   MovieStatisticsCard,
-  MovieFiltersComponent,
-  createMovieTableColumns,
+  MovieFilters,
   MovieFormModal,
+  createMovieColumns
 } from './components';
-import { MovieResponse, MovieCreateRequest, MovieFilters } from './types';
-import { filterMovies, calculateMovieStatistics, MOCK_MOVIES } from './utils';
+import { MovieData, MovieCreateRequest } from './types';
 
 const { Text } = Typography;
 
-export default function AdminMoviesPage() {
-  const router = useRouter();
-  const [form] = Form.useForm();
-  
-  // State
-  const [movieData, setMovieData] = useState<MovieResponse[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalElements, setTotalElements] = useState(0);
+export default function AdminMovieManagement() {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingMovie, setEditingMovie] = useState<MovieResponse | null>(null);
-  const [isUsingApiData, setIsUsingApiData] = useState(true);
-  
-  // Ref to track component mounting status
-  const isMountedRef = React.useRef(true);
+  const [editingMovie, setEditingMovie] = useState<MovieData | null>(null);
 
-  // Filters
-  const [filters, setFilters] = useState<MovieFilters>({
-    searchTerm: '',
-    filterGenre: undefined,
-    filterStatus: undefined,
-    filterRating: undefined,
-  });
+  // Use custom hook for all movie management logic
+  const {
+    // Data
+    paginatedData,
+    filteredData,
+    statistics,
 
-  // Fetch movies function with filters
-  const fetchMovies = useCallback(async (page: number = 1, size: number = 10, currentFilters: MovieFilters = filters) => {
-    if (!isMountedRef.current) return;
-    
-    setLoading(true);
-    try {
-      // Check if any filters are applied
-      const hasFilters = currentFilters.searchTerm || currentFilters.filterGenre || currentFilters.filterStatus || currentFilters.filterRating;
-      
-      if (hasFilters) {
-        // Use filter endpoint when filters are applied
-        const filterRequest = {
-          page: page - 1,
-          size,
-          sortBy: "title",
-          sortDirection: "asc",
-          keyword: currentFilters.searchTerm || undefined,
-          genres: currentFilters.filterGenre ? [currentFilters.filterGenre] : undefined,
-          status: currentFilters.filterStatus || undefined,
-          rating: currentFilters.filterRating || undefined,
-        };
-        
-        const response = await MovieApiService.getMoviesWithFilter(filterRequest);
-        
-        if (!isMountedRef.current) return;
-        
-        if (response.success && response.data) {
-          setMovieData(Array.isArray(response.data.movies) ? response.data.movies : []);
-          setTotalElements(response.data.totalElements || 0);
-          setCurrentPage(page);
-          setPageSize(size);
-          setIsUsingApiData(true);
-        } else {
-          throw new Error('Failed to fetch filtered movies from API');
-        }
-      } else {
-        // Use regular paginated endpoint when no filters
-        const response = await MovieApiService.getAllMovies(page - 1, size, "title", "asc");
-        
-        if (!isMountedRef.current) return;
-        
-        if (response.success && response.data) {
-          setMovieData(Array.isArray(response.data.content) ? response.data.content : []);
-          setTotalElements(response.data.totalElements || 0);
-          setCurrentPage(page);
-          setPageSize(size);
-          setIsUsingApiData(true);
-        } else {
-          throw new Error('Failed to fetch from API');
-        }
-      }
-    } catch (error) {
-      if (!isMountedRef.current) return;
-      
-      console.error("Failed to fetch movies:", error);
-      // Fallback to mock data with frontend filtering
-      let filteredMockMovies = Array.isArray(MOCK_MOVIES) ? MOCK_MOVIES : [];
-      if (currentFilters.searchTerm || currentFilters.filterGenre || currentFilters.filterStatus || currentFilters.filterRating) {
-        filteredMockMovies = filterMovies(filteredMockMovies, currentFilters);
-      }
-      
-      const startIndex = (page - 1) * size;
-      const endIndex = startIndex + size;
-      const paginatedMockMovies = filteredMockMovies.slice(startIndex, endIndex);
-      
-      setMovieData(paginatedMockMovies);
-      setTotalElements(filteredMockMovies.length);
-      setCurrentPage(page);
-      setPageSize(size);
-      setIsUsingApiData(false);
-      message.warning("Failed to fetch movies from server. Using offline data.");
-    } finally {
-      if (isMountedRef.current) {
-        setLoading(false);
-      }
-    }
-  }, [filters]);
+    // State
+    loading,
+    showAuthWarning,
+    isUsingApiData,
+    filters,
+    pagination,
 
-  // CRUD operations (using mock for now since API doesn't have CRUD)
-  const createMovieFunction = async (movieData: MovieCreateRequest) => {
-    try {
-      setLoading(true);
-      // Mock creation since API doesn't support CRUD
-      const newMovie: MovieResponse = {
-        movieId: Date.now().toString(),
-        title: movieData.title,
-        genre: movieData.genre,
-        duration: movieData.duration,
-        formattedDuration: `${Math.floor(movieData.duration / 60)}h ${movieData.duration % 60}m`,
-        releaseDate: movieData.releaseDate,
-        rating: movieData.rating,
-        posterUrl: movieData.posterUrl,
-        price: movieData.price,
-        status: movieData.status,
-        imdbRating: movieData.imdbRating,
-        isFeatured: movieData.isFeatured,
-        isAdultContent: movieData.isAdultContent,
-      };
-      
-      MOCK_MOVIES.push(newMovie);
-      message.success("Movie created successfully! (Mock mode)");
-      fetchMovies(currentPage, pageSize);
-      return true;
-    } catch {
-      message.error("Failed to create movie");
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateMovieFunction = async (id: string, movieData: MovieCreateRequest) => {
-    try {
-      setLoading(true);
-      // Mock update
-      const index = MOCK_MOVIES.findIndex(m => m.movieId === id);
-      if (index !== -1) {
-        MOCK_MOVIES[index] = {
-          ...MOCK_MOVIES[index],
-          title: movieData.title,
-          genre: movieData.genre,
-          duration: movieData.duration,
-          formattedDuration: `${Math.floor(movieData.duration / 60)}h ${movieData.duration % 60}m`,
-          releaseDate: movieData.releaseDate,
-          rating: movieData.rating,
-          posterUrl: movieData.posterUrl,
-          price: movieData.price,
-          status: movieData.status,
-          imdbRating: movieData.imdbRating,
-          isFeatured: movieData.isFeatured,
-          isAdultContent: movieData.isAdultContent,
-        };
-      }
-      message.success("Movie updated successfully! (Mock mode)");
-      fetchMovies(currentPage, pageSize);
-      return true;
-    } catch {
-      message.error("Failed to update movie");
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteMovieFunction = async (id: string) => {
-    try {
-      setLoading(true);
-      // Mock deletion
-      const index = MOCK_MOVIES.findIndex(m => m.movieId === id);
-      if (index !== -1) {
-        MOCK_MOVIES.splice(index, 1);
-      }
-      message.success("Movie deleted successfully! (Mock mode)");
-      fetchMovies(currentPage, pageSize);
-    } catch {
-      message.error("Failed to delete movie");
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Actions
+    setFilters,
+    setPagination,
+    createMovie,
+    updateMovie,
+    deleteMovie,
+    toggleFeatureMovie,
+  } = useMovieManagement();
 
   // Event handlers
-  const handleEdit = (record: MovieResponse) => {
+  const handleEdit = (record: MovieData) => {
     setEditingMovie(record);
     setIsModalVisible(true);
   };
 
-  const handleDelete = (movieId: string) => {
-    deleteMovieFunction(movieId);
+  const handleViewDetail = () => {
+    // Tạm thời disabled - sẽ implement sau
+    message.info('Tính năng xem chi tiết phim sẽ được cập nhật sau');
   };
 
-  const handleView = (record: MovieResponse) => {
-    router.push(`/admin/movies/${record.movieId}`);
-  };
-
-  const handleModalOk = async () => {
+  const handleModalSubmit = async (movieData: MovieCreateRequest) => {
     try {
-      const values = await form.validateFields();
-      
-      // Convert form values to proper format
-      const movieData: MovieCreateRequest = {
-        ...values,
-        releaseDate: values.releaseDate.format('YYYY-MM-DD'),
-      };
-
+      let success = false;
       if (editingMovie) {
-        const success = await updateMovieFunction(editingMovie.movieId, movieData);
-        if (success) {
-          setIsModalVisible(false);
-          setEditingMovie(null);
-          form.resetFields();
-        }
+        success = await updateMovie(editingMovie.id, movieData);
       } else {
-        const success = await createMovieFunction(movieData);
-        if (success) {
-          setIsModalVisible(false);
-          form.resetFields();
-        }
+        success = await createMovie(movieData);
+      }
+
+      if (success) {
+        setIsModalVisible(false);
+        setEditingMovie(null);
       }
     } catch {
-      // Form validation failed
+      message.error('Vui lòng kiểm tra lại các trường bắt buộc và thử lại.');
     }
   };
 
   const handleModalCancel = () => {
     setIsModalVisible(false);
     setEditingMovie(null);
-    form.resetFields();
   };
 
-  const handleAddNewMovie = () => {
-    form.resetFields();
-    setIsModalVisible(true);
+  const handleDelete = async (record: MovieData) => {
+    await deleteMovie(record.id);
   };
 
-  // Filter handlers
-  const updateFilters = useCallback((newFilters: Partial<MovieFilters>) => {
-    const updatedFilters = { ...filters, ...newFilters };
-    setFilters(updatedFilters);
-    // Fetch data with new filters, reset to page 1
-    fetchMovies(1, pageSize, updatedFilters);
-  }, [filters, pageSize, fetchMovies]);
+  const handleToggleFeature = async (record: MovieData) => {
+    await toggleFeatureMovie(record.id, record.isFeatured);
+  };
 
-  const clearFilters = useCallback(() => {
-    const clearedFilters = {
-      searchTerm: '',
-      filterGenre: undefined,
-      filterStatus: undefined,
-      filterRating: undefined,
-    };
-    setFilters(clearedFilters);
-    // Fetch data without filters, reset to page 1
-    fetchMovies(1, pageSize, clearedFilters);
-  }, [pageSize, fetchMovies]);
-
-  // Computed values - when using API, movieData is already filtered/paginated
-  const filteredData = useMemo(() => {
-    // Ensure movieData is always an array
-    const safeMovieData = Array.isArray(movieData) ? movieData : [];
-    
-    if (isUsingApiData) {
-      // Data from API is already filtered and paginated
-      return safeMovieData;
-    } else {
-      // For mock data, still apply frontend filtering
-      return filterMovies(safeMovieData, filters);
-    }
-  }, [movieData, filters, isUsingApiData]);
-
-  const statistics = useMemo(() => {
-    const safeMovieData = Array.isArray(movieData) ? movieData : [];
-    return calculateMovieStatistics(safeMovieData);
-  }, [movieData]);
-
-  // Table columns
-  const columns = createMovieTableColumns({
-    onEdit: handleEdit,
-    onDelete: handleDelete,
-    onView: handleView,
-  });
-
-  // Effects
-  useEffect(() => {
-    isMountedRef.current = true;
-    
-    const loadInitialData = async () => {
-      if (isMountedRef.current) {
-        await fetchMovies(1, 10); // Initial fetch with page 1 and size 10
-      }
-    };
-    
-    loadInitialData();
-    
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, [fetchMovies]);
+  // Create table columns with handlers
+  const columns = createMovieColumns(
+    handleViewDetail,
+    handleEdit,
+    handleDelete,
+    handleToggleFeature
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
-        
-        {/* Demo Data Warning */}
         {!isUsingApiData && (
           <Alert
-            message="Demo Mode - Using Sample Data"
-            description="You are viewing sample data. Connect to the backend server to enable full CRUD operations."
+            message="Chế độ Demo - Sử dụng dữ liệu mẫu"
+            description="Bạn đang xem dữ liệu mẫu. Kết nối với server backend để sử dụng đầy đủ chức năng CRUD."
             type="warning"
             showIcon
             className="mb-6"
             closable
+          />
+        )}
+
+        {showAuthWarning && (
+          <Alert
+            message="Thông báo xác thực"
+            description="Bạn chưa đăng nhập. Hiển thị dữ liệu mẫu để demo. Hãy đăng nhập để truy cập dữ liệu thật."
+            type="warning"
+            showIcon
+            className="mb-6"
+            action={
+              <Button size="small" type="link" href="/auth/Login">
+                Đăng nhập
+              </Button>
+            }
           />
         )}
 
@@ -358,18 +131,15 @@ export default function AdminMoviesPage() {
           styles={{ body: { padding: 0 } }}
           style={{ borderRadius: 16 }}
         >
-          {/* Header Section */}
+          {/* Header */}
           <div className="px-6 py-5 border-b border-gray-100 bg-white flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
             <div>
               <h1 className="m-0 text-gray-900 text-xl xl:text-2xl font-semibold">
-                Movie Management
+                Quản lý Phim
               </h1>
               <Text type="secondary" className="text-sm xl:text-base">
-                Manage cinema movies and their information
+                Quản lý danh mục phim của rạp chiếu
               </Text>
-              {!isUsingApiData && (
-                <Text className="text-orange-600 text-sm">⚠️ Currently using offline data</Text>
-              )}
             </div>
             <div className="flex items-center gap-3">
               <Button
@@ -377,77 +147,101 @@ export default function AdminMoviesPage() {
                 icon={<PlusOutlined />}
                 size="middle"
                 className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
-                onClick={handleAddNewMovie}
+                onClick={() => {
+                  setEditingMovie(null);
+                  setIsModalVisible(true);
+                }}
                 disabled={!isUsingApiData}
-                title={!isUsingApiData ? "Create/Edit functions require backend connection" : "Add new movie"}
+                title={!isUsingApiData ? "Chức năng tạo/sửa cần kết nối backend" : "Thêm phim mới"}
               >
-                Add New Movie
+                Thêm phim mới
               </Button>
             </div>
           </div>
 
-          {/* Filters Section */}
-          <MovieFiltersComponent
-            filters={filters}
-            onFiltersChange={updateFilters}
-            onClearFilters={clearFilters}
+          {/* Filters */}
+          <MovieFilters
+            filters={{
+              keyword: filters.searchTerm,
+              status: filters.filterStatus,
+              genre: filters.filterGenre
+            }}
+            onFiltersChange={(newFilters) => {
+              setFilters(prev => ({
+                ...prev,
+                searchTerm: newFilters.keyword !== undefined ? newFilters.keyword : prev.searchTerm,
+                filterStatus: newFilters.status !== undefined ? newFilters.status : prev.filterStatus,
+                filterGenre: newFilters.genre !== undefined ? newFilters.genre : prev.filterGenre
+              }));
+            }}
           />
 
-          {/* Table Section */}
+          {/* Table */}
           <div className="bg-white">
             <Spin spinning={loading}>
               <Table
-                dataSource={filteredData}
+                dataSource={paginatedData}
                 columns={columns}
                 pagination={false}
-                scroll={{ x: 1280 }}
+                scroll={{ x: 1200 }}
                 rowClassName="hover:bg-gray-50 transition-colors"
                 className="professional-table"
                 size="small"
-                loading={loading}
-                rowKey="movieId"
+                rowKey="key"
+                sortDirections={['ascend', 'descend']}
               />
             </Spin>
             
             {/* Pagination */}
-            <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <Text type="secondary" className="text-sm">
-                Showing {Math.max(1, (currentPage - 1) * pageSize + 1)} to{" "}
-                {Math.min(currentPage * pageSize, totalElements)} of{" "}
-                {totalElements} movies
-              </Text>
-              <Pagination
-                current={currentPage}
-                pageSize={pageSize}
-                total={totalElements}
-                onChange={(page, size) => {
-                  if (size !== pageSize) {
-                    // If page size changed, fetch with new size and reset to page 1
-                    fetchMovies(1, size, filters);
-                  } else {
-                    // If only page changed, fetch with new page
-                    fetchMovies(page, pageSize, filters);
-                  }
-                }}
-                showSizeChanger
-                showQuickJumper={false}
-                pageSizeOptions={["5", "10", "20", "50"]}
-                size="default"
-              />
+            <div className="px-6 py-5 border-t border-gray-100 bg-gray-50">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <Text type="secondary" className="text-sm">
+                    Hiển thị{" "}
+                    <span className="font-medium text-gray-900">
+                      {Math.max(1, (pagination.currentPage - 1) * pagination.pageSize + 1)}
+                    </span>
+                    {" "}đến{" "}
+                    <span className="font-medium text-gray-900">
+                      {Math.min(pagination.currentPage * pagination.pageSize, filteredData.length)}
+                    </span>
+                    {" "}trong tổng số{" "}
+                    <span className="font-medium text-gray-900">
+                      {filteredData.length}
+                    </span>
+                    {" "}phim
+                  </Text>
+                </div>
+                <Pagination
+                  current={pagination.currentPage}
+                  pageSize={pagination.pageSize}
+                  total={filteredData.length}
+                  onChange={(page, size) => {
+                    setPagination({ 
+                      currentPage: page, 
+                      pageSize: size || pagination.pageSize
+                    });
+                  }}
+                  showSizeChanger
+                  showQuickJumper={false}
+                  pageSizeOptions={["5", "10", "20", "50"]}
+                  size="default"
+                  className="flex-shrink-0"
+                />
+              </div>
             </div>
           </div>
         </Card>
-
-        {/* Modal */}
-        <MovieFormModal
-          visible={isModalVisible}
-          onOk={handleModalOk}
-          onCancel={handleModalCancel}
-          editingMovie={editingMovie}
-          loading={loading}
-          form={form}
-        />
       </div>
+
+      {/* Modal */}
+      <MovieFormModal
+        open={isModalVisible}
+        editingMovie={editingMovie}
+        onSubmit={handleModalSubmit}
+        onCancel={handleModalCancel}
+        loading={loading}
+      />
     </div>
   );
 }

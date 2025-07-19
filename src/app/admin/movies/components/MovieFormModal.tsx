@@ -1,273 +1,254 @@
+"use client";
+
 import React, { useEffect } from 'react';
-import { Modal, Form, Input, Select, InputNumber, Checkbox, Row, Col, DatePicker, Upload, Button } from 'antd';
-import { UploadOutlined, StarOutlined } from '@ant-design/icons';
-import { MovieResponse, MovieCreateRequest } from '../types';
-import dayjs from 'dayjs';
+import { Modal, Form, Input, Select, DatePicker, InputNumber, Switch, Button, Row, Col } from 'antd';
+import { MovieData, MovieCreateRequest, MovieUpdateRequest } from '../types';
+import moment from 'moment';
 
 const { Option } = Select;
 const { TextArea } = Input;
 
 interface MovieFormModalProps {
-  visible: boolean;
-  onOk: () => void;
+  open: boolean;
+  editingMovie: MovieData | null;
+  onSubmit: (movieData: MovieCreateRequest | MovieUpdateRequest) => void;
   onCancel: () => void;
-  editingMovie: MovieResponse | null;
   loading: boolean;
-  form: any;
 }
 
-export const MovieFormModal: React.FC<MovieFormModalProps> = ({
-  visible,
-  onOk,
-  onCancel,
-  editingMovie,
-  loading,
-  form,
-}) => {
+export const MovieFormModal: React.FC<MovieFormModalProps> = ({ open, editingMovie, onSubmit, onCancel, loading }) => {
+  const [form] = Form.useForm();
 
   useEffect(() => {
-    if (visible && editingMovie) {
-      form.setFieldsValue({
-        title: editingMovie.title,
-        genre: editingMovie.genre,
-        duration: editingMovie.duration,
-        releaseDate: dayjs(editingMovie.releaseDate),
-        rating: editingMovie.rating,
-        posterUrl: editingMovie.posterUrl,
-        price: editingMovie.price,
-        status: editingMovie.status,
-        imdbRating: editingMovie.imdbRating,
-        isFeatured: editingMovie.isFeatured,
-        isAdultContent: editingMovie.isAdultContent,
-      });
-    } else if (visible && !editingMovie) {
-      form.setFieldsValue({
-        genre: [],
-        price: 100000,
-        status: 'NOW_SHOWING',
-        imdbRating: 5.0,
-        isFeatured: false,
-        isAdultContent: false,
-        rating: 'PG'
-      });
+    if (open) {
+      if (editingMovie) {
+        form.setFieldsValue({
+          ...editingMovie,
+          releaseDate: editingMovie.releaseDate ? moment(editingMovie.releaseDate) : null,
+        });
+      } else {
+        form.resetFields();
+      }
     }
-  }, [visible, editingMovie, form]);
+  }, [editingMovie, form, open]);
+
+  const handleOk = () => {
+    form.validateFields().then(values => {
+      const releaseDate = values.releaseDate ? values.releaseDate.format('YYYY-MM-DD') : undefined;
+      const payload = { ...values, releaseDate };
+      onSubmit(payload);
+    }).catch(() => {
+      // Form validation failed - handled by Ant Design form validation display
+    });
+  };
 
   return (
     <Modal
-      title={editingMovie ? "Edit Movie" : "Add New Movie"}
-      open={visible}
-      onOk={onOk}
+      title={editingMovie ? 'Edit Movie' : 'Add New Movie'}
+      open={open}
+      onOk={handleOk}
       onCancel={onCancel}
-      width={900}
-      className="professional-modal"
-      okText={editingMovie ? "Update Movie" : "Add Movie"}
-      cancelText="Cancel"
-      confirmLoading={loading}
+      footer={[
+        <Button key="back" onClick={onCancel}>
+          Cancel
+        </Button>,
+        <Button key="submit" type="primary" loading={loading} onClick={handleOk}>
+          {editingMovie ? 'Save Changes' : 'Create Movie'}
+        </Button>,
+      ]}
+      width={800}
     >
-      <Form form={form} layout="vertical" className="mt-6">
+      <Form form={form} layout="vertical" name="movieForm">
         <Row gutter={16}>
-          <Col xs={24} sm={16}>
-            <Form.Item
-              name="title"
-              label="Movie Title"
+          <Col span={12}>
+            <Form.Item 
+              name="title" 
+              label="Title" 
               rules={[
-                { required: true, message: "Please enter movie title" },
-                { max: 100, message: "Title cannot exceed 100 characters" },
+                { required: true, message: 'Movie title is required!' },
+                { max: 200, message: 'Title cannot exceed 200 characters' }
               ]}
             >
-              <Input placeholder="Enter movie title" className="h-10" />
+              <Input />
             </Form.Item>
           </Col>
-          <Col xs={24} sm={8}>
-            <Form.Item
-              name="duration"
-              label="Duration (minutes)"
+          <Col span={12}>
+            <Form.Item 
+              name="genre" 
+              label="Genre" 
               rules={[
-                { required: true, message: "Please enter duration" },
-                {
-                  type: "number",
-                  min: 30,
-                  max: 300,
-                  message: "Duration must be between 30 and 300 minutes",
-                },
+                { required: true, message: 'Genre is required!' },
+                { max: 100, message: 'Genre cannot exceed 100 characters' }
               ]}
             >
-              <InputNumber
-                placeholder="Enter duration"
-                className="w-full h-10"
-                min={30}
-                max={300}
-                addonAfter="min"
+              <Input placeholder="e.g., Action, Comedy, Sci-Fi" />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Form.Item 
+          name="description" 
+          label="Description"
+          rules={[
+            { max: 2000, message: 'Description cannot exceed 2000 characters' }
+          ]}
+        >
+          <TextArea rows={4} />
+        </Form.Item>
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item 
+              name="duration" 
+              label="Duration (minutes)" 
+              rules={[
+                { required: true, message: 'Duration is required!' },
+                { type: 'number', min: 1, max: 600, message: 'Duration must be between 1 and 600 minutes' }
+              ]}
+            >
+              <InputNumber min={1} max={600} style={{ width: '100%' }} />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item name="releaseDate" label="Release Date">
+              <DatePicker style={{ width: '100%' }} />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item 
+              name="price" 
+              label="Ticket Price" 
+              rules={[
+                { required: true, message: 'Price is required!' },
+                { type: 'number', min: 0.01, max: 1000000, message: 'Price must be between 0.01 and 1,000,000' }
+              ]}
+            >
+              <InputNumber 
+                min={0.01} 
+                max={1000000}
+                step={0.01}
+                precision={2}
+                style={{ width: '100%' }} 
               />
             </Form.Item>
           </Col>
         </Row>
-
         <Row gutter={16}>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              name="genre"
-              label="Genres"
+          <Col span={8}>
+            <Form.Item 
+              name="status" 
+              label="Status" 
               rules={[
-                { required: true, message: "Please select at least one genre" },
+                { required: true, message: 'Status is required!' }
               ]}
+              initialValue="COMING_SOON"
             >
-              <Select
-                mode="multiple"
-                placeholder="Select genres"
-                className="h-10"
-                maxTagCount={3}
-              >
-                <Option value="Action">Action</Option>
-                <Option value="Adventure">Adventure</Option>
-                <Option value="Drama">Drama</Option>
-                <Option value="Comedy">Comedy</Option>
-                <Option value="Horror">Horror</Option>
-                <Option value="Romance">Romance</Option>
-                <Option value="Sci-Fi">Sci-Fi</Option>
-                <Option value="Fantasy">Fantasy</Option>
-                <Option value="Thriller">Thriller</Option>
-                <Option value="Animation">Animation</Option>
-                <Option value="Documentary">Documentary</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={6}>
-            <Form.Item
-              name="rating"
-              label="Age Rating"
-              rules={[{ required: true, message: "Please select rating" }]}
-            >
-              <Select placeholder="Select rating" className="h-10">
-                <Option value="G">G - General</Option>
-                <Option value="PG">PG - Parental Guidance</Option>
-                <Option value="PG-13">PG-13 - Ages 13+</Option>
-                <Option value="R">R - Restricted</Option>
-                <Option value="NC-17">NC-17 - Adults Only</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={6}>
-            <Form.Item
-              name="status"
-              label="Status"
-              rules={[{ required: true, message: "Please select status" }]}
-            >
-              <Select placeholder="Select status" className="h-10">
+              <Select>
                 <Option value="NOW_SHOWING">Now Showing</Option>
                 <Option value="COMING_SOON">Coming Soon</Option>
                 <Option value="ENDED">Ended</Option>
               </Select>
             </Form.Item>
           </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col xs={24} sm={8}>
-            <Form.Item
-              name="releaseDate"
-              label="Release Date"
-              rules={[{ required: true, message: "Please select release date" }]}
-            >
-              <DatePicker
-                className="w-full h-10"
-                placeholder="Select release date"
-                format="YYYY-MM-DD"
-              />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={8}>
-            <Form.Item
-              name="price"
-              label="Ticket Price (VNĐ)"
+          <Col span={8}>
+            <Form.Item 
+              name="rating" 
+              label="Rating" 
               rules={[
-                { required: true, message: "Please enter ticket price" },
-                {
-                  type: "number",
-                  min: 50000,
-                  max: 500000,
-                  message: "Price must be between 50,000 and 500,000 VNĐ",
-                },
+                { pattern: /^(G|PG|PG-13|R|NC-17)$/, message: 'Rating must be G, PG, PG-13, R, or NC-17' }
               ]}
             >
-              <InputNumber
-                placeholder="Enter ticket price"
-                className="w-full h-10"
-                min={50000}
-                max={500000}
-                step={10000}
-                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, '')) as any}
-                addonAfter="VNĐ"
-              />
+              <Select placeholder="Select rating">
+                <Option value="G">G</Option>
+                <Option value="PG">PG</Option>
+                <Option value="PG-13">PG-13</Option>
+                <Option value="R">R</Option>
+                <Option value="NC-17">NC-17</Option>
+              </Select>
             </Form.Item>
           </Col>
-          <Col xs={24} sm={8}>
-            <Form.Item
-              name="imdbRating"
+          <Col span={8}>
+            <Form.Item 
+              name="imdbRating" 
               label="IMDB Rating"
               rules={[
-                { required: true, message: "Please enter IMDB rating" },
-                {
-                  type: "number",
-                  min: 1,
-                  max: 10,
-                  message: "Rating must be between 1 and 10",
-                },
+                { type: 'number', min: 0, max: 10, message: 'IMDB rating must be between 0.0 and 10.0' }
               ]}
             >
-              <InputNumber
-                placeholder="Enter IMDB rating"
-                className="w-full h-10"
-                min={1}
+              <InputNumber 
+                min={0} 
                 max={10}
                 step={0.1}
                 precision={1}
-                addonBefore={<StarOutlined />}
+                style={{ width: '100%' }} 
               />
             </Form.Item>
           </Col>
         </Row>
-
         <Row gutter={16}>
-          <Col xs={24}>
-            <Form.Item
-              name="posterUrl"
-              label="Poster URL"
-              rules={[
-                { required: true, message: "Please enter poster URL" },
-                { type: 'url', message: 'Please enter a valid URL' }
-              ]}
-            >
-              <Input 
-                placeholder="Enter poster image URL" 
-                className="h-10"
-                addonAfter={
-                  <Upload
-                    showUploadList={false}
-                    beforeUpload={() => false}
-                    accept="image/*"
-                  >
-                    <Button icon={<UploadOutlined />} size="small">
-                      Upload
-                    </Button>
-                  </Upload>
-                }
-              />
-            </Form.Item>
-          </Col>
+            <Col span={12}>
+                <Form.Item 
+                  name="director" 
+                  label="Director"
+                  rules={[
+                    { max: 100, message: 'Director name cannot exceed 100 characters' }
+                  ]}
+                >
+                    <Input />
+                </Form.Item>
+            </Col>
+            <Col span={12}>
+                <Form.Item 
+                  name="cast" 
+                  label="Cast"
+                  rules={[
+                    { max: 1000, message: 'Cast list cannot exceed 1000 characters' }
+                  ]}
+                >
+                    <Input />
+                </Form.Item>
+            </Col>
         </Row>
-
         <Row gutter={16}>
-          <Col xs={24} sm={12}>
-            <Form.Item name="isFeatured" valuePropName="checked">
-              <Checkbox>Featured Movie</Checkbox>
+            <Col span={12}>
+                <Form.Item 
+                  name="language" 
+                  label="Language"
+                  rules={[
+                    { max: 50, message: 'Language cannot exceed 50 characters' }
+                  ]}
+                >
+                    <Input />
+                </Form.Item>
+            </Col>
+            <Col span={12}>
+                <Form.Item 
+                  name="country" 
+                  label="Country"
+                  rules={[
+                    { max: 50, message: 'Country cannot exceed 50 characters' }
+                  ]}
+                >
+                    <Input />
+                </Form.Item>
+            </Col>
+        </Row>
+        <Form.Item 
+          name="productionCompany" 
+          label="Production Company"
+          rules={[
+            { max: 100, message: 'Production company name cannot exceed 100 characters' }
+          ]}
+        >
+            <Input />
+        </Form.Item>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item name="isFeatured" label="Featured" valuePropName="checked" initialValue={false}>
+              <Switch />
             </Form.Item>
           </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item name="isAdultContent" valuePropName="checked">
-              <Checkbox>Adult Content (18+)</Checkbox>
+          <Col span={12}>
+            <Form.Item name="isAdultContent" label="Adult Content" valuePropName="checked" initialValue={false}>
+              <Switch />
             </Form.Item>
           </Col>
         </Row>

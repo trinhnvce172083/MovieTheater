@@ -1,12 +1,62 @@
 import axiosClient from "../axiosClient";
-import { 
-  mockGetMovies, 
-  mockCreateMovie, 
-  mockUpdateMovie, 
-  mockDeleteMovie, 
-  mockGetMovieById
-} from "../mock/moviesMock";
+import { mockMovies } from "../../app/admin/movies/mock/movies";
 import { transformToBackendFormat, prepareSmartUpdateData } from "../../utils/movieDataTransform";
+
+// Simple mock functions to replace the deleted ones
+const mockGetMovies = async (params: Record<string, unknown> = {}) => {
+  const { page = 0, size = 10, search, status, genre } = params;
+  let filteredMovies = [...mockMovies];
+  
+  if (search) {
+    filteredMovies = filteredMovies.filter(movie => 
+      movie.title.toLowerCase().includes((search as string).toLowerCase())
+    );
+  }
+  
+  if (status) {
+    filteredMovies = filteredMovies.filter(movie => movie.status === status);
+  }
+  
+  if (genre) {
+    filteredMovies = filteredMovies.filter(movie => 
+      movie.genre.toLowerCase().includes((genre as string).toLowerCase())
+    );
+  }
+  
+  const startIndex = (page as number) * (size as number);
+  const endIndex = startIndex + (size as number);
+  const paginatedMovies = filteredMovies.slice(startIndex, endIndex);
+  
+  return {
+    content: paginatedMovies,
+    totalElements: filteredMovies.length,
+    totalPages: Math.ceil(filteredMovies.length / (size as number)),
+    page,
+    size
+  };
+};
+
+const mockCreateMovie = async (movieData: Record<string, unknown>) => {
+  const newMovie = {
+    ...movieData,
+    id: Math.max(...mockMovies.map(m => m.id)) + 1,
+    key: (Math.max(...mockMovies.map(m => m.id)) + 1).toString()
+  };
+  return newMovie;
+};
+
+const mockUpdateMovie = async (id: string, movieData: Record<string, unknown>) => {
+  return { ...movieData, id: parseInt(id) };
+};
+
+const mockDeleteMovie = async () => {
+  return { success: true };
+};
+
+const mockGetMovieById = async (id: string) => {
+  const movie = mockMovies.find(m => m.id === parseInt(id));
+  return movie || null;
+};
 
 export interface Movie {
   movieId: number;
@@ -75,7 +125,7 @@ export const getMovies = async (params: GetMoviesParams = {}) => {
     return response.data;
   } catch (error) {
     console.warn("API call failed, falling back to mock data:", error);
-    const mockResult = await mockGetMovies(params);
+    const mockResult = await mockGetMovies(params as Record<string, unknown>);
     return mockResult;
   }
 };
@@ -122,7 +172,7 @@ export const deleteMovie = async (id: number) => {
     console.log('Movie deleted successfully');
   } catch {
     console.warn("API call failed, falling back to mock data");
-    await mockDeleteMovie(id.toString());
+    await mockDeleteMovie();
   }
 };
 

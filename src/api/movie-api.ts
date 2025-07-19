@@ -1,13 +1,19 @@
 import type { Movie, ApiResponse } from "@/types/NowShowing/movie";
 import axiosClient from "./axiosClient";
+import { transformBackendToFrontend, type BackendMovie } from "@/utils/movieTransform";
 
 export class MovieApiService {
   static async getNowShowingMovies(): Promise<ApiResponse<Movie[]>> {
     try {
       const response = await axiosClient.get("/movies/now-showing");
       const data = response.data;
+      
+      // Backend returns array directly for this endpoint, transform each movie
+      const backendMovies = Array.isArray(data) ? data : [];
+      const transformedMovies = backendMovies.map((movie: BackendMovie) => transformBackendToFrontend(movie));
+      
       return {
-        data: data.movies || data,
+        data: transformedMovies,
         success: true,
       };
     } catch (error: unknown) {
@@ -24,8 +30,13 @@ export class MovieApiService {
     try {
       const response = await axiosClient.get("/movies/coming-soon");
       const data = response.data;
+      
+      // Backend returns array directly for this endpoint, transform each movie
+      const backendMovies = Array.isArray(data) ? data : [];
+      const transformedMovies = backendMovies.map((movie: BackendMovie) => transformBackendToFrontend(movie));
+      
       return {
-        data: data.movies || data,
+        data: transformedMovies,
         success: true,
       };
     } catch (error: unknown) {
@@ -42,8 +53,13 @@ export class MovieApiService {
     try {
       const response = await axiosClient.get(`/movies/genre/${encodeURIComponent(genre)}`);
       const data = response.data;
+      
+      // Backend returns array directly for this endpoint, transform each movie
+      const backendMovies = Array.isArray(data) ? data : [];
+      const transformedMovies = backendMovies.map((movie: BackendMovie) => transformBackendToFrontend(movie));
+      
       return {
-        data: data.movies || data,
+        data: transformedMovies,
         success: true,
       };
     } catch (error: unknown) {
@@ -56,18 +72,18 @@ export class MovieApiService {
     }
   }
 
-  static async searchMoviesNowShowing(query: string, page: number = 0, size: number = 9): Promise<ApiResponse<Movie[]>> {
+  static async searchMoviesNowShowing(query: string, page: number = 0, size: number = 10): Promise<ApiResponse<Movie[]>> {
     try {
       const response = await axiosClient.get("/movies/search", {
         params: { keyword: query, page, size },
       });
       const data = response.data;
-      const moviesArray = Array.isArray(data.movies)
-        ? data.movies
-        : Array.isArray(data)
-        ? data
-        : [];
-      const nowShowingMovies = moviesArray.filter((movie: Movie) => movie.status === "NOW_SHOWING");
+      
+      // Backend returns Spring Boot Page<T> format for search
+      const moviesArray = Array.isArray(data.content) ? data.content : [];
+      const transformedMovies = moviesArray.map((movie: BackendMovie) => transformBackendToFrontend(movie));
+      const nowShowingMovies = transformedMovies.filter((movie: Movie) => movie.status === "NOW_SHOWING");
+      
       return {
         data: nowShowingMovies,
         success: true,
@@ -85,8 +101,12 @@ export class MovieApiService {
   static async getMovieById(movieId: string | number): Promise<ApiResponse<Movie>> {
     try {
       const response = await axiosClient.get(`/movies/${movieId}`);
+      
+      // Transform the single movie response
+      const transformedMovie = transformBackendToFrontend(response.data as BackendMovie);
+      
       return {
-        data: response.data,
+        data: transformedMovie,
         success: true,
       };
     } catch (error: unknown) {
@@ -106,21 +126,17 @@ export class MovieApiService {
       });
       const data = response.data;
       
-      // Transform the movie data to match the expected format
-      const transformedContent = (data.content || []).map((movie: Record<string, unknown>) => ({
-        ...movie,
-        genre: typeof movie.genre === 'string' 
-          ? movie.genre.split(', ').map((g: string) => g.trim())
-          : Array.isArray(movie.genre) ? movie.genre : [movie.genre || '']
-      }));
+      // Backend returns Spring Boot Page<T> format - transform the content
+      const backendMovies = Array.isArray(data.content) ? data.content : [];
+      const transformedMovies = backendMovies.map((movie: BackendMovie) => transformBackendToFrontend(movie));
       
       return {
         data: {
-          content: transformedContent,
-          totalElements: data.page?.totalElements || 0,
-          totalPages: data.page?.totalPages || 0,
-          page: data.page?.number || 0,
-          size: data.page?.size || 10
+          content: transformedMovies,
+          totalElements: data.totalElements || 0,
+          totalPages: data.totalPages || 0,
+          page: data.number || 0,
+          size: data.size || 10
         },
         success: true,
       };
@@ -159,16 +175,9 @@ export class MovieApiService {
       const response = await axiosClient.post("/movies/filter", filterRequest);
       const data = response.data;
       
-      // Transform the movie data to match the expected format
-      const transformedMovies = (data.movies || []).map((movie: Record<string, unknown>) => ({
-        ...movie,
-        // Transform genres string to genre array
-        genre: typeof movie.genres === 'string' 
-          ? movie.genres.split(', ').map((g: string) => g.trim())
-          : Array.isArray(movie.genres) ? movie.genres : [movie.genres || ''],
-        // Map adultContent to isAdultContent if needed
-        isAdultContent: movie.adultContent !== undefined ? movie.adultContent : movie.isAdultContent
-      }));
+      // Backend returns MovieListResponse format with movies array and pagination object
+      const backendMovies = Array.isArray(data.movies) ? data.movies : [];
+      const transformedMovies = backendMovies.map((movie: BackendMovie) => transformBackendToFrontend(movie));
       
       return {
         data: {

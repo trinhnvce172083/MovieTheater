@@ -1,4 +1,4 @@
-export { MovieStatisticsCard } from './MovieStatisticsCard';
-export { MovieFiltersComponent } from './MovieFilters';
-export { createMovieTableColumns } from './MovieTableColumns';
-export { MovieFormModal } from './MovieFormModal';
+export * from './MovieStatisticsCard';
+export * from './MovieFilters';
+export * from './MovieFormModal';
+export * from './createMovieColumns';

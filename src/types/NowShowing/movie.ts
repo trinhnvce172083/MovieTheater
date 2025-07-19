@@ -1,7 +1,7 @@
 export interface Movie {
-  movieId: string
+  movieId: string // Keep as string for frontend compatibility, will be converted from number
   title: string
-  genre: string[]
+  genre: string[] // Frontend expects array, will be converted from backend string
   duration: number
   formattedDuration: string
   releaseDate: string
