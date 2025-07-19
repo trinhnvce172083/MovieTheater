@@ -27,6 +27,8 @@ export interface FrontendMovie {
   productionCompany?: string;
   budget?: number;
   boxOffice?: number;
+  isAdultContent?: boolean;
+  formattedDuration?: string;
 }
 
 export interface BackendMovie {
@@ -54,6 +56,8 @@ export interface BackendMovie {
   productionCompany?: string;
   budget?: number;
   boxOffice?: number;
+  isAdultContent?: boolean;
+  formattedDuration?: string;
 }
 
 /**
@@ -114,6 +118,9 @@ export const transformToFrontendFormat = (backendData: BackendMovie): FrontendMo
     genre: backendData.genres,
     // Keep genres field as well for new components
     genres: backendData.genres,
+    // Add missing fields with defaults if not present
+    isAdultContent: backendData.isAdultContent ?? false,
+    formattedDuration: backendData.formattedDuration ?? `${backendData.duration || 0} min`,
   };
 };
 

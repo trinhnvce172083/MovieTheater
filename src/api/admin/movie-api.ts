@@ -68,7 +68,7 @@ export class MovieApiService {
                 headers: { Authorization: `Bearer ${token}` },
             });
             return {
-                data: transformToFrontendFormat(response.data),
+                data: transformToFrontendFormat(response.data) as Movie,
                 success: true,
             };
         } catch (error) {
@@ -82,15 +82,37 @@ export class MovieApiService {
 
     static async updateMovie(movieId: number, movieData: MovieUpdateRequest, token: string): Promise<ApiResponse<Movie>> {
         try {
-            const backendData = transformToBackendFormat(movieData);
-            const response = await axiosClient.put(`/movies/${movieId}`, backendData, {
+            // For partial updates, only send the specific fields to avoid unintended changes
+            const cleanData: Record<string, unknown> = {};
+            
+            // Only include non-undefined fields in the request
+            Object.entries(movieData).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    // Handle genre/genres mapping for backend compatibility
+                    if (key === 'genre' && typeof value === 'string') {
+                        cleanData.genres = value;
+                    } else if (key === 'genres' && typeof value === 'string') {
+                        cleanData.genres = value;
+                    } else {
+                        cleanData[key] = value;
+                    }
+                }
+            });
+            
+            console.log(`🔧 Updating movie ${movieId} with data:`, cleanData);
+            
+            const response = await axiosClient.put(`/movies/${movieId}`, cleanData, {
                 headers: { Authorization: `Bearer ${token}` },
             });
+            
+            console.log('✅ Movie update response:', response.data);
+            
             return {
-                data: transformToFrontendFormat(response.data),
+                data: transformToFrontendFormat(response.data) as Movie,
                 success: true,
             };
         } catch (error) {
+            console.error('❌ Movie update error:', error);
             return {
                 data: null,
                 success: false,

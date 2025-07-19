@@ -50,8 +50,8 @@ export default function AdminMovieManagement() {
   };
 
   const handleViewDetail = () => {
-    // Tạm thời disabled - sẽ implement sau
-    message.info('Tính năng xem chi tiết phim sẽ được cập nhật sau');
+    // Temporarily disabled - will implement later
+    message.info('Movie detail feature will be updated later');
   };
 
   const handleModalSubmit = async (movieData: MovieCreateRequest) => {
@@ -68,7 +68,7 @@ export default function AdminMovieManagement() {
         setEditingMovie(null);
       }
     } catch {
-      message.error('Vui lòng kiểm tra lại các trường bắt buộc và thử lại.');
+      message.error('Please check required fields and try again.');
     }
   };
 
@@ -98,8 +98,8 @@ export default function AdminMovieManagement() {
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {!isUsingApiData && (
           <Alert
-            message="Chế độ Demo - Sử dụng dữ liệu mẫu"
-            description="Bạn đang xem dữ liệu mẫu. Kết nối với server backend để sử dụng đầy đủ chức năng CRUD."
+            message="Demo Mode - Using Sample Data"
+            description="You are viewing sample data. Connect to backend server to use full CRUD functionality."
             type="warning"
             showIcon
             className="mb-6"
@@ -109,14 +109,14 @@ export default function AdminMovieManagement() {
 
         {showAuthWarning && (
           <Alert
-            message="Thông báo xác thực"
-            description="Bạn chưa đăng nhập. Hiển thị dữ liệu mẫu để demo. Hãy đăng nhập để truy cập dữ liệu thật."
+            message="Authentication Notice"
+            description="You are not logged in. Displaying sample data for demo. Please login to access real data."
             type="warning"
             showIcon
             className="mb-6"
             action={
               <Button size="small" type="link" href="/auth/Login">
-                Đăng nhập
+                Login
               </Button>
             }
           />
@@ -135,10 +135,10 @@ export default function AdminMovieManagement() {
           <div className="px-6 py-5 border-b border-gray-100 bg-white flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
             <div>
               <h1 className="m-0 text-gray-900 text-xl xl:text-2xl font-semibold">
-                Quản lý Phim
+                Movie Management
               </h1>
               <Text type="secondary" className="text-sm xl:text-base">
-                Quản lý danh mục phim của rạp chiếu
+                Manage cinema movie catalog
               </Text>
             </div>
             <div className="flex items-center gap-3">
@@ -152,9 +152,9 @@ export default function AdminMovieManagement() {
                   setIsModalVisible(true);
                 }}
                 disabled={!isUsingApiData}
-                title={!isUsingApiData ? "Chức năng tạo/sửa cần kết nối backend" : "Thêm phim mới"}
+                title={!isUsingApiData ? "Create/Edit feature requires backend connection" : "Add new movie"}
               >
-                Thêm phim mới
+                Add New Movie
               </Button>
             </div>
           </div>
@@ -197,19 +197,19 @@ export default function AdminMovieManagement() {
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <Text type="secondary" className="text-sm">
-                    Hiển thị{" "}
+                    Showing{" "}
                     <span className="font-medium text-gray-900">
                       {Math.max(1, (pagination.currentPage - 1) * pagination.pageSize + 1)}
                     </span>
-                    {" "}đến{" "}
+                    {" "}to{" "}
                     <span className="font-medium text-gray-900">
                       {Math.min(pagination.currentPage * pagination.pageSize, filteredData.length)}
                     </span>
-                    {" "}trong tổng số{" "}
+                    {" "}of{" "}
                     <span className="font-medium text-gray-900">
                       {filteredData.length}
                     </span>
-                    {" "}phim
+                    {" "}movies
                   </Text>
                 </div>
                 <Pagination

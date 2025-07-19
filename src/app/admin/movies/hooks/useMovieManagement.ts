@@ -127,12 +127,12 @@ export const useMovieManagement = () => {
         setMovieData(transformedData);
         setIsUsingApiData(true);
       } else {
-        message.error(response.message || 'Không thể tải danh sách phim.');
+        message.error(response.message || 'Unable to load movie list.');
         setMovieData(mockMovies);
         setIsUsingApiData(false);
       }
     } catch {
-      message.error('Có lỗi xảy ra khi tải danh sách phim.');
+      message.error('An error occurred while loading the movie list.');
       setMovieData(mockMovies);
       setIsUsingApiData(false);
     } finally {
@@ -213,16 +213,16 @@ export const useMovieManagement = () => {
       
       const response = await MovieApiService.createMovie(backendData as any, actualToken);
       if (response.success) {
-        message.success('Tạo phim thành công!');
+        message.success('Movie created successfully!');
         fetchMovies();
         fetchStatistics();
         return true;
       } else {
-        message.error(response.message || 'Không thể tạo phim.');
+        message.error(response.message || 'Unable to create movie.');
         return false;
       }
     } catch {
-      message.error('Có lỗi xảy ra khi tạo phim.');
+      message.error('An error occurred while creating the movie.');
       return false;
     } finally {
       setLoading(false);
@@ -236,15 +236,15 @@ export const useMovieManagement = () => {
     try {
       const response = await MovieApiService.updateMovie(movieId, movieUpdateData as any, actualToken);
       if (response.success) {
-        message.success('Cập nhật phim thành công!');
+        message.success('Movie updated successfully!');
         fetchMovies();
         return true;
       } else {
-        message.error(response.message || 'Không thể cập nhật phim.');
+        message.error(response.message || 'Unable to update movie.');
         return false;
       }
     } catch {
-      message.error('Có lỗi xảy ra khi cập nhật phim.');
+      message.error('An error occurred while updating the movie.');
       return false;
     } finally {
       setLoading(false);
@@ -258,14 +258,14 @@ export const useMovieManagement = () => {
     try {
       const response = await MovieApiService.deleteMovie(movieId, actualToken);
       if (response.success) {
-        message.success('Xóa phim thành công!');
+        message.success('Movie deleted successfully!');
         fetchMovies();
         fetchStatistics();
       } else {
-        message.error(response.message || 'Không thể xóa phim.');
+        message.error(response.message || 'Unable to delete movie.');
       }
     } catch {
-      message.error('Có lỗi xảy ra khi xóa phim.');
+      message.error('An error occurred while deleting the movie.');
     } finally {
       setLoading(false);
     }
@@ -276,16 +276,24 @@ export const useMovieManagement = () => {
     
     setLoading(true);
     try {
-      const response = await MovieApiService.updateMovie(movieId, { isFeatured: !isFeatured } as any, actualToken);
+      // Only send the isFeatured field to avoid any unintended side effects
+      const updateData = {
+        isFeatured: !isFeatured
+      };
+      
+      console.log(`🌟 Toggling feature for movie ${movieId}:`, updateData);
+      
+      const response = await MovieApiService.updateMovie(movieId, updateData as any, actualToken);
       if (response.success) {
-        message.success(`${!isFeatured ? 'Đánh dấu nổi bật' : 'Bỏ đánh dấu nổi bật'} thành công!`);
+        message.success(`${!isFeatured ? 'Movie featured' : 'Movie unfeatured'} successfully!`);
         fetchMovies();
         fetchStatistics();
       } else {
-        message.error(response.message || 'Không thể thay đổi trạng thái nổi bật.');
+        message.error(response.message || 'Unable to change featured status.');
       }
-    } catch {
-      message.error('Có lỗi xảy ra khi thay đổi trạng thái nổi bật.');
+    } catch (error) {
+      console.error('Feature toggle error:', error);
+      message.error('An error occurred while changing the featured status.');
     } finally {
       setLoading(false);
     }

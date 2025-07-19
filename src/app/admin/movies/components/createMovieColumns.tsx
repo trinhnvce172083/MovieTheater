@@ -30,7 +30,6 @@ export const createMovieColumns = (
     key: 'id',
     width: 60,
     sorter: (a: MovieData, b: MovieData) => a.id - b.id,
-    defaultSortOrder: 'ascend' as const,
     render: (id: number) => (
       <span className="font-mono text-gray-600">#{id}</span>
     ),
@@ -91,8 +90,9 @@ export const createMovieColumns = (
     ),
   },
   {
-    title: 'Actions',
+    title: <div style={{ textAlign: 'center' }}>Actions</div>,
     key: 'actions',
+    align: 'center' as const,
     render: (_: unknown, record: MovieData) => (
       <Space size="middle">
         <Tooltip title="View Details">

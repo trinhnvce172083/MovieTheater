@@ -7,7 +7,6 @@ import {
   ClockCircleOutlined,
   CheckCircleOutlined,
   StarOutlined,
-  DollarCircleOutlined,
   VideoCameraOutlined,
 } from '@ant-design/icons';
 import { MovieStatistics } from '../types';
@@ -75,7 +74,7 @@ export const MovieStatisticsCard: React.FC<MovieStatisticsCardProps> = ({ statis
   return (
     <div className="mb-6">
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
+        <Col xs={24} sm={12} md={6} lg={6} xl={6}>
           <StatCard
             icon={<VideoCameraOutlined />}
             title="Total Movies"
@@ -85,7 +84,7 @@ export const MovieStatisticsCard: React.FC<MovieStatisticsCardProps> = ({ statis
             color="#3b82f6"
           />
         </Col>
-        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
+        <Col xs={24} sm={12} md={6} lg={6} xl={6}>
           <StatCard
             icon={<PlayCircleOutlined />}
             title="Now Showing"
@@ -95,7 +94,7 @@ export const MovieStatisticsCard: React.FC<MovieStatisticsCardProps> = ({ statis
             color="#10b981"
           />
         </Col>
-        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
+        <Col xs={24} sm={12} md={6} lg={6} xl={6}>
           <StatCard
             icon={<ClockCircleOutlined />}
             title="Coming Soon"
@@ -105,7 +104,7 @@ export const MovieStatisticsCard: React.FC<MovieStatisticsCardProps> = ({ statis
             color="#f59e0b"
           />
         </Col>
-        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
+        <Col xs={24} sm={12} md={6} lg={6} xl={6}>
           <StatCard
             icon={<CheckCircleOutlined />}
             title="Ended"
@@ -115,7 +114,9 @@ export const MovieStatisticsCard: React.FC<MovieStatisticsCardProps> = ({ statis
             color="#6b7280"
           />
         </Col>
-        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
+      </Row>
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col xs={24} sm={24} md={12} lg={12} xl={12}>
           <StatCard
             icon={<StarOutlined />}
             title="Featured"
@@ -123,16 +124,6 @@ export const MovieStatisticsCard: React.FC<MovieStatisticsCardProps> = ({ statis
             loading={loading}
             tooltip="Movies specially promoted or highlighted."
             color="#8b5cf6"
-          />
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
-          <StatCard
-            icon={<DollarCircleOutlined />}
-            title="Avg. Price"
-            value={`$${statistics.averagePrice.toFixed(2)}`}
-            loading={loading}
-            tooltip="Average ticket price across all movies."
-            color="#ec4899"
           />
         </Col>
       </Row>
