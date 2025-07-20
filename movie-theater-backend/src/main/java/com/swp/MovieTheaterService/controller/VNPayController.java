@@ -105,7 +105,7 @@ public class VNPayController {
     }
     @PostMapping("/ipn")
     @Operation(summary = "Xử lý IPN từ VNPay", description = "Xử lý thông báo tức thì từ VNPay")
-    public ResponseEntity<Map<String, String>> vnpayIPN(@RequestParam Map<String, String> queryParams) {
+    public ResponseEntity<ApiResponse<Map<String, String>>> vnpayIPN(@RequestParam Map<String, String> queryParams) {
         log.info("Nhận IPN từ VNPay: {}", queryParams);
         
         try {
@@ -114,15 +114,25 @@ public class VNPayController {
             }
             
             Map<String, String> response = vnPayService.processIPNResponse(queryParams);
-            return ResponseEntity.ok(response);
+
+            ApiResponse<Map<String, String>> apiResponse = ApiResponse.<Map<String, String>>builder()
+                    .success(true)
+                    .message("Xử lý IPN thành công")
+                    .data(response)
+                    .build();
+
+            return ResponseEntity.ok(apiResponse);
             
         } catch (Exception e) {
             log.error("Lỗi xử lý IPN VNPay: {}", e.getMessage());
-            return ResponseEntity.status(500)
-                    .body(Map.of(
-                        "RspCode", "99",
-                        "Message", e.getMessage()
-                    ));
+
+            ApiResponse<Map<String, String>> apiResponse = ApiResponse.<Map<String, String>>builder()
+                    .success(false)
+                    .message("Lỗi xử lý IPN: " + e.getMessage())
+                    .errorCode("IPN_ERROR")
+                    .build();
+
+            return ResponseEntity.status(500).body(apiResponse);
         }
     }
 } 

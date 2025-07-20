@@ -1,6 +1,7 @@
 package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.loyalty.*;
+import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.service.LoyaltyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -42,13 +43,20 @@ public class LoyaltyController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get user loyalty points", description = "Get loyalty points for a specific user (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<LoyaltyPointsResponse> getUserLoyaltyPoints(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<LoyaltyPointsResponse>> getUserLoyaltyPoints(@PathVariable Long userId) {
         log.info("Fetching loyalty points for user ID: {}", userId);
         
         LoyaltyPointsResponse response = new LoyaltyPointsResponse();
         int availablePoints = loyaltyService.getAvailablePoints(userId);
         response.setCurrentPoints(availablePoints);
-        return ResponseEntity.ok(response);
+
+        ApiResponse<LoyaltyPointsResponse> apiResponse = ApiResponse.<LoyaltyPointsResponse>builder()
+                .success(true)
+                .message("Lấy thông tin điểm tích lũy thành công")
+                .data(response)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
 

@@ -8,6 +8,7 @@ import com.swp.MovieTheaterService.exception.AppException;
 import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.repository.AccountRepository;
 import com.swp.MovieTheaterService.repository.LoyaltyTransactionRepository;
+import com.swp.MovieTheaterService.utils.ValidationUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -44,6 +45,22 @@ public class LoyaltyService {
     public LoyaltyTransaction earnPointsFromBooking(Account account, Booking booking) {
         log.info("Processing points earning for booking: {} by account: {}", 
                 booking.getBookingCode(), account.getEmail());
+
+        // Validate required parameters (bổ sung)
+        ValidationUtils.validateRequiredParameters(
+                "account", account,
+                "booking", booking
+        );
+
+        // Validate account is active (bổ sung)
+        if (!account.getIsActive()) {
+            throw new AppException(ErrorCode.ACCOUNT_LOCKED, "Tài khoản đã bị khóa");
+        }
+
+        // Validate booking amount (bổ sung)
+        if (booking.getTotalAmount() == null || !ValidationUtils.isPositive(booking.getTotalAmount())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Số tiền booking không hợp lệ");
+        }
 
         // Calculate points based on total amount
         int pointsToEarn = calculatePointsFromAmount(booking.getTotalAmount());

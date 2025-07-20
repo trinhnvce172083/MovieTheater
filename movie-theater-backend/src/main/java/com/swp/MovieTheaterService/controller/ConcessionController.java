@@ -1,5 +1,6 @@
 package com.swp.MovieTheaterService.controller;
 
+import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.entity.Concession;
 import com.swp.MovieTheaterService.enums.ConcessionCategory;
 import com.swp.MovieTheaterService.service.ConcessionService;
@@ -48,13 +49,20 @@ public class ConcessionController {
      */
     @GetMapping
     @Operation(summary = "Get all concessions", description = "Get all available concessions for customers")
-    public ResponseEntity<List<Concession>> getAllConcessions() {
+    public ResponseEntity<ApiResponse<List<Concession>>> getAllConcessions() {
         log.info("GET /api/concessions - Getting all available concessions");
         
         List<Concession> concessions = concessionService.getAllAvailableConcessions();
         
         log.info("Found {} available concessions", concessions.size());
-        return ResponseEntity.ok(concessions);
+
+        ApiResponse<List<Concession>> apiResponse = ApiResponse.<List<Concession>>builder()
+                .success(true)
+                .message("Lấy danh sách đồ ăn thức uống thành công")
+                .data(concessions)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     /**
@@ -62,13 +70,20 @@ public class ConcessionController {
      */
     @GetMapping("/popcorn")
     @Operation(summary = "Get popcorn flavors", description = "Get all available popcorn flavors")
-    public ResponseEntity<List<Concession>> getPopcornFlavors() {
+    public ResponseEntity<ApiResponse<List<Concession>>> getPopcornFlavors() {
         log.info("GET /api/concessions/popcorn - Getting popcorn flavors");
         
         List<Concession> popcorns = concessionService.getPopcornFlavors();
         
         log.info("Found {} popcorn flavors", popcorns.size());
-        return ResponseEntity.ok(popcorns);
+
+        ApiResponse<List<Concession>> apiResponse = ApiResponse.<List<Concession>>builder()
+                .success(true)
+                .message("Lấy danh sách bắp rang thành công")
+                .data(popcorns)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     /**
@@ -76,13 +91,20 @@ public class ConcessionController {
      */
     @GetMapping("/drinks")
     @Operation(summary = "Get drinks", description = "Get all available drinks")
-    public ResponseEntity<List<Concession>> getDrinks() {
+    public ResponseEntity<ApiResponse<List<Concession>>> getDrinks() {
         log.info("GET /api/concessions/drinks - Getting drinks");
         
         List<Concession> drinks = concessionService.getDrinks();
         
         log.info("Found {} drinks", drinks.size());
-        return ResponseEntity.ok(drinks);
+
+        ApiResponse<List<Concession>> apiResponse = ApiResponse.<List<Concession>>builder()
+                .success(true)
+                .message("Lấy danh sách thức uống thành công")
+                .data(drinks)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     /**
@@ -90,13 +112,20 @@ public class ConcessionController {
      */
     @GetMapping("/combos")
     @Operation(summary = "Get combos", description = "Get all available combo concessions")
-    public ResponseEntity<List<Concession>> getComboConcessions() {
+    public ResponseEntity<ApiResponse<List<Concession>>> getComboConcessions() {
         log.info("GET /api/concessions/combos - Getting combo concessions");
 
         List<Concession> combos = concessionService.getComboConcessions();
 
         log.info("Found {} combo concessions", combos.size());
-        return ResponseEntity.ok(combos);
+
+        ApiResponse<List<Concession>> apiResponse = ApiResponse.<List<Concession>>builder()
+                .success(true)
+                .message("Lấy danh sách combo thành công")
+                .data(combos)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     /**
@@ -104,14 +133,21 @@ public class ConcessionController {
      */
     @GetMapping("/category/{category}")
     @Operation(summary = "Get by category", description = "Get concessions by category")
-    public ResponseEntity<List<Concession>> getConcessionsByCategory(
+    public ResponseEntity<ApiResponse<List<Concession>>> getConcessionsByCategory(
             @PathVariable ConcessionCategory category) {
         log.info("GET /api/concessions/category/{} - Getting concessions by category", category);
         
         List<Concession> concessions = concessionService.getConcessionsByCategory(category);
         
         log.info("Found {} concessions for category {}", concessions.size(), category);
-        return ResponseEntity.ok(concessions);
+
+        ApiResponse<List<Concession>> apiResponse = ApiResponse.<List<Concession>>builder()
+                .success(true)
+                .message("Lấy danh sách đồ ăn thức uống theo danh mục thành công")
+                .data(concessions)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     /**
@@ -119,13 +155,20 @@ public class ConcessionController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "Get concession by ID", description = "Get specific concession details")
-    public ResponseEntity<Concession> getConcessionById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Concession>> getConcessionById(@PathVariable Long id) {
         log.info("GET /api/concessions/{} - Getting concession by ID", id);
         
         try {
             Concession concession = concessionService.getConcessionById(id);
             log.info("Found concession: {}", concession.getFullName());
-            return ResponseEntity.ok(concession);
+
+            ApiResponse<Concession> apiResponse = ApiResponse.<Concession>builder()
+                    .success(true)
+                    .message("Lấy thông tin đồ ăn thức uống thành công")
+                    .data(concession)
+                    .build();
+
+            return ResponseEntity.ok(apiResponse);
         } catch (RuntimeException e) {
             log.error("Concession not found with ID: {}", id);
             return ResponseEntity.notFound().build();
@@ -137,7 +180,7 @@ public class ConcessionController {
      */
     @GetMapping("/{id}/availability")
     @Operation(summary = "Check availability", description = "Check if concession is available for order")
-    public ResponseEntity<Map<String, Object>> checkAvailability(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> checkAvailability(
             @PathVariable Long id,
             @RequestParam(defaultValue = "1") Integer quantity) {
         log.info("GET /api/concessions/{}/availability?quantity={} - Checking availability", id, quantity);
@@ -156,8 +199,14 @@ public class ConcessionController {
             
             log.info("Availability check for {}: {} (stock: {})", 
                     concession.getFullName(), available, concession.getStockQuantity());
-            
-            return ResponseEntity.ok(response);
+
+            ApiResponse<Map<String, Object>> apiResponse = ApiResponse.<Map<String, Object>>builder()
+                    .success(true)
+                    .message("Kiểm tra tình trạng tồn kho thành công")
+                    .data(response)
+                    .build();
+
+            return ResponseEntity.ok(apiResponse);
         } catch (RuntimeException e) {
             log.error("Error checking availability for concession ID: {}", id);
             return ResponseEntity.notFound().build();
@@ -169,13 +218,20 @@ public class ConcessionController {
      */
     @GetMapping("/in-stock")
     @Operation(summary = "Get in-stock items", description = "Get only in-stock concessions")
-    public ResponseEntity<List<Concession>> getInStockConcessions() {
+    public ResponseEntity<ApiResponse<List<Concession>>> getInStockConcessions() {
         log.info("GET /api/concessions/in-stock - Getting in-stock concessions");
         
         List<Concession> concessions = concessionService.getInStockConcessions();
         
         log.info("Found {} in-stock concessions", concessions.size());
-        return ResponseEntity.ok(concessions);
+
+        ApiResponse<List<Concession>> apiResponse = ApiResponse.<List<Concession>>builder()
+                .success(true)
+                .message("Lấy danh sách đồ ăn thức uống còn hàng thành công")
+                .data(concessions)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     /**
@@ -183,7 +239,7 @@ public class ConcessionController {
      */
     @GetMapping("/menu")
     @Operation(summary = "Get menu", description = "Get menu summary grouped by category")
-    public ResponseEntity<Map<String, List<Concession>>> getMenu() {
+    public ResponseEntity<ApiResponse<Map<String, List<Concession>>>> getMenu() {
         log.info("GET /api/concessions/menu - Getting menu summary");
         
         List<Concession> popcorns = concessionService.getPopcornFlavors();
@@ -198,7 +254,14 @@ public class ConcessionController {
 
         log.info("Menu summary: {} popcorns, {} drinks, {} combos",
                 popcorns.size(), drinks.size(), combos.size());
-        return ResponseEntity.ok(menu);
+
+        ApiResponse<Map<String, List<Concession>>> apiResponse = ApiResponse.<Map<String, List<Concession>>>builder()
+                .success(true)
+                .message("Lấy thực đơn thành công")
+                .data(menu)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     // ==================== ADMIN CRUD OPERATIONS ====================
@@ -210,7 +273,7 @@ public class ConcessionController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Create concession", description = "Create new concession item (Admin only)")
-    public ResponseEntity<Concession> createConcession(@Valid @RequestBody ConcessionCreateRequest request) {
+    public ResponseEntity<ApiResponse<Concession>> createConcession(@Valid @RequestBody ConcessionCreateRequest request) {
         log.info("POST /api/concessions - Creating new concession: {}", request.getName());
         Concession concession = new Concession();
         concession.setName(request.getName());
@@ -226,7 +289,14 @@ public class ConcessionController {
         concession.setDisplayOrder(request.getDisplayOrder());
         Concession savedConcession = concessionService.createConcession(concession);
         log.info("Created concession with ID: {}", savedConcession.getConcessionId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedConcession);
+
+        ApiResponse<Concession> apiResponse = ApiResponse.<Concession>builder()
+                .success(true)
+                .message("Tạo đồ ăn thức uống thành công")
+                .data(savedConcession)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
     }
 
     /**

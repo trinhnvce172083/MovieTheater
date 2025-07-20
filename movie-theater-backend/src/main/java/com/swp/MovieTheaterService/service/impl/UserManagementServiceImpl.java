@@ -10,6 +10,7 @@ import com.swp.MovieTheaterService.repository.BookingRepository;
 import com.swp.MovieTheaterService.service.EmailService;
 import com.swp.MovieTheaterService.service.LoyaltyService;
 import com.swp.MovieTheaterService.service.UserManagementService;
+import com.swp.MovieTheaterService.utils.ValidationUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -841,6 +842,11 @@ public class UserManagementServiceImpl implements UserManagementService {
     }
 
     private void validateUniqueFields(UserManagementRequest request, Long excludeUserId) {
+        // DTO đã validate rồi, chỉ cần business logic validation
+        log.info("Validating unique fields for username: {}, email: {}",
+                request.getUsername(), request.getEmail());
+
+        // Check uniqueness (business logic validation)
         if (!isUsernameAvailable(request.getUsername(), excludeUserId)) {
             throw new AppException(ErrorCode.USERNAME_ALREADY_EXISTS);
         }

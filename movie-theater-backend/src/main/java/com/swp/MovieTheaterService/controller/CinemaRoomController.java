@@ -1,6 +1,7 @@
 package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.cinema.*;
+import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.service.CinemaRoomService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -43,49 +44,49 @@ public class CinemaRoomController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create cinema room", description = "Create a new cinema room (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<CinemaRoomResponse> createCinemaRoom(@RequestBody CinemaRoomCreateRequest request) {
+    public ResponseEntity<ApiResponse<CinemaRoomResponse>> createCinemaRoom(@RequestBody CinemaRoomCreateRequest request) {
         log.info("Creating new cinema room: {}", request.getCinemaRoomName());
         
         CinemaRoomResponse response = cinemaRoomService.createCinemaRoom(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Tạo phòng chiếu thành công", response));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update cinema room", description = "Update an existing cinema room (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<CinemaRoomResponse> updateCinemaRoom(
+    public ResponseEntity<ApiResponse<CinemaRoomResponse>> updateCinemaRoom(
             @PathVariable Long id,
             @RequestBody CinemaRoomUpdateRequest request) {
         log.info("Updating cinema room with ID: {}", id);
         
         CinemaRoomResponse response = cinemaRoomService.updateCinemaRoom(id, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật phòng chiếu thành công", response));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get cinema room by ID", description = "Retrieve cinema room details by ID")
-    public ResponseEntity<CinemaRoomResponse> getCinemaRoom(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<CinemaRoomResponse>> getCinemaRoom(@PathVariable Long id) {
         log.info("Fetching cinema room with ID: {}", id);
         
         CinemaRoomResponse response = cinemaRoomService.getCinemaRoomById(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success("Lấy thông tin phòng chiếu thành công", response));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete cinema room", description = "Delete a cinema room (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Void> deleteCinemaRoom(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<String>> deleteCinemaRoom(@PathVariable Long id) {
         log.info("Deleting cinema room with ID: {}", id);
         
         cinemaRoomService.deleteCinemaRoom(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("Xóa phòng chiếu thành công", null));
     }
 
     @GetMapping
     @Operation(summary = "Get all cinema rooms", description = "Retrieve all cinema rooms with pagination")
-    public ResponseEntity<Page<CinemaRoomResponse>> getAllCinemaRooms(
+    public ResponseEntity<ApiResponse<Page<CinemaRoomResponse>>> getAllCinemaRooms(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "cinemaRoomName") String sortBy,
@@ -103,12 +104,12 @@ public class CinemaRoomController {
         Pageable pageable = PageRequest.of(page, size, sort);
         
         Page<CinemaRoomResponse> rooms = cinemaRoomService.getAllCinemaRooms(pageable);
-        return ResponseEntity.ok(rooms);
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách phòng chiếu thành công", rooms));
     }
 
     @GetMapping("/search")
     @Operation(summary = "Search cinema rooms", description = "Search cinema rooms by keyword")
-    public ResponseEntity<Page<CinemaRoomResponse>> searchCinemaRooms(
+    public ResponseEntity<ApiResponse<Page<CinemaRoomResponse>>> searchCinemaRooms(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -117,60 +118,102 @@ public class CinemaRoomController {
         
         Pageable pageable = PageRequest.of(page, size);
         Page<CinemaRoomResponse> rooms = cinemaRoomService.searchCinemaRooms(keyword, pageable);
-        return ResponseEntity.ok(rooms);
+
+        ApiResponse<Page<CinemaRoomResponse>> apiResponse = ApiResponse.<Page<CinemaRoomResponse>>builder()
+                .success(true)
+                .message("Tìm kiếm phòng chiếu thành công")
+                .data(rooms)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/type/{type}")
     @Operation(summary = "Get cinema rooms by type", description = "Retrieve cinema rooms filtered by type")
-    public ResponseEntity<List<CinemaRoomResponse>> getCinemaRoomsByType(@PathVariable String type) {
+    public ResponseEntity<ApiResponse<List<CinemaRoomResponse>>> getCinemaRoomsByType(@PathVariable String type) {
         log.info("Fetching cinema rooms by type: {}", type);
         
         List<CinemaRoomResponse> rooms = cinemaRoomService.getCinemaRoomsByType(type);
-        return ResponseEntity.ok(rooms);
+
+        ApiResponse<List<CinemaRoomResponse>> apiResponse = ApiResponse.<List<CinemaRoomResponse>>builder()
+                .success(true)
+                .message("Lấy danh sách phòng chiếu theo loại thành công")
+                .data(rooms)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/features/3d")
     @Operation(summary = "Get 3D cinema rooms", description = "Retrieve cinema rooms with 3D capability")
-    public ResponseEntity<List<CinemaRoomResponse>> get3DCinemaRooms() {
+    public ResponseEntity<ApiResponse<List<CinemaRoomResponse>>> get3DCinemaRooms() {
         log.info("Fetching 3D cinema rooms");
         
         List<CinemaRoomResponse> rooms = cinemaRoomService.getCinemaRoomsWith3D();
-        return ResponseEntity.ok(rooms);
+
+        ApiResponse<List<CinemaRoomResponse>> apiResponse = ApiResponse.<List<CinemaRoomResponse>>builder()
+                .success(true)
+                .message("Lấy danh sách phòng chiếu 3D thành công")
+                .data(rooms)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/features/dolby-atmos")
     @Operation(summary = "Get Dolby Atmos cinema rooms", description = "Retrieve cinema rooms with Dolby Atmos")
-    public ResponseEntity<List<CinemaRoomResponse>> getDolbyAtmosCinemaRooms() {
+    public ResponseEntity<ApiResponse<List<CinemaRoomResponse>>> getDolbyAtmosCinemaRooms() {
         log.info("Fetching Dolby Atmos cinema rooms");
         
         List<CinemaRoomResponse> rooms = cinemaRoomService.getCinemaRoomsWithDolbyAtmos();
-        return ResponseEntity.ok(rooms);
+
+        ApiResponse<List<CinemaRoomResponse>> apiResponse = ApiResponse.<List<CinemaRoomResponse>>builder()
+                .success(true)
+                .message("Lấy danh sách phòng chiếu Dolby Atmos thành công")
+                .data(rooms)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/features/recliner")
     @Operation(summary = "Get recliner seat cinema rooms", description = "Retrieve cinema rooms with recliner seats")
-    public ResponseEntity<List<CinemaRoomResponse>> getReclinerCinemaRooms() {
+    public ResponseEntity<ApiResponse<List<CinemaRoomResponse>>> getReclinerCinemaRooms() {
         log.info("Fetching recliner seat cinema rooms");
         
         List<CinemaRoomResponse> rooms = cinemaRoomService.getCinemaRoomsWithReclinerSeats();
-        return ResponseEntity.ok(rooms);
+
+        ApiResponse<List<CinemaRoomResponse>> apiResponse = ApiResponse.<List<CinemaRoomResponse>>builder()
+                .success(true)
+                .message("Lấy danh sách phòng chiếu ghế nằm thành công")
+                .data(rooms)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/capacity")
     @Operation(summary = "Get cinema rooms by seat capacity", description = "Retrieve cinema rooms by seat capacity range")
-    public ResponseEntity<List<CinemaRoomResponse>> getCinemaRoomsByCapacity(
+    public ResponseEntity<ApiResponse<List<CinemaRoomResponse>>> getCinemaRoomsByCapacity(
             @RequestParam(required = false) Integer minSeats,
             @RequestParam(required = false) Integer maxSeats) {
         
         log.info("Fetching cinema rooms by capacity - min: {}, max: {}", minSeats, maxSeats);
         
         List<CinemaRoomResponse> rooms = cinemaRoomService.getCinemaRoomsBySeatsRange(minSeats, maxSeats);
-        return ResponseEntity.ok(rooms);
+
+        ApiResponse<List<CinemaRoomResponse>> apiResponse = ApiResponse.<List<CinemaRoomResponse>>builder()
+                .success(true)
+                .message("Lấy danh sách phòng chiếu theo sức chứa thành công")
+                .data(rooms)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/available")
     @Operation(summary = "Get available cinema rooms", description = "Get available cinema rooms for specific time slot")
-    public ResponseEntity<List<CinemaRoomResponse>> getAvailableCinemaRooms(
+    public ResponseEntity<ApiResponse<List<CinemaRoomResponse>>> getAvailableCinemaRooms(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate showDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTime) {
@@ -178,16 +221,30 @@ public class CinemaRoomController {
         log.info("Fetching available cinema rooms for {} from {} to {}", showDate, startTime, endTime);
         
         List<CinemaRoomResponse> rooms = cinemaRoomService.getAvailableCinemaRooms(showDate, startTime, endTime);
-        return ResponseEntity.ok(rooms);
+
+        ApiResponse<List<CinemaRoomResponse>> apiResponse = ApiResponse.<List<CinemaRoomResponse>>builder()
+                .success(true)
+                .message("Lấy danh sách phòng chiếu có sẵn thành công")
+                .data(rooms)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/premium")
     @Operation(summary = "Get premium cinema rooms", description = "Retrieve premium cinema rooms (VIP, IMAX, 4DX)")
-    public ResponseEntity<List<CinemaRoomResponse>> getPremiumCinemaRooms() {
+    public ResponseEntity<ApiResponse<List<CinemaRoomResponse>>> getPremiumCinemaRooms() {
         log.info("Fetching premium cinema rooms");
         
         List<CinemaRoomResponse> rooms = cinemaRoomService.getPremiumCinemaRooms();
-        return ResponseEntity.ok(rooms);
+
+        ApiResponse<List<CinemaRoomResponse>> apiResponse = ApiResponse.<List<CinemaRoomResponse>>builder()
+                .success(true)
+                .message("Lấy danh sách phòng chiếu cao cấp thành công")
+                .data(rooms)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/statistics")

@@ -18,8 +18,8 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Global Exception Handler - Optimized & Clean
@@ -86,45 +86,105 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleValidationErrors(MethodArgumentNotValidException ex) {
         ErrorCode errorCode = ErrorCode.VALIDATION_ERROR;
 
-        // Collect field errors
-        Map<String, String> fieldErrors = new LinkedHashMap<>();
-        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-            fieldErrors.put(error.getField(), error.getDefaultMessage());
-        }
+        // Collect field errors with enhanced error details
+        List<ApiResponse.ErrorDetail> errorDetails = ex.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> {
+                    String enumKey = fieldError.getDefaultMessage();
+                    String fieldName = fieldError.getField();
+                    ErrorCode specificErrorCode = ErrorCode.INVALID_KEY;
+                    Map<String, Object> attributes = null;
 
-        // Debug logging only in DEBUG level (not in production)
+                    try {
+                        // Try to find specific error code from message
+                        specificErrorCode = Arrays.stream(ErrorCode.values())
+                                .filter(code -> code.name().equals(enumKey))
+                                .findFirst()
+                                .orElse(ErrorCode.INVALID_KEY);
+
+                        // Get constraint attributes if available
+                        var constraintViolation = fieldError.unwrap(jakarta.validation.ConstraintViolation.class);
+                        attributes = constraintViolation.getConstraintDescriptor().getAttributes();
+                    } catch (Exception e) {
+                        log.debug("Could not extract constraint attributes for field: {}", fieldName);
+                    }
+
+                    String errorMessage = Objects.nonNull(attributes) ?
+                            formatMessage(specificErrorCode.getMessage(), attributes) : specificErrorCode.getMessage();
+                    errorMessage = fieldName + ": " + errorMessage;
+
+                    return ApiResponse.ErrorDetail.builder()
+                            .field(fieldName)
+                            .message(errorMessage)
+                            .rejectedValue(fieldError.getRejectedValue())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        // Debug logging only in DEBUG level
         if (log.isDebugEnabled()) {
             Object target = ex.getBindingResult().getTarget();
             log.debug("===== VALIDATION DEBUG =====");
             log.debug("Target object class: {}", target != null ? target.getClass().getSimpleName() : "NULL");
-            log.debug("Target object: {}", target);
             log.debug("Field error count: {}", ex.getBindingResult().getFieldErrorCount());
-
-            for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-                log.debug("Field: {} = '{}' (rejected value: {})",
-                        error.getField(),
-                        error.getRejectedValue(),
-                        error.getRejectedValue() != null ? error.getRejectedValue().getClass().getSimpleName()
-                                : "NULL");
-            }
             log.debug("=============================");
         }
 
-        // Use first field error as main message
-        String mainMessage = fieldErrors.isEmpty() ? "Validation failed" : fieldErrors.values().iterator().next();
+        String mainMessage = errorDetails.isEmpty() ? "Validation failed" :
+                errorDetails.get(0).getMessage();
 
-        log.warn("Validation errors: {} fields failed", fieldErrors.size());
+        log.warn("Validation errors: {} fields failed", errorDetails.size());
 
         ApiResponse<Object> response = ApiResponse.<Object>builder()
                 .success(false)
                 .code(errorCode.getCode())
                 .message(mainMessage)
                 .errorCode(errorCode.name())
-                .data(fieldErrors)
+                .errors(errorDetails)
                 .timestamp(java.time.LocalDateTime.now())
                 .build();
 
         return ResponseEntity.status(errorCode.getHttpStatusCode()).body(response);
+    }
+
+    /**
+     * Handle Multiple Parameter Validation
+     */
+    @ExceptionHandler(MultipleParameterValidationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMultipleParameterValidation(
+            MultipleParameterValidationException exception) {
+
+        List<ApiResponse.ErrorDetail> errors = exception.getMissingParameters().stream()
+                .map(paramName -> {
+                    ErrorCode errorCode = ErrorCode.NOT_EMPTY;
+                    String errorMessage = paramName + ": " + errorCode.getMessage();
+
+                    return ApiResponse.ErrorDetail.builder()
+                            .field(paramName)
+                            .message(errorMessage)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        ApiResponse<Object> response = ApiResponse.<Object>builder()
+                .success(false)
+                .code(ErrorCode.VALIDATION_ERROR.getCode())
+                .message("Missing required parameters")
+                .errorCode(ErrorCode.VALIDATION_ERROR.name())
+                .errors(errors)
+                .timestamp(java.time.LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(ErrorCode.VALIDATION_ERROR.getHttpStatusCode()).body(response);
+    }
+
+    /**
+     * Helper method để format message với placeholder
+     */
+    private String formatMessage(String message, Map<String, Object> attributes) {
+        for (Map.Entry<String, Object> entry : attributes.entrySet()) {
+            message = message.replace("{" + entry.getKey() + "}", entry.getValue().toString());
+        }
+        return message;
     }
 
     /**
@@ -236,20 +296,24 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleBindException(BindException ex) {
         ErrorCode errorCode = ErrorCode.VALIDATION_ERROR;
 
-        Map<String, String> fieldErrors = new LinkedHashMap<>();
-        for (FieldError error : ex.getFieldErrors()) {
-            fieldErrors.put(error.getField(), error.getDefaultMessage());
-        }
+        List<ApiResponse.ErrorDetail> errorDetails = ex.getFieldErrors().stream()
+                .map(fieldError -> ApiResponse.ErrorDetail.builder()
+                        .field(fieldError.getField())
+                        .message(fieldError.getDefaultMessage())
+                        .rejectedValue(fieldError.getRejectedValue())
+                        .build())
+                .collect(Collectors.toList());
 
-        String mainMessage = fieldErrors.isEmpty() ? "Binding failed" : fieldErrors.values().iterator().next();
-        log.warn("Binding errors: {} fields failed", fieldErrors.size());
+        String mainMessage = errorDetails.isEmpty() ? "Binding failed" :
+                errorDetails.get(0).getMessage();
+        log.warn("Binding errors: {} fields failed", errorDetails.size());
 
         ApiResponse<Object> response = ApiResponse.<Object>builder()
                 .success(false)
                 .code(errorCode.getCode())
                 .message(mainMessage)
                 .errorCode(errorCode.name())
-                .data(fieldErrors)
+                .errors(errorDetails)
                 .timestamp(java.time.LocalDateTime.now())
                 .build();
 

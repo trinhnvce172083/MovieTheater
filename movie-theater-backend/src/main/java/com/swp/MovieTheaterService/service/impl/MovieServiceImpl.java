@@ -13,6 +13,7 @@ import com.swp.MovieTheaterService.mapper.MovieMapper;
 import com.swp.MovieTheaterService.repository.MovieRepository;
 import com.swp.MovieTheaterService.service.MovieService;
 import com.swp.MovieTheaterService.service.SupabaseStorageService;
+import com.swp.MovieTheaterService.utils.ValidationUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -49,7 +50,10 @@ public class MovieServiceImpl implements MovieService {
     public MovieResponse createMovie(MovieCreateRequest request) {
         log.info("Creating new movie with title: {}", request.getTitle());
 
-        // Check if movie title already exists
+        // DTO đã validate rồi, chỉ cần business logic validation
+        log.info("Validating movie creation for title: {}", request.getTitle());
+
+        // Check if movie title already exists (business logic validation)
         if (movieRepository.existsByTitleIgnoreCaseAndIsActiveTrue(request.getTitle())) {
             throw new AppException(ErrorCode.MOVIE_ALREADY_EXISTS);
         }

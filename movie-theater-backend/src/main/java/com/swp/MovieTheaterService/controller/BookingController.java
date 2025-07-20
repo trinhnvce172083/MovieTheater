@@ -138,7 +138,7 @@ public class BookingController {
                 @ExampleObject(name = "Guest with Concessions", summary = "Guest booking với đồ ăn/uống", value = OpenApiExamples.GUEST_BOOKING_WITH_CONCESSIONS_EXAMPLE),
                 @ExampleObject(name = "Family Scenario", summary = "Scenario gia đình đầy đủ", value = OpenApiExamples.FAMILY_BOOKING_SCENARIO)
     })))
-    public ResponseEntity<BookingResponse> createBooking(
+    public ResponseEntity<ApiResponse<BookingResponse>> createBooking(
             @Valid @RequestBody BookingCreateRequest request,
             Authentication authentication,
             HttpServletRequest httpRequest) {
@@ -156,7 +156,14 @@ public class BookingController {
         } else {
             response = bookingService.createGuestBooking(request);
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        ApiResponse<BookingResponse> apiResponse = ApiResponse.<BookingResponse>builder()
+                .success(true)
+                .message("Tạo booking thành công")
+                .data(response)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
     }
 
     @PostMapping("/guest")
@@ -166,7 +173,7 @@ public class BookingController {
               @ExampleObject(name = "Couple Date Scenario", summary = "Scenario hẹn hò", value = OpenApiExamples.COUPLE_DATE_SCENARIO),
               @ExampleObject(name = "Business Group", summary = "Scenario nhóm doanh nghiệp", value = OpenApiExamples.BUSINESS_GROUP_SCENARIO)
     })))
-    public ResponseEntity<BookingResponse> createGuestBooking(
+    public ResponseEntity<ApiResponse<BookingResponse>> createGuestBooking(
             @Valid @RequestBody BookingCreateRequest request,
             HttpServletRequest httpRequest) {
 
@@ -178,13 +185,20 @@ public class BookingController {
                 sessionId, request.getScheduleId(), request.getCustomerEmail());
 
         BookingResponse response = bookingService.createGuestBooking(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        ApiResponse<BookingResponse> apiResponse = ApiResponse.<BookingResponse>builder()
+                .success(true)
+                .message("Tạo booking khách thành công")
+                .data(response)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
     }
 
     @GetMapping("/{bookingId}")
     @Operation(summary = "Get booking details", description = "Get detailed booking information")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<BookingResponse> getBooking(
+    public ResponseEntity<ApiResponse<BookingResponse>> getBooking(
             @PathVariable Long bookingId,
             Authentication authentication) {
 
@@ -193,13 +207,20 @@ public class BookingController {
 
         // Use existing method without userId parameter for now
         BookingResponse response = bookingService.getBookingById(bookingId);
-        return ResponseEntity.ok(response);
+
+        ApiResponse<BookingResponse> apiResponse = ApiResponse.<BookingResponse>builder()
+                .success(true)
+                .message("Lấy thông tin booking thành công")
+                .data(response)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @PostMapping("/{bookingId}/confirm")
     @Operation(summary = "Confirm booking", description = "Confirm booking - change status from PENDING to CONFIRMED")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<BookingResponse> confirmBooking(
+    public ResponseEntity<ApiResponse<BookingResponse>> confirmBooking(
             @PathVariable Long bookingId,
             Authentication authentication) {
 
@@ -212,30 +233,32 @@ public class BookingController {
             // Success notification
             log.info("✅ Booking confirmed successfully - ID: {}, Status: {}", 
                     response.getBookingId(), response.getBookingStatus());
-            
-            return ResponseEntity.ok(response);
+
+            ApiResponse<BookingResponse> apiResponse = ApiResponse.<BookingResponse>builder()
+                    .success(true)
+                    .message("Xác nhận booking thành công")
+                    .data(response)
+                    .build();
+
+            return ResponseEntity.ok(apiResponse);
             
         } catch (Exception e) {
             // Error notification
             log.error("❌ Failed to confirm booking - ID: {}, Error: {}", bookingId, e.getMessage());
-            
-            // Return structured error response for frontend
-            Map<String, Object> errorResponse = Map.of(
-                "success", false,
-                "message", "Không thể xác nhận booking",
-                "error", e.getMessage(),
-                "bookingId", bookingId,
-                "timestamp", LocalDateTime.now()
-            );
-            
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+
+            ApiResponse<BookingResponse> apiResponse = ApiResponse.<BookingResponse>builder()
+                    .success(false)
+                    .message("Không thể xác nhận booking: " + e.getMessage())
+                    .build();
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiResponse);
         }
     }
 
     @PostMapping("/{bookingId}/cancel")
     @Operation(summary = "Cancel booking", description = "Cancel booking and process refund")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<BookingResponse> cancelBooking(
+    public ResponseEntity<ApiResponse<BookingResponse>> cancelBooking(
             @PathVariable Long bookingId,
             @RequestParam(required = false, defaultValue = "User cancelled") String reason,
             Authentication authentication) {
@@ -249,30 +272,32 @@ public class BookingController {
             // Success notification
             log.info("✅ Booking cancelled successfully - ID: {}, Status: {}, Refund: {}", 
                     response.getBookingId(), response.getBookingStatus(), response.getRefundAmount());
-            
-            return ResponseEntity.ok(response);
+
+            ApiResponse<BookingResponse> apiResponse = ApiResponse.<BookingResponse>builder()
+                    .success(true)
+                    .message("Hủy booking thành công")
+                    .data(response)
+                    .build();
+
+            return ResponseEntity.ok(apiResponse);
             
         } catch (Exception e) {
             // Error notification
             log.error("❌ Failed to cancel booking - ID: {}, Error: {}", bookingId, e.getMessage());
-            
-            // Return structured error response for frontend
-            Map<String, Object> errorResponse = Map.of(
-                "success", false,
-                "message", "Không thể hủy booking",
-                "error", e.getMessage(),
-                "bookingId", bookingId,
-                "timestamp", LocalDateTime.now()
-            );
-            
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+
+            ApiResponse<BookingResponse> apiResponse = ApiResponse.<BookingResponse>builder()
+                    .success(false)
+                    .message("Không thể hủy booking: " + e.getMessage())
+                    .build();
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiResponse);
         }
     }
 
     @PostMapping("/{bookingId}/checkin")
     @Operation(summary = "Check-in booking", description = "Check-in for movie show")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<BookingResponse> checkInBooking(
+    public ResponseEntity<ApiResponse<BookingResponse>> checkInBooking(
             @PathVariable Long bookingId,
             Authentication authentication) {
 
@@ -282,7 +307,14 @@ public class BookingController {
         // Get booking code first then check-in
         BookingResponse bookingDetails = bookingService.getBookingById(bookingId);
         BookingResponse response = bookingService.checkInBooking(bookingDetails.getBookingCode());
-        return ResponseEntity.ok(response);
+
+        ApiResponse<BookingResponse> apiResponse = ApiResponse.<BookingResponse>builder()
+                .success(true)
+                .message("Check-in thành công")
+                .data(response)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     // ==================== BOOKING HISTORY & MANAGEMENT ====================
@@ -291,7 +323,7 @@ public class BookingController {
     @Operation(summary = "Get user bookings", description = "Get user's booking history with pagination")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('MEMBER')")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Page<BookingResponse>> getUserBookings(
+    public ResponseEntity<ApiResponse<Page<BookingResponse>>> getUserBookings(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "bookingDate") String sortBy,
@@ -307,14 +339,21 @@ public class BookingController {
 
         // Use existing method - ignore status filter for now
         Page<BookingResponse> bookings = bookingService.getBookingsByAccount(userId, pageable);
-        return ResponseEntity.ok(bookings);
+
+        ApiResponse<Page<BookingResponse>> apiResponse = ApiResponse.<Page<BookingResponse>>builder()
+                .success(true)
+                .message("Lấy lịch sử booking thành công")
+                .data(bookings)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/search")
     @Operation(summary = "Search bookings", description = "Search bookings by various criteria")
     @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Page<BookingResponse>> searchBookings(
+    public ResponseEntity<ApiResponse<Page<BookingResponse>>> searchBookings(
             @RequestParam(required = false) String bookingCode,
             @RequestParam(required = false) String customerEmail,
             @RequestParam(required = false) String customerPhone,
@@ -331,14 +370,21 @@ public class BookingController {
         // Use basic search for now - TODO: Implement advanced search
         String keyword = bookingCode != null ? bookingCode : customerEmail != null ? customerEmail : "";
         Page<BookingResponse> bookings = bookingService.searchBookings(keyword, pageable);
-        return ResponseEntity.ok(bookings);
+
+        ApiResponse<Page<BookingResponse>> apiResponse = ApiResponse.<Page<BookingResponse>>builder()
+                .success(true)
+                .message("Tìm kiếm booking thành công")
+                .data(bookings)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/statistics")
     @Operation(summary = "Get booking statistics", description = "Get booking statistics for analytics with period filtering")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<BookingService.BookingStatistics> getBookingStatistics(
+    public ResponseEntity<ApiResponse<BookingService.BookingStatistics>> getBookingStatistics(
             @RequestParam(required = false, defaultValue = "all") String period) {
 
         log.info("Getting booking statistics for period: {}", period);
@@ -367,12 +413,26 @@ public class BookingController {
             default:
                 // Get all statistics without date filter
                 BookingService.BookingStatistics statistics = bookingService.getBookingStatistics();
-                return ResponseEntity.ok(statistics);
+
+                ApiResponse<BookingService.BookingStatistics> apiResponse = ApiResponse.<BookingService.BookingStatistics>builder()
+                        .success(true)
+                        .message("Lấy thống kê booking thành công")
+                        .data(statistics)
+                        .build();
+
+                return ResponseEntity.ok(apiResponse);
         }
 
         // Get statistics with date filter
         BookingService.BookingStatistics statistics = bookingService.getBookingStatistics(startDate, endDate);
-        return ResponseEntity.ok(statistics);
+
+        ApiResponse<BookingService.BookingStatistics> apiResponse = ApiResponse.<BookingService.BookingStatistics>builder()
+                .success(true)
+                .message("Lấy thống kê booking thành công")
+                .data(statistics)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @PostMapping("/cleanup-expired")

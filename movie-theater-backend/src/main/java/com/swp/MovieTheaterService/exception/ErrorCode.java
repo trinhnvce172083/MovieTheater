@@ -27,6 +27,9 @@ public enum ErrorCode {
     VALIDATION_ERROR(1002, "Dữ liệu không hợp lệ", HttpStatus.BAD_REQUEST),
     RESOURCE_NOT_FOUND(1003, "Tài nguyên không tìm thấy", HttpStatus.NOT_FOUND),
     ACCESS_DENIED(1004, "Truy cập bị từ chối", HttpStatus.FORBIDDEN),
+    NOT_EMPTY(1005, "Không được bỏ trống", HttpStatus.BAD_REQUEST),
+    MIN_LENGTH(1006, "Phải ít nhất {min} ký tự", HttpStatus.BAD_REQUEST),
+    MAX_LENGTH(1007, "Phải tối đa {max} ký tự", HttpStatus.BAD_REQUEST),
 
     // ==================== AUTHENTICATION & AUTHORIZATION (1100-1199)
     // ====================

@@ -20,10 +20,11 @@ import java.time.LocalDate;
 public class MovieCreateRequest {
 
     @NotBlank(message = "Tiêu đề phim không được để trống")
-    @Size(max = 200, message = "Tiêu đề phim không được vượt quá 200 ký tự")
+    @Size(min = 1, max = 200, message = "Tiêu đề phim phải từ 1-200 ký tự")
     private String title;
 
-    @Size(max = 2000, message = "Mô tả phim không được vượt quá 2000 ký tự")
+    @NotBlank(message = "Mô tả phim không được để trống")
+    @Size(min = 10, max = 2000, message = "Mô tả phim phải từ 10-2000 ký tự")
     private String description;
 
     @NotNull(message = "Thời lượng phim không được để trống")

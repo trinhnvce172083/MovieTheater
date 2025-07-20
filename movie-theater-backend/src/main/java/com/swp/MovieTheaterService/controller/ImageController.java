@@ -1,5 +1,6 @@
 package com.swp.MovieTheaterService.controller;
 
+import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.service.ImageManagementService;
 import com.swp.MovieTheaterService.utils.ImageUtils;
 import lombok.RequiredArgsConstructor;
@@ -23,86 +24,99 @@ public class ImageController {
     
     @PostMapping("/movies/{movieId}/poster")
     @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
-    public ResponseEntity<Map<String, Object>> updateMoviePoster(
+    public ResponseEntity<ApiResponse<String>> updateMoviePoster(
             @PathVariable Long movieId,
             @RequestParam("file") MultipartFile file) {
         
-        Map<String, Object> response = new HashMap<>();
-        
         try {
             if (!ImageUtils.isValidImageFile(file)) {
-                response.put("success", false);
-                response.put("message", ImageUtils.getValidationMessage(file));
-                return ResponseEntity.badRequest().body(response);
+                ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                        .success(false)
+                        .message(ImageUtils.getValidationMessage(file))
+                        .build();
+                return ResponseEntity.badRequest().body(apiResponse);
             }
             
             String newPosterUrl = imageManagementService.updateMoviePoster(movieId, file);
-            
-            response.put("success", true);
-            response.put("message", "Cập nhật poster phim thành công");
-            response.put("url", newPosterUrl);
-            
-            return ResponseEntity.ok(response);
+
+            ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                    .success(true)
+                    .message("Cập nhật poster phim thành công")
+                    .data(newPosterUrl)
+                    .build();
+
+            return ResponseEntity.ok(apiResponse);
             
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.internalServerError().body(response);
+            ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .build();
+            return ResponseEntity.internalServerError().body(apiResponse);
         }
     }
     
     @PostMapping("/movies/{movieId}/backdrop")
     @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
-    public ResponseEntity<Map<String, Object>> updateMovieBackdrop(
+    public ResponseEntity<ApiResponse<String>> updateMovieBackdrop(
             @PathVariable Long movieId,
             @RequestParam("file") MultipartFile file) {
         
-        Map<String, Object> response = new HashMap<>();
-        
         try {
             if (!ImageUtils.isValidImageFile(file)) {
-                response.put("success", false);
-                response.put("message", ImageUtils.getValidationMessage(file));
-                return ResponseEntity.badRequest().body(response);
+                ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                        .success(false)
+                        .message(ImageUtils.getValidationMessage(file))
+                        .build();
+                return ResponseEntity.badRequest().body(apiResponse);
             }
             
             String newBackdropUrl = imageManagementService.updateMovieBackdrop(movieId, file);
-            
-            response.put("success", true);
-            response.put("message", "Cập nhật backdrop phim thành công");
-            response.put("url", newBackdropUrl);
-            
-            return ResponseEntity.ok(response);
+
+            ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                    .success(true)
+                    .message("Cập nhật backdrop phim thành công")
+                    .data(newBackdropUrl)
+                    .build();
+
+            return ResponseEntity.ok(apiResponse);
             
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.internalServerError().body(response);
+            ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .build();
+            return ResponseEntity.internalServerError().body(apiResponse);
         }
     }
     
     @DeleteMapping("/movies/{movieId}/poster")
     @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
-    public ResponseEntity<Map<String, Object>> deleteMoviePoster(@PathVariable Long movieId) {
-        Map<String, Object> response = new HashMap<>();
-        
+    public ResponseEntity<ApiResponse<String>> deleteMoviePoster(@PathVariable Long movieId) {
         try {
             boolean deleted = imageManagementService.deleteMoviePoster(movieId);
             
             if (deleted) {
-                response.put("success", true);
-                response.put("message", "Xóa poster phim thành công");
+                ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                        .success(true)
+                        .message("Xóa poster phim thành công")
+                        .data("Poster đã được xóa")
+                        .build();
+                return ResponseEntity.ok(apiResponse);
             } else {
-                response.put("success", false);
-                response.put("message", "Không thể xóa poster phim");
+                ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                        .success(false)
+                        .message("Không thể xóa poster phim")
+                        .build();
+                return ResponseEntity.badRequest().body(apiResponse);
             }
             
-            return ResponseEntity.ok(response);
-            
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.internalServerError().body(response);
+            ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .build();
+            return ResponseEntity.internalServerError().body(apiResponse);
         }
     }
     

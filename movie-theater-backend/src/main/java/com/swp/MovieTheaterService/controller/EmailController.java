@@ -1,6 +1,7 @@
 package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.booking.BookingResponse;
+import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.service.EmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -38,7 +39,7 @@ public class EmailController {
     @Operation(summary = "Test SMTP configuration", description = "Test SMTP connection and send test email")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Map<String, Object>> testSmtpConfiguration(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> testSmtpConfiguration(
             @RequestBody Map<String, String> request,
             Authentication authentication) {
 
@@ -76,7 +77,13 @@ public class EmailController {
             response.put("message", "SMTP có vấn đề với template engine hoặc verification email");
         }
 
-        return ResponseEntity.ok(response);
+        ApiResponse<Map<String, Object>> apiResponse = ApiResponse.<Map<String, Object>>builder()
+                .success(true)
+                .message("Test SMTP configuration thành công")
+                .data(response)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @PostMapping("/test/verification")

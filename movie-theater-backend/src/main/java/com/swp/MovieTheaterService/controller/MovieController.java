@@ -6,6 +6,7 @@ import com.swp.MovieTheaterService.dto.movie.MovieListResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieSummaryResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieUpdateRequest;
+import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.exception.AppException;
 import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.service.MovieService;
@@ -55,17 +56,17 @@ public class MovieController {
     @PostMapping
     @Operation(summary = "Create new movie", description = "Create a new movie (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<MovieResponse> createMovie(@RequestBody MovieCreateRequest request) {
+    public ResponseEntity<ApiResponse<MovieResponse>> createMovie(@RequestBody MovieCreateRequest request) {
         log.info("Creating new movie: {}", request.getTitle());
 
         MovieResponse response = movieService.createMovie(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Tạo phim thành công", response));
     }
 
     @PostMapping(value = "/with-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Create movie with images", description = "Create a new movie with poster and backdrop images (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<MovieResponse> createMovieWithImages(
+    public ResponseEntity<ApiResponse<MovieResponse>> createMovieWithImages(
             @RequestParam("movieData") String movieDataJson,
             @RequestParam(value = "poster", required = false) MultipartFile posterFile,
             @RequestParam(value = "backdrop", required = false) MultipartFile backdropFile) {
@@ -92,7 +93,14 @@ public class MovieController {
             
             // Return updated movie data
             MovieResponse finalResponse = movieService.getMovieById(movieId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(finalResponse);
+
+            ApiResponse<MovieResponse> apiResponse = ApiResponse.<MovieResponse>builder()
+                    .success(true)
+                    .message("Tạo phim với hình ảnh thành công")
+                    .data(finalResponse)
+                    .build();
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
             
         } catch (Exception e) {
             log.error("Error creating movie with images: {}", e.getMessage());
@@ -128,19 +136,26 @@ public class MovieController {
             4. Mixed operations: `{"title": "New Title", "description": "CLEAR_FIELD", "genre": "Action"}`
             """)
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<MovieResponse> updateMovie(
+    public ResponseEntity<ApiResponse<MovieResponse>> updateMovie(
             @PathVariable Long id,
             @RequestBody MovieUpdateRequest request) {
         log.info("Updating movie with ID: {} using smart update", id);
 
         MovieResponse response = movieService.updateMovie(id, request);
-        return ResponseEntity.ok(response);
+
+        ApiResponse<MovieResponse> apiResponse = ApiResponse.<MovieResponse>builder()
+                .success(true)
+                .message("Cập nhật phim thành công")
+                .data(response)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @PutMapping(value = "/{id}/with-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Update movie with images", description = "Update movie data and upload new images (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<MovieResponse> updateMovieWithImages(
+    public ResponseEntity<ApiResponse<MovieResponse>> updateMovieWithImages(
             @PathVariable Long id,
             @RequestParam(value = "movieData", required = false) String movieDataJson,
             @RequestParam(value = "poster", required = false) MultipartFile posterFile,
@@ -167,7 +182,14 @@ public class MovieController {
             
             // Return updated movie data
             MovieResponse finalResponse = movieService.getMovieById(id);
-            return ResponseEntity.ok(finalResponse);
+
+            ApiResponse<MovieResponse> apiResponse = ApiResponse.<MovieResponse>builder()
+                    .success(true)
+                    .message("Cập nhật phim với hình ảnh thành công")
+                    .data(finalResponse)
+                    .build();
+
+            return ResponseEntity.ok(apiResponse);
             
         } catch (Exception e) {
             log.error("Error updating movie with images: {}", e.getMessage());
@@ -177,26 +199,26 @@ public class MovieController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get movie by ID", description = "Retrieve movie details by ID")
-    public ResponseEntity<MovieResponse> getMovie(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<MovieResponse>> getMovie(@PathVariable Long id) {
         log.info("Fetching movie with ID: {}", id);
 
         MovieResponse response = movieService.getMovieById(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success("Lấy thông tin phim thành công", response));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete movie", description = "Delete a movie (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Void> deleteMovie(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<String>> deleteMovie(@PathVariable Long id) {
         log.info("Deleting movie with ID: {}", id);
 
         movieService.deleteMovie(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("Xóa phim thành công", null));
     }
 
     @GetMapping
     @Operation(summary = "Get all movies", description = "Retrieve all movies with pagination")
-    public ResponseEntity<Page<MovieSummaryResponse>> getAllMovies(
+    public ResponseEntity<ApiResponse<Page<MovieSummaryResponse>>> getAllMovies(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "title") String sortBy,
@@ -208,7 +230,7 @@ public class MovieController {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<MovieSummaryResponse> movies = movieService.getAllMovies(pageable);
-        return ResponseEntity.ok(movies);
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách phim thành công", movies));
     }
 
     @PostMapping("/filter")

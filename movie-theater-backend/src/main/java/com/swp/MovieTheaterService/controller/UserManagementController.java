@@ -1,6 +1,7 @@
 package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.user.*;
+import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.dto.response.PageResponse;
 import com.swp.MovieTheaterService.exception.AppException;
 import com.swp.MovieTheaterService.exception.ErrorCode;
@@ -52,7 +53,7 @@ public class UserManagementController {
 
     @GetMapping
     @Operation(summary = "Get all users", description = "Get all users with pagination and sorting (Admin only)")
-    public ResponseEntity<PageResponse<UserManagementResponse>> getAllUsers(
+    public ResponseEntity<ApiResponse<PageResponse<UserManagementResponse>>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -66,36 +67,36 @@ public class UserManagementController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
         Page<UserManagementResponse> users = userManagementService.getAllUsers(pageable);
-        return ResponseEntity.ok(PageResponse.of(users));
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách người dùng thành công", PageResponse.of(users)));
     }
 
     @GetMapping("/{userId}")
     @Operation(summary = "Get user by ID", description = "Get detailed user information by ID (Admin only)")
-    public ResponseEntity<UserManagementResponse> getUserById(
+    public ResponseEntity<ApiResponse<UserManagementResponse>> getUserById(
             @PathVariable Long userId,
             Authentication authentication) {
 
         log.info("Admin {} is getting user details for ID: {}", authentication.getName(), userId);
 
         UserManagementResponse user = userManagementService.getUserById(userId);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(ApiResponse.success("Lấy thông tin người dùng thành công", user));
     }
 
     @PostMapping
     @Operation(summary = "Create new user", description = "Create a new user account (Admin only)")
-    public ResponseEntity<UserManagementResponse> createUser(
+    public ResponseEntity<ApiResponse<UserManagementResponse>> createUser(
             @Valid @RequestBody UserManagementRequest request,
             Authentication authentication) {
 
         log.info("Admin {} is creating new user: {}", authentication.getName(), request.getUsername());
 
         UserManagementResponse createdUser = userManagementService.createUser(request);
-        return ResponseEntity.ok(createdUser);
+        return ResponseEntity.status(201).body(ApiResponse.success("Tạo người dùng thành công", createdUser));
     }
 
     @PutMapping("/{userId}")
     @Operation(summary = "Update user", description = "Update user information (Admin only)")
-    public ResponseEntity<UserManagementResponse> updateUser(
+    public ResponseEntity<ApiResponse<UserManagementResponse>> updateUser(
             @PathVariable Long userId,
             @Valid @RequestBody UserManagementRequest request,
             Authentication authentication) {
@@ -103,19 +104,19 @@ public class UserManagementController {
         log.info("Admin {} is updating user ID: {}", authentication.getName(), userId);
 
         UserManagementResponse updatedUser = userManagementService.updateUser(userId, request);
-        return ResponseEntity.ok(updatedUser);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật người dùng thành công", updatedUser));
     }
 
     @DeleteMapping("/{userId}")
     @Operation(summary = "Delete user", description = "Soft delete user account (Admin only)")
-    public ResponseEntity<Map<String, String>> deleteUser(
+    public ResponseEntity<ApiResponse<String>> deleteUser(
             @PathVariable Long userId,
             Authentication authentication) {
 
         log.info("Admin {} is deleting user ID: {}", authentication.getName(), userId);
 
         userManagementService.deleteUser(userId);
-        return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success("Xóa người dùng thành công", null));
     }
 
     // ==================== AVATAR MANAGEMENT ====================
