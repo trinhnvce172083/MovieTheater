@@ -65,6 +65,11 @@ export const MOCK_ROOMS: CinemaRoomResponse[] = [
 ];
 
 export const filterRooms = (rooms: CinemaRoomResponse[], filters: RoomFilters): CinemaRoomResponse[] => {
+  // Safety check: ensure rooms is an array
+  if (!rooms || !Array.isArray(rooms)) {
+    return [];
+  }
+  
   return rooms.filter(room => {
     const matchesSearch = !filters.searchTerm || 
       room.cinemaRoomName.toLowerCase().includes(filters.searchTerm.toLowerCase());
@@ -80,6 +85,16 @@ export const filterRooms = (rooms: CinemaRoomResponse[], filters: RoomFilters): 
 };
 
 export const calculateRoomStatistics = (rooms: CinemaRoomResponse[]) => {
+  // Safety check: ensure rooms is an array
+  if (!rooms || !Array.isArray(rooms)) {
+    return {
+      totalRooms: 0,
+      activeRooms: 0,
+      totalSeats: 0,
+      avgSeats: 0
+    };
+  }
+
   const totalRooms = rooms.length;
   const activeRooms = rooms.filter(room => room.isActive).length;
   const totalSeats = rooms.reduce((sum, room) => sum + room.seatQuantity, 0);
@@ -113,10 +128,10 @@ export const getRoomTypeColor = (type: string): string => {
   }
 };
 
-export const validateRoomForm = (values: any): string[] => {
+export const validateRoomForm = (values: Record<string, unknown>): string[] => {
   const errors: string[] = [];
   
-  if (!values.cinemaRoomName?.trim()) {
+  if (!values.cinemaRoomName || typeof values.cinemaRoomName !== 'string' || !values.cinemaRoomName.trim()) {
     errors.push('Room name is required');
   }
   
@@ -124,23 +139,28 @@ export const validateRoomForm = (values: any): string[] => {
     errors.push('Room type is required');
   }
   
-  if (!values.seatQuantity || values.seatQuantity <= 0) {
+  if (!values.seatQuantity || typeof values.seatQuantity !== 'number' || values.seatQuantity <= 0) {
     errors.push('Seat quantity must be greater than 0');
   }
   
-  if (!values.rows || values.rows <= 0) {
+  if (!values.rows || typeof values.rows !== 'number' || values.rows <= 0) {
     errors.push('Number of rows must be greater than 0');
   }
   
-  if (!values.columns || values.columns <= 0) {
+  if (!values.columns || typeof values.columns !== 'number' || values.columns <= 0) {
     errors.push('Number of columns must be greater than 0');
   }
   
-  if (values.rows * values.columns !== values.seatQuantity) {
+  // Type-safe arithmetic operations
+  const rows = typeof values.rows === 'number' ? values.rows : 0;
+  const columns = typeof values.columns === 'number' ? values.columns : 0;
+  const seatQuantity = typeof values.seatQuantity === 'number' ? values.seatQuantity : 0;
+  
+  if (rows * columns !== seatQuantity) {
     errors.push('Rows × Columns must equal Seat Quantity');
   }
   
-  if (!values.priceMultiplier || values.priceMultiplier <= 0) {
+  if (!values.priceMultiplier || typeof values.priceMultiplier !== 'number' || values.priceMultiplier <= 0) {
     errors.push('Price multiplier must be greater than 0');
   }
   

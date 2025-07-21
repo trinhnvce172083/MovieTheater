@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Spin } from "antd";
 import {
-  UserOutlined,
+  // UserOutlined,
   VideoCameraOutlined,
   HomeOutlined,
   GiftOutlined,
@@ -33,93 +33,131 @@ export default function AdminDashboard() {
   const [activeRooms, setActiveRooms] = useState<number | null>(null);
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
   const [averagePrice, setAveragePrice] = useState<number>(0);
+  const [apiStatus, setApiStatus] = useState({
+    movies: 'loading',
+    users: 'loading', 
+    rooms: 'loading',
+    promotions: 'loading'
+  });
 
   const fetchData = async () => {
     setLoading(true);
     try {
+      console.log("🚀 Starting dashboard data fetch...");
+      
       // Fetch users
       console.log("🔍 Fetching users data...");
-      const userData = await getAllUsers();
-      console.log("👥 Users data received:", userData);
-      if (userData && Array.isArray(userData.content)) {
-        console.log("✅ Users count:", userData.content.length);
-        setTotalUsers(userData.content.length);
-      } else if (userData && userData.page && userData.page.totalElements) {
-        console.log("✅ Users total elements:", userData.page.totalElements);
-        setTotalUsers(userData.page.totalElements);
-      } else {
-        console.log("⚠️ Users data structure unexpected:", userData);
+      try {
+        const userData = await getAllUsers();
+        console.log("👥 Users data received:", userData);
+        setApiStatus(prev => ({ ...prev, users: 'success' }));
+        
+        if (userData && Array.isArray(userData.content)) {
+          console.log("✅ Users count:", userData.content.length);
+          setTotalUsers(userData.content.length);
+        } else if (userData && userData.page && userData.page.totalElements) {
+          console.log("✅ Users total elements:", userData.page.totalElements);
+          setTotalUsers(userData.page.totalElements);
+        } else {
+          console.log("⚠️ Users data structure unexpected:", userData);
+        }
+      } catch (userError) {
+        console.error("❌ Failed to fetch users:", userError);
+        setApiStatus(prev => ({ ...prev, users: 'error' }));
       }
 
       // Fetch movies  
       console.log("🔍 Fetching movies data...");
-      const movieData = await getMovies({
-        page: 0,
-        size: 100,
-        sortBy: "title",
-        sortDirection: "asc",
-      });
-      console.log("🎬 Movies data received:", movieData);
-      if (movieData?.content && Array.isArray(movieData.content)) {
-        console.log("✅ Movies count:", movieData.content.length);
-        setTotalMovies(movieData.content.length);
-        const activeMovieCount = movieData.content.filter((movie: { status: string }) => 
-          movie.status === 'NOW_SHOWING'
-        ).length;
-        console.log("✅ Active movies count:", activeMovieCount);
-        setActiveMovies(activeMovieCount);
+      try {
+        const movieData = await getMovies({
+          page: 0,
+          size: 100,
+          sortBy: "title",
+          sortDirection: "asc",
+        });
+        console.log("🎬 Movies data received:", movieData);
+        setApiStatus(prev => ({ ...prev, movies: 'success' }));
+        
+        if (movieData?.content && Array.isArray(movieData.content)) {
+          console.log("✅ Movies count:", movieData.content.length);
+          setTotalMovies(movieData.content.length);
+          const activeMovieCount = movieData.content.filter((movie: { status: string }) => 
+            movie.status === 'NOW_SHOWING'
+          ).length;
+          console.log("✅ Active movies count:", activeMovieCount);
+          setActiveMovies(activeMovieCount);
 
-        // Calculate revenue and pricing data
-        const moviesWithRevenue = movieData.content.filter((movie: MovieData) => movie.revenue || movie.price);
-        const totalRev = moviesWithRevenue.reduce((sum: number, movie: MovieData) => 
-          sum + (movie.revenue || movie.price || 0), 0
-        );
-        console.log("💰 Total revenue calculated:", totalRev);
-        setTotalRevenue(totalRev);
+          // Calculate revenue and pricing data
+          const moviesWithRevenue = movieData.content.filter((movie: MovieData) => movie.revenue || movie.price);
+          const totalRev = moviesWithRevenue.reduce((sum: number, movie: MovieData) => 
+            sum + (movie.revenue || movie.price || 0), 0
+          );
+          console.log("💰 Total revenue calculated:", totalRev);
+          setTotalRevenue(totalRev);
 
-        const moviesWithPrice = movieData.content.filter((movie: MovieData) => movie.price);
-        const avgPrice = moviesWithPrice.length > 0 
-          ? moviesWithPrice.reduce((sum: number, movie: MovieData) => sum + (movie.price || 0), 0) / moviesWithPrice.length
-          : 0;
-        console.log("💵 Average price calculated:", avgPrice);
-        setAveragePrice(avgPrice);
-      } else {
-        console.log("⚠️ Movies data structure unexpected:", movieData);
+          const moviesWithPrice = movieData.content.filter((movie: MovieData) => movie.price);
+          const avgPrice = moviesWithPrice.length > 0 
+            ? moviesWithPrice.reduce((sum: number, movie: MovieData) => sum + (movie.price || 0), 0) / moviesWithPrice.length
+            : 0;
+          console.log("💵 Average price calculated:", avgPrice);
+          setAveragePrice(avgPrice);
+        } else {
+          console.log("⚠️ Movies data structure unexpected:", movieData);
+        }
+      } catch (movieError) {
+        console.error("❌ Failed to fetch movies:", movieError);
+        setApiStatus(prev => ({ ...prev, movies: 'error' }));
       }
 
       // Fetch rooms
       console.log("🔍 Fetching rooms data...");
-      const roomData = await getAllRooms(0, 100);
-      console.log("🏢 Rooms data received:", roomData);
-      if (roomData?.content && Array.isArray(roomData.content)) {
-        console.log("✅ Rooms count:", roomData.content.length);
-        setTotalRooms(roomData.content.length);
-        const activeRoomCount = roomData.content.filter((room: { isActive: boolean }) => 
-          room.isActive === true
-        ).length;
-        console.log("✅ Active rooms count:", activeRoomCount);
-        setActiveRooms(activeRoomCount);
-      } else {
-        console.log("⚠️ Rooms data structure unexpected:", roomData);
+      try {
+        const roomData = await getAllRooms(0, 100);
+        console.log("🏢 Rooms data received:", roomData);
+        setApiStatus(prev => ({ ...prev, rooms: 'success' }));
+        
+        if (roomData?.content && Array.isArray(roomData.content)) {
+          console.log("✅ Rooms count:", roomData.content.length);
+          setTotalRooms(roomData.content.length);
+          const activeRoomCount = roomData.content.filter((room: { isActive: boolean }) => 
+            room.isActive === true
+          ).length;
+          console.log("✅ Active rooms count:", activeRoomCount);
+          setActiveRooms(activeRoomCount);
+        } else {
+          console.log("⚠️ Rooms data structure unexpected:", roomData);
+        }
+      } catch (roomError) {
+        console.error("❌ Failed to fetch rooms:", roomError);
+        setApiStatus(prev => ({ ...prev, rooms: 'error' }));
       }
 
       // Fetch promotions
       console.log("🔍 Fetching promotions data...");
-      const promotionData = await getAllPromotions({
-        page: 0,
-        size: 100,
-        sortBy: "promotionName",
-        sortDirection: "ASC",
-      });
-      console.log("🎁 Promotions data received:", promotionData);
-      if (promotionData?.content && Array.isArray(promotionData.content)) {
-        console.log("✅ Promotions count:", promotionData.content.length);
-        setTotalPromotions(promotionData.content.length);
-      } else {
-        console.log("⚠️ Promotions data structure unexpected:", promotionData);
+      try {
+        const promotionData = await getAllPromotions({
+          page: 0,
+          size: 100,
+          sortBy: "promotionName",
+          sortDirection: "ASC",
+        });
+        console.log("🎁 Promotions data received:", promotionData);
+        setApiStatus(prev => ({ ...prev, promotions: 'success' }));
+        
+        if (promotionData?.content && Array.isArray(promotionData.content)) {
+          console.log("✅ Promotions count:", promotionData.content.length);
+          setTotalPromotions(promotionData.content.length);
+        } else {
+          console.log("⚠️ Promotions data structure unexpected:", promotionData);
+        }
+      } catch (promotionError) {
+        console.error("❌ Failed to fetch promotions:", promotionError);
+        setApiStatus(prev => ({ ...prev, promotions: 'error' }));
       }
+
+      console.log("🏁 Dashboard data fetch completed!");
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('❌ Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }
@@ -154,8 +192,12 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900">Admin Dashboard</h1>
-          <p className="text-sm text-gray-600 mt-1">Cinema Management System Overview</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">Admin Dashboard</h1>
+              <p className="text-sm text-gray-600 mt-1">Cinema Management System Overview</p>
+            </div>
+          </div>
         </div>
         
         {/* Key Metrics */}

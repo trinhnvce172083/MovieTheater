@@ -27,6 +27,8 @@ export interface FrontendMovie {
   productionCompany?: string;
   budget?: number;
   boxOffice?: number;
+  isAdultContent?: boolean;
+  formattedDuration?: string;
 }
 
 export interface BackendMovie {
@@ -35,7 +37,7 @@ export interface BackendMovie {
   originalTitle?: string;
   description?: string;
   duration: number;
-  genres: string; // Backend expects comma-separated string
+  genre: string; // Backend expects comma-separated string
   director?: string;
   cast?: string;
   language?: string;
@@ -54,6 +56,8 @@ export interface BackendMovie {
   productionCompany?: string;
   budget?: number;
   boxOffice?: number;
+  isAdultContent?: boolean;
+  formattedDuration?: string;
 }
 
 /**
@@ -77,14 +81,14 @@ export const transformToBackendFormat = (frontendData: FrontendMovie): BackendMo
     originalTitle: frontendData.originalTitle || frontendData.title,
     description: frontendData.description || null,
     duration: frontendData.duration,
-    genres: genresValue,
-    director: frontendData.director || null,
-    cast: frontendData.cast || null,
-    language: frontendData.language || "English",
-    country: frontendData.country || "USA",
+    genre: genresValue,
+    director: frontendData.director,
+    cast: frontendData.cast,
+    language: frontendData.language,
+    country: frontendData.country,
     releaseDate: frontendData.releaseDate,
-    endDate: frontendData.endDate || null,
-    rating: frontendData.rating || "PG-13",
+    endDate: frontendData.endDate,
+    rating: frontendData.rating,
     posterUrl: frontendData.posterUrl || null,
     backdropUrl: frontendData.backdropUrl || null,
     trailerUrl: frontendData.trailerUrl || null,
@@ -98,10 +102,8 @@ export const transformToBackendFormat = (frontendData: FrontendMovie): BackendMo
     boxOffice: frontendData.boxOffice || null,
   };
 
-  // Remove null values for create operations
-  return Object.fromEntries(
-    Object.entries(transformed).filter(([, value]) => value !== null)
-  ) as BackendMovie;
+  // Return the raw transformed object without filtering nulls
+  return transformed;
 };
 
 /**
@@ -111,9 +113,12 @@ export const transformToFrontendFormat = (backendData: BackendMovie): FrontendMo
   return {
     ...backendData,
     // Map backend genres to frontend genre field for compatibility
-    genre: backendData.genres,
+    genre: backendData.genre,
     // Keep genres field as well for new components
-    genres: backendData.genres,
+    genres: backendData.genre,
+    // Add missing fields with defaults if not present
+    isAdultContent: backendData.isAdultContent ?? false,
+    formattedDuration: backendData.formattedDuration ?? `${backendData.duration || 0} min`,
   };
 };
 
@@ -173,7 +178,7 @@ export const prepareSmartUpdateData = (movieData: Partial<FrontendMovie>): Recor
       // Handle genre/genres mapping
       if (key === 'genre' || key === 'genres') {
         const genresValue = Array.isArray(value) ? value.join(', ') : value;
-        backendData.genres = genresValue;
+        backendData.genre = genresValue;
       } else {
         backendData[key] = value;
       }

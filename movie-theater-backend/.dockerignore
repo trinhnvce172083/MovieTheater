@@ -1,0 +1,68 @@
+# 🎬 Movie Theater - Docker Ignore File
+# Exclude unnecessary files from Docker build context
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+*.md
+docs/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Maven
+target/
+.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+
+# Logs
+logs/
+*.log
+
+# Docker files (không cần copy vào container)
+Dockerfile
+.dockerignore
+docker/
+docker-compose*.yml
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Temporary files
+tmp/
+temp/
+
+# Application specific
+uploads/
+mysql-data/
+
+# Test files
+src/test/
+
+# Node modules (nếu có frontend)
+node_modules/
+npm-debug.log*
+
+# Build artifacts
+*.jar
+*.war
+*.ear
+
+# Spring Boot
+spring.log
+application-*.properties
+application-*.yml 
