@@ -22,7 +22,7 @@ export class MovieApiService {
         token: string
     ): Promise<ApiResponse<MovieListResponse>> {
         try {
-            const response = await axiosClient.post("/movies/filter", filterRequest, {
+            const response = await axiosClient.post("/api/movies/filter", filterRequest, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = response.data;
@@ -38,7 +38,7 @@ export class MovieApiService {
             return {
                 data: null,
                 success: false,
-                message: (error as any).response?.data?.message || "Failed to fetch movies.",
+                message: (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to fetch movies.",
             };
         }
     }
@@ -56,7 +56,7 @@ export class MovieApiService {
             return {
                 data: null,
                 success: false,
-                message: (error as any).response?.data?.message || "Failed to fetch statistics.",
+                message: (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to fetch statistics.",
             };
         }
     }
@@ -75,7 +75,7 @@ export class MovieApiService {
             return {
                 data: null,
                 success: false,
-                message: (error as any).response?.data?.message || "Failed to create movie.",
+                message: (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to create movie.",
             };
         }
     }
@@ -90,9 +90,9 @@ export class MovieApiService {
                 if (value !== undefined) {
                     // Handle genre/genres mapping for backend compatibility
                     if (key === 'genre' && typeof value === 'string') {
-                        cleanData.genres = value;
+                        cleanData.genre = value;
                     } else if (key === 'genres' && typeof value === 'string') {
-                        cleanData.genres = value;
+                        cleanData.genre = value;
                     } else {
                         cleanData[key] = value;
                     }
@@ -116,7 +116,7 @@ export class MovieApiService {
             return {
                 data: null,
                 success: false,
-                message: (error as any).response?.data?.message || "Failed to update movie.",
+                message: (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to update movie.",
             };
         }
     }
@@ -134,7 +134,7 @@ export class MovieApiService {
             return {
                 data: null,
                 success: false,
-                message: (error as any).response?.data?.message || "Failed to delete movie.",
+                message: (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to delete movie.",
             };
         }
     }
@@ -152,7 +152,7 @@ export class MovieApiService {
             return {
                 data: null,
                 success: false,
-                message: (error as any).response?.data?.message || "Failed to get movie details.",
+                message: (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to get movie details.",
             };
         }
     }

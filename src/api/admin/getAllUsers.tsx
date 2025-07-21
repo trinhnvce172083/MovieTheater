@@ -164,7 +164,13 @@ export const getAllUsers = async (): Promise<UsersResponse> => {
     console.log("✅ API call successful!");
     console.log("getAllUsers API Response:", response.data);
     console.log("Response status:", response.status);
-    return response.data;
+    
+    // Backend returns ApiResponse format: { success: true, data: {...}, message: "..." }
+    // Extract the data field which contains the actual user data
+    const userData = response.data.data || response.data;
+    console.log("Extracted user data:", userData);
+    
+    return userData;
   } catch (error) {
     console.error("❌ API call failed:");
     console.error("Error in getAllUsers:", error);

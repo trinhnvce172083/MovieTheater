@@ -54,7 +54,15 @@ export default function CinemaRoomManagement() {
     try {
       // Fetch all rooms data (we'll handle pagination on frontend due to no filter API)
       const response = await getAllRooms(0, 1000); // Get all rooms
-      setAllRoomData(response.content);
+      console.log('API Response:', response); // Debug log
+      
+      // Check if response has the expected structure
+      if (response && response.content && Array.isArray(response.content)) {
+        setAllRoomData(response.content);
+      } else {
+        console.warn('Unexpected API response structure:', response);
+        setAllRoomData([]);
+      }
       setIsUsingApiData(true);
     } catch (error) {
       console.error("Failed to fetch rooms:", error);
@@ -68,16 +76,28 @@ export default function CinemaRoomManagement() {
 
   // Computed values for filtering and pagination
   const filteredData = useMemo(() => {
+    // Ensure allRoomData is an array before filtering
+    if (!allRoomData || !Array.isArray(allRoomData)) {
+      return [];
+    }
     return filterRooms(allRoomData, filters);
   }, [allRoomData, filters]);
 
   const paginatedData = useMemo(() => {
+    // Ensure filteredData is an array before slicing
+    if (!filteredData || !Array.isArray(filteredData)) {
+      return [];
+    }
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
     return filteredData.slice(startIndex, endIndex);
   }, [filteredData, currentPage, pageSize]);
 
   const statistics = useMemo(() => {
+    // Ensure allRoomData is an array before calculating statistics
+    if (!allRoomData || !Array.isArray(allRoomData)) {
+      return { totalRooms: 0, activeRooms: 0, totalSeats: 0, avgSeats: 0 };
+    }
     return calculateRoomStatistics(allRoomData);
   }, [allRoomData]);
   const createRoomFunction = async (roomData: RoomCreateRequest) => {

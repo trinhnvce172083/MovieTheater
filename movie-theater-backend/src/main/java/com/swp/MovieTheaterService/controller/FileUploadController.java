@@ -1,5 +1,6 @@
 package com.swp.MovieTheaterService.controller;
 
+import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.service.SupabaseStorageService;
 import com.swp.MovieTheaterService.utils.ImageUtils;
 import lombok.RequiredArgsConstructor;
@@ -19,68 +20,109 @@ public class FileUploadController {
     private final SupabaseStorageService supabaseStorageService;
     
     @PostMapping("/upload/{folder}")
-    public ResponseEntity<String> uploadFile(
+    public ResponseEntity<ApiResponse<String>> uploadFile(
             @RequestParam("file") MultipartFile file,
             @PathVariable String folder) {
         
         try {
             String imageUrl = supabaseStorageService.uploadFile(file, folder);
-            return ResponseEntity.ok(imageUrl);
+
+            ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                    .success(true)
+                    .message("Upload file thành công")
+                    .data(imageUrl)
+                    .build();
+
+            return ResponseEntity.ok(apiResponse);
             
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Upload thất bại: " + e.getMessage());
+            ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                    .success(false)
+                    .message("Upload thất bại: " + e.getMessage())
+                    .build();
+
+            return ResponseEntity.badRequest().body(apiResponse);
         }
     }
     
     @DeleteMapping("/delete/{fileName}")
-    public ResponseEntity<String> deleteFile(@PathVariable String fileName) {
+    public ResponseEntity<ApiResponse<String>> deleteFile(@PathVariable String fileName) {
         try {
             boolean isDeleted = supabaseStorageService.deleteFile(fileName);
             if (isDeleted) {
-                return ResponseEntity.ok("Xóa file thành công");
+                ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                        .success(true)
+                        .message("Xóa file thành công")
+                        .data("File đã được xóa")
+                        .build();
+                return ResponseEntity.ok(apiResponse);
             } else {
-                return ResponseEntity.badRequest().body("Không thể xóa file");
+                ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                        .success(false)
+                        .message("Không thể xóa file")
+                        .build();
+                return ResponseEntity.badRequest().body(apiResponse);
             }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Lỗi khi xóa file: " + e.getMessage());
+            ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                    .success(false)
+                    .message("Lỗi khi xóa file: " + e.getMessage())
+                    .build();
+            return ResponseEntity.badRequest().body(apiResponse);
         }
     }
     
     @DeleteMapping("/delete")
-    public ResponseEntity<String> deleteFileByUrl(@RequestParam String url) {
+    public ResponseEntity<ApiResponse<String>> deleteFileByUrl(@RequestParam String url) {
         try {
             boolean isDeleted = supabaseStorageService.deleteFile(url);
             if (isDeleted) {
-                return ResponseEntity.ok("Xóa file thành công");
+                ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                        .success(true)
+                        .message("Xóa file thành công")
+                        .data("File đã được xóa")
+                        .build();
+                return ResponseEntity.ok(apiResponse);
             } else {
-                return ResponseEntity.badRequest().body("Không thể xóa file");
+                ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                        .success(false)
+                        .message("Không thể xóa file")
+                        .build();
+                return ResponseEntity.badRequest().body(apiResponse);
             }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Lỗi khi xóa file: " + e.getMessage());
+            ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                    .success(false)
+                    .message("Lỗi khi xóa file: " + e.getMessage())
+                    .build();
+            return ResponseEntity.badRequest().body(apiResponse);
         }
     }
     
     @PostMapping("/replace/{folder}")
-    public ResponseEntity<Map<String, Object>> replaceFile(
+    public ResponseEntity<ApiResponse<String>> replaceFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "oldUrl", required = false) String oldUrl,
             @PathVariable String folder) {
         
-        Map<String, Object> response = new HashMap<>();
-        
         try {
             String newImageUrl = supabaseStorageService.replaceFile(oldUrl, file, folder);
-            
-            response.put("success", true);
-            response.put("message", "Thay thế file thành công");
-            response.put("url", newImageUrl);
-            
-            return ResponseEntity.ok(response);
+
+            ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                    .success(true)
+                    .message("Thay thế file thành công")
+                    .data(newImageUrl)
+                    .build();
+
+            return ResponseEntity.ok(apiResponse);
             
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Lỗi khi thay thế file: " + e.getMessage());
-            return ResponseEntity.internalServerError().body(response);
+            ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                    .success(false)
+                    .message("Lỗi khi thay thế file: " + e.getMessage())
+                    .build();
+
+            return ResponseEntity.internalServerError().body(apiResponse);
         }
     }
 } 

@@ -1,0 +1,111 @@
+/* Remove green background from active step icon in Ant Design Steps */
+.ant-steps-item-process .ant-steps-icon {
+  background: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+/* MovieFormModal Custom Styles */
+.step-card .ant-card-head {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-bottom: none;
+}
+
+.step-card .ant-card-head-title {
+  color: white !important;
+  font-weight: 600;
+}
+
+.step-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
+}
+
+.step-card .ant-card-body {
+  padding: 24px;
+}
+
+/* Required field indicator
+.ant-form-item-label > label[title]::after {
+  display: none;
+} */
+
+/* Custom required asterisk styling */
+.ant-form-item-label {
+  line-height: 1.4;
+}
+
+.ant-form-item-label .ant-typography {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+Step indicators
+.ant-steps-item-finish .ant-steps-item-icon {
+  background-color: #52c41a !important;
+  border-color: #52c41a !important;
+}
+
+.ant-steps-item-process .ant-steps-item-icon {
+  background-color: #ffffff !important;
+  border-color: #d9d9d9 !important;
+  color: #666 !important;
+}
+
+/* Form enhancements */
+.ant-input-lg, 
+.ant-select-lg .ant-select-selector,
+.ant-picker-large,
+.ant-input-number-lg {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.ant-input-lg:focus,
+.ant-select-lg .ant-select-selector:focus,
+.ant-picker-large:focus,
+.ant-input-number-lg:focus {
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
+  border-color: #40a9ff;
+}
+
+/* Preview section */
+.preview-image {
+  border: 2px dashed #d9d9d9;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.preview-image:hover {
+  border-color: #40a9ff;
+  background: #f0f8ff;
+}
+
+/* Switch enhancements */
+.ant-switch-checked {
+  background-color: #52c41a !important;
+}
+
+/* Summary section */
+.movie-summary {
+  background: linear-gradient(135deg, #f0f8ff 0%, #e6f7ff 100%);
+  border: 1px solid #91d5ff;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .step-card .ant-card-body {
+    padding: 16px;
+  }
+  
+  .ant-modal {
+    margin: 0;
+    max-width: 100vw;
+  }
+}

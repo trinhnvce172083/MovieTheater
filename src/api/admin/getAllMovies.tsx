@@ -2,7 +2,68 @@ import axiosClient from "../axiosClient";
 import { mockMovies } from "../../app/admin/movies/mock/movies";
 import { transformToBackendFormat, prepareSmartUpdateData } from "../../utils/movieDataTransform";
 
-// Simple mock functions to replace the deleted ones
+export interface Movie {
+  movieId: number;
+  title: string;
+  genre?: string;
+  duration: number;
+  formattedDuration?: string;
+  releaseDate: string;
+  rating: string;
+  posterUrl?: string;
+  price?: number;
+  status: string; // NOW_SHOWING, COMING_SOON, ENDED
+  imdbRating?: number;
+  isFeatured?: boolean;
+  isAdultContent?: boolean;
+  // Legacy fields for backward compatibility
+  originalTitle?: string;
+  vietnameseTitle?: string;
+  description?: string;
+  productionCompany?: string;
+  company?: string;
+  genres?: string | string[];
+  versions?: string[];
+  boxOffice?: number;
+  revenue?: number;
+  backdropUrl?: string;
+  trailerUrl?: string;
+  director?: string;
+  cast?: string;
+  language?: string;
+  country?: string;
+  endDate?: string;
+  budget?: number;
+  isActive?: boolean;
+  isNowShowing?: boolean;
+  isComingSoon?: boolean;
+  isEnded?: boolean;
+  scheduleCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface GetMoviesParams {
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
+  search?: string;
+  status?: string;
+  genre?: string;
+}
+
+export interface MoviesResponse {
+  content: Movie[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+}
+
+// Simple mock functions for fallback
 const mockGetMovies = async (params: Record<string, unknown> = {}) => {
   const { page = 0, size = 10, search, status, genre } = params;
   let filteredMovies = [...mockMovies];
@@ -58,75 +119,23 @@ const mockGetMovieById = async (id: string) => {
   return movie || null;
 };
 
-export interface Movie {
-  movieId: number;
-  title: string;
-  genre?: string; // Made optional for backward compatibility
-  duration: number;
-  formattedDuration?: string;
-  releaseDate: string;
-  rating: string;
-  posterUrl?: string;
-  price?: number;
-  status: string; // NOW_SHOWING, COMING_SOON, ENDED
-  imdbRating?: number;
-  isFeatured?: boolean;
-  isAdultContent?: boolean;
-  // Legacy fields for backward compatibility
-  originalTitle?: string;
-  vietnameseTitle?: string;
-  description?: string;
-  productionCompany?: string;
-  company?: string;
-  genres?: string | string[]; // Support both string and array
-  versions?: string[];
-  boxOffice?: number;
-  revenue?: number;
-  backdropUrl?: string;
-  trailerUrl?: string;
-  director?: string;
-  cast?: string;
-  language?: string;
-  country?: string;
-  endDate?: string;
-  budget?: number;
-  isActive?: boolean;
-  isNowShowing?: boolean;
-  isComingSoon?: boolean;
-  isEnded?: boolean;
-  scheduleCount?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface GetMoviesParams {
-  page?: number;
-  size?: number;
-  sortBy?: string;
-  sortDirection?: "asc" | "desc";
-  search?: string;
-  status?: string;
-  genre?: string;
-}
-
-export interface MoviesResponse {
-  content: Movie[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-  first: boolean;
-  last: boolean;
-}
-
 export const getMovies = async (params: GetMoviesParams = {}) => {
   try {
+    console.log('Calling API with params:', params);
     const response = await axiosClient.get("/movies", { params });
-    return response.data;
+    console.log('API Response:', response.data);
+    
+    // Backend returns ApiResponse format: { success: true, data: {...}, message: "..." }
+    if (response.data && response.data.success) {
+      return response.data.data;
+    } else {
+      console.error('API returned unsuccessful response:', response.data);
+      throw new Error(response.data?.message || 'API call unsuccessful');
+    }
   } catch (error) {
-    console.warn("API call failed, falling back to mock data:", error);
-    const mockResult = await mockGetMovies(params as Record<string, unknown>);
-    return mockResult;
+    console.error("API call failed:", error);
+    // Instead of falling back to mock data, re-throw the error so the UI can handle it properly
+    throw error;
   }
 };
 
@@ -138,7 +147,7 @@ export const createMovie = async (movieData: Omit<Movie, 'movieId'>) => {
     console.log('Creating movie with data:', backendData);
     const response = await axiosClient.post("/movies", backendData);
     console.log('Movie created successfully:', response.data);
-    return response.data;
+    return response.data.data || response.data;
   } catch (error) {
     console.warn("API call failed, falling back to mock data:", error);
     try {
@@ -158,7 +167,7 @@ export const updateMovie = async (id: number, movieData: Partial<Movie>) => {
     console.log('Updating movie with data:', backendData);
     const response = await axiosClient.put(`/movies/${id}`, backendData);
     console.log('Movie updated successfully:', response.data);
-    return response.data;
+    return response.data.data || response.data;
   } catch {
     console.warn("API call failed, falling back to mock data");
     return await mockUpdateMovie(id.toString(), movieData);
@@ -181,7 +190,7 @@ export const getMovieById = async (id: number) => {
     console.log('Fetching movie with ID:', id);
     const response = await axiosClient.get(`/movies/${id}`);
     console.log('Movie fetched successfully:', response.data);
-    return response.data;
+    return response.data.data || response.data;
   } catch {
     console.warn("API call failed, falling back to mock data");
     return await mockGetMovieById(id.toString());
@@ -193,7 +202,7 @@ export const getMovieStatistics = async () => {
     console.log('Fetching movie statistics');
     const response = await axiosClient.get("/movies/statistics");
     console.log('Statistics fetched successfully:', response.data);
-    return response.data;
+    return response.data.data || response.data;
   } catch {
     console.warn("API call failed, returning default statistics");
     return {
@@ -204,8 +213,6 @@ export const getMovieStatistics = async () => {
     };
   }
 };
-
-// Additional API functions for enhanced movie management
 
 export const uploadMoviePoster = async (id: number, file: File) => {
   try {
@@ -226,82 +233,6 @@ export const uploadMoviePoster = async (id: number, file: File) => {
   }
 };
 
-export const uploadMovieBackdrop = async (id: number, file: File) => {
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    console.log('Uploading backdrop for movie ID:', id);
-    const response = await axiosClient.post(`/movies/${id}/backdrop`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    console.log('Backdrop uploaded successfully:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Failed to upload backdrop:', error);
-    throw new Error('Failed to upload backdrop');
-  }
-};
-
-export const createMovieWithImages = async (
-  movieData: Omit<Movie, 'movieId'>, 
-  posterFile?: File, 
-  backdropFile?: File
-) => {
-  try {
-    const formData = new FormData();
-    formData.append('movieData', JSON.stringify({
-      title: movieData.title,
-      originalTitle: movieData.originalTitle || movieData.title,
-      description: movieData.description || null,
-      duration: movieData.duration,
-      genres: typeof movieData.genres === 'string' ? movieData.genres : 
-              Array.isArray(movieData.genres) ? (movieData.genres as string[]).join(', ') : 
-              movieData.genre || null,
-      director: movieData.director || null,
-      cast: movieData.cast || null,
-      language: movieData.language || "English",
-      country: movieData.country || "USA",
-      releaseDate: movieData.releaseDate,
-      endDate: movieData.endDate || null,
-      rating: movieData.rating || "PG-13",
-      posterUrl: movieData.posterUrl || null,
-      backdropUrl: movieData.backdropUrl || null,
-      trailerUrl: movieData.trailerUrl || null,
-      isActive: movieData.isActive !== undefined ? movieData.isActive : true,
-      isFeatured: movieData.isFeatured !== undefined ? movieData.isFeatured : false,
-      price: movieData.price || 0,
-      status: movieData.status || "COMING_SOON",
-      imdbRating: movieData.imdbRating || null,
-      productionCompany: movieData.productionCompany || null,
-      budget: movieData.budget || null,
-      boxOffice: movieData.boxOffice || null,
-    }));
-    
-    if (posterFile) {
-      formData.append('poster', posterFile);
-    }
-    if (backdropFile) {
-      formData.append('backdrop', backdropFile);
-    }
-    
-    console.log('Creating movie with images');
-    const response = await axiosClient.post('/movies/with-images', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    console.log('Movie created with images successfully:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Failed to create movie with images:', error);
-    // Fallback to regular movie creation
-    return await createMovie(movieData);
-  }
-};
-
 export const searchMovies = async (keyword: string, page = 0, size = 10) => {
   try {
     console.log('Searching movies with keyword:', keyword);
@@ -309,10 +240,9 @@ export const searchMovies = async (keyword: string, page = 0, size = 10) => {
       params: { keyword, page, size }
     });
     console.log('Search results:', response.data);
-    return response.data;
+    return response.data.data || response.data;
   } catch {
     console.warn("Search API failed, falling back to mock data");
-    // Return empty results for now
     return {
       content: [],
       totalElements: 0,
@@ -325,61 +255,38 @@ export const searchMovies = async (keyword: string, page = 0, size = 10) => {
   }
 };
 
-export const getMoviesByStatus = async (status: string) => {
+export const getNowShowingMovies = async () => {
   try {
-    console.log('Fetching movies by status:', status);
-    const endpoint = status === 'NOW_SHOWING' ? '/movies/now-showing' : 
-                    status === 'COMING_SOON' ? '/movies/coming-soon' : 
-                    `/movies?status=${status}`;
-    const response = await axiosClient.get(endpoint);
-    console.log('Movies by status fetched:', response.data);
-    return response.data;
-  } catch {
-    console.warn("API call failed, falling back to mock data");
-    return [];
-  }
-};
-
-export const autoUpdateMovieStatus = async () => {
-  try {
-    console.log('Triggering auto update movie status');
-    const response = await axiosClient.post('/movies/auto-update-status');
-    console.log('Auto update completed:', response.data);
-    return response.data;
+    console.log('Fetching now showing movies from API');
+    const response = await axiosClient.get('/movies/now-showing');
+    console.log('Now showing movies API response:', response.data);
+    
+    if (response.data && response.data.success) {
+      return response.data.data;
+    } else {
+      console.error('API returned unsuccessful response:', response.data);
+      throw new Error(response.data?.message || 'Failed to fetch now showing movies');
+    }
   } catch (error) {
-    console.error('Failed to auto update movie status:', error);
-    throw new Error('Failed to auto update movie status');
+    console.error("Failed to fetch now showing movies:", error);
+    throw error;
   }
 };
 
-export const getStatusUpdateStats = async () => {
+export const getComingSoonMovies = async () => {
   try {
-    console.log('Fetching status update statistics');
-    const response = await axiosClient.get('/movies/status-update-stats');
-    console.log('Status update stats:', response.data);
-    return response.data;
+    console.log('Fetching coming soon movies from API');
+    const response = await axiosClient.get('/movies/coming-soon');
+    console.log('Coming soon movies API response:', response.data);
+    
+    if (response.data && response.data.success) {
+      return response.data.data;
+    } else {
+      console.error('API returned unsuccessful response:', response.data);
+      throw new Error(response.data?.message || 'Failed to fetch coming soon movies');
+    }
   } catch (error) {
-    console.error('Failed to fetch status update stats:', error);
-    return {
-      totalUpdates: 0,
-      lastUpdateTime: null,
-      updatedMoviesCount: 0,
-    };
-  }
-};
-
-export const getMovieStatusOptions = async () => {
-  try {
-    console.log('Fetching movie status options');
-    const response = await axiosClient.get('/movies/status-options');
-    console.log('Status options:', response.data);
-    return response.data;
-  } catch {
-    console.warn("API call failed, returning default status options");
-    return {
-      NOW_SHOWING: { code: 'NOW_SHOWING', displayName: 'Now Showing', description: 'Currently showing in theaters' },
-      COMING_SOON: { code: 'COMING_SOON', displayName: 'Coming Soon', description: 'Will be released soon' },
-      ENDED: { code: 'ENDED', displayName: 'Ended', description: 'No longer showing' },
-    };
+    console.error("Failed to fetch coming soon movies:", error);
+    throw error;
   }
 };

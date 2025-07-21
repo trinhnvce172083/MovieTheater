@@ -2,6 +2,7 @@ package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.analytics.DashboardSummaryResponse;
 import com.swp.MovieTheaterService.dto.analytics.ReportRequest;
+import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.service.AnalyticsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -42,7 +43,7 @@ public class AnalyticsController {
     @Operation(summary = "Get dashboard summary", description = "Get overall dashboard metrics and statistics")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<DashboardSummaryResponse> getDashboardSummary(
+    public ResponseEntity<ApiResponse<DashboardSummaryResponse>> getDashboardSummary(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             Authentication authentication) {
@@ -55,20 +56,33 @@ public class AnalyticsController {
         } else {
             dashboard = analyticsService.getDashboardSummary();
         }
-        
-        return ResponseEntity.ok(dashboard);
+
+        ApiResponse<DashboardSummaryResponse> apiResponse = ApiResponse.<DashboardSummaryResponse>builder()
+                .success(true)
+                .message("Lấy thống kê tổng quan thành công")
+                .data(dashboard)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/dashboard/real-time")
     @Operation(summary = "Get real-time stats", description = "Get current real-time statistics")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Map<String, Object>> getRealTimeStats() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getRealTimeStats() {
         
         log.info("Getting real-time statistics");
         
         Map<String, Object> stats = analyticsService.getRealTimeStats();
-        return ResponseEntity.ok(stats);
+
+        ApiResponse<Map<String, Object>> apiResponse = ApiResponse.<Map<String, Object>>builder()
+                .success(true)
+                .message("Lấy thống kê thời gian thực thành công")
+                .data(stats)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     // ==================== REVENUE ANALYTICS ====================
@@ -77,7 +91,7 @@ public class AnalyticsController {
     @Operation(summary = "Get revenue analytics", description = "Get detailed revenue analysis")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Map<String, Object>> getRevenueAnalytics(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getRevenueAnalytics(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "DAY") String groupBy,
@@ -86,7 +100,14 @@ public class AnalyticsController {
         log.info("Getting revenue analytics from {} to {} grouped by {}", startDate, endDate, groupBy);
         
         Map<String, Object> analytics = analyticsService.getRevenueAnalytics(startDate, endDate, groupBy);
-        return ResponseEntity.ok(analytics);
+
+        ApiResponse<Map<String, Object>> apiResponse = ApiResponse.<Map<String, Object>>builder()
+                .success(true)
+                .message("Lấy phân tích doanh thu thành công")
+                .data(analytics)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     // ==================== BOOKING ANALYTICS ====================

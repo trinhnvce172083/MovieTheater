@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Card, Table, Button, Typography, Alert, Pagination, message, Spin } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
+import { useRouter } from 'next/navigation';
 
 // Local imports
 import { useMovieManagement } from './hooks/useMovieManagement';
@@ -19,6 +20,7 @@ const { Text } = Typography;
 export default function AdminMovieManagement() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMovie, setEditingMovie] = useState<MovieData | null>(null);
+  const router = useRouter();
 
   // Use custom hook for all movie management logic
   const {
@@ -49,9 +51,8 @@ export default function AdminMovieManagement() {
     setIsModalVisible(true);
   };
 
-  const handleViewDetail = () => {
-    // Temporarily disabled - will implement later
-    message.info('Movie detail feature will be updated later');
+  const handleViewDetail = (record: MovieData) => {
+    router.push(`/admin/movies/MovieDetail?id=${record.id}`);
   };
 
   const handleModalSubmit = async (movieData: MovieCreateRequest) => {

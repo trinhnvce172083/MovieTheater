@@ -1,6 +1,7 @@
 package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.schedule.*;
+import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.service.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -43,33 +44,54 @@ public class ScheduleController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create new schedule", description = "Create a new movie schedule (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<ScheduleResponse> createSchedule(@RequestBody ScheduleCreateRequest request) {
+    public ResponseEntity<ApiResponse<ScheduleResponse>> createSchedule(@RequestBody ScheduleCreateRequest request) {
         log.info("Creating new schedule for movie: {}", request.getMovieId());
         
         ScheduleResponse response = scheduleService.createSchedule(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        ApiResponse<ScheduleResponse> apiResponse = ApiResponse.<ScheduleResponse>builder()
+                .success(true)
+                .message("Tạo lịch chiếu thành công")
+                .data(response)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update schedule", description = "Update an existing schedule (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<ScheduleResponse> updateSchedule(
+    public ResponseEntity<ApiResponse<ScheduleResponse>> updateSchedule(
             @PathVariable Long id,
             @RequestBody ScheduleUpdateRequest request) {
         log.info("Updating schedule with ID: {}", id);
         
         ScheduleResponse response = scheduleService.updateSchedule(id, request);
-        return ResponseEntity.ok(response);
+
+        ApiResponse<ScheduleResponse> apiResponse = ApiResponse.<ScheduleResponse>builder()
+                .success(true)
+                .message("Cập nhật lịch chiếu thành công")
+                .data(response)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get schedule by ID", description = "Retrieve schedule details by ID")
-    public ResponseEntity<ScheduleResponse> getSchedule(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<ScheduleResponse>> getSchedule(@PathVariable Long id) {
         log.info("Fetching schedule with ID: {}", id);
         
         ScheduleResponse response = scheduleService.getScheduleById(id);
-        return ResponseEntity.ok(response);
+
+        ApiResponse<ScheduleResponse> apiResponse = ApiResponse.<ScheduleResponse>builder()
+                .success(true)
+                .message("Lấy thông tin lịch chiếu thành công")
+                .data(response)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @DeleteMapping("/{id}")
@@ -85,7 +107,7 @@ public class ScheduleController {
 
     @GetMapping
     @Operation(summary = "Get all schedules", description = "Retrieve all schedules with pagination")
-    public ResponseEntity<Page<ScheduleSummaryResponse>> getAllSchedules(
+    public ResponseEntity<ApiResponse<Page<ScheduleSummaryResponse>>> getAllSchedules(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "showDate") String sortBy,
@@ -97,12 +119,19 @@ public class ScheduleController {
         Pageable pageable = PageRequest.of(page, size, sort);
         
         Page<ScheduleSummaryResponse> schedules = scheduleService.getAllSchedulesSummary(pageable);
-        return ResponseEntity.ok(schedules);
+
+        ApiResponse<Page<ScheduleSummaryResponse>> apiResponse = ApiResponse.<Page<ScheduleSummaryResponse>>builder()
+                .success(true)
+                .message("Lấy danh sách lịch chiếu thành công")
+                .data(schedules)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/movie/{movieId}")
     @Operation(summary = "Get schedules by movie", description = "Retrieve schedules for a specific movie")
-    public ResponseEntity<List<ScheduleSummaryResponse>> getSchedulesByMovie(
+    public ResponseEntity<ApiResponse<List<ScheduleSummaryResponse>>> getSchedulesByMovie(
             @PathVariable Long movieId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
@@ -110,12 +139,19 @@ public class ScheduleController {
         log.info("Fetching schedules for movie ID: {}", movieId);
         
         List<ScheduleSummaryResponse> schedules = scheduleService.getSchedulesByMovieId(movieId, fromDate, toDate);
-        return ResponseEntity.ok(schedules);
+
+        ApiResponse<List<ScheduleSummaryResponse>> apiResponse = ApiResponse.<List<ScheduleSummaryResponse>>builder()
+                .success(true)
+                .message("Lấy lịch chiếu theo phim thành công")
+                .data(schedules)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/room/{roomId}")
     @Operation(summary = "Get schedules by room", description = "Retrieve schedules for a specific room")
-    public ResponseEntity<List<ScheduleSummaryResponse>> getSchedulesByRoom(
+    public ResponseEntity<ApiResponse<List<ScheduleSummaryResponse>>> getSchedulesByRoom(
             @PathVariable Long roomId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
@@ -123,23 +159,37 @@ public class ScheduleController {
         log.info("Fetching schedules for room ID: {}", roomId);
         
         List<ScheduleSummaryResponse> schedules = scheduleService.getSchedulesByRoomId(roomId, fromDate, toDate);
-        return ResponseEntity.ok(schedules);
+
+        ApiResponse<List<ScheduleSummaryResponse>> apiResponse = ApiResponse.<List<ScheduleSummaryResponse>>builder()
+                .success(true)
+                .message("Lấy lịch chiếu theo phòng thành công")
+                .data(schedules)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/date/{date}")
     @Operation(summary = "Get schedules by date", description = "Retrieve schedules for a specific date")
-    public ResponseEntity<List<ScheduleSummaryResponse>> getSchedulesByDate(
+    public ResponseEntity<ApiResponse<List<ScheduleSummaryResponse>>> getSchedulesByDate(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         
         log.info("Fetching schedules for date: {}", date);
         
         List<ScheduleSummaryResponse> schedules = scheduleService.getSchedulesByDateSummary(date);
-        return ResponseEntity.ok(schedules);
+
+        ApiResponse<List<ScheduleSummaryResponse>> apiResponse = ApiResponse.<List<ScheduleSummaryResponse>>builder()
+                .success(true)
+                .message("Lấy lịch chiếu theo ngày thành công")
+                .data(schedules)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/date-range")
     @Operation(summary = "Get schedules by date range", description = "Retrieve schedules within a date range")
-    public ResponseEntity<Page<ScheduleSummaryResponse>> getSchedulesByDateRange(
+    public ResponseEntity<ApiResponse<Page<ScheduleSummaryResponse>>> getSchedulesByDateRange(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @RequestParam(defaultValue = "0") int page,
@@ -149,50 +199,85 @@ public class ScheduleController {
         
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "showDate", "showTime"));
         Page<ScheduleSummaryResponse> schedules = scheduleService.getSchedulesByDateRangeSummary(fromDate, toDate, pageable);
-        return ResponseEntity.ok(schedules);
+
+        ApiResponse<Page<ScheduleSummaryResponse>> apiResponse = ApiResponse.<Page<ScheduleSummaryResponse>>builder()
+                .success(true)
+                .message("Lấy lịch chiếu theo khoảng thời gian thành công")
+                .data(schedules)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/available-seats/{scheduleId}")
     @Operation(summary = "Get available seats", description = "Get available seats for a specific schedule")
-    public ResponseEntity<SeatAvailabilityResponse> getAvailableSeats(@PathVariable Long scheduleId) {
+    public ResponseEntity<ApiResponse<SeatAvailabilityResponse>> getAvailableSeats(@PathVariable Long scheduleId) {
         log.info("Fetching available seats for schedule ID: {}", scheduleId);
         
         SeatAvailabilityResponse response = scheduleService.getAvailableSeats(scheduleId);
-        return ResponseEntity.ok(response);
+
+        ApiResponse<SeatAvailabilityResponse> apiResponse = ApiResponse.<SeatAvailabilityResponse>builder()
+                .success(true)
+                .message("Lấy thông tin ghế có sẵn thành công")
+                .data(response)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/upcoming")
     @Operation(summary = "Get upcoming schedules", description = "Retrieve upcoming movie schedules")
-    public ResponseEntity<List<ScheduleSummaryResponse>> getUpcomingSchedules(
+    public ResponseEntity<ApiResponse<List<ScheduleSummaryResponse>>> getUpcomingSchedules(
             @RequestParam(defaultValue = "7") int days,
             @RequestParam(defaultValue = "10") int limit) {
         
         log.info("Fetching upcoming schedules for next {} days, limit: {}", days, limit);
         
         List<ScheduleSummaryResponse> schedules = scheduleService.getUpcomingSchedules(days, limit);
-        return ResponseEntity.ok(schedules);
+
+        ApiResponse<List<ScheduleSummaryResponse>> apiResponse = ApiResponse.<List<ScheduleSummaryResponse>>builder()
+                .success(true)
+                .message("Lấy lịch chiếu sắp tới thành công")
+                .data(schedules)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/popular-times")
     @Operation(summary = "Get popular showtimes", description = "Get most popular showtimes based on bookings")
-    public ResponseEntity<List<PopularShowtimeResponse>> getPopularShowtimes() {
+    public ResponseEntity<ApiResponse<List<PopularShowtimeResponse>>> getPopularShowtimes() {
         log.info("Fetching popular showtimes");
         
         List<PopularShowtimeResponse> showtimes = scheduleService.getPopularShowtimes();
-        return ResponseEntity.ok(showtimes);
+
+        ApiResponse<List<PopularShowtimeResponse>> apiResponse = ApiResponse.<List<PopularShowtimeResponse>>builder()
+                .success(true)
+                .message("Lấy giờ chiếu phổ biến thành công")
+                .data(showtimes)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/statistics")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get schedule statistics", description = "Get schedule statistics (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<ScheduleService.ScheduleStatistics> getScheduleStatistics(
+    public ResponseEntity<ApiResponse<ScheduleService.ScheduleStatistics>> getScheduleStatistics(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
         
         log.info("Fetching schedule statistics from {} to {}", fromDate, toDate);
         
         ScheduleService.ScheduleStatistics statistics = scheduleService.getScheduleStatistics(fromDate, toDate);
-        return ResponseEntity.ok(statistics);
+
+        ApiResponse<ScheduleService.ScheduleStatistics> apiResponse = ApiResponse.<ScheduleService.ScheduleStatistics>builder()
+                .success(true)
+                .message("Lấy thống kê lịch chiếu thành công")
+                .data(statistics)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 } 

@@ -12,6 +12,7 @@ import com.swp.MovieTheaterService.entity.Promotion;
 import com.swp.MovieTheaterService.repository.PromotionRepository;
 import com.swp.MovieTheaterService.service.PromotionService;
 import com.swp.MovieTheaterService.exception.AppException;
+import com.swp.MovieTheaterService.utils.ValidationUtils;
 import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.dto.promotion.PromotionCreateRequest;
 import com.swp.MovieTheaterService.enums.DiscountType;
@@ -30,7 +31,10 @@ public class PromotionServiceImpl implements PromotionService {
     public Promotion createPromotion(PromotionCreateRequest request) {
         log.info("Creating new promotion: {}", request.getCode());
 
-        // Validate promotion code uniqueness
+        // DTO đã validate rồi, chỉ cần business logic validation
+        log.info("Validating promotion creation for code: {}", request.getCode());
+
+        // Validate promotion code uniqueness (business logic validation)
         if (promotionRepository.existsByPromotionCode(request.getCode())) {
             throw new AppException(ErrorCode.PROMOTION_CODE_EXISTS);
         }

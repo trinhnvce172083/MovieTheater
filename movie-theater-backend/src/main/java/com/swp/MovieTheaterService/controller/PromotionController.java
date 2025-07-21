@@ -51,33 +51,54 @@ public class PromotionController {
     // @PreAuthorize("hasRole('ADMIN')") // TEMPORARILY DISABLED FOR DEBUGGING
     @Operation(summary = "Create new promotion", description = "Create a new promotion (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Promotion> createPromotion(@RequestBody PromotionCreateRequest request) {
+    public ResponseEntity<ApiResponse<Promotion>> createPromotion(@RequestBody PromotionCreateRequest request) {
         log.info("Creating new promotion: {}", request.getName());
 
         Promotion promotion = promotionService.createPromotion(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(promotion);
+
+        ApiResponse<Promotion> apiResponse = ApiResponse.<Promotion>builder()
+                .success(true)
+                .message("Tạo khuyến mãi thành công")
+                .data(promotion)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
     }
 
     @PutMapping("/{id}")
     // @PreAuthorize("hasRole('ADMIN')") // TEMPORARILY DISABLED FOR DEBUGGING
     @Operation(summary = "Update promotion", description = "Update an existing promotion (Admin only)")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Promotion> updatePromotion(
+    public ResponseEntity<ApiResponse<Promotion>> updatePromotion(
             @PathVariable Long id,
             @RequestBody PromotionCreateRequest request) {
         log.info("Updating promotion with ID: {}", id);
 
         Promotion promotion = promotionService.updatePromotion(id, request);
-        return ResponseEntity.ok(promotion);
+
+        ApiResponse<Promotion> apiResponse = ApiResponse.<Promotion>builder()
+                .success(true)
+                .message("Cập nhật khuyến mãi thành công")
+                .data(promotion)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get promotion by ID", description = "Retrieve promotion details by ID")
-    public ResponseEntity<Promotion> getPromotion(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Promotion>> getPromotion(@PathVariable Long id) {
         log.info("Fetching promotion with ID: {}", id);
 
         Promotion promotion = promotionService.getPromotionById(id);
-        return ResponseEntity.ok(promotion);
+
+        ApiResponse<Promotion> apiResponse = ApiResponse.<Promotion>builder()
+                .success(true)
+                .message("Lấy thông tin khuyến mãi thành công")
+                .data(promotion)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @DeleteMapping("/{id}")
@@ -93,7 +114,7 @@ public class PromotionController {
 
     @GetMapping
     @Operation(summary = "Get all active promotions", description = "Retrieve all active promotions with pagination")
-    public ResponseEntity<Page<Promotion>> getAllPromotions(
+    public ResponseEntity<ApiResponse<Page<Promotion>>> getAllPromotions(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -105,25 +126,46 @@ public class PromotionController {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<Promotion> promotions = promotionService.getActivePromotions(pageable);
-        return ResponseEntity.ok(promotions);
+
+        ApiResponse<Page<Promotion>> apiResponse = ApiResponse.<Page<Promotion>>builder()
+                .success(true)
+                .message("Lấy danh sách khuyến mãi thành công")
+                .data(promotions)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/active")
     @Operation(summary = "Get active promotions", description = "Retrieve all currently active promotions")
-    public ResponseEntity<List<Promotion>> getActivePromotions() {
+    public ResponseEntity<ApiResponse<List<Promotion>>> getActivePromotions() {
         log.info("Fetching active promotions");
 
         List<Promotion> promotions = promotionService.getAllActivePromotions();
-        return ResponseEntity.ok(promotions);
+
+        ApiResponse<List<Promotion>> apiResponse = ApiResponse.<List<Promotion>>builder()
+                .success(true)
+                .message("Lấy danh sách khuyến mãi đang hoạt động thành công")
+                .data(promotions)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/code/{code}")
     @Operation(summary = "Get promotion by code", description = "Retrieve promotion details by promotion code")
-    public ResponseEntity<Promotion> getPromotionByCode(@PathVariable String code) {
+    public ResponseEntity<ApiResponse<Promotion>> getPromotionByCode(@PathVariable String code) {
         log.info("Fetching promotion with code: {}", code);
 
         Promotion promotion = promotionService.getPromotionByCode(code);
-        return ResponseEntity.ok(promotion);
+
+        ApiResponse<Promotion> apiResponse = ApiResponse.<Promotion>builder()
+                .success(true)
+                .message("Lấy thông tin khuyến mãi theo mã thành công")
+                .data(promotion)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @PostMapping("/validate")

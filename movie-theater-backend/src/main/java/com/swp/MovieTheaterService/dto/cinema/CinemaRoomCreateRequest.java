@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 public class CinemaRoomCreateRequest {
 
     @NotBlank(message = "Tên phòng chiếu không được để trống")
-    @Size(max = 50, message = "Tên phòng chiếu không được vượt quá 50 ký tự")
+    @Size(min = 2, max = 50, message = "Tên phòng chiếu phải từ 2-50 ký tự")
     @Pattern(regexp = "^[A-Za-z0-9\\s-_]+$", message = "Tên phòng chiếu chỉ được chứa chữ cái, số, dấu cách, dấu gạch ngang và gạch dưới")
     private String cinemaRoomName;
 

@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { message } from 'antd';
-import { MovieData, MovieStatistics, MovieCreateRequest, MovieUpdateRequest, CurrentUser, MovieFilters, PaginationState } from '../types';
+import { MovieData, MovieStatistics, CurrentUser, MovieFilters, PaginationState } from '../types';
+import { MovieCreateRequest, MovieUpdateRequest } from '@/types/Admin/movie';
+import { getMovies, getMovieStatistics } from '@/api/admin/getAllMovies';
 import { MovieApiService } from '@/api/admin/movie-api';
 import { useAuth } from '@/hooks/useAuth';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -103,35 +105,80 @@ export const useMovieManagement = () => {
         return;
       }
 
-      // Token exists - use API
+      // Token exists - use simple getAllMovies API
       setShowAuthWarning(false);
+      console.log('Fetching movies from API with token:', actualToken ? 'present' : 'missing');
       
-      // Use the POST /api/movies/filter endpoint
-      const filterParams = {
-        page: 0,
-        size: 200, // Get large size for client-side pagination
-        keyword: debouncedSearchTerm || undefined,
-        status: filters.filterStatus || undefined,
-        genres: filters.filterGenre ? [filters.filterGenre] : undefined,
-        sortBy: 'movieId',
-        sortDirection: 'asc'
-      };
-      
-      const response = await MovieApiService.getMoviesWithFilter(filterParams, actualToken);
-
-      if (response.success && response.data) {
-        // Transform Movie[] to MovieData[]
-        const transformedData: MovieData[] = response.data.movies.map((movie: Movie) => 
-          transformApiMovieToMovieData(movie as any)
-        );
-        setMovieData(transformedData);
-        setIsUsingApiData(true);
-      } else {
-        message.error(response.message || 'Unable to load movie list.');
+      try {
+        // Use the simpler getMovies endpoint first
+        const movieResponse = await getMovies({
+          page: 0,
+          size: 100,
+          sortBy: "title",
+          sortDirection: "asc",
+        });
+        console.log('API Response:', movieResponse);
+        
+        if (movieResponse && movieResponse.content && Array.isArray(movieResponse.content)) {
+          // Transform Movie[] to MovieData[] 
+          let transformedData: MovieData[] = [];
+          
+          try {
+            transformedData = movieResponse.content.map((movie: Movie) => {
+              // Ensure movie has required properties before transformation
+              if (!movie || typeof movie !== 'object') {
+                console.warn('Invalid movie object:', movie);
+                return null;
+              }
+              
+              return transformApiMovieToMovieData({ ...movie, isActive: true });
+            }).filter(Boolean) as MovieData[]; // Remove null values
+          } catch (transformError) {
+            console.error('Error transforming movie data:', transformError);
+            setMovieData([]);
+            setIsUsingApiData(false);
+            return;
+          }
+          
+          // Apply client-side filtering with safety checks
+          if (debouncedSearchTerm && transformedData.length > 0) {
+            transformedData = transformedData.filter(movie => 
+              movie && movie.title && movie.genre &&
+              (movie.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+               movie.genre.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
+            );
+          }
+          
+          if (filters.filterStatus && transformedData.length > 0) {
+            transformedData = transformedData.filter(movie => 
+              movie && movie.status === filters.filterStatus
+            );
+          }
+          
+          if (filters.filterGenre && transformedData.length > 0) {
+            transformedData = transformedData.filter(movie => 
+              movie && movie.genre && 
+              movie.genre.toLowerCase().includes(filters.filterGenre.toLowerCase())
+            );
+          }
+          
+          setMovieData(transformedData);
+          setIsUsingApiData(true);
+          console.log('Successfully loaded movies from API:', transformedData.length);
+        } else {
+          console.error('API returned unexpected response structure:', movieResponse);
+          message.error('Unable to load movie list - unexpected response format.');
+          setMovieData(mockMovies);
+          setIsUsingApiData(false);
+        }
+      } catch (apiError) {
+        console.error('API call failed:', apiError);
+        message.error('An error occurred while loading the movie list.');
         setMovieData(mockMovies);
         setIsUsingApiData(false);
       }
-    } catch {
+    } catch (error) {
+      console.error('Error in fetchMovies:', error);
       message.error('An error occurred while loading the movie list.');
       setMovieData(mockMovies);
       setIsUsingApiData(false);
@@ -148,9 +195,9 @@ export const useMovieManagement = () => {
     }
     
     try {
-      const response = await MovieApiService.getMovieStatistics(actualToken);
-      if (response.success && response.data) {
-        setStatistics(response.data);
+      const statsResponse = await getMovieStatistics();
+      if (statsResponse) {
+        setStatistics(statsResponse);
       } else {
         setStatistics(mockMovieStatistics);
       }
@@ -205,13 +252,28 @@ export const useMovieManagement = () => {
     setLoading(true);
     try {
       // Transform to match backend expected format
-      const backendData = {
-        ...movieCreateData,
-        genre: movieCreateData.genre, // Backend expects 'genre', frontend uses 'genre'
-        isAdultContent: false // Add default value for required backend field
-      };
+      const backendData: MovieCreateRequest = {
+  title: movieCreateData.title,
+  description: movieCreateData.description     || '',
+  duration: movieCreateData.duration,
+  releaseDate: movieCreateData.releaseDate,
+  genre: movieCreateData.genre,
+  // đưa director thành chuỗi rỗng nếu undefined
+  director: movieCreateData.director           || '',
+  cast: movieCreateData.cast,
+  language: movieCreateData.language,
+  country: movieCreateData.country,
+  rating: movieCreateData.rating,
+  price: movieCreateData.price,
+  status: movieCreateData.status,
+  isFeatured: movieCreateData.isFeatured,
+  isAdultContent: false,
+  // thêm trailerUrl và endDate
+  trailerUrl: movieCreateData.trailerUrl       || '',
+  endDate: movieCreateData.endDate             || null,
+};
       
-      const response = await MovieApiService.createMovie(backendData as any, actualToken);
+      const response = await MovieApiService.createMovie(backendData, actualToken);
       if (response.success) {
         message.success('Movie created successfully!');
         fetchMovies();
@@ -234,7 +296,7 @@ export const useMovieManagement = () => {
     
     setLoading(true);
     try {
-      const response = await MovieApiService.updateMovie(movieId, movieUpdateData as any, actualToken);
+      const response = await MovieApiService.updateMovie(movieId, movieUpdateData, actualToken);
       if (response.success) {
         message.success('Movie updated successfully!');
         fetchMovies();
@@ -283,7 +345,7 @@ export const useMovieManagement = () => {
       
       console.log(`🌟 Toggling feature for movie ${movieId}:`, updateData);
       
-      const response = await MovieApiService.updateMovie(movieId, updateData as any, actualToken);
+      const response = await MovieApiService.updateMovie(movieId, updateData as MovieUpdateRequest, actualToken);
       if (response.success) {
         message.success(`${!isFeatured ? 'Movie featured' : 'Movie unfeatured'} successfully!`);
         fetchMovies();

@@ -30,8 +30,8 @@ export const createMovieColumns = (
     key: 'id',
     width: 60,
     sorter: (a: MovieData, b: MovieData) => a.id - b.id,
-    render: (id: number) => (
-      <span className="font-mono text-gray-600">#{id}</span>
+    render: (_text: unknown, record: MovieData) => (
+      <span className="font-mono text-gray-600">#{record.id}</span>
     ),
   },
   {

@@ -168,6 +168,18 @@ public class BookingMapper {
                     .seatCount(seats.size());
         }
 
+        // Concession information
+        if (booking.getBookingConcessions() != null && !booking.getBookingConcessions().isEmpty()) {
+            List<BookingResponse.ConcessionInfo> concessions = booking.getBookingConcessions().stream()
+                    .map(this::toConcessionInfo)
+                    .collect(Collectors.toList());
+            builder.concessions(concessions)
+                    .concessionCount(concessions.size())
+                    .concessionAmount(concessions.stream()
+                            .mapToDouble(concession -> concession.getTotalPrice())
+                            .sum());
+        }
+
         // Computed fields
         BookingResponse response = builder.build();
         setComputedFields(response, booking);
@@ -193,6 +205,27 @@ public class BookingMapper {
                 .seatPrice(bookingSeat.getSeatPrice())
                 .isVIP(seat.isVIP())
                 .isCouple(seat.isCouple())
+                .build();
+    }
+
+    /**
+     * Convert BookingConcession to ConcessionInfo
+     */
+    private BookingResponse.ConcessionInfo toConcessionInfo(BookingConcession bookingConcession) {
+        if (bookingConcession == null || bookingConcession.getConcession() == null) {
+            return null;
+        }
+
+        Concession concession = bookingConcession.getConcession();
+        return BookingResponse.ConcessionInfo.builder()
+                .concessionId(concession.getConcessionId())
+                .concessionName(concession.getName())
+                .description(concession.getDescription())
+                .category(concession.getCategory().name())
+                .price(concession.getPrice().doubleValue())
+                .quantity(bookingConcession.getQuantity())
+                .totalPrice(bookingConcession.getTotalPrice().doubleValue())
+                .imageUrl(concession.getImageUrl())
                 .build();
     }
 

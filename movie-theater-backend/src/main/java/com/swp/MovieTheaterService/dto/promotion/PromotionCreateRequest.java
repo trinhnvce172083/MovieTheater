@@ -15,9 +15,11 @@ import com.swp.MovieTheaterService.enums.DiscountType;
 public class PromotionCreateRequest {
 
     @NotBlank(message = "Mã khuyến mãi không được để trống")
+    @Size(min = 3, max = 20, message = "Mã khuyến mãi phải từ 3-20 ký tự")
     private String code;
 
     @NotBlank(message = "Tên khuyến mãi không được để trống")
+    @Size(min = 2, max = 100, message = "Tên khuyến mãi phải từ 2-100 ký tự")
     private String name;
 
     @Size(max = 255, message = "Mô tả tối đa 255 ký tự")

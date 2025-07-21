@@ -1,6 +1,7 @@
 package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.payment.*;
+import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -118,7 +119,7 @@ public class PaymentController {
 
     @GetMapping("/methods")
     @Operation(summary = "Get payment methods", description = "Get supported payment methods")
-    public ResponseEntity<Map<String, Object>> getPaymentMethods() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPaymentMethods() {
         log.info("Getting supported payment methods");
         
         Map<String, Object> methods = new HashMap<>();
@@ -132,8 +133,14 @@ public class PaymentController {
         response.put("currency", "VND");
         response.put("minAmount", 1000);
         response.put("maxAmount", 50000000);
-        
-        return ResponseEntity.ok(response);
+
+        ApiResponse<Map<String, Object>> apiResponse = ApiResponse.<Map<String, Object>>builder()
+                .success(true)
+                .message("Lấy danh sách phương thức thanh toán thành công")
+                .data(response)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     // ==================== PAYMENT CALLBACK ENDPOINTS ====================
@@ -207,7 +214,7 @@ public class PaymentController {
     @GetMapping("/status/{bookingId}")
     @Operation(summary = "Get payment status", description = "Get payment status by booking ID")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<PaymentService.PaymentStatus> getPaymentStatus(
+    public ResponseEntity<ApiResponse<PaymentService.PaymentStatus>> getPaymentStatus(
             @PathVariable Long bookingId,
             Authentication authentication) {
         
@@ -215,7 +222,14 @@ public class PaymentController {
         
         // For now, use VNPay service - in production, determine based on payment method
         PaymentService.PaymentStatus status = vnpayService.getPaymentStatus(bookingId);
-        return ResponseEntity.ok(status);
+
+        ApiResponse<PaymentService.PaymentStatus> apiResponse = ApiResponse.<PaymentService.PaymentStatus>builder()
+                .success(true)
+                .message("Lấy trạng thái thanh toán thành công")
+                .data(status)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     // ==================== REFUND ENDPOINTS ====================

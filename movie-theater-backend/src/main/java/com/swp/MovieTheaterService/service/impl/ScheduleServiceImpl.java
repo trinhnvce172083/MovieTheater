@@ -11,6 +11,7 @@ import com.swp.MovieTheaterService.repository.CinemaRoomRepository;
 import com.swp.MovieTheaterService.repository.MovieRepository;
 import com.swp.MovieTheaterService.repository.ScheduleRepository;
 import com.swp.MovieTheaterService.service.ScheduleService;
+import com.swp.MovieTheaterService.utils.ValidationUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -48,12 +49,16 @@ public class ScheduleServiceImpl implements ScheduleService {
         log.info("Creating new schedule for movie ID: {} in cinema room ID: {}", 
                 request.getMovieId(), request.getCinemaRoomId());
 
-        // Validate time
+        // DTO đã validate rồi, chỉ cần business logic validation
+        log.info("Validating schedule creation for movie: {}, room: {}",
+                request.getMovieId(), request.getCinemaRoomId());
+
+        // Validate time (business logic validation)
         if (!request.isTimeValid()) {
             throw new AppException(ErrorCode.SCHEDULE_TIME_INVALID);
         }
 
-        // Validate date
+        // Validate date (business logic validation)
         if (!request.isValidScheduleDate()) {
             throw new AppException(ErrorCode.SCHEDULE_PAST_DATE);
         }
@@ -62,7 +67,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         Movie movie = findMovieById(request.getMovieId());
         CinemaRoom cinemaRoom = findCinemaRoomById(request.getCinemaRoomId());
 
-        // Check for schedule conflicts
+        // Check for schedule conflicts (business logic validation)
         if (hasScheduleConflict(request.getCinemaRoomId(), request.getShowDate(), 
                                request.getStartTime(), request.getEndTime())) {
             throw new AppException(ErrorCode.SCHEDULE_ROOM_OCCUPIED);

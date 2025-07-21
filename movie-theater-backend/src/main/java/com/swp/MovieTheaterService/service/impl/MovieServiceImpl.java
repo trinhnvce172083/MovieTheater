@@ -13,18 +13,22 @@ import com.swp.MovieTheaterService.mapper.MovieMapper;
 import com.swp.MovieTheaterService.repository.MovieRepository;
 import com.swp.MovieTheaterService.service.MovieService;
 import com.swp.MovieTheaterService.service.SupabaseStorageService;
+import com.swp.MovieTheaterService.utils.ValidationUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-
+import jakarta.persistence.criteria.Predicate;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,7 +53,10 @@ public class MovieServiceImpl implements MovieService {
     public MovieResponse createMovie(MovieCreateRequest request) {
         log.info("Creating new movie with title: {}", request.getTitle());
 
-        // Check if movie title already exists
+        // DTO đã validate rồi, chỉ cần business logic validation
+        log.info("Validating movie creation for title: {}", request.getTitle());
+
+        // Check if movie title already exists (business logic validation)
         if (movieRepository.existsByTitleIgnoreCaseAndIsActiveTrue(request.getTitle())) {
             throw new AppException(ErrorCode.MOVIE_ALREADY_EXISTS);
         }
@@ -302,15 +309,25 @@ public class MovieServiceImpl implements MovieService {
         log.info("Getting movies with filter: {}", filterRequest);
         
         try {
+            // Validate and sanitize sort direction
+            String sortDirection = validateSortDirection(filterRequest.getSortDirection());
+            String sortBy = validateSortBy(filterRequest.getSortBy());
+            
             // Create pageable
             Pageable pageable = PageRequest.of(
                 filterRequest.getPage(), 
                 filterRequest.getSize(),
-                Sort.by(Sort.Direction.fromString(filterRequest.getSortDirection()), filterRequest.getSortBy())
+                    Sort.by(Sort.Direction.fromString(sortDirection), sortBy)
             );
-            
-            // Get movies with filter (simplified implementation)
-            Page<Movie> movies = movieRepository.findAll(pageable);
+
+            // Sanitize filter request
+            sanitizeFilterRequest(filterRequest);
+
+            // Build specification for filtering
+            Specification<Movie> spec = buildMovieSpecification(filterRequest);
+
+            // Get movies with filter
+            Page<Movie> movies = movieRepository.findAll(spec, pageable);
             
             // Convert to MovieSummaryDTO
             List<MovieListResponse.MovieSummaryDTO> movieSummaries = movies.getContent().stream()
@@ -393,6 +410,209 @@ public class MovieServiceImpl implements MovieService {
         return !releaseDate.isAfter(today) && 
                (endDate == null || !endDate.isBefore(today)) &&
                movie.getIsActive();
+    }
+
+    /**
+     * Build specification for movie filtering
+     */
+    private Specification<Movie> buildMovieSpecification(MovieFilterRequest filterRequest) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Status filter
+            if (filterRequest.getStatus() != null && !filterRequest.getStatus().isEmpty()) {
+                predicates.add(criteriaBuilder.equal(root.get("status"), filterRequest.getStatus()));
+            }
+
+            // Keyword search (title, description, cast, director)
+            if (filterRequest.getKeyword() != null && !filterRequest.getKeyword().trim().isEmpty()) {
+                String keyword = "%" + filterRequest.getKeyword().toLowerCase() + "%";
+                Predicate titlePredicate = criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("title")), keyword);
+                Predicate descriptionPredicate = criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("description")), keyword);
+                Predicate castPredicate = criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("cast")), keyword);
+                Predicate directorPredicate = criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("director")), keyword);
+
+                predicates.add(criteriaBuilder.or(titlePredicate, descriptionPredicate,
+                        castPredicate, directorPredicate));
+            }
+
+            // Genre filter
+            if (filterRequest.getGenres() != null && !filterRequest.getGenres().isEmpty()) {
+                List<Predicate> genrePredicates = filterRequest.getGenres().stream()
+                        .map(genre -> criteriaBuilder.like(root.get("genres"), "%" + genre + "%"))
+                        .collect(Collectors.toList());
+                predicates.add(criteriaBuilder.or(genrePredicates.toArray(new Predicate[0])));
+            }
+
+            // Rating filter
+            if (filterRequest.getRating() != null && !filterRequest.getRating().isEmpty()) {
+                predicates.add(criteriaBuilder.equal(root.get("rating"), filterRequest.getRating()));
+            }
+
+            // Language filter
+            if (filterRequest.getLanguage() != null && !filterRequest.getLanguage().isEmpty()) {
+                predicates.add(criteriaBuilder.equal(root.get("language"), filterRequest.getLanguage()));
+            }
+
+            // Country filter
+            if (filterRequest.getCountry() != null && !filterRequest.getCountry().isEmpty()) {
+                predicates.add(criteriaBuilder.equal(root.get("country"), filterRequest.getCountry()));
+            }
+
+            // Release date range
+            if (filterRequest.getReleaseDateFrom() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                        root.get("releaseDate"), filterRequest.getReleaseDateFrom()));
+            }
+            if (filterRequest.getReleaseDateTo() != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(
+                        root.get("releaseDate"), filterRequest.getReleaseDateTo()));
+            }
+
+            // Duration range
+            if (filterRequest.getDurationMin() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                        root.get("duration"), filterRequest.getDurationMin()));
+            }
+            if (filterRequest.getDurationMax() != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(
+                        root.get("duration"), filterRequest.getDurationMax()));
+            }
+
+            // IMDb rating
+            if (filterRequest.getImdbRatingMin() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                        root.get("imdbRating"), filterRequest.getImdbRatingMin()));
+            }
+
+            // Active status
+            if (filterRequest.getIsActive() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("isActive"), filterRequest.getIsActive()));
+            }
+
+            // Featured status
+            if (filterRequest.getIsFeatured() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("isFeatured"), filterRequest.getIsFeatured()));
+            }
+
+            // Adult content filter
+            if (filterRequest.getIsAdultContent() != null) {
+                if (filterRequest.getIsAdultContent()) {
+                    predicates.add(criteriaBuilder.in(root.get("rating")).value(Arrays.asList("R", "NC-17")));
+                } else {
+                    predicates.add(criteriaBuilder.in(root.get("rating")).value(Arrays.asList("G", "PG", "PG-13")));
+                }
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    /**
+     * Validate and sanitize sort direction
+     */
+    private String validateSortDirection(String sortDirection) {
+        if (sortDirection == null || sortDirection.trim().isEmpty() ||
+                sortDirection.equalsIgnoreCase("string") ||
+                sortDirection.equalsIgnoreCase("null")) {
+            return "desc"; // Default to desc
+        }
+
+        String direction = sortDirection.trim().toLowerCase();
+        if (direction.equals("asc") || direction.equals("desc")) {
+            return direction;
+        }
+
+        log.warn("Invalid sort direction: {}, using default 'desc'", sortDirection);
+        return "desc";
+    }
+
+    /**
+     * Validate and sanitize sort by field
+     */
+    private String validateSortBy(String sortBy) {
+        if (sortBy == null || sortBy.trim().isEmpty() ||
+                sortBy.equalsIgnoreCase("string") ||
+                sortBy.equalsIgnoreCase("null")) {
+            return "releaseDate"; // Default to releaseDate
+        }
+
+        String field = sortBy.trim();
+        // List of valid sort fields
+        List<String> validFields = Arrays.asList(
+                "title", "releaseDate", "duration", "imdbRating",
+                "createdAt", "updatedAt", "rating", "price"
+        );
+
+        if (validFields.contains(field)) {
+            return field;
+        }
+
+        log.warn("Invalid sort by field: {}, using default 'releaseDate'", sortBy);
+        return "releaseDate";
+    }
+
+    /**
+     * Sanitize filter request to handle invalid values
+     */
+    private void sanitizeFilterRequest(MovieFilterRequest filterRequest) {
+        // Sanitize keyword
+        if (filterRequest.getKeyword() != null &&
+                (filterRequest.getKeyword().equalsIgnoreCase("string") ||
+                        filterRequest.getKeyword().equalsIgnoreCase("null"))) {
+            filterRequest.setKeyword(null);
+        }
+
+        // Sanitize genres
+        if (filterRequest.getGenres() != null) {
+            filterRequest.setGenres(filterRequest.getGenres().stream()
+                    .filter(genre -> genre != null && !genre.equalsIgnoreCase("string") && !genre.equalsIgnoreCase("null"))
+                    .collect(Collectors.toList()));
+        }
+
+        // Sanitize rating
+        if (filterRequest.getRating() != null &&
+                (filterRequest.getRating().equalsIgnoreCase("string") ||
+                        filterRequest.getRating().equalsIgnoreCase("null"))) {
+            filterRequest.setRating(null);
+        }
+
+        // Sanitize language
+        if (filterRequest.getLanguage() != null &&
+                (filterRequest.getLanguage().equalsIgnoreCase("string") ||
+                        filterRequest.getLanguage().equalsIgnoreCase("null"))) {
+            filterRequest.setLanguage(null);
+        }
+
+        // Sanitize country
+        if (filterRequest.getCountry() != null &&
+                (filterRequest.getCountry().equalsIgnoreCase("string") ||
+                        filterRequest.getCountry().equalsIgnoreCase("null"))) {
+            filterRequest.setCountry(null);
+        }
+
+        // Sanitize numeric values
+        if (filterRequest.getDurationMin() != null && filterRequest.getDurationMin() <= 0) {
+            filterRequest.setDurationMin(null);
+        }
+        if (filterRequest.getDurationMax() != null && filterRequest.getDurationMax() <= 0) {
+            filterRequest.setDurationMax(null);
+        }
+        if (filterRequest.getImdbRatingMin() != null && filterRequest.getImdbRatingMin() <= 0) {
+            filterRequest.setImdbRatingMin(null);
+        }
+
+        // Sanitize page and size
+        if (filterRequest.getPage() < 0) {
+            filterRequest.setPage(0);
+        }
+        if (filterRequest.getSize() <= 0) {
+            filterRequest.setSize(20);
+        }
     }
 
     /**

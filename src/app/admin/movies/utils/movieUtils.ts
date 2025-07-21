@@ -8,7 +8,7 @@ export const transformApiMovieToMovieData = (apiMovie: ApiMovie): MovieData => {
     key: apiMovie.movieId.toString(),
     id: apiMovie.movieId,
     title: apiMovie.title || '',
-    genre: apiMovie.genres || '',
+    genre: apiMovie.genre || '',  // Changed from apiMovie.genres to apiMovie.genre
     duration: apiMovie.duration || 0,
     releaseDate: apiMovie.releaseDate || '',
     status: (apiMovie.status as 'NOW_SHOWING' | 'COMING_SOON' | 'ENDED') || 'COMING_SOON',

@@ -38,7 +38,7 @@ export interface ApiMovie {
   title: string;
   description?: string;
   duration: number;
-  genres: string;
+  genre: string;  // Changed from 'genres' to 'genre' to match API response
   director?: string;
   cast?: string;
   language?: string;
@@ -65,22 +65,34 @@ export interface ApiMovie {
 // Interface for creating movies
 export interface MovieCreateRequest {
   title: string;
-  description?: string;
+  originalTitle?: string;
+  description: string;  // Required to match global type
   duration: number;
   genre: string;
-  director?: string;
-  cast?: string;
-  language?: string;
-  country?: string;
-  releaseDate?: string;
-  rating?: string;
+  director: string;     // Required to match global type
+  cast: string;         // Required to match global type
+  language: string;     // Required to match global type
+  country: string;      // Required to match global type
+  releaseDate: string;  // Required to match global type (no optional)
+  endDate?: string;
+  rating: string;       // Required to match global type
   price: number;
-  status?: 'NOW_SHOWING' | 'COMING_SOON' | 'ENDED';
-  isFeatured?: boolean;
+  status: 'NOW_SHOWING' | 'COMING_SOON' | 'ENDED';  // Required to match global type
+  isFeatured: boolean;  // Required to match global type
+  isAdultContent: boolean;  // Required to match global type
   imdbRating?: number;
   productionCompany?: string;
   budget?: number;
   boxOffice?: number;
+  backdropUrl?: string;
+  posterUrl?: string;
+  trailerUrl?: string;
+  isActive?: boolean;
+  autoScheduleEnabled?: boolean;
+  priorityScore?: number;
+  minDailyShows?: number;
+  maxDailyShows?: number;
+  preferredRoomTypes?: string[];
 }
 
 // Interface for updating movies
