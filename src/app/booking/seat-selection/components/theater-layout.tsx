@@ -91,17 +91,20 @@ const TheaterLayout: React.FC<TheaterLayoutProps> = ({
   const rightSeats = totalSeats - mid;
   const leftWidth = leftSeats * seatWidth + Math.max(0, leftSeats - 1) * seatGap;
   const rightWidth = rightSeats * seatWidth + Math.max(0, rightSeats - 1) * seatGap;
-  const screenWidth = leftLabelWidth + leftWidth + midGap + rightWidth;
+  // Tính toán chính xác hơn: bao gồm cả gap giữa các nhóm ghế
+  const totalWidth = leftLabelWidth + leftWidth + midGap + rightWidth;
+  // Thêm padding để thanh Screen rộng hơn một chút
+  const screenWidth = totalWidth + 32; // +32px padding
 
   return (
-    <div className="bg-gray-50 rounded-lg w-full max-w-3xl mx-auto p-4 overflow-x-auto">
+    <div className="rounded-lg w-full max-w-3xl mx-auto p-4">
       <div
         className="h-8 bg-gray-300 mb-8 rounded-lg flex items-center justify-center text-gray-600 font-medium shadow"
-        style={{ minWidth: screenWidth, width: screenWidth }}
+        style={{ width: screenWidth, margin: '0 auto' }}
       >
         Screen
       </div>
-      <div className="space-y-3 min-w-fit">
+      <div className="space-y-3 min-w-fit overflow-x-auto pt-4 min-h-[550px]">
         {allRows.map((row, index) => {
           const rowSeats = rows[row];
           const mid = Math.floor(rowSeats.length / 2);
@@ -140,7 +143,7 @@ const TheaterLayout: React.FC<TheaterLayoutProps> = ({
         })}
       </div>
       {/* Chú thích */}
-      <div className="mt-8 flex justify-center gap-6">
+      <div className="mt-8 mb-4 flex justify-between gap-4 sm:gap-4 lg:gap-6">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 bg-gray-200 border border-gray-400 rounded-lg" />
           <span>Standard</span>
