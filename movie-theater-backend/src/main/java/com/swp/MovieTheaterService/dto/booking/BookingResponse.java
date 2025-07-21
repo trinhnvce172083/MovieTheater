@@ -56,6 +56,11 @@ public class BookingResponse {
     
     // Promotion information
     private PromotionInfo promotion;
+
+    // Concession information
+    private List<ConcessionInfo> concessions;
+    private Double concessionAmount;
+    private Integer concessionCount;
     
     // Additional information
     private String notes;
@@ -194,6 +199,40 @@ public class BookingResponse {
         private com.swp.MovieTheaterService.enums.DiscountType discountType;
         private Double discountValue;
         private Double appliedDiscount;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ConcessionInfo {
+        private Long concessionId;
+        private String concessionName;
+        private String description;
+        private String category;
+        private Double price;
+        private Integer quantity;
+        private Double totalPrice;
+        private String imageUrl;
+
+        // Helper methods
+        public Double getTotalPrice() {
+            if (price != null && quantity != null) {
+                return price * quantity;
+            }
+            return totalPrice != null ? totalPrice : 0.0;
+        }
+
+        public String getFormattedPrice() {
+            if (price != null) {
+                return String.format("%,.0f VND", price);
+            }
+            return "";
+        }
+
+        public String getFormattedTotalPrice() {
+            return String.format("%,.0f VND", getTotalPrice());
+        }
     }
     
     // Helper methods
