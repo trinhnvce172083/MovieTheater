@@ -160,12 +160,12 @@ export default function MemberAccountPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <Typography.Title level={2} className="text-white mb-8 text-center">
+    <div className="max-w-4xl mx-auto p-4 lg:p-6">
+      <Typography.Title level={2} className="text-center mb-6 lg:mb-8 mt-8">
         Account Information
       </Typography.Title>
 
-      <Row gutter={[24, 24]}>
+      <Row gutter={[16, 16]} className="lg:gutter-[24, 24]">
         {/* Member Card Section */}
         <Col xs={24} lg={8}>
           <Card className="text-center">
@@ -223,26 +223,12 @@ export default function MemberAccountPage() {
               onFinish={handleProfileUpdate}
               onValuesChange={() => setHasChanges(true)}
             >
-              <Row gutter={16}>
+              <Row gutter={[12, 12]} className="lg:gutter-[16, 16]">
                 <Col xs={24} md={12}>
                   <Form.Item label="Username" name="username">
-                    <Input size="large" readOnly />
+                    <Input size="middle" readOnly />
                   </Form.Item>
                 </Col>
-                {/* <Col xs={24} md={12}>
-                  <Form.Item
-                    label="Password"
-                    name="password"
-                    rules={[
-                      { required: true, message: "Please enter your password" },
-                    ]}
-                  >
-                    <Input.Password
-                      size="large"
-                      placeholder="Enter your password"
-                    />
-                  </Form.Item>
-                </Col> */}
                 <Col xs={24} md={12}>
                   <Form.Item
                     label="Email"
@@ -251,7 +237,7 @@ export default function MemberAccountPage() {
                       { required: true, message: "Please enter your email" },
                     ]}
                   >
-                    <Input size="large" placeholder="Enter your email" />
+                    <Input size="middle" placeholder="Enter your email" />
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
@@ -265,7 +251,7 @@ export default function MemberAccountPage() {
                       },
                     ]}
                   >
-                    <Input size="large" placeholder="Enter your full name" />
+                    <Input size="middle" placeholder="Enter your full name" />
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
@@ -283,7 +269,7 @@ export default function MemberAccountPage() {
                       },
                     ]}
                   >
-                    <Input size="large" placeholder="Enter your phone number" />
+                    <Input size="middle" placeholder="Enter your phone number" />
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
@@ -297,7 +283,7 @@ export default function MemberAccountPage() {
                       },
                     ]}
                   >
-                    <Input size="large" type="date" />
+                    <Input size="middle" type="date" />
                   </Form.Item>
                 </Col>
                 <Col xs={24}>
@@ -309,28 +295,30 @@ export default function MemberAccountPage() {
                     ]}
                   >
                     <Input.TextArea
-                      size="large"
+                      size="middle"
                       rows={3}
                       placeholder="Enter your address"
                     />
                   </Form.Item>
                 </Col>
               </Row>
-              <div className="flex gap-3 mt-6">
+              <div className="flex flex-col sm:flex-row gap-3 mt-6">
                 <Button
                   type="primary"
                   htmlType="submit"
-                  size="large"
+                  size="middle"
                   loading={updatingProfile}
                   disabled={!hasChanges}
                   icon={updatingProfile ? <LoadingOutlined /> : undefined}
+                  className="flex-1 sm:flex-none"
                 >
                   {updatingProfile ? "Updating..." : "Save Changes"}
                 </Button>
                 <Button
-                  size="large"
+                  size="middle"
                   onClick={handleReset}
                   disabled={!hasChanges || updatingProfile}
+                  className="flex-1 sm:flex-none"
                 >
                   Reset
                 </Button>

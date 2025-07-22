@@ -3,7 +3,6 @@ import { Space, Button, Tooltip, Popconfirm, Avatar, Tag } from 'antd';
 import { 
   EyeOutlined, 
   EditOutlined, 
-  DeleteOutlined, 
   UserOutlined,
   LockOutlined,
   UnlockOutlined,
@@ -15,7 +14,6 @@ import { MemberData, CurrentUser } from '../types';
 import { 
   canViewDetails, 
   canEdit, 
-  canDelete, 
   canLockUser, 
   canUnlockUser, 
   canActivateUser, 
@@ -28,7 +26,6 @@ interface TableActionsProps {
   isUsingApiData: boolean;
   onViewDetail: (record: MemberData) => void;
   onEdit: (record: MemberData) => void;
-  onDelete: (record: MemberData) => void;
   onLock: (record: MemberData) => void;
   onUnlock: (record: MemberData) => void;
   onActivate: (record: MemberData) => void;
@@ -41,7 +38,6 @@ const TableActions: React.FC<TableActionsProps> = ({
   isUsingApiData,
   onViewDetail,
   onEdit,
-  onDelete,
   onLock,
   onUnlock,
   onActivate,
@@ -66,15 +62,14 @@ const TableActions: React.FC<TableActionsProps> = ({
       )}
       
       {/* Edit */}
-      {canEdit(currentUser, record) && (
-        <Tooltip title={isUsingApiData ? "Edit" : "Edit disabled in demo mode"}>
+      {canEdit(currentUser, record) && isUsingApiData && (
+        <Tooltip title="Edit">
           <Button
             type="text"
             icon={<EditOutlined />}
             size="small"
-            className={isUsingApiData ? "text-green-600 hover:bg-green-50" : "text-gray-400"}
+            className="text-green-600 hover:bg-green-50"
             onClick={() => onEdit(record)}
-            disabled={!isUsingApiData}
           />
         </Tooltip>
       )}
@@ -83,7 +78,7 @@ const TableActions: React.FC<TableActionsProps> = ({
       {isUsingApiData && (
         <>
           {isLocked ? (
-            canUnlockUser(currentUser, record) ? (
+            canUnlockUser(currentUser, record) && (
               <Tooltip title="Unlock User">
                 <Button
                   type="text"
@@ -93,19 +88,9 @@ const TableActions: React.FC<TableActionsProps> = ({
                   onClick={() => onUnlock(record)}
                 />
               </Tooltip>
-            ) : (
-              <Tooltip title="Cannot unlock: You cannot unlock yourself or other admins">
-                <Button
-                  type="text"
-                  icon={<UnlockOutlined />}
-                  size="small"
-                  className="text-gray-400"
-                  disabled
-                />
-              </Tooltip>
             )
           ) : (
-            canLockUser(currentUser, record) ? (
+            canLockUser(currentUser, record) && (
               <Tooltip title="Lock User">
                 <Button
                   type="text"
@@ -113,16 +98,6 @@ const TableActions: React.FC<TableActionsProps> = ({
                   size="small"
                   className="text-orange-600 hover:bg-orange-50"
                   onClick={() => onLock(record)}
-                />
-              </Tooltip>
-            ) : (
-              <Tooltip title="Cannot lock: You cannot lock yourself or other admins">
-                <Button
-                  type="text"
-                  icon={<LockOutlined />}
-                  size="small"
-                  className="text-gray-400"
-                  disabled
                 />
               </Tooltip>
             )
@@ -134,7 +109,7 @@ const TableActions: React.FC<TableActionsProps> = ({
       {isUsingApiData && (
         <>
           {isActive ? (
-            canDeactivateUser(currentUser, record) ? (
+            canDeactivateUser(currentUser, record) && (
               <Tooltip title="Deactivate User">
                 <Popconfirm
                   title="Deactivate User"
@@ -152,19 +127,9 @@ const TableActions: React.FC<TableActionsProps> = ({
                   />
                 </Popconfirm>
               </Tooltip>
-            ) : (
-              <Tooltip title="Cannot deactivate: You cannot deactivate yourself or other admins">
-                <Button
-                  type="text"
-                  icon={<StopOutlined />}
-                  size="small"
-                  className="text-gray-400"
-                  disabled
-                />
-              </Tooltip>
             )
           ) : (
-            canActivateUser(currentUser, record) ? (
+            canActivateUser(currentUser, record) && (
               <Tooltip title="Activate User">
                 <Button
                   type="text"
@@ -174,53 +139,11 @@ const TableActions: React.FC<TableActionsProps> = ({
                   onClick={() => onActivate(record)}
                 />
               </Tooltip>
-            ) : (
-              <Tooltip title="Cannot activate: You cannot activate yourself or other admins">
-                <Button
-                  type="text"
-                  icon={<CheckCircleOutlined />}
-                  size="small"
-                  className="text-gray-400"
-                  disabled
-                />
-              </Tooltip>
             )
           )}
         </>
       )}
       
-      {/* Delete */}
-      {canDelete(currentUser, record) ? (
-        <Tooltip title={isUsingApiData ? "Delete" : "Delete disabled in demo mode"}>
-          <Popconfirm
-            title="Delete Member"
-            description={`Are you sure you want to delete ${record.name}?`}
-            onConfirm={() => onDelete(record)}
-            okText="Delete"
-            cancelText="Cancel"
-            okButtonProps={{ danger: true }}
-            disabled={!isUsingApiData}
-          >
-            <Button
-              type="text"
-              icon={<DeleteOutlined />}
-              size="small"
-              className={isUsingApiData ? "text-red-600 hover:bg-red-50" : "text-gray-400"}
-              disabled={!isUsingApiData}
-            />
-          </Popconfirm>
-        </Tooltip>
-      ) : (
-        <Tooltip title="Cannot delete: You cannot delete yourself or other admins">
-          <Button
-            type="text"
-            icon={<DeleteOutlined />}
-            size="small"
-            className="text-gray-400"
-            disabled
-          />
-        </Tooltip>
-      )}
     </Space>
   );
 };
@@ -232,7 +155,6 @@ export const createMemberColumns = (
   pageSize: number,
   onViewDetail: (record: MemberData) => void,
   onEdit: (record: MemberData) => void,
-  onDelete: (record: MemberData) => void,
   onLock: (record: MemberData) => void,
   onUnlock: (record: MemberData) => void,
   onActivate: (record: MemberData) => void,
@@ -299,40 +221,76 @@ export const createMemberColumns = (
     title: "Role",
     dataIndex: "type",
     key: "type",
-    width: 100,
+    width: 85,
+    align: "center" as const,
     render: (type: string) => (
-      <Tag
-        color={
-          type === "ADMIN" ? "red" :
-          type === "EMPLOYEE" ? "orange" :
-          type === "MEMBER" ? "green" :
-          "blue"
-        }
-        className="text-xs m-0"
-      >
-        {type}
-      </Tag>
+      <div className="flex justify-center">
+        <Tag
+          color={
+            type === "ADMIN" ? "red" :
+            type === "EMPLOYEE" ? "orange" :
+            type === "MEMBER" ? "green" :
+            "blue"
+          }
+          className="text-xs"
+          style={{
+            borderRadius: '8px',
+            fontWeight: '500',
+            fontSize: '11px',
+            padding: '2px 6px',
+            margin: 0,
+            lineHeight: '1.2',
+            display: 'inline-block',
+            width: 'fit-content'
+          }}
+        >
+          {type}
+        </Tag>
+      </div>
     ),
   },
   {
     title: "Status",
     key: "status",
-    width: 120,
+    width: 85,
     align: "center" as const,
     render: (_: unknown, record: MemberData) => {
       const isLocked = record.accountLockedUntil && new Date(record.accountLockedUntil) > new Date();
       const isActive = record.isActive;
       
       return (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col items-center gap-1">
           <Tag
-            color={isActive ? "success" : "default"}
-            className="font-medium text-xs"
+            color={isActive ? "green" : "red"}
+            className="text-xs"
+            style={{
+              borderRadius: '8px',
+              fontWeight: '500',
+              fontSize: '11px',
+              padding: '2px 6px',
+              margin: 0,
+              lineHeight: '1.2',
+              display: 'inline-block',
+              width: 'fit-content'
+            }}
           >
             {isActive ? "Active" : "Inactive"}
           </Tag>
           {isLocked && (
-            <Tag color="orange" className="font-medium text-xs">
+            <Tag 
+              color="orange" 
+              className="text-xs"
+              style={{
+                borderRadius: '8px',
+                fontWeight: '500',
+                fontSize: '10px',
+                padding: '2px 6px',
+                margin: 0,
+                lineHeight: '1.2',
+                display: 'inline-block',
+                width: 'fit-content'
+              }}
+            >
               Locked
             </Tag>
           )}
@@ -343,7 +301,7 @@ export const createMemberColumns = (
   {
     title: "Actions",
     key: "actions",
-    width: 200,
+    width: 120,
     fixed: "right" as const,
     align: "center" as const,
     render: (_: unknown, record: MemberData) => (
@@ -353,7 +311,6 @@ export const createMemberColumns = (
         isUsingApiData={isUsingApiData}
         onViewDetail={onViewDetail}
         onEdit={onEdit}
-        onDelete={onDelete}
         onLock={onLock}
         onUnlock={onUnlock}
         onActivate={onActivate}

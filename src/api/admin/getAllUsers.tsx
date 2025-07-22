@@ -164,7 +164,13 @@ export const getAllUsers = async (): Promise<UsersResponse> => {
     console.log("✅ API call successful!");
     console.log("getAllUsers API Response:", response.data);
     console.log("Response status:", response.status);
-    return response.data;
+    
+    // Backend returns ApiResponse format: { success: true, data: {...}, message: "..." }
+    // Extract the data field which contains the actual user data
+    const userData = response.data.data || response.data;
+    console.log("Extracted user data:", userData);
+    
+    return userData;
   } catch (error) {
     console.error("❌ API call failed:");
     console.error("Error in getAllUsers:", error);
@@ -191,7 +197,7 @@ export const getAllUsers = async (): Promise<UsersResponse> => {
 // Lock user account
 export const lockUser = async (userId: number, lockData: LockUserRequest): Promise<ApiUser> => {
   try {
-    const response = await axiosClient.post(`/api/admin/users/${userId}/lock`, lockData);
+    const response = await axiosClient.post(`/admin/users/${userId}/lock`, lockData);
     return response.data;
   } catch (error) {
     console.error('Lock user error:', error);
@@ -202,7 +208,7 @@ export const lockUser = async (userId: number, lockData: LockUserRequest): Promi
 // Unlock user account
 export const unlockUser = async (userId: number): Promise<ApiUser> => {
   try {
-    const response = await axiosClient.post(`/api/admin/users/${userId}/unlock`);
+    const response = await axiosClient.post(`/admin/users/${userId}/unlock`);
     return response.data;
   } catch (error) {
     console.error('Unlock user error:', error);
@@ -213,7 +219,7 @@ export const unlockUser = async (userId: number): Promise<ApiUser> => {
 // Activate user account
 export const activateUser = async (userId: number): Promise<ApiUser> => {
   try {
-    const response = await axiosClient.post(`/api/admin/users/${userId}/activate`);
+    const response = await axiosClient.post(`/admin/users/${userId}/activate`);
     return response.data;
   } catch (error) {
     console.error('Activate user error:', error);
@@ -224,7 +230,7 @@ export const activateUser = async (userId: number): Promise<ApiUser> => {
 // Deactivate user account
 export const deactivateUser = async (userId: number): Promise<ApiUser> => {
   try {
-    const response = await axiosClient.post(`/api/admin/users/${userId}/deactivate`);
+    const response = await axiosClient.post(`/admin/users/${userId}/deactivate`);
     return response.data;
   } catch (error) {
     console.error('Deactivate user error:', error);
@@ -235,7 +241,7 @@ export const deactivateUser = async (userId: number): Promise<ApiUser> => {
 // Get user by ID
 export const getUserById = async (userId: number): Promise<ApiUser> => {
   try {
-    const response = await axiosClient.get(`/api/admin/users/${userId}`);
+    const response = await axiosClient.get(`/admin/users/${userId}`);
     return response.data;
   } catch (error) {
     console.error('Get user by ID error:', error);

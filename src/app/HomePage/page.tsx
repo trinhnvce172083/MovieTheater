@@ -1,68 +1,17 @@
-"use client";
+import { Metadata } from "next";
+import HomeContent from "./HomeContent";
 
-import { useRef } from "react";
-import { useMovies } from "@/hooks/HomePage/useMovies";
-import Image from "next/image";
-import MovieSection from "@/app/HomePage/components/MovieSection";
-import ClientCarousel from "@/app/HomePage/components/ClientCarousel";
-import PROMOTIONS from "@/constants/HomePage/promotions";
+export const metadata: Metadata = {
+  title: "Home | Lumiere Cinema",
+  description: "Welcome to Lumiere Cinema - Now Showing and Upcoming Movies",
+  keywords: ["cinema", "movies", "now showing", "upcoming", "lumiere", "entertainment"],
+  openGraph: {
+    title: "Lumiere Cinema - Your Movie Experience",
+    description: "Discover now showing and upcoming movies at Lumiere Cinema",
+    type: "website",
+  },
+};
 
-export default function Home() {
-  const { nowShowingMovies, upcomingMovies, loading } = useMovies();
-  const nowShowingRef = useRef<HTMLDivElement>(null);
-  const upcomingRef = useRef<HTMLDivElement>(null);
-
-  const scroll = (
-    ref: React.RefObject<HTMLDivElement | null>,
-    direction: "left" | "right"
-  ) => {
-    if (ref.current) {
-      ref.current.scrollTo({
-        left: ref.current.scrollLeft + (direction === "left" ? -316 : 316),
-        behavior: "smooth",
-      });
-    }
-  };
-
-  return (
-    <main>
-      <ClientCarousel autoplay effect="scrollx">
-        {PROMOTIONS.map((promo) => (
-          <div key={promo.id} className="relative w-full h-[550px]">
-            <Image
-              src={promo.image}
-              alt={promo.title}
-              fill
-              className="object-contain"
-              priority
-              sizes="100vw"
-            />
-          </div>
-        ))}
-      </ClientCarousel>
-
-      <div className="mt-8 text-white">
-      <MovieSection
-        title="NOW SHOWING"
-        movies={nowShowingMovies}
-        scrollRef={nowShowingRef}
-        loading={loading}
-        onScrollLeft={() => scroll(nowShowingRef, "left")}
-        onScrollRight={() => scroll(nowShowingRef, "right")}
-        isUpcoming={false}
-      />
-      </div>
-      <div className="mt-8 text-white">
-      <MovieSection
-        title="UPCOMING"
-        movies={upcomingMovies}
-        scrollRef={upcomingRef}
-        loading={loading}
-        isUpcoming={true}
-        onScrollLeft={() => scroll(upcomingRef, "left")}
-        onScrollRight={() => scroll(upcomingRef, "right")}
-      />
-      </div>
-    </main>
-  );
+export default function HomePage() {
+  return <HomeContent />;
 }

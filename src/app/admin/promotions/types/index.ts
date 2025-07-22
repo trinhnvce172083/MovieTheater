@@ -26,7 +26,7 @@ export interface PromotionModalProps {
   editingPromotion: PromotionDto | null;
   onOk: () => void;
   onCancel: () => void;
-  formRef: any;
+  handleSavePromotion: (values: any, editingPromotion: PromotionDto | null) => Promise<boolean>;
 }
 
 export interface PromotionViewModalProps {

@@ -39,7 +39,7 @@ const HistoryCard: React.FC<HistoryCardProps> = ({
   return (
     <Card
       className={`w-full shadow-sm hover:shadow-md transition-shadow ${className}`}
-      bodyStyle={{ padding: "20px" }}
+      styles={{ body: { padding: "20px" } }}
     >
       <div className="flex gap-4">
         <MoviePoster src={moviePoster} alt={movieTitle} width={96} height={144} />

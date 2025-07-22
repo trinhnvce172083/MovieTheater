@@ -53,17 +53,50 @@ export const useMemberManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      console.log("🔍 [useMemberManagement] Starting fetchUsers...");
+      
       const response = await getAllUsers();
+      console.log("📦 [useMemberManagement] getAllUsers response:", response);
+      console.log("📦 [useMemberManagement] Response type:", typeof response);
+      console.log("📦 [useMemberManagement] Response keys:", response ? Object.keys(response) : 'null');
 
-      if (!response || !response.content || !Array.isArray(response.content)) {
+      if (!response) {
+        console.log("⚠️ [useMemberManagement] No response received");
         setMemberData([]);
         return;
       }
 
-      const transformedData: MemberData[] = response.content.map(transformApiUserToMemberData);
-      setMemberData(transformedData || []);
-      setIsUsingApiData(true);
+      // Check if response has content property (paginated response)
+      if (response.content && Array.isArray(response.content)) {
+        console.log("📋 [useMemberManagement] Found content array with", response.content.length, "items");
+        const transformedData: MemberData[] = response.content.map(transformApiUserToMemberData);
+        console.log("✨ [useMemberManagement] Transformed data:", transformedData);
+        setMemberData(transformedData || []);
+        setIsUsingApiData(true);
+      } 
+      // Check if response is direct array
+      else if (Array.isArray(response)) {
+        console.log("📋 [useMemberManagement] Response is direct array with", response.length, "items");
+        const transformedData: MemberData[] = response.map(transformApiUserToMemberData);
+        console.log("✨ [useMemberManagement] Transformed data:", transformedData);
+        setMemberData(transformedData || []);
+        setIsUsingApiData(true);
+      }
+      // Check if response has data property
+      else if ('data' in response && Array.isArray((response as { data: unknown[] }).data)) {
+        const responseData = (response as { data: unknown[] }).data;
+        console.log("📋 [useMemberManagement] Found data array with", responseData.length, "items");
+        const transformedData: MemberData[] = responseData.map(transformApiUserToMemberData);
+        console.log("✨ [useMemberManagement] Transformed data:", transformedData);
+        setMemberData(transformedData || []);
+        setIsUsingApiData(true);
+      }
+      else {
+        console.log("⚠️ [useMemberManagement] Unexpected response structure:", response);
+        setMemberData([]);
+      }
     } catch (error) {
+      console.error("❌ [useMemberManagement] fetchUsers error:", error);
       message.warning("Using sample data - please check your connection or login status");
       setMemberData([]);
       setIsUsingApiData(false);
@@ -284,18 +317,37 @@ export const useMemberManagement = () => {
   const lockUserAccount = async (userId: string, lockDurationHours: number, reason: string, sendNotificationEmail: boolean = true): Promise<boolean> => {
     try {
       setLoading(true);
+      console.log('Locking user with data:', {
+        userId: parseInt(userId),
+        lockData: {
+          reason,
+          lockHours: lockDurationHours,
+          sendNotificationEmail,
+          notes: `Locked by admin: ${reason}`
+        }
+      });
+      
       const lockData = {
         reason,
         lockHours: lockDurationHours,
         sendNotificationEmail,
         notes: `Locked by admin: ${reason}`
       };
+      
       await lockUser(parseInt(userId), lockData);
       message.success('User locked successfully');
       await fetchUsers(); // Refresh data
       return true;
-    } catch (_error) {
-      message.error('Failed to lock user');
+    } catch (error: unknown) {
+      console.error('Lock user error:', error);
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response: { data?: { message?: string }; status: number } };
+        console.error('Error response:', axiosError.response.data);
+        console.error('Error status:', axiosError.response.status);
+        message.error(`Failed to lock user: ${axiosError.response.data?.message || axiosError.response.status}`);
+      } else {
+        message.error('Failed to lock user: Network or server error');
+      }
       return false;
     } finally {
       setLoading(false);

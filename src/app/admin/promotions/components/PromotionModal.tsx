@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Modal,
   Form,
@@ -23,20 +23,51 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
   editingPromotion,
   onOk,
   onCancel,
-  formRef,
+  handleSavePromotion,
 }) => {
+  const handleSubmit = async (values: any) => {
+    const success = await handleSavePromotion(values, editingPromotion);
+    if (success) {
+      onOk();
+    }
+  };
+
   return (
     <Modal
       title={editingPromotion ? "Edit Promotion" : "Add New Promotion"}
       open={isVisible}
-      onOk={onOk}
       onCancel={onCancel}
       width={800}
       className="professional-modal"
-      okText={editingPromotion ? "Update Promotion" : "Add Promotion"}
-      cancelText="Cancel"
+      footer={null}
+      destroyOnHidden
     >
-      <Form ref={formRef} layout="vertical" className="mt-6">
+      <Form
+        key={isVisible ? 'open' : 'closed'}
+        layout="vertical"
+        className="mt-6"
+        onFinish={handleSubmit}
+        initialValues={editingPromotion ? {
+          code: editingPromotion.promotionCode,
+          name: editingPromotion.promotionName,
+          description: editingPromotion.description,
+          discountType: editingPromotion.discountType,
+          discountValue: editingPromotion.discountValue,
+          startDate: editingPromotion.startDate ? dayjs(editingPromotion.startDate) : null,
+          endDate: editingPromotion.endDate ? dayjs(editingPromotion.endDate) : null,
+          minPurchase: editingPromotion.minPurchaseAmount,
+          maxDiscount: editingPromotion.maxDiscountAmount,
+          status: editingPromotion.isActive ? 'ACTIVE' : 'INACTIVE',
+          promotionType: editingPromotion.promotionType,
+          memberOnly: editingPromotion.memberOnly,
+          membershipLevels: editingPromotion.membershipLevels,
+          maxUsageCount: editingPromotion.maxUsageCount,
+          maxUsagePerUser: editingPromotion.maxUsagePerUser,
+          pointsRequired: editingPromotion.pointsRequired,
+          isFeatured: editingPromotion.isFeatured,
+          banner: undefined,
+        } : {}}
+      >
         {/* Basic Information */}
         <Row gutter={16}>
           <Col xs={24} sm={12}>
@@ -44,7 +75,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
               name="name"
               label="Promotion Name"
               rules={[
-                { required: true, message: "Please enter promotion name" },
+                { required: !editingPromotion, message: "Please enter promotion name" },
               ]}
             >
               <Input
@@ -58,7 +89,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
               name="promoCode"
               label="Promotion Code"
               rules={[
-                { required: true, message: "Please enter promotion code" },
+                { required: !editingPromotion, message: "Please enter promotion code" },
                 { min: 4, message: "Code must be at least 4 characters" },
                 {
                   pattern: /^[A-Za-z0-9]+$/,
@@ -79,7 +110,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
                         .toString(36)
                         .substring(2, 8)
                         .toUpperCase();
-                      formRef.current?.setFieldsValue({ promoCode: randomCode });
+                      // form.setFieldsValue({ promoCode: randomCode }); // Removed
                     }}
                   >
                     Generate
@@ -96,7 +127,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
               name="description"
               label="Description"
               rules={[
-                { required: true, message: "Please enter description" },
+                { required: !editingPromotion, message: "Please enter description" },
               ]}
             >
               <Input.TextArea
@@ -114,13 +145,13 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
               name="discountType"
               label="Discount Type"
               rules={[
-                { required: true, message: "Please select discount type" },
+                { required: !editingPromotion, message: "Please select discount type" },
               ]}
             >
               <Select placeholder="Select discount type" className="h-10">
                 <Option value="PERCENTAGE">Percentage</Option>
-                <Option value="FIXED_AMOUNT">Fixed Amount</Option>
-                <Option value="BUY_ONE_GET_ONE">Buy One Get One</Option>
+                <Option value="FIXED">Fixed Amount</Option>
+                <Option value="POINTS">Points</Option>
               </Select>
             </Form.Item>
           </Col>
@@ -129,41 +160,36 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
               name="discountValue"
               label="Discount Value"
               rules={[
-                { required: true, message: "Please enter discount value" },
+                { required: !editingPromotion, message: "Please enter discount value" },
               ]}
               dependencies={["discountType"]}
             >
-              <InputNumber
-                min={0}
-                max={
-                  formRef.current?.getFieldValue("discountType") === "PERCENTAGE"
-                    ? 100
-                    : undefined
-                }
-                className="w-full h-10"
-                placeholder={
-                  formRef.current?.getFieldValue("discountType") === "PERCENTAGE"
-                    ? "Enter percentage (1-100)"
-                    : formRef.current?.getFieldValue("discountType") === "BUY_ONE_GET_ONE"
-                    ? "1"
-                    : "Enter amount in VND"
-                }
-                disabled={
-                  formRef.current?.getFieldValue("discountType") === "BUY_ONE_GET_ONE"
-                }
-                value={
-                  formRef.current?.getFieldValue("discountType") === "BUY_ONE_GET_ONE"
-                    ? 1
-                    : undefined
-                }
-                addonAfter={
-                  formRef.current?.getFieldValue("discountType") === "PERCENTAGE"
-                    ? "%"
-                    : formRef.current?.getFieldValue("discountType") === "FIXED_AMOUNT"
-                    ? "VND"
-                    : ""
-                }
-              />
+              {(form) => {
+                const discountType = form.getFieldValue("discountType");
+                return (
+                  <InputNumber
+                    min={0}
+                    max={discountType === "PERCENTAGE" ? 100 : undefined}
+                    className="w-full h-10"
+                    placeholder={
+                      discountType === "PERCENTAGE"
+                        ? "Enter percentage (1-100)"
+                        : discountType === "BUY_ONE_GET_ONE"
+                        ? "1"
+                        : "Enter amount in VND"
+                    }
+                    disabled={discountType === "BUY_ONE_GET_ONE"}
+                    value={discountType === "BUY_ONE_GET_ONE" ? 1 : undefined}
+                    addonAfter={
+                      discountType === "PERCENTAGE"
+                        ? "%"
+                        : discountType === "FIXED_AMOUNT"
+                        ? "VND"
+                        : ""
+                    }
+                  />
+                );
+              }}
             </Form.Item>
           </Col>
         </Row>
@@ -175,7 +201,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
               name="startDate"
               label="Start Date"
               rules={[
-                { required: true, message: "Please select start date" },
+                { required: !editingPromotion, message: "Please select start date" },
               ]}
             >
               <DatePicker className="w-full h-10" />
@@ -185,7 +211,9 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
             <Form.Item
               name="endDate"
               label="End Date"
-              rules={[{ required: true, message: "Please select end date" }]}
+              rules={[
+                { required: !editingPromotion, message: "Please select end date" },
+              ]}
             >
               <DatePicker className="w-full h-10" />
             </Form.Item>
@@ -200,7 +228,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
               label="Minimum Purchase (VND)"
               rules={[
                 {
-                  required: true,
+                  required: !editingPromotion,
                   message: "Please enter minimum purchase amount",
                 },
               ]}
@@ -221,7 +249,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
               label="Maximum Discount (VND)"
               rules={[
                 {
-                  required: true,
+                  required: !editingPromotion,
                   message: "Please enter maximum discount amount",
                 },
               ]}
@@ -244,7 +272,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
             <Form.Item
               name="status"
               label="Status"
-              rules={[{ required: true, message: "Please select status" }]}
+              rules={[{ required: !editingPromotion, message: "Please select status" }]}
             >
               <Select placeholder="Select status" className="h-10">
                 <Option value="ACTIVE">Active</Option>
@@ -256,7 +284,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
             <Form.Item
               name="promotionType"
               label="Promotion Type"
-              rules={[{ required: true }]}
+              rules={[{ required: !editingPromotion, message: "'promotionType' is required" }]}
               tooltip="PUBLIC promotions are available to all users, POINT_BASED can be redeemed with points"
             >
               <Select placeholder="Select promotion type">
@@ -337,14 +365,17 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
               tooltip="Required points to redeem (for POINT_BASED promotions only)"
               dependencies={["promotionType"]}
             >
-              <InputNumber
-                min={0}
-                className="w-full"
-                disabled={
-                  formRef.current?.getFieldValue("promotionType") !== "POINT_BASED"
-                }
-                placeholder="Enter points required"
-              />
+              {(form) => {
+                const promotionType = form.getFieldValue("promotionType");
+                return (
+                  <InputNumber
+                    min={0}
+                    className="w-full"
+                    disabled={promotionType !== "POINT_BASED"}
+                    placeholder="Enter points required"
+                  />
+                );
+              }}
             </Form.Item>
           </Col>
           <Col xs={24} sm={12}>
@@ -381,6 +412,16 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
                 </div>
               </Upload>
             </Form.Item>
+          </Col>
+        </Row>
+        <Row>
+          <Col span={24} style={{ textAlign: 'right' }}>
+            <Button onClick={onCancel} style={{ marginRight: 8 }}>
+              Cancel
+            </Button>
+            <Button type="primary" htmlType="submit">
+              {editingPromotion ? "Update Promotion" : "Add Promotion"}
+            </Button>
           </Col>
         </Row>
       </Form>

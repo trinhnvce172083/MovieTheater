@@ -70,30 +70,20 @@ export default function MemberPromotionsPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <Typography.Title level={2} className="mb-2 text-center">
+    <div className="max-w-4xl mx-auto p-4 lg:p-6">
+      <Typography.Title level={2} className="mb-2 text-center mt-8">
         Redeem Promotions with Points
       </Typography.Title>
       <div
-        style={{
-          position: "sticky",
-          top: 64,
-          zIndex: 100,
-          background: "white",
-          paddingTop: 16,
-          paddingBottom: 16,
-          borderBottom: "1px solid #f0f0f0",
-          marginLeft: -24,
-          marginRight: -24,
-        }}
+        className="sticky top-16 lg:top-16 z-10 bg-white py-4 lg:py-4 border-b border-gray-200 -mx-4 lg:-mx-6 px-4 lg:px-6"
       >
         <div className="text-center">
-          <Tag color="gold" style={{ fontSize: 18, padding: '8px 20px' }}>
+          <Tag color="gold" className="text-base lg:text-lg px-4 lg:px-5 py-2 lg:py-2">
             Your Points: <b>{memberPoints}</b>
           </Tag>
         </div>
       </div>
-      <Row gutter={[24, 24]}>
+      <Row gutter={[16, 16]} className="lg:gutter-[24, 24]">
         {mockPromotions.length === 0 ? (
           <Col span={24} className="text-center">
             <Typography.Text type="secondary">
@@ -105,15 +95,16 @@ export default function MemberPromotionsPage() {
             <Col xs={24} md={12} key={promo.promotionId}>
               <Card
                 title={promo.promotionName}
-                extra={<Tag color="purple">{promo.pointsRequired} Points</Tag>}
+                extra={<Tag color="purple" className="text-xs lg:text-sm">{promo.pointsRequired} Points</Tag>}
                 bordered={false}
                 className="mb-4"
+                size="small"
               >
-                <div className="mb-2">{promo.description}</div>
-                <div className="mb-2">
+                <div className="mb-2 text-sm lg:text-base">{promo.description}</div>
+                <div className="mb-2 text-sm lg:text-base">
                   <b>Discount:</b> {promo.discountDisplay}
                 </div>
-                <div className="mb-2">
+                <div className="mb-2 text-sm lg:text-base">
                   <b>Validity:</b> {promo.validityDisplay}
                 </div>
                 <Button
@@ -121,6 +112,8 @@ export default function MemberPromotionsPage() {
                   loading={redeemingId === promo.promotionId}
                   onClick={() => handleRedeem(promo)}
                   disabled={redeemingId !== null || memberPoints < promo.pointsRequired}
+                  size="middle"
+                  className="w-full sm:w-auto"
                 >
                   Redeem
                 </Button>
@@ -138,15 +131,17 @@ export default function MemberPromotionsPage() {
             Close
           </Button>,
         ]}
+        width="90%"
+        className="max-w-md mx-auto"
       >
         <div className="text-center">
           <Typography.Title level={4}>
             {showCode?.promoName}
           </Typography.Title>
-          <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: 2, margin: '24px 0' }}>
+          <div className="text-xl lg:text-2xl font-bold tracking-wider my-6 break-all">
             {showCode?.code}
           </div>
-          <Typography.Text type="secondary">
+          <Typography.Text type="secondary" className="text-sm">
             Use this code at checkout to redeem your promotion.
           </Typography.Text>
         </div>

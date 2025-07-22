@@ -23,12 +23,12 @@ const OrderSummary = ({ movieDetails, totalOrder, bookingData, concessions, quan
   };
 
   return (
-    <div className="bg-white text-black rounded-xl shadow-lg p-6 h-full flex flex-col">
+    <div className="bg-white text-black rounded-lg md:rounded-xl shadow-lg p-2 md:p-4 flex flex-col w-full max-w-sm mx-auto">
       {/* Ảnh phim */}
       <div className="mb-4">
         <img src={movieDetails.image || '/popcorn.jpg'} alt={movieDetails.title} className="w-full h-32 object-cover rounded" />
       </div>
-      <div className="font-bold text-lg mb-2">Order Summary</div>
+      <div className="font-bold text-base md:text-lg mb-2">Order Summary</div>
       <div className="mb-2">
         <div className="font-semibold">{movieDetails.title}</div>
         <div className="text-sm text-gray-500">{movieDetails.date}</div>
@@ -48,10 +48,10 @@ const OrderSummary = ({ movieDetails, totalOrder, bookingData, concessions, quan
           <div className="text-gray-400 text-sm">Chưa chọn món nào</div>
         )}
       </div>
-      <div className="font-bold text-right text-lg mt-4 mb-2">
+      <div className="font-bold text-right text-base md:text-lg mt-4 mb-2">
         Total: <span className="text-yellow-600">{totalOrder.toLocaleString()} VND</span>
       </div>
-      <div className="flex gap-4 mt-4">
+      <div className="flex gap-2 md:gap-4 mt-4">
         <Button
           variant="outline"
           size="lg"

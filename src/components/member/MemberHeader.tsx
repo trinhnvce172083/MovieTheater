@@ -14,12 +14,7 @@ import Image from "next/image";
 import { useMemberProfile } from "@/hooks/member";
 
 interface MemberHeaderProps {
-  user: {
-    name: string;
-    email: string;
-    avatar?: string;
-    points: number;
-  };
+  onClose?: () => void;
 }
 
 const MEMBER_TABS = [
@@ -55,38 +50,45 @@ const MEMBER_TABS = [
   },
 ];
 
-const MemberHeader: React.FC = () => {
+const MemberHeader: React.FC<MemberHeaderProps> = ({ onClose }) => {
   const pathname = usePathname();
   const { profile } = useMemberProfile();
 
+  const handleTabClick = () => {
+    // Đóng mobile menu khi click vào tab
+    if (onClose) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed top-0 min-h-screen flex flex-col justify-between p-10">
+    <div className="fixed lg:static top-0 min-h-screen flex flex-col justify-between p-6 lg:p-10">
       {/* User Info (avatar, username, email từ API) */}
       <div>
-        <div className="pt-24 flex flex-col items-center mb-6">
+        <div className="pt-16 lg:pt-24 flex flex-col items-center mb-6">
           {/* Avatar, Name, Email */}
           <div className="flex flex-col items-center mb-6">
-            <div className="w-20 h-20 rounded-full bg-gray-400 flex items-center justify-center mb-2 text-white text-3xl">
+            <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-gray-400 flex items-center justify-center mb-2 text-white text-2xl lg:text-3xl">
               {profile?.avatarUrl ? (
                 <img
                   src={profile.avatarUrl}
                   alt="avatar"
-                  className="w-20 h-20 rounded-full object-cover"
+                  className="w-16 h-16 lg:w-20 lg:h-20 rounded-full object-cover"
                 />
               ) : (
                 <span>👤</span>
               )}
             </div>
-            <p className="font-bold text-lg">{profile?.fullName || profile?.username || ""}</p>
-            <p className="text-gray-600 text-xs">{profile?.email || ""}</p>
+            <p className="font-bold text-base lg:text-lg text-center">{profile?.fullName || profile?.username || ""}</p>
+            <p className="text-gray-600 text-xs text-center">{profile?.email || ""}</p>
           </div>
 
           {/* Menu */}
-          <div className="flex flex-col gap-y-4 mb-6">
+          <div className="flex flex-col gap-y-3 lg:gap-y-4 mb-6 w-full">
             {MEMBER_TABS.map((tab) => (
-              <Link href={tab.path} key={tab.key}>
+              <Link href={tab.path} key={tab.key} onClick={handleTabClick}>
                 <button
-                  className={`w-full text-left flex items-center space-x-2 px-4 py-2 rounded-full transition ${
+                  className={`w-full text-left flex items-center space-x-2 px-3 lg:px-4 py-2 lg:py-2 rounded-full transition text-sm lg:text-base ${
                     pathname === tab.path
                       ? "bg-white shadow"
                       : "bg-white/30 hover:bg-white/50"

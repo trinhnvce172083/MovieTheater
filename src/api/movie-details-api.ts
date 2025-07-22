@@ -39,17 +39,26 @@ export class MovieDetailsApiService {
     try {
       console.log(`🎬 Fetching movie details for ID: ${movieId}`);
       
-      // Fetch from real API
+      // Fetch from real API - fixed endpoint
       const response = await axiosClient.get(`/movies/${movieId}`);
       const data = response.data;
       
-      console.log("✅ Movie details received:", data);
+      console.log("✅ Movie details API response:", data);
       
-      return {
-        data: data,
-        success: true,
-        message: "Movie details fetched successfully from API"
-      };
+      // Handle ApiResponse format from backend
+      if (data && data.success && data.data) {
+        return {
+          data: data.data,
+          success: true,
+          message: data.message
+        };
+      } else {
+        return {
+          data: null,
+          success: false,
+          message: data?.message || "Failed to fetch movie details"
+        };
+      }
     } catch (error: unknown) {
       console.error("❌ API Error:", error);
       
@@ -65,11 +74,22 @@ export class MovieDetailsApiService {
     try {
       console.log("🎬 Fetching all movies from API");
       const response = await axiosClient.get('/movies');
-      return {
-        data: response.data,
-        success: true,
-        message: "Movies fetched successfully from API"
-      };
+      const data = response.data;
+      
+      // Handle ApiResponse format from backend
+      if (data && data.success && data.data && data.data.content) {
+        return {
+          data: data.data.content,
+          success: true,
+          message: data.message
+        };
+      } else {
+        return {
+          data: [],
+          success: false,
+          message: data?.message || "Failed to fetch movies"
+        };
+      }
     } catch (error: unknown) {
       console.error("❌ API Error:", error);
       return {
@@ -83,15 +103,23 @@ export class MovieDetailsApiService {
   static async getNowShowingMovies(): Promise<ApiResponse<MovieDetails[]>> {
     try {
       console.log("🎬 Fetching now showing movies from API");
-      const response = await axiosClient.get('/movies');
-      const allMovies = response.data;
-      const nowShowingMovies = allMovies.filter((movie: MovieDetails) => movie.isNowShowing);
+      const response = await axiosClient.get('/movies/now-showing');
+      const data = response.data;
       
-      return {
-        data: nowShowingMovies,
-        success: true,
-        message: "Now showing movies fetched successfully from API"
-      };
+      // Handle ApiResponse format from backend
+      if (data && data.success && data.data) {
+        return {
+          data: data.data,
+          success: true,
+          message: data.message
+        };
+      } else {
+        return {
+          data: [],
+          success: false,
+          message: data?.message || "Failed to fetch now showing movies"
+        };
+      }
     } catch (error: unknown) {
       console.error("❌ API Error:", error);
       return {
@@ -105,15 +133,23 @@ export class MovieDetailsApiService {
   static async getComingSoonMovies(): Promise<ApiResponse<MovieDetails[]>> {
     try {
       console.log("🎬 Fetching coming soon movies from API");
-      const response = await axiosClient.get('/movies');
-      const allMovies = response.data;
-      const comingSoonMovies = allMovies.filter((movie: MovieDetails) => movie.isComingSoon);
+      const response = await axiosClient.get('/movies/coming-soon');
+      const data = response.data;
       
-      return {
-        data: comingSoonMovies,
-        success: true,
-        message: "Coming soon movies fetched successfully from API"
-      };
+      // Handle ApiResponse format from backend
+      if (data && data.success && data.data) {
+        return {
+          data: data.data,
+          success: true,
+          message: data.message
+        };
+      } else {
+        return {
+          data: [],
+          success: false,
+          message: data?.message || "Failed to fetch coming soon movies"
+        };
+      }
     } catch (error: unknown) {
       console.error("❌ API Error:", error);
       return {

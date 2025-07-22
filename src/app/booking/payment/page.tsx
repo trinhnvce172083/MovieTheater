@@ -38,7 +38,7 @@ export default function PaymentPage() {
     if (bookingId) {
       loadBookingDetails();
     } else {
-      message.error("Không tìm thấy thông tin booking");
+      message.error("Booking information not found");
       router.push(ROUTES.HOME);
     }
   }, [bookingId]);
@@ -55,7 +55,7 @@ export default function PaymentPage() {
   // Xử lý thanh toán
   const handlePayment = async () => {
     if (!bookingId || !bookingDetails) {
-      message.error("Thiếu thông tin booking");
+      message.error("Missing booking information");
       return;
     }
 
@@ -77,19 +77,19 @@ export default function PaymentPage() {
       if (selectedPaymentMethod === 'WALLET') {
         if (response.paymentUrl) {
           window.open(response.paymentUrl, '_blank');
-          message.success('Đang chuyển hướng đến VNPay...');
+          message.success('Redirecting to VNPay...');
         } else {
-          message.error('Không lấy được link thanh toán VNPay!');
+          message.error('Failed to get VNPay payment link!');
         }
         return;
       }
 
       if (response.status === 'PENDING') {
-        message.success("Đã tạo thanh toán thành công. Vui lòng hoàn tất thanh toán.");
+        message.success("Payment created successfully. Please complete the payment.");
       }
     } catch (error) {
       console.error('Error creating payment:', error);
-      message.error("Có lỗi xảy ra khi tạo thanh toán");
+      message.error("An error occurred while creating payment");
     }
   };
 
@@ -102,7 +102,7 @@ export default function PaymentPage() {
       setPaymentResponse(status);
 
       if (status.status === 'COMPLETED') {
-        message.success("Thanh toán thành công!");
+        message.success("Payment successful!");
         // Chuyển đến trang thành công hoặc booking history
         setTimeout(() => {
           router.push(ROUTES.MEMBER_BOOKINGS);
@@ -125,10 +125,10 @@ export default function PaymentPage() {
     if (!paymentResponse) return null;
 
     const statusConfig = {
-      PENDING: { icon: Clock, color: "bg-yellow-500", text: "Chờ thanh toán" },
-      PROCESSING: { icon: Clock, color: "bg-blue-500", text: "Đang xử lý" },
-      COMPLETED: { icon: CheckCircle, color: "bg-green-500", text: "Thành công" },
-      FAILED: { icon: XCircle, color: "bg-red-500", text: "Thất bại" }
+      PENDING: { icon: Clock, color: "bg-yellow-500", text: "Pending payment" },
+      PROCESSING: { icon: Clock, color: "bg-blue-500", text: "Processing" },
+      COMPLETED: { icon: CheckCircle, color: "bg-green-500", text: "Completed" },
+      FAILED: { icon: XCircle, color: "bg-red-500", text: "Failed" }
     };
 
     const config = statusConfig[paymentResponse.status as keyof typeof statusConfig];
@@ -139,13 +139,13 @@ export default function PaymentPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
             <IconComponent className={`w-5 h-5 ${config.color} rounded-full p-1`} />
-            Trạng thái thanh toán
+            Payment Status
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-gray-400">Trạng thái:</span>
+              <span className="text-gray-400">Status:</span>
               <Badge variant="secondary" className={config.color}>
                 {config.text}
               </Badge>
@@ -153,7 +153,7 @@ export default function PaymentPage() {
             
             {paymentResponse.transactionId && (
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Mã giao dịch:</span>
+                <span className="text-gray-400">Transaction ID:</span>
                 <span className="text-white font-mono">{paymentResponse.transactionId}</span>
               </div>
             )}
@@ -168,7 +168,7 @@ export default function PaymentPage() {
               <div className="space-y-3">
                 {paymentResponse.qrCode && (
                   <div className="text-center">
-                    <p className="text-gray-400 mb-2">Quét mã QR để thanh toán:</p>
+                    <p className="text-gray-400 mb-2">Scan QR code to complete payment:</p>
                     <img 
                       src={paymentResponse.qrCode} 
                       alt="QR Code" 
@@ -177,22 +177,22 @@ export default function PaymentPage() {
                   </div>
                 )}
                 
-                {paymentResponse.paymentUrl && (
+                {/* {paymentResponse.paymentUrl && (
                   <Button 
                     onClick={() => window.open(paymentResponse.paymentUrl, '_blank')}
                     className="w-full bg-blue-600 hover:bg-blue-700"
                   >
-                    Thanh toán trực tuyến
+                    Complete Online Payment
                   </Button>
-                )}
+                )} */}
 
-                <Button 
+                {/* <Button 
                   onClick={handleCheckPaymentStatus}
                   variant="outline"
                   className="w-full"
                 >
-                  Kiểm tra trạng thái
-                </Button>
+                  Check Payment Status
+                </Button> */}
               </div>
             )}
           </div>
@@ -213,12 +213,12 @@ export default function PaymentPage() {
         if (status?.status === 'COMPLETED') {
           setPaymentModalContent({
             status: 'success',
-            message: 'Thanh toán thành công! Đang chuyển về trang chủ...'
+            message: 'Payment successful! Redirecting to home...'
           });
         } else {
           setPaymentModalContent({
             status: 'error',
-            message: 'Thanh toán thất bại hoặc bị hủy! Đang chuyển về trang chủ...'
+            message: 'Payment failed or cancelled! Redirecting to home...'
           });
         }
         setShowPaymentModal(true);
@@ -237,12 +237,12 @@ export default function PaymentPage() {
           <div className="flex items-center gap-4 mb-8">
             <Button variant="ghost" onClick={handleBack} className="text-white">
               <ArrowLeft className="w-5 h-5 mr-2" />
-              Quay lại
+              Back
             </Button>
-            <h1 className="text-2xl font-bold">Thanh toán</h1>
+            <h1 className="text-2xl font-bold">Payment</h1>
           </div>
           <div className="text-center py-12">
-            <p>Đang tải thông tin booking...</p>
+            <p>Loading booking information...</p>
           </div>
         </div>
       </div>
@@ -256,7 +256,7 @@ export default function PaymentPage() {
         footer={null}
         closable={false}
         centered
-        bodyStyle={{ textAlign: 'center', padding: 32 }}
+        styles={{ body:{ textAlign: 'center', padding: 32 }}}
       >
         {paymentModalContent.status === 'success' ? (
           <div>
@@ -276,9 +276,9 @@ export default function PaymentPage() {
           <div className="flex items-center gap-4 mb-8">
             <Button variant="ghost" onClick={handleBack} className="text-white">
               <ArrowLeft className="w-5 h-5 mr-2" />
-              Quay lại
+              Back
             </Button>
-            <h1 className="text-2xl font-bold">Thanh toán</h1>
+            <h1 className="text-2xl font-bold">Payment</h1>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -292,7 +292,7 @@ export default function PaymentPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-white">
                     <CreditCard className="w-5 h-5" />
-                    Phương thức thanh toán
+                    Payment Methods
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -326,34 +326,34 @@ export default function PaymentPage() {
             <div className="space-y-6">
               <Card className="bg-[#1a2332] border-[#2d3748] sticky top-4">
                 <CardHeader>
-                  <CardTitle className="text-white">Tóm tắt đơn hàng</CardTitle>
+                  <CardTitle className="text-white">Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Mã booking:</span>
+                      <span className="text-gray-400">Booking Code:</span>
                       <span className="font-mono">{bookingDetails.bookingCode}</span>
                     </div>
                     
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Phim:</span>
+                      <span className="text-gray-400">Movie:</span>
                       <span>{bookingDetails.movie?.title}</span>
                     </div>
                     
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Suất chiếu:</span>
+                      <span className="text-gray-400">Show Time:</span>
                       <span>{bookingDetails.schedule?.formattedShowDateTime}</span>
                     </div>
                     
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Ghế:</span>
-                      <span>{bookingDetails.seats?.length || 0} ghế</span>
+                      <span className="text-gray-400">Seats:</span>
+                      <span>{bookingDetails.seats?.length || 0} seats</span>
                     </div>
                     
                     <Separator className="bg-gray-600" />
                     
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Tổng tiền:</span>
+                      <span className="text-gray-400">Total Amount:</span>
                       <span className="text-lg font-bold text-green-400">
                         {bookingDetails.finalAmount?.toLocaleString()}đ
                       </span>
@@ -367,7 +367,7 @@ export default function PaymentPage() {
                       className="w-full bg-green-600 hover:bg-green-700 text-white"
                       size="lg"
                     >
-                      {loading ? "Đang xử lý..." : "Thanh toán ngay"}
+                      {loading ? "Processing..." : "Pay Now"}
                     </Button>
                   )}
                 </CardContent>

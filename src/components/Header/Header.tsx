@@ -16,49 +16,55 @@ const HeaderComponent = () => {
   const { isLoggedIn, user } = useAuth();
 
   return (
-    <header className="flex items-center justify-between px-6 bg-black py-0 text-white relative z-10">
-      <div className="flex items-center">
-        <Link href={ROUTES.HOME} className="mr-8">
+    <header className="flex items-center justify-between px-2 sm:px-4 md:px-6 bg-black py-2 md:py-0 text-white relative z-10 border-b border-black/30 shadow-sm">
+      <div className="flex items-center gap-2 md:gap-8">
+        <Link href={ROUTES.HOME} className="mr-2 md:mr-8">
           <Image
             src="/Logo.png"
             alt="Logo"
-            width={180}
-            height={72}
-            className="w-auto h-24"
+            width={120}
+            height={48}
+            className="w-24 h-12 md:w-auto md:h-24"
             priority // Logo is important for First Contentful Paint
-            sizes="180px"
+            sizes="120px"
           />
         </Link>
-        <nav className="flex space-x-8">
+        <nav className="flex gap-3 md:gap-8 text-sm md:text-base flex-wrap">
           <Link
             href={ROUTES.NOW_SHOWING}
-            className="hover:text-red-500 transition-colors"
+            className="hover:text-red-500 transition-colors whitespace-nowrap"
           >
             Now Showing
           </Link>
           <Link
             href={ROUTES.COMING_SOON}
-            className="hover:text-red-500 transition-colors"
+            className="hover:text-red-500 transition-colors whitespace-nowrap"
           >
             Coming Soon
           </Link>
         </nav>
       </div>
-      <div className="flex items-center space-x-6">
+      <div className="flex items-center gap-2 md:gap-6">
         {!isLoggedIn ? (
           <Link
             href={ROUTES.LOGIN}
-            className="rounded-full bg-gradient-to-r from-teal-400 to-blue-500 hover:from-pink-500 hover:to-orange-500 text-white px-4 py-1.5 font-medium transition-colors shadow-md"
+            className="rounded-full bg-gradient-to-r from-teal-400 to-blue-500 hover:from-pink-500 hover:to-orange-500 text-white px-3 py-1 md:px-4 md:py-1.5 font-medium transition-colors shadow-md text-sm md:text-base"
           >
             Login
           </Link>
         ) : (
           <>
-            <NotificationDropdown />
-            <UserDropdown user={user} />
+            <div className="rounded-full bg-white/10 p-2 md:p-0">
+              <NotificationDropdown />
+            </div>
+            <div className="rounded-full bg-white/10 p-2 md:p-0">
+              <UserDropdown user={user} />
+            </div>
           </>
         )}
-        <LanguageDropdown />
+        <div className="rounded-full bg-white/10 p-2 md:p-0">
+          <LanguageDropdown />
+        </div>
       </div>
     </header>
   );

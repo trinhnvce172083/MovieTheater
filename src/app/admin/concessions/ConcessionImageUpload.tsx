@@ -5,28 +5,26 @@ import { UploadOutlined } from "@ant-design/icons";
 interface ConcessionImageUploadProps {
   value?: string;
   onChange?: (url: string) => void;
+  onFileChange?: (file: File | null) => void;
 }
 
-const ConcessionImageUpload: React.FC<ConcessionImageUploadProps> = ({ value, onChange }) => {
+const ConcessionImageUpload: React.FC<ConcessionImageUploadProps> = ({ value, onChange, onFileChange }) => {
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(value);
 
   const handleImageUpload = async (file: File) => {
     setUploading(true);
-    // TODO: Thay thế API upload phù hợp với backend của bạn
-    const formData = new FormData();
-    formData.append("file", file);
-    // Ví dụ: gọi API backend trả về { url: "https://..." }
-    const response = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await response.json();
-    setPreviewUrl(data.url);
+    if (onFileChange) onFileChange(file);
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
     setUploading(false);
-    if (onChange) onChange(data.url);
-    return false; // Ngăn upload mặc định của Ant Design
+    return false;
   };
+
+  React.useEffect(() => {
+    if (value) setPreviewUrl(value);
+    else setPreviewUrl(undefined);
+  }, [value]);
 
   return (
     <div>

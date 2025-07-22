@@ -1,28 +1,20 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Card, Spin, Button, Typography, Progress, Badge, Row, Col } from "antd";
+import { Spin } from "antd";
 import {
-  UserOutlined,
+  // UserOutlined,
   VideoCameraOutlined,
   HomeOutlined,
   GiftOutlined,
-  DatabaseOutlined,
-  TrophyOutlined,
-  CalendarOutlined,
-  RiseOutlined,
-  FallOutlined,
   DollarOutlined,
+  TagOutlined,
   TeamOutlined,
-  BarChartOutlined,
-  DashboardOutlined,
 } from "@ant-design/icons";
 import { getAllUsers } from "@/api/admin/getAllUsers";
 import { getMovies } from "@/api/admin/getAllMovies";
 import { getAllPromotions } from "@/api/admin/getAllPromotions";
 import { getAllRooms } from "@/api/admin/getAllRooms";
-
-const { Title, Text } = Typography;
 
 interface MovieData {
   status: string;
@@ -41,66 +33,131 @@ export default function AdminDashboard() {
   const [activeRooms, setActiveRooms] = useState<number | null>(null);
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
   const [averagePrice, setAveragePrice] = useState<number>(0);
+  const [apiStatus, setApiStatus] = useState({
+    movies: 'loading',
+    users: 'loading', 
+    rooms: 'loading',
+    promotions: 'loading'
+  });
 
   const fetchData = async () => {
     setLoading(true);
     try {
+      console.log("🚀 Starting dashboard data fetch...");
+      
       // Fetch users
-      const userData = await getAllUsers();
-      if (userData && Array.isArray(userData.content)) {
-        setTotalUsers(userData.content.length);
+      console.log("🔍 Fetching users data...");
+      try {
+        const userData = await getAllUsers();
+        console.log("👥 Users data received:", userData);
+        setApiStatus(prev => ({ ...prev, users: 'success' }));
+        
+        if (userData && Array.isArray(userData.content)) {
+          console.log("✅ Users count:", userData.content.length);
+          setTotalUsers(userData.content.length);
+        } else if (userData && userData.page && userData.page.totalElements) {
+          console.log("✅ Users total elements:", userData.page.totalElements);
+          setTotalUsers(userData.page.totalElements);
+        } else {
+          console.log("⚠️ Users data structure unexpected:", userData);
+        }
+      } catch (userError) {
+        console.error("❌ Failed to fetch users:", userError);
+        setApiStatus(prev => ({ ...prev, users: 'error' }));
       }
 
       // Fetch movies  
-      const movieData = await getMovies({
-        page: 0,
-        size: 100,
-        sortBy: "title",
-        sortDirection: "asc",
-      });
-      if (movieData?.content && Array.isArray(movieData.content)) {
-        setTotalMovies(movieData.content.length);
-        const activeMovieCount = movieData.content.filter((movie: { status: string }) => 
-          movie.status === 'NOW_SHOWING'
-        ).length;
-        setActiveMovies(activeMovieCount);
+      console.log("🔍 Fetching movies data...");
+      try {
+        const movieData = await getMovies({
+          page: 0,
+          size: 100,
+          sortBy: "title",
+          sortDirection: "asc",
+        });
+        console.log("🎬 Movies data received:", movieData);
+        setApiStatus(prev => ({ ...prev, movies: 'success' }));
+        
+        if (movieData?.content && Array.isArray(movieData.content)) {
+          console.log("✅ Movies count:", movieData.content.length);
+          setTotalMovies(movieData.content.length);
+          const activeMovieCount = movieData.content.filter((movie: { status: string }) => 
+            movie.status === 'NOW_SHOWING'
+          ).length;
+          console.log("✅ Active movies count:", activeMovieCount);
+          setActiveMovies(activeMovieCount);
 
-        // Calculate revenue and pricing data
-        const moviesWithRevenue = movieData.content.filter((movie: MovieData) => movie.revenue || movie.price);
-        const totalRev = moviesWithRevenue.reduce((sum: number, movie: MovieData) => 
-          sum + (movie.revenue || movie.price || 0), 0
-        );
-        setTotalRevenue(totalRev);
+          // Calculate revenue and pricing data
+          const moviesWithRevenue = movieData.content.filter((movie: MovieData) => movie.revenue || movie.price);
+          const totalRev = moviesWithRevenue.reduce((sum: number, movie: MovieData) => 
+            sum + (movie.revenue || movie.price || 0), 0
+          );
+          console.log("💰 Total revenue calculated:", totalRev);
+          setTotalRevenue(totalRev);
 
-        const moviesWithPrice = movieData.content.filter((movie: MovieData) => movie.price);
-        const avgPrice = moviesWithPrice.length > 0 
-          ? moviesWithPrice.reduce((sum: number, movie: MovieData) => sum + (movie.price || 0), 0) / moviesWithPrice.length
-          : 0;
-        setAveragePrice(avgPrice);
+          const moviesWithPrice = movieData.content.filter((movie: MovieData) => movie.price);
+          const avgPrice = moviesWithPrice.length > 0 
+            ? moviesWithPrice.reduce((sum: number, movie: MovieData) => sum + (movie.price || 0), 0) / moviesWithPrice.length
+            : 0;
+          console.log("💵 Average price calculated:", avgPrice);
+          setAveragePrice(avgPrice);
+        } else {
+          console.log("⚠️ Movies data structure unexpected:", movieData);
+        }
+      } catch (movieError) {
+        console.error("❌ Failed to fetch movies:", movieError);
+        setApiStatus(prev => ({ ...prev, movies: 'error' }));
       }
 
       // Fetch rooms
-      const roomData = await getAllRooms(0, 100);
-      if (roomData?.content && Array.isArray(roomData.content)) {
-        setTotalRooms(roomData.content.length);
-        const activeRoomCount = roomData.content.filter((room: { isActive: boolean }) => 
-          room.isActive === true
-        ).length;
-        setActiveRooms(activeRoomCount);
+      console.log("🔍 Fetching rooms data...");
+      try {
+        const roomData = await getAllRooms(0, 100);
+        console.log("🏢 Rooms data received:", roomData);
+        setApiStatus(prev => ({ ...prev, rooms: 'success' }));
+        
+        if (roomData?.content && Array.isArray(roomData.content)) {
+          console.log("✅ Rooms count:", roomData.content.length);
+          setTotalRooms(roomData.content.length);
+          const activeRoomCount = roomData.content.filter((room: { isActive: boolean }) => 
+            room.isActive === true
+          ).length;
+          console.log("✅ Active rooms count:", activeRoomCount);
+          setActiveRooms(activeRoomCount);
+        } else {
+          console.log("⚠️ Rooms data structure unexpected:", roomData);
+        }
+      } catch (roomError) {
+        console.error("❌ Failed to fetch rooms:", roomError);
+        setApiStatus(prev => ({ ...prev, rooms: 'error' }));
       }
 
       // Fetch promotions
-      const promotionData = await getAllPromotions({
-        page: 0,
-        size: 100,
-        sortBy: "promotionName",
-        sortDirection: "ASC",
-      });
-      if (promotionData?.content && Array.isArray(promotionData.content)) {
-        setTotalPromotions(promotionData.content.length);
+      console.log("🔍 Fetching promotions data...");
+      try {
+        const promotionData = await getAllPromotions({
+          page: 0,
+          size: 100,
+          sortBy: "promotionName",
+          sortDirection: "ASC",
+        });
+        console.log("🎁 Promotions data received:", promotionData);
+        setApiStatus(prev => ({ ...prev, promotions: 'success' }));
+        
+        if (promotionData?.content && Array.isArray(promotionData.content)) {
+          console.log("✅ Promotions count:", promotionData.content.length);
+          setTotalPromotions(promotionData.content.length);
+        } else {
+          console.log("⚠️ Promotions data structure unexpected:", promotionData);
+        }
+      } catch (promotionError) {
+        console.error("❌ Failed to fetch promotions:", promotionError);
+        setApiStatus(prev => ({ ...prev, promotions: 'error' }));
       }
+
+      console.log("🏁 Dashboard data fetch completed!");
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('❌ Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }
@@ -112,7 +169,7 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <Spin size="large" />
           <div className="mt-4 text-slate-700 text-lg">Loading dashboard...</div>
@@ -121,276 +178,145 @@ export default function AdminDashboard() {
     );
   }
 
-  const getCurrentDate = () => {
-    const now = new Date();
-    return now.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  };
-
-  const getCurrentTime = () => {
-    const now = new Date();
-    return now.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit'
-    });
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', { 
+      style: 'currency', 
+      currency: 'VND',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount * 25000);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 p-6">
+    <div className="p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        {/* Professional Header */}
+        {/* Header */}
         <div className="mb-8">
-          <div className="bg-white/80 backdrop-blur-md rounded-2xl p-6 border border-slate-200 shadow-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
-                  <DashboardOutlined className="text-white text-xl" />
-                </div>
-                <div>
-                  <Title level={1} className="!mb-1 !text-slate-800">
-                    Cinema Analytics Hub
-                  </Title>
-                  <Text className="text-slate-600 text-lg">
-                    Enterprise Management Dashboard
-                  </Text>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">Admin Dashboard</h1>
+              <p className="text-sm text-gray-600 mt-1">Cinema Management System Overview</p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          {/* Members Card */}
+          <div className="bg-white rounded-md shadow-sm border border-gray-100">
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-gray-500">Total Members</h3>
+                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50">
+                  <TeamOutlined className="text-blue-500" />
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-slate-800 text-lg font-semibold">
-                  {getCurrentTime()}
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-2xl font-semibold text-gray-900">{totalUsers !== null ? totalUsers.toLocaleString() : '—'}</p>
                 </div>
-                <div className="text-slate-600">
-                  {getCurrentDate()}
+              </div>
+            </div>
+          </div>
+
+          {/* Movies Card */}
+          <div className="bg-white rounded-md shadow-sm border border-gray-100">
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-gray-500">Movies</h3>
+                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-green-50">
+                  <VideoCameraOutlined className="text-green-500" />
+                </div>
+              </div>
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-2xl font-semibold text-gray-900">{totalMovies !== null ? totalMovies.toLocaleString() : '—'}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {activeMovies !== null ? <span><span className="font-medium text-green-600">{activeMovies}</span> now showing</span> : '—'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Cinema Halls Card */}
+          <div className="bg-white rounded-md shadow-sm border border-gray-100">
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-gray-500">Cinema Halls</h3>
+                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-indigo-50">
+                  <HomeOutlined className="text-indigo-500" />
+                </div>
+              </div>
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-2xl font-semibold text-gray-900">{totalRooms !== null ? totalRooms.toLocaleString() : '—'}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {activeRooms !== null ? <span><span className="font-medium text-indigo-600">{activeRooms}</span> operational</span> : '—'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Promotions Card */}
+          <div className="bg-white rounded-md shadow-sm border border-gray-100">
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-gray-500">Promotions</h3>
+                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-50">
+                  <GiftOutlined className="text-orange-500" />
+                </div>
+              </div>
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-2xl font-semibold text-gray-900">{totalPromotions !== null ? totalPromotions.toLocaleString() : '—'}</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Executive Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <div className="text-center">
-              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <TeamOutlined className="text-white text-3xl" />
-              </div>
-              <div className="text-3xl font-bold text-white mb-1">
-                {totalUsers || 0}
-              </div>
-              <Text className="text-blue-100 text-base">Total Members</Text>
-              <div className="mt-3 flex items-center justify-center">
-                <RiseOutlined className="text-green-300 mr-1 text-lg" />
-                <span className="text-green-300 text-sm">+12% this month</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-emerald-500 to-green-600 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <div className="text-center">
-              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <VideoCameraOutlined className="text-white text-3xl" />
-              </div>
-              <div className="text-3xl font-bold text-white mb-1">
-                {totalMovies || 0}
-              </div>
-              <Text className="text-emerald-100 text-base">Movies Portfolio</Text>
-              <div className="mt-3">
-                <Badge 
-                  count={activeMovies || 0} 
-                  style={{ backgroundColor: '#10b981' }}
-                  className="text-white"
-                />
-                <span className="text-emerald-200 text-sm ml-2">Now Showing</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-violet-500 to-purple-600 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <div className="text-center">
-              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <HomeOutlined className="text-white text-3xl" />
-              </div>
-              <div className="text-3xl font-bold text-white mb-1">
-                {totalRooms || 0}
-              </div>
-              <Text className="text-violet-100 text-base">Cinema Halls</Text>
-              <div className="mt-3">
-                <Progress 
-                  percent={totalRooms ? Math.round((activeRooms || 0) / totalRooms * 100) : 0} 
-                  size="small" 
-                  strokeColor="#8b5cf6"
-                  trailColor="rgba(255,255,255,0.2)"
-                  showInfo={false}
-                />
-                <div className="text-violet-200 text-sm mt-1">
-                  {activeRooms || 0} Operational
+        {/* Financial Overview */}
+        <div className="mb-8">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Financial Overview</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Total Revenue */}
+            <div className="bg-white rounded-md shadow-sm border border-gray-100">
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
+                  <div className="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-50">
+                    <DollarOutlined className="text-emerald-500" />
+                  </div>
+                </div>
+                <div className="mt-1">
+                  <p className="text-2xl font-semibold text-gray-900">{formatCurrency(totalRevenue)}</p>
+                  <div className="flex items-center mt-1">
+                    <span className="text-xs font-medium text-emerald-500">↑ +8.2%</span>
+                    <span className="text-xs text-gray-500 ml-1">from last month</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </Card>
 
-          <Card className="bg-gradient-to-br from-amber-500 to-orange-600 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <div className="text-center">
-              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <GiftOutlined className="text-white text-3xl" />
-              </div>
-              <div className="text-3xl font-bold text-white mb-1">
-                {totalPromotions || 0}
-              </div>
-              <Text className="text-amber-100 text-base">Active Promotions</Text>
-              <div className="mt-3 flex items-center justify-center">
-                <TrophyOutlined className="text-yellow-300 mr-1 text-lg" />
-                <span className="text-amber-200 text-sm">Marketing Active</span>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Revenue Analytics */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <Card className="lg:col-span-2 bg-white/80 backdrop-blur-md border border-slate-200 shadow-lg">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                  <BarChartOutlined className="text-white text-xl" />
-                </div>
-                <Title level={3} className="!mb-0 !text-slate-800">
-                  Financial Overview
-                </Title>
-              </div>
-            </div>
-            <Row gutter={24}>
-              <Col span={12}>
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <Text className="text-green-700 font-medium">Tổng Doanh Thu</Text>
-                    <DollarOutlined className="text-green-600 text-xl" />
-                  </div>
-                  <div className="text-3xl font-bold text-green-800 mb-2">
-                    {(totalRevenue * 25000).toLocaleString('vi-VN')} ₫
-                  </div>
-                  <div className="flex items-center text-green-600">
-                    <RiseOutlined className="mr-1 text-lg" />
-                    <span className="text-sm">+8.2% so với tháng trước</span>
+            {/* Average Ticket Price */}
+            <div className="bg-white rounded-md shadow-sm border border-gray-100">
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-gray-500">Average Ticket Price</h3>
+                  <div className="w-8 h-8 flex items-center justify-center rounded-full bg-cyan-50">
+                    <TagOutlined className="text-cyan-500" />
                   </div>
                 </div>
-              </Col>
-              <Col span={12}>
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <Text className="text-blue-700 font-medium">Giá Vé Trung Bình</Text>
-                    <CalendarOutlined className="text-blue-600 text-xl" />
-                  </div>
-                  <div className="text-3xl font-bold text-blue-800 mb-2">
-                    {(averagePrice * 25000).toLocaleString('vi-VN')} ₫
-                  </div>
-                  <div className="flex items-center text-blue-600">
-                    <span className="text-sm">Trải nghiệm cao cấp</span>
-                  </div>
+                <div className="mt-1">
+                  <p className="text-2xl font-semibold text-gray-900">{formatCurrency(averagePrice)}</p>
+                  <p className="text-xs text-gray-500 mt-1">Premium experience</p>
                 </div>
-              </Col>
-            </Row>
-          </Card>
-
-          <Card className="bg-white/80 backdrop-blur-md border border-slate-200 shadow-lg">
-            <div className="text-center">
-              <div className="w-24 h-24 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <TrophyOutlined className="text-white text-4xl" />
               </div>
-              <Title level={3} className="!text-slate-800 !mb-2">
-                Performance Score
-              </Title>
-              <div className="text-4xl font-bold text-slate-800 mb-4">98.5%</div>
-              <Progress 
-                type="circle" 
-                percent={98.5} 
-                size={140}
-                strokeColor={{
-                  '0%': '#8b5cf6',
-                  '100%': '#a855f7',
-                }}
-                trailColor="rgba(203, 213, 225, 0.3)"
-              />
-              <Text className="text-slate-600 mt-4 block">
-                System Health Excellent
-              </Text>
             </div>
-          </Card>
-        </div>
-
-        {/* Management Actions */}
-        {/* <Card className="bg-white/80 backdrop-blur-md border border-slate-200 shadow-lg">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-lg flex items-center justify-center">
-              <DatabaseOutlined className="text-white text-xl" />
-            </div>
-            <Title level={3} className="!mb-0 !text-slate-800">
-              Quick Management Tools
-            </Title>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Button 
-              size="large"
-              className="h-20 bg-gradient-to-r from-blue-500 to-blue-600 border-0 text-white hover:from-blue-600 hover:to-blue-700 transition-all duration-300 text-left"
-              icon={<UserOutlined className="text-2xl" />}
-              onClick={() => window.location.href = '/admin/users'}
-            >
-              <div className="flex items-center space-x-4">
-                <UserOutlined className="text-3xl" />
-                <div>
-                  <div className="font-semibold text-lg">User Management</div>
-                  <div className="text-sm opacity-80">Manage customer accounts</div>
-                </div>
-              </div>
-            </Button>
-            
-            <Button 
-              size="large"
-              className="h-20 bg-gradient-to-r from-emerald-500 to-green-600 border-0 text-white hover:from-emerald-600 hover:to-green-700 transition-all duration-300 text-left"
-              onClick={() => window.location.href = '/admin/movies'}
-            >
-              <div className="flex items-center space-x-4">
-                <VideoCameraOutlined className="text-3xl" />
-                <div>
-                  <div className="font-semibold text-lg">Movie Catalog</div>
-                  <div className="text-sm opacity-80">Content management</div>
-                </div>
-              </div>
-            </Button>
-            
-            <Button 
-              size="large"
-              className="h-20 bg-gradient-to-r from-violet-500 to-purple-600 border-0 text-white hover:from-violet-600 hover:to-purple-700 transition-all duration-300 text-left"
-              onClick={() => window.location.href = '/admin/rooms'}
-            >
-              <div className="flex items-center space-x-4">
-                <HomeOutlined className="text-3xl" />
-                <div>
-                  <div className="font-semibold text-lg">Hall Operations</div>
-                  <div className="text-sm opacity-80">Room configuration</div>
-                </div>
-              </div>
-            </Button>
-            
-            <Button 
-              size="large"
-              className="h-20 bg-gradient-to-r from-amber-500 to-orange-600 border-0 text-white hover:from-amber-600 hover:to-orange-700 transition-all duration-300 text-left"
-              onClick={() => window.location.href = '/admin/promotions'}
-            >
-              <div className="flex items-center space-x-4">
-                <GiftOutlined className="text-3xl" />
-                <div>
-                  <div className="font-semibold text-lg">Promotions</div>
-                  <div className="text-sm opacity-80">Marketing campaigns</div>
-                </div>
-              </div>
-            </Button>
-          </div>
-        </Card> */}
+        </div>
       </div>
     </div>
   );
