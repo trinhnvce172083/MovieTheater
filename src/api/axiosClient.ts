@@ -161,6 +161,15 @@ axiosClient.interceptors.response.use(
         data: error.response?.data,
       }
     );
+
+    // Trigger global banned account detection if available
+    if (typeof window !== "undefined") {
+      const windowWithCallback = window as typeof window & { __triggerAccountBannedCheck?: (error: unknown) => void };
+      if (windowWithCallback.__triggerAccountBannedCheck) {
+        windowWithCallback.__triggerAccountBannedCheck(error);
+      }
+    }
+
     return Promise.reject(error);
   }
 );

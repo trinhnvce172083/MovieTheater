@@ -116,6 +116,27 @@ export default function AdminMemberManagement() {
       if (success) {
         setLockModalVisible(false);
         setSelectedMember(null);
+        
+        // If we just locked the current user, trigger banned notification
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        if (currentUser.id === parseInt(selectedMember.id)) {
+          console.log('🚫 User locked themselves! Triggering banned notification...');
+          const windowWithCallback = window as typeof window & { __triggerAccountBannedCheck?: (error: unknown) => void };
+          if (windowWithCallback.__triggerAccountBannedCheck) {
+            // Simulate account locked error
+            const mockError = {
+              response: {
+                status: 403,
+                data: {
+                  message: lockData.reason || "Tài khoản đã bị khóa",
+                  errorCode: "ACCOUNT_LOCKED",
+                  code: 1105
+                }
+              }
+            };
+            windowWithCallback.__triggerAccountBannedCheck(mockError);
+          }
+        }
       }
     }
   };
@@ -209,6 +230,33 @@ export default function AdminMemberManagement() {
                 title={!isUsingApiData ? "Create/Edit functions require backend connection" : "Add new member"}
               >
                 Add New Member
+              </Button>
+              
+              {/* Test Button - Remove this in production */}
+              <Button
+                type="default"
+                size="small"
+                danger
+                onClick={() => {
+                  console.log('🧪 Testing banned notification...');
+                  const windowWithCallback = window as typeof window & { __triggerAccountBannedCheck?: (error: unknown) => void };
+                  if (windowWithCallback.__triggerAccountBannedCheck) {
+                    const mockError = {
+                      response: {
+                        status: 403,
+                        data: {
+                          message: "Tài khoản đã bị khóa do vi phạm điều khoản sử dụng",
+                          errorCode: "ACCOUNT_LOCKED",
+                          code: 1105
+                        }
+                      }
+                    };
+                    windowWithCallback.__triggerAccountBannedCheck(mockError);
+                  }
+                }}
+                title="Test banned notification (Remove in production)"
+              >
+                🧪 Test Ban
               </Button>
             </div>
           </div>

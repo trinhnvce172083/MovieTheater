@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   reactStrictMode: true,
+  experimental: {
+    // Sử dụng SWC để sửa lỗi font loader
+    optimizePackageImports: ['@next/font'],
+  },
   turbopack: {
     // Nếu cần loader cho file đặc biệt (ví dụ: .md), dùng rules dạng object mapping:
     rules: {
