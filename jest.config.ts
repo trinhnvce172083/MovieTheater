@@ -41,7 +41,12 @@ const config: Config = {
     "**/__tests__/**/*.(ts|tsx|js|jsx)",
     "**/*.(test|spec).(ts|tsx|js|jsx)"
   ],
-  
+
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "\\.mock\\.ts$"
+  ],
+
   // Coverage settings
   collectCoverage: true,
   coverageDirectory: "coverage",

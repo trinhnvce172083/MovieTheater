@@ -267,7 +267,8 @@ describe("LoginPage", () => {
   it("renders the login form", () => {
     render(<LoginPage />);
 
-    expect(screen.getByText("Login")).toBeInTheDocument();
+    // Check for the heading (h2 element)
+    expect(screen.getByRole("heading", { name: "Log In", level: 2 })).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText("Enter your username")
     ).toBeInTheDocument();
