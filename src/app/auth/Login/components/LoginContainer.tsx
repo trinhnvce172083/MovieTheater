@@ -83,20 +83,20 @@ const LoginContainer = memo(function LoginContainer() {
   }, [router, dispatch]);
 
   return (
-    <div className="min-h-screen h-screen flex items-center justify-center p-2 sm:p-4 md:p-8 lg:p-12">
+    <div className="min-h-screen h-screen flex items-center justify-center p-1 sm:p-2 md:p-4 lg:p-8 xl:p-12">
       <Card
-        className="w-full gap-0 max-w-sm sm:max-w-md md:max-w-md lg:max-w-md shadow-lg p-2 sm:p-4 rounded-xl"
+        className="w-full gap-0 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-md xl:max-w-md shadow-lg p-1 sm:p-2 md:p-4 rounded-lg sm:rounded-xl"
         style={{ background: "#F8F6F3", backdropFilter: "blur(8px)" }}
       >
         <Typography.Title
           level={2}
-          className="text-center mb-4 text-2xl sm:text-3xl md:text-4xl font-bold"
+          className="text-center mb-2 sm:mb-4 text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold"
           style={{ color: "#3C2414" }}
         >
           Log In
         </Typography.Title>
         <LoginForm loading={loading} onFinish={handleFinish} form={form} />
-        <div className="mt-2">
+        <div className="mt-1 sm:mt-2">
           <LoginFooter />
         </div>
       </Card>

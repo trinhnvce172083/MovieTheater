@@ -26,6 +26,7 @@ const ResponsiveMovieSection = memo(function ResponsiveMovieSection({
   onScrollRight,
   isUpcoming = false,
 }: ResponsiveMovieSectionProps) {
+  console.log(`${title} - Movies:`, movies, `Loading: ${loading}`);
   const [showLeftShadow, setShowLeftShadow] = useState(false);
   const [showRightShadow, setShowRightShadow] = useState(true);
   const [cardWidth, setCardWidth] = useState(0);

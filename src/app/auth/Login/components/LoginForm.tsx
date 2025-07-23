@@ -19,7 +19,7 @@ const LoginForm = React.memo<LoginFormProps>(function LoginForm({ loading, onFin
         <Input
           size="large"
           placeholder="Enter your username"
-          className="rounded-lg text-shadow-gray-950! autofill:bg-transparent"
+          className="rounded-lg text-shadow-gray-950! autofill:bg-transparent sm:text-base text-sm"
           autoComplete="new-username"
         />
       ),
@@ -33,7 +33,7 @@ const LoginForm = React.memo<LoginFormProps>(function LoginForm({ loading, onFin
         <Input.Password
           size="large"
           placeholder="Enter your password"
-          className="rounded-lg text-gray-950! autofill:bg-transparent"
+          className="rounded-lg text-gray-950! autofill:bg-transparent sm:text-base text-sm"
           autoComplete="new-password"
         />
       ),
@@ -42,7 +42,7 @@ const LoginForm = React.memo<LoginFormProps>(function LoginForm({ loading, onFin
       key: "remember-me-field",
       name: "rememberMe",
       valuePropName: "checked",
-      component: <Checkbox>Remember me</Checkbox>,
+      component: <Checkbox className="sm:text-base text-sm">Remember me</Checkbox>,
     },
   ];
 
@@ -69,7 +69,7 @@ const LoginForm = React.memo<LoginFormProps>(function LoginForm({ loading, onFin
         <Button
           type="primary"
           htmlType="submit"
-          className="w-full mt-2"
+          className="w-full mt-1 sm:mt-2 sm:text-base text-sm"
           size="large"
           loading={loading}
         >

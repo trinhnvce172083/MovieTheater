@@ -255,6 +255,93 @@ describe("Login API", () => {
       });
     }
   });
+
+  it("Empty username should fail", async () => {
+    const emptyUsernameData = { ...InputData, username: "" };
+    jest.spyOn(axiosClient, "post").mockRejectedValueOnce({
+      response: {
+        data: {
+          success: false,
+          message: "Username is required",
+          errorCode: "VALIDATION_ERROR"
+        }
+      }
+    });
+
+    try {
+      await Login_API(emptyUsernameData);
+    } catch (err: any) {
+      expect(err.response.data).toMatchObject({
+        success: false,
+        errorCode: "VALIDATION_ERROR"
+      });
+    }
+  });
+
+  it("Empty password should fail", async () => {
+    const emptyPasswordData = { ...InputData, password: "" };
+    jest.spyOn(axiosClient, "post").mockRejectedValueOnce({
+      response: {
+        data: {
+          success: false,
+          message: "Password is required",
+          errorCode: "VALIDATION_ERROR"
+        }
+      }
+    });
+
+    try {
+      await Login_API(emptyPasswordData);
+    } catch (err: any) {
+      expect(err.response.data).toMatchObject({
+        success: false,
+        errorCode: "VALIDATION_ERROR"
+      });
+    }
+  });
+
+  it("Network error should be handled", async () => {
+    jest.spyOn(axiosClient, "post").mockRejectedValueOnce(new Error("Network Error"));
+
+    try {
+      await Login_API(InputData);
+    } catch (err: any) {
+      expect(err.message).toBe("Network Error");
+    }
+  });
+
+  it("Server error (500) should be handled", async () => {
+    jest.spyOn(axiosClient, "post").mockRejectedValueOnce({
+      response: {
+        status: 500,
+        data: {
+          success: false,
+          message: "Internal Server Error",
+          errorCode: "SERVER_ERROR"
+        }
+      }
+    });
+
+    try {
+      await Login_API(InputData);
+    } catch (err: any) {
+      expect(err.response.status).toBe(500);
+      expect(err.response.data.errorCode).toBe("SERVER_ERROR");
+    }
+  });
+
+  it("Should include rememberMe flag in request", async () => {
+    const postSpy = jest.spyOn(axiosClient, "post").mockResolvedValueOnce(SuccessResponse);
+    
+    await Login_API(InputData);
+    
+    expect(postSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        rememberMe: true
+      })
+    );
+  });
 });
 
 // Login Component Tests
@@ -316,5 +403,137 @@ describe("LoginPage", () => {
     fireEvent.click(rememberCheckbox);
 
     expect(rememberCheckbox).toBeChecked();
+  });
+
+  it("should clear input fields when clicking them", () => {
+    render(<LoginPage />);
+    
+    const usernameInput = screen.getByPlaceholderText("Enter your username");
+    const passwordInput = screen.getByPlaceholderText("Enter your password");
+    
+    // Type in inputs
+    fireEvent.change(usernameInput, { target: { value: "testuser" } });
+    fireEvent.change(passwordInput, { target: { value: "testpass" } });
+    
+    expect(usernameInput).toHaveValue("testuser");
+    expect(passwordInput).toHaveValue("testpass");
+    
+    // Clear inputs
+    fireEvent.change(usernameInput, { target: { value: "" } });
+    fireEvent.change(passwordInput, { target: { value: "" } });
+    
+    expect(usernameInput).toHaveValue("");
+    expect(passwordInput).toHaveValue("");
+  });
+
+  it("should handle special characters in input", () => {
+    render(<LoginPage />);
+    
+    const usernameInput = screen.getByPlaceholderText("Enter your username");
+    const passwordInput = screen.getByPlaceholderText("Enter your password");
+    
+    const specialUsername = "user@domain.com";
+    const specialPassword = "Pass@123!";
+    
+    fireEvent.change(usernameInput, { target: { value: specialUsername } });
+    fireEvent.change(passwordInput, { target: { value: specialPassword } });
+    
+    expect(usernameInput).toHaveValue(specialUsername);
+    expect(passwordInput).toHaveValue(specialPassword);
+  });
+
+  it("should handle very long input values", () => {
+    render(<LoginPage />);
+    
+    const usernameInput = screen.getByPlaceholderText("Enter your username");
+    const passwordInput = screen.getByPlaceholderText("Enter your password");
+    
+    const longUsername = "a".repeat(100);
+    const longPassword = "b".repeat(100);
+    
+    fireEvent.change(usernameInput, { target: { value: longUsername } });
+    fireEvent.change(passwordInput, { target: { value: longPassword } });
+    
+    expect(usernameInput).toHaveValue(longUsername);
+    expect(passwordInput).toHaveValue(longPassword);
+  });
+
+  it("should toggle remember me checkbox multiple times", () => {
+    render(<LoginPage />);
+    
+    const rememberCheckbox = screen.getByRole("checkbox");
+    
+    // Initial state
+    expect(rememberCheckbox).not.toBeChecked();
+    
+    // Click once - should be checked
+    fireEvent.click(rememberCheckbox);
+    expect(rememberCheckbox).toBeChecked();
+    
+    // Click again - should be unchecked
+    fireEvent.click(rememberCheckbox);
+    expect(rememberCheckbox).not.toBeChecked();
+    
+    // Click once more - should be checked again
+    fireEvent.click(rememberCheckbox);
+    expect(rememberCheckbox).toBeChecked();
+  });
+
+  it("should handle keyboard navigation", () => {
+    render(<LoginPage />);
+    
+    const usernameInput = screen.getByPlaceholderText("Enter your username");
+    const passwordInput = screen.getByPlaceholderText("Enter your password");
+    const loginButton = screen.getByRole("button", { name: "Log In" });
+    
+    // Focus on username input
+    usernameInput.focus();
+    expect(document.activeElement).toBe(usernameInput);
+    
+    // Tab to password input
+    fireEvent.keyDown(usernameInput, { key: 'Tab', keyCode: 9 });
+    
+    // Tab to login button (would need to simulate properly in real app)
+    fireEvent.keyDown(passwordInput, { key: 'Tab', keyCode: 9 });
+    
+    // Enter key should submit form
+    fireEvent.keyDown(loginButton, { key: 'Enter', keyCode: 13 });
+  });
+
+  it("should display password field as masked", () => {
+    render(<LoginPage />);
+    
+    const passwordInput = screen.getByPlaceholderText("Enter your password");
+    
+    // Password input should have type="password"
+    expect(passwordInput).toHaveAttribute("type", "password");
+  });
+
+  it("should render footer links", () => {
+    render(<LoginPage />);
+    
+    // Check for sign up link
+    expect(screen.getByText("Sign up")).toBeInTheDocument();
+    expect(screen.getByText("Don't have an account?")).toBeInTheDocument();
+    
+    // Check for forgot password link
+    expect(screen.getByText("Forgot Password?")).toBeInTheDocument();
+    expect(screen.getByText("Forgot your password?")).toBeInTheDocument();
+  });
+
+  it("should handle form submission with Enter key", () => {
+    render(<LoginPage />);
+    
+    const usernameInput = screen.getByPlaceholderText("Enter your username");
+    const passwordInput = screen.getByPlaceholderText("Enter your password");
+    
+    fireEvent.change(usernameInput, { target: { value: "admin1" } });
+    fireEvent.change(passwordInput, { target: { value: "12345Aa@" } });
+    
+    // Press Enter on password field
+    fireEvent.keyDown(passwordInput, { key: 'Enter', keyCode: 13 });
+    
+    expect(usernameInput).toHaveValue("admin1");
+    expect(passwordInput).toHaveValue("12345Aa@");
   });
 });

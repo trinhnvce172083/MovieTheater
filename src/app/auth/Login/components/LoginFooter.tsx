@@ -38,16 +38,16 @@ const LoginFooter = memo(function LoginFooter() {
 
   return (
     <footer>
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center space-y-1 sm:space-y-2">
         {footerSections.map((section) => (
-          <div key={section.key} className="flex items-center gap-2 text-sm">
+          <div key={section.key} className="flex flex-col sm:flex-row items-center sm:gap-2 text-xs sm:text-sm text-center">
             <span className="text-gray-950!">{section.text}</span>
             <Button
               variant="link"
               size="sm"
               onClick={() => handleNavigation(section.route, section.type)}
               disabled={isNavigating !== null}
-              className="h-auto p-1 font-medium text-blue-500! hover:text-blue-600! disabled:opacity-50"
+              className="h-auto p-0.5 sm:p-1 font-medium text-blue-500! hover:text-blue-600! disabled:opacity-50 text-xs sm:text-sm"
               aria-label={`Navigate to ${section.buttonText.toLowerCase()} page`}
             >
               {isNavigating === section.type ? (
