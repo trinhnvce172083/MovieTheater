@@ -18,7 +18,6 @@ const ManagedTickets: React.FC = () => {
     try {
       const res = await MemberApiService.getBookings({});
       setManagedTickets(res.data.content || []);
-      console.log("ManagedTickets data:", res.data.content || []);
     } catch (err: any) {
       message.error("Error loading tickets");
     } finally {
@@ -95,16 +94,32 @@ const ManagedTickets: React.FC = () => {
 
   const columns = [
     { title: "Movie", dataIndex: "movieTitle", key: "movieTitle" },
-    { title: "Booking Date", key: "bookingDate", render: (_, record) => {
-      if (record.bookingDate) {
-        const date = new Date(record.bookingDate);
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear();
-        const hour = date.getHours().toString().padStart(2, '0');
-        const minute = date.getMinutes().toString().padStart(2, '0');
+    { title: "Show Time", key: "showTime", render: (_, record) => {
+      // Ưu tiên sử dụng formattedShowDateTime từ schedule nếu có
+      if (record.schedule?.formattedShowDateTime) {
+        return record.schedule.formattedShowDateTime;
+      }
+      
+      // Fallback: sử dụng showDate + startTime
+      if (record.showDate && record.startTime) {
+        const showDate = new Date(record.showDate);
+        const day = showDate.getDate().toString().padStart(2, '0');
+        const month = (showDate.getMonth() + 1).toString().padStart(2, '0');
+        const year = showDate.getFullYear();
+        return `${day}/${month}/${year} ${record.startTime}`;
+      }
+      
+      // Fallback: sử dụng schedule.showDateTime
+      if (record.schedule?.showDateTime) {
+        const showDateTime = new Date(record.schedule.showDateTime);
+        const day = showDateTime.getDate().toString().padStart(2, '0');
+        const month = (showDateTime.getMonth() + 1).toString().padStart(2, '0');
+        const year = showDateTime.getFullYear();
+        const hour = showDateTime.getHours().toString().padStart(2, '0');
+        const minute = showDateTime.getMinutes().toString().padStart(2, '0');
         return `${day}/${month}/${year} ${hour}:${minute}`;
       }
+      
       return "—";
     }},
     { title: "Seats", key: "seats", render: (_, record) => {
@@ -175,17 +190,36 @@ const ManagedTickets: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-xs text-gray-500">Booking Date:</span>
+                    <span className="text-xs text-gray-500">Show Time:</span>
                     <p className="text-sm">
-                      {ticket.bookingDate ? (() => {
-                        const date = new Date(ticket.bookingDate);
-                        const day = date.getDate().toString().padStart(2, '0');
-                        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                        const year = date.getFullYear();
-                        const hour = date.getHours().toString().padStart(2, '0');
-                        const minute = date.getMinutes().toString().padStart(2, '0');
-                        return `${day}/${month}/${year} ${hour}:${minute}`;
-                      })() : "—"}
+                      {(() => {
+                        // Ưu tiên sử dụng formattedShowDateTime từ schedule nếu có
+                        if (ticket.schedule?.formattedShowDateTime) {
+                          return ticket.schedule.formattedShowDateTime;
+                        }
+                        
+                        // Fallback: sử dụng showDate + startTime
+                        if (ticket.showDate && ticket.startTime) {
+                          const showDate = new Date(ticket.showDate);
+                          const day = showDate.getDate().toString().padStart(2, '0');
+                          const month = (showDate.getMonth() + 1).toString().padStart(2, '0');
+                          const year = showDate.getFullYear();
+                          return `${day}/${month}/${year} ${ticket.startTime}`;
+                        }
+                        
+                        // Fallback: sử dụng schedule.showDateTime
+                        if (ticket.schedule?.showDateTime) {
+                          const showDateTime = new Date(ticket.schedule.showDateTime);
+                          const day = showDateTime.getDate().toString().padStart(2, '0');
+                          const month = (showDateTime.getMonth() + 1).toString().padStart(2, '0');
+                          const year = showDateTime.getFullYear();
+                          const hour = showDateTime.getHours().toString().padStart(2, '0');
+                          const minute = showDateTime.getMinutes().toString().padStart(2, '0');
+                          return `${day}/${month}/${year} ${hour}:${minute}`;
+                        }
+                        
+                        return "—";
+                      })()}
                     </p>
                   </div>
                   <div>
