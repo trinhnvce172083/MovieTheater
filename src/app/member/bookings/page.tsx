@@ -17,18 +17,34 @@ const columns = [
     width: 50,
   },
   {
-    title: "BOOKING DATE",
-    key: "bookingDate",
+    title: "SHOW TIME",
+    key: "showTime",
     render: (_, record: MemberBooking) => {
-      if (record.bookingDate) {
-        const bookingDate = new Date(record.bookingDate);
-        const day = bookingDate.getDate().toString().padStart(2, '0');
-        const month = (bookingDate.getMonth() + 1).toString().padStart(2, '0');
-        const year = bookingDate.getFullYear();
-        const hour = bookingDate.getHours().toString().padStart(2, '0');
-        const minute = bookingDate.getMinutes().toString().padStart(2, '0');
+      // Ưu tiên sử dụng formattedShowDateTime từ schedule nếu có
+      if (record.schedule?.formattedShowDateTime) {
+        return record.schedule.formattedShowDateTime;
+      }
+      
+      // Fallback: sử dụng showDate + startTime
+      if (record.showDate && record.startTime) {
+        const showDate = new Date(record.showDate);
+        const day = showDate.getDate().toString().padStart(2, '0');
+        const month = (showDate.getMonth() + 1).toString().padStart(2, '0');
+        const year = showDate.getFullYear();
+        return `${day}/${month}/${year} ${record.startTime}`;
+      }
+      
+      // Fallback: sử dụng schedule.showDateTime
+      if (record.schedule?.showDateTime) {
+        const showDateTime = new Date(record.schedule.showDateTime);
+        const day = showDateTime.getDate().toString().padStart(2, '0');
+        const month = (showDateTime.getMonth() + 1).toString().padStart(2, '0');
+        const year = showDateTime.getFullYear();
+        const hour = showDateTime.getHours().toString().padStart(2, '0');
+        const minute = showDateTime.getMinutes().toString().padStart(2, '0');
         return `${day}/${month}/${year} ${hour}:${minute}`;
       }
+      
       return "—";
     },
   },
@@ -218,17 +234,36 @@ export default function BookedTicketsPage() {
                       <p className="font-medium">{item.movieTitle || "—"}</p>
                     </div>
                                        <div>
-                     <span className="text-xs text-gray-500">Booking Date:</span>
+                     <span className="text-xs text-gray-500">Show Time:</span>
                      <p className="text-sm">
-                       {item.bookingDate ? (() => {
-                         const bookingDate = new Date(item.bookingDate);
-                         const day = bookingDate.getDate().toString().padStart(2, '0');
-                         const month = (bookingDate.getMonth() + 1).toString().padStart(2, '0');
-                         const year = bookingDate.getFullYear();
-                         const hour = bookingDate.getHours().toString().padStart(2, '0');
-                         const minute = bookingDate.getMinutes().toString().padStart(2, '0');
-                         return `${day}/${month}/${year} ${hour}:${minute}`;
-                       })() : "—"}
+                       {(() => {
+                         // Ưu tiên sử dụng formattedShowDateTime từ schedule nếu có
+                         if (item.schedule?.formattedShowDateTime) {
+                           return item.schedule.formattedShowDateTime;
+                         }
+                         
+                         // Fallback: sử dụng showDate + startTime
+                         if (item.showDate && item.startTime) {
+                           const showDate = new Date(item.showDate);
+                           const day = showDate.getDate().toString().padStart(2, '0');
+                           const month = (showDate.getMonth() + 1).toString().padStart(2, '0');
+                           const year = showDate.getFullYear();
+                           return `${day}/${month}/${year} ${item.startTime}`;
+                         }
+                         
+                         // Fallback: sử dụng schedule.showDateTime
+                         if (item.schedule?.showDateTime) {
+                           const showDateTime = new Date(item.schedule.showDateTime);
+                           const day = showDateTime.getDate().toString().padStart(2, '0');
+                           const month = (showDateTime.getMonth() + 1).toString().padStart(2, '0');
+                           const year = showDateTime.getFullYear();
+                           const hour = showDateTime.getHours().toString().padStart(2, '0');
+                           const minute = showDateTime.getMinutes().toString().padStart(2, '0');
+                           return `${day}/${month}/${year} ${hour}:${minute}`;
+                         }
+                         
+                         return "—";
+                       })()}
                      </p>
                    </div>
                     <div>
