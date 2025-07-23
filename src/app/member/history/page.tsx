@@ -137,14 +137,14 @@ export default function ScoreHistoryPage() {
 
         {/* Desktop Table View */}
         <div className="hidden lg:block">
-          <Table
-            columns={columns}
-            dataSource={pagedData}
-            pagination={false}
-            bordered
-            size="middle"
+        <Table
+          columns={columns}
+          dataSource={pagedData}
+          pagination={false}
+          bordered
+          size="middle"
             scroll={{ x: 800 }}
-          />
+        />
         </div>
 
         {/* Pagination */}
