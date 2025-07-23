@@ -95,6 +95,13 @@ export interface MemberBooking {
   canCancel: boolean;
   canCheckIn: boolean;
   expiresAt?: string;
+  schedule?: {
+    scheduleId: number;
+    showDateTime: string;
+    formattedShowDateTime: string;
+    language: string;
+    isSubtitled: boolean;
+  } | null;
 }
 
 export interface BookingSeat {
