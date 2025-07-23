@@ -139,6 +139,89 @@ export class MovieApiService {
         }
     }
 
+    static async updateMovieWithImages(
+        movieId: number,
+        movieData: any,
+        posterFile?: File,
+        backdropFile?: File,
+        token?: string
+    ): Promise<ApiResponse<any>> {
+        try {
+            const formData = new FormData();
+            
+            // Add movie data as JSON string
+            formData.append('movieData', JSON.stringify(movieData));
+            
+            // Add image files if provided
+            if (posterFile) {
+                formData.append('poster', posterFile);
+            }
+            if (backdropFile) {
+                formData.append('backdrop', backdropFile);
+            }
+
+            const response = await axiosClient.put(`/api/movies/${movieId}/with-images`, formData, {
+                headers: { 
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                },
+            });
+            
+            return {
+                data: response.data.data,
+                success: response.data.success,
+                message: response.data.message,
+            };
+        } catch (error) {
+            return {
+                data: null,
+                success: false,
+                message: (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to update movie with images.",
+            };
+        }
+    }
+
+    static async createMovieWithImages(
+        movieData: any,
+        posterFile?: File,
+        backdropFile?: File,
+        token?: string
+    ): Promise<ApiResponse<any>> {
+        try {
+            const formData = new FormData();
+            
+            // Add movie data as JSON string
+            formData.append('movieData', JSON.stringify(movieData));
+            
+            // Add image files if provided
+            if (posterFile) {
+                formData.append('poster', posterFile);
+            }
+            if (backdropFile) {
+                formData.append('backdrop', backdropFile);
+            }
+
+            const response = await axiosClient.post(`/movies/with-images`, formData, {
+                headers: { 
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                },
+            });
+            
+            return {
+                data: response.data.data,
+                success: response.data.success,
+                message: response.data.message,
+            };
+        } catch (error) {
+            return {
+                data: null,
+                success: false,
+                message: (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to create movie with images.",
+            };
+        }
+    }
+
     static async getMovieDetails(movieId: number, token: string): Promise<ApiResponse<MovieDetails>> {
         try {
             const response = await axiosClient.get(`/movies/${movieId}`, {

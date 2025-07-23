@@ -2,74 +2,42 @@
 
 import React, { useEffect, useState } from 'react';
 import { 
-  Modal, Form, Input, Select, DatePicker, InputNumber, Switch, Button,
-  Row, Col, Space, Typography, Tooltip, message, Image
+  Modal, Form, Input, Select, DatePicker, InputNumber, Switch, Button, message,
+  Row, Col, Tabs, Space, Upload, Image
 } from 'antd';
-import { 
-  InfoCircleOutlined
-} from '@ant-design/icons';
+import { UploadOutlined, PlusOutlined } from '@ant-design/icons';
+import type { UploadFile, UploadProps } from 'antd';
+import { MovieData, MovieCreateRequest, MovieUpdateRequest } from '../types';
 import dayjs, { Dayjs } from 'dayjs';
 
 const { TextArea } = Input;
-const { Text } = Typography;
 
-// Define types based on your actual API structure
-interface MovieFormData {
-  movieId?: number;
-  title: string;
-  description?: string;
-  duration: number;
-  genre: string;
-  director?: string;
-  cast?: string;
-  language?: string;
-  country?: string;
-  releaseDate: string;
-  endDate?: string;
-  rating?: string;  // Make rating optional to match MovieData
-  posterUrl?: string;
-  backdropUrl?: string;
-  trailerUrl?: string;
-  price: number;
-  status: 'NOW_SHOWING' | 'COMING_SOON' | 'ENDED';
-  isFeatured: boolean;
-  imdbRating?: number;
-  productionCompany?: string;
-  budget?: number;
-  boxOffice?: number;
-  isActive?: boolean;
-}
+
+const GENRE_OPTIONS = [
+  'Action', 'Adventure', 'Animation', 'Biography', 'Comedy', 'Crime', 'Documentary',
+  'Drama', 'Family', 'Fantasy', 'History', 'Horror', 'Music', 'Mystery', 'Romance',
+  'Science Fiction', 'Thriller', 'War', 'Western', 'Superhero', 'Musical', 'Sports'
+];
+
+// Language options
+const LANGUAGE_OPTIONS = [
+  'English', 'Vietnamese', 'French', 'Spanish', 'Chinese', 'Japanese', 'Korean',
+  'German', 'Italian', 'Russian', 'Portuguese', 'Arabic', 'Hindi', 'Thai'
+];
+
+// Country options
+const COUNTRY_OPTIONS = [
+  'United States', 'Vietnam', 'United Kingdom', 'France', 'China', 'Japan', 'South Korea',
+  'Canada', 'Australia', 'Germany', 'Spain', 'Italy', 'Russia', 'India', 'Brazil', 'Thailand'
+];
 
 interface MovieFormModalProps {
   open: boolean;
-  editingMovie: MovieFormData | null;
-  onSubmit: (movieData: Partial<MovieFormData>) => void;
+  editingMovie: MovieData | null;
+  onSubmit: (movieData: MovieCreateRequest | MovieUpdateRequest) => void;
   onCancel: () => void;
   loading: boolean;
 }
-
-// Pre-defined options
-const GENRE_OPTIONS = [
-  'Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary',
-  'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Science Fiction',
-  'Thriller', 'War', 'Western'
-];
-
-const LANGUAGE_OPTIONS = [
-  'English', 'Vietnamese', 'Spanish', 'French', 'German', 'Japanese', 'Korean', 'Chinese'
-];
-
-const COUNTRY_OPTIONS = [
-  'USA', 'Vietnam', 'United Kingdom', 'France', 'Germany', 'Japan', 'South Korea', 'China'
-];
-
-const RATING_OPTIONS = ['G', 'PG', 'PG-13', 'R', 'NC-17'];
-
-const STATUS_OPTIONS = [
-  { value: 'COMING_SOON', label: '⏳ Coming Soon' },
-  { value: 'NOW_SHOWING', label: '🎬 Now Showing' },
-  { value: 'ENDED', label: '🛑 Ended' }
-];
 
 export const MovieFormModal: React.FC<MovieFormModalProps> = ({
   open,
@@ -79,517 +47,483 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
   loading
 }) => {
   const [form] = Form.useForm();
+  const [posterFileList, setPosterFileList] = useState<UploadFile[]>([]);
+  const [backdropFileList, setBackdropFileList] = useState<UploadFile[]>([]);
   const [posterPreview, setPosterPreview] = useState<string>('');
   const [backdropPreview, setBackdropPreview] = useState<string>('');
-  const [trailerPreview, setTrailerPreview] = useState<string>('');
 
-  // Initialize form when modal opens or editing movie changes
+  // Initialize form with editing data
   useEffect(() => {
-    if (open) {
-      if (editingMovie) {
-        // Transform data for form
-        const formData = {
-          ...editingMovie,
-          releaseDate: editingMovie.releaseDate ? dayjs(editingMovie.releaseDate) : null,
-          endDate: editingMovie.endDate ? dayjs(editingMovie.endDate) : null,
-          genre: editingMovie.genre ? editingMovie.genre.split(', ') : [], // Convert string to array for multi-select
-        };
-        form.setFieldsValue(formData);
-        
-        // Set previews
-        if (editingMovie.posterUrl) setPosterPreview(editingMovie.posterUrl);
-        if (editingMovie.backdropUrl) setBackdropPreview(editingMovie.backdropUrl);
-        if (editingMovie.trailerUrl) setTrailerPreview(getYouTubeEmbedUrl(editingMovie.trailerUrl));
-      } else {
-        // Reset form for new movie
-        form.resetFields();
-        form.setFieldsValue({
-          isActive: true,
-          isFeatured: false,
-          status: 'COMING_SOON',
-          rating: 'PG-13',
-          price: 50000
-        });
-        setPosterPreview('');
-        setBackdropPreview('');
-        setTrailerPreview('');
+    if (editingMovie && open) {
+      form.setFieldsValue({
+        ...editingMovie,
+        releaseDate: editingMovie.releaseDate ? dayjs(editingMovie.releaseDate) : null,
+        endDate: editingMovie.endDate ? dayjs(editingMovie.endDate) : null,
+      });
+      
+      // Set image previews for editing
+      if (editingMovie.posterUrl) {
+        setPosterPreview(editingMovie.posterUrl);
       }
-    }
-  }, [open, editingMovie, form]);
-
-  // Clean up when modal closes
-  useEffect(() => {
-    if (!open) {
+      if (editingMovie.backdropUrl) {
+        setBackdropPreview(editingMovie.backdropUrl);
+      }
+    } else if (open) {
       form.resetFields();
       setPosterPreview('');
       setBackdropPreview('');
-      setTrailerPreview('');
+      setPosterFileList([]);
+      setBackdropFileList([]);
+    }
+  }, [editingMovie, form, open]);
+
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!open) {
+      // form.resetFields();
+      setPosterPreview('');
+      setBackdropPreview('');
+      setPosterFileList([]);
+      setBackdropFileList([]);
     }
   }, [open, form]);
 
-  // Utility functions
-  const getYouTubeEmbedUrl = (url: string) => {
-    if (!url) return '';
-    const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
-    return videoId ? `https://www.youtube.com/embed/${videoId[1]}` : '';
+  // Upload handlers
+  const handlePosterUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPosterPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    setPosterFileList([{
+      uid: '-1',
+      name: file.name,
+      status: 'done',
+      originFileObj: file,
+    } as UploadFile]);
+    return false; // Prevent auto upload
   };
 
-  const handleTrailerUrlChange = (url: string) => {
-    const embedUrl = getYouTubeEmbedUrl(url);
-    setTrailerPreview(embedUrl);
+  const handleBackdropUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setBackdropPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    setBackdropFileList([{
+      uid: '-1',
+      name: file.name,
+      status: 'done',
+      originFileObj: file,
+    } as UploadFile]);
+    return false; // Prevent auto upload
   };
 
-  // Handle release date change to auto-set status and end date
+  const handleRemovePoster = () => {
+    setPosterPreview('');
+    setPosterFileList([]);
+  };
+
+  const handleRemoveBackdrop = () => {
+    setBackdropPreview('');
+    setBackdropFileList([]);
+  };
+
+  // Smart status calculation
+  const calculateStatus = (releaseDate: Dayjs | null): string => {
+    if (!releaseDate) return 'COMING_SOON';
+    const today = dayjs();
+    return releaseDate.isAfter(today) ? 'COMING_SOON' : 'NOW_SHOWING';
+  };
+
+  // Handle release date change
   const handleReleaseDateChange = (date: Dayjs | null) => {
     if (date) {
-      const today = dayjs().startOf('day');
-      const releaseDate = date.startOf('day');
+      const newStatus = calculateStatus(date);
+      form.setFieldsValue({ status: newStatus });
       
-      // Auto set status based on release date
-      let autoStatus = 'COMING_SOON';
-      if (releaseDate.isSame(today) || releaseDate.isBefore(today)) {
-        autoStatus = 'NOW_SHOWING';
-      }
-      
-      // Auto set end date to 1 month after release date
+      // Always auto-set end date to 1 month after release date when release date changes
       const autoEndDate = date.add(1, 'month');
-      
-      form.setFieldsValue({ 
-        status: autoStatus,
-        endDate: autoEndDate
-      });
+      form.setFieldsValue({ endDate: autoEndDate });
+    } else {
+      // Clear end date if release date is cleared
+      form.setFieldValue('endDate', null);
     }
   };
 
-  // Form submission
+  // Handle form submission
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-
-      // Transform data for API
+      
+      console.log('🎬 Form Values before processing:', values);
+      
       const movieData = {
         ...values,
-        releaseDate: values.releaseDate ? values.releaseDate.format('YYYY-MM-DD') : null,
-        endDate: values.endDate ? values.endDate.format('YYYY-MM-DD') : null,
-        genre: Array.isArray(values.genre) ? values.genre.join(', ') : values.genre, // Convert array back to string
-        isAdultContent: values.rating === 'R' || values.rating === 'NC-17', // Auto-set based on rating
-        // Ensure required fields have default values
-        description: values.description || '',
-        director: values.director || '',
-        cast: values.cast || '',
-        language: values.language || 'English',
-        country: values.country || 'USA',
-        rating: values.rating || 'PG-13',
-        status: values.status || 'COMING_SOON',
-        isFeatured: values.isFeatured || false,
+        releaseDate: values.releaseDate ? (values.releaseDate as Dayjs).format('YYYY-MM-DD') : null,
+        endDate: values.endDate ? (values.endDate as Dayjs).format('YYYY-MM-DD') : null,
+        genre: Array.isArray(values.genre) ? values.genre.join(', ') : values.genre,
+        status: values.status || calculateStatus(values.releaseDate),
+        isFeatured: Boolean(values.isFeatured), // Ensure boolean value
+        isAdultContent: false // Always false since we removed the field
       };
 
-      // Remove movieId for create, keep it for update
-      if (!editingMovie) {
-        delete movieData.movieId;
-      }
+      console.log('🎬 Movie Data after processing:', movieData);
 
-      onSubmit(movieData);
-    } catch (errorInfo) {
-      console.error('Form validation failed:', errorInfo);
-      message.error('Please check all required fields and fix any validation errors.');
+      // Check if there are image files to upload
+      const hasImages = posterFileList.length > 0 || backdropFileList.length > 0;
+      
+      if (editingMovie) {
+        // For editing, pass the movie data along with image files for backend to handle upload
+        onSubmit({ 
+          id: editingMovie.id, 
+          ...movieData,
+          posterFile: posterFileList[0]?.originFileObj,
+          backdropFile: backdropFileList[0]?.originFileObj,
+          hasImages
+        });
+      } else {
+        // For creating, include image files
+        onSubmit({
+          ...movieData,
+          posterFile: posterFileList[0]?.originFileObj,
+          backdropFile: backdropFileList[0]?.originFileObj,
+          hasImages
+        });
+        console.log('isFeatured value:', values.isFeatured)
+      }
+    } catch (error) {
+      console.error('Form validation failed:', error);
+      message.error('Please fill all required fields correctly!');
     }
   };
 
+  const items = [
+    {
+      key: 'basic',
+      label: 'Basic Information',
+      children: (
+        <>
+          {/* Title */}
+          <Form.Item
+            name="title" 
+            label="Movie Title"
+            rules={[{ required: true, message: 'Please enter movie title!' }, { max: 200 }]}
+          >
+            <Input placeholder="Enter movie title..." />
+          </Form.Item>
+
+          {/* Original Title */}
+          <Form.Item 
+            name="originalTitle" 
+            label="Original Title"
+            rules={[{ max: 200 }]}
+          >
+            <Input placeholder="Enter original title (if different)..." />
+          </Form.Item>
+
+          {/* Genre */}
+          <Form.Item 
+            name="genre" 
+            label="Genre"
+            rules={[{ required: true, message: 'Please select at least one genre!' }]}
+          >
+            <Select
+              mode="tags"
+              placeholder="Select or add genres..."
+              options={GENRE_OPTIONS.map(genre => ({ value: genre, label: genre }))}
+              filterOption={(input, option) =>
+                option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
+              }
+              maxTagCount="responsive"
+            />
+          </Form.Item>
+
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item 
+                name="duration" 
+                label="Duration"
+                rules={[{ required: true, message: 'Please enter duration!' }, { type: 'number', min: 1, max: 600 }]}
+              >
+                <InputNumber min={1} max={600} style={{ width: '100%' }} addonAfter="min" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item 
+                name="releaseDate" 
+                label="Release Date"
+                rules={[{ required: true, message: 'Please select release date!' }]}
+              >
+                <DatePicker 
+                  style={{ width: '100%' }} 
+                  onChange={handleReleaseDateChange}
+                  format="YYYY-MM-DD"
+                  disabledDate={(current) => {
+                    // Disable dates before today
+                    return current && current < dayjs().startOf('day');
+                  }}
+                  placeholder="Select future release date"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item 
+                name="endDate" 
+                label="End Date"
+                rules={[{ required: false }]}
+              >
+                <DatePicker 
+                  style={{ width: '100%' }} 
+                  format="YYYY-MM-DD"
+                  disabledDate={(current) => {
+                    const releaseDate = form.getFieldValue('releaseDate');
+                    // End date must be after release date
+                    return current && releaseDate && current <= releaseDate;
+                  }}
+                  placeholder="Auto: +1 month from release"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item 
+                name="price" 
+                label="Ticket Price"
+                rules={[{ required: true, message: 'Please enter ticket price!' }, { type: 'number', min: 1000, max: 500000 }]}
+              >
+                <InputNumber 
+                  min={1000} 
+                  max={500000}
+                  step={1000}
+                  style={{ width: '100%' }} 
+                  addonAfter="VND"
+                  formatter={(value) => value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* Description */}
+          <Form.Item 
+            name="description" 
+            label="Description"
+            rules={[
+              { required: true, message: 'Please enter movie description!' },
+              { max: 2000, message: 'Description cannot exceed 2000 characters!' },
+              { min: 10, message: 'Description must be at least 10 characters!' }
+            ]}
+          >
+            <TextArea rows={4} placeholder="Enter movie description..." maxLength={2000} showCount />
+          </Form.Item>
+        </>
+      ),
+    },
+    {
+      key: 'advanced',
+      label: 'Advanced Information',
+      children: (
+        <>
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item 
+                name="director" 
+                label="Director" 
+                rules={[
+                  { required: true, message: 'Please enter director name!' },
+                  { max: 100, message: 'Director name cannot exceed 100 characters!' }
+                ]}
+              >
+                <Input placeholder="Enter director name..." />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item 
+                name="language" 
+                label="Language" 
+                rules={[
+                  { required: true, message: 'Please select language!' }
+                ]}
+              >
+                <Select
+                  placeholder="Select language"
+                  allowClear
+                  showSearch
+                  options={LANGUAGE_OPTIONS.map(lang => ({ value: lang, label: lang }))}
+                  filterOption={(input, option) =>
+                    option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
+                  }
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item 
+                name="country" 
+                label="Country" 
+                rules={[
+                  { required: true, message: 'Please select country!' }
+                ]}
+              >
+                <Select
+                  placeholder="Select country"
+                  allowClear
+                  showSearch
+                  options={COUNTRY_OPTIONS.map(country => ({ value: country, label: country }))}
+                  filterOption={(input, option) =>
+                    option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
+                  }
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item 
+                name="rating" 
+                label="Rating"
+                rules={[
+                  { required: true, message: 'Please select rating!' }
+                ]}
+              >
+                <Select placeholder="Select rating" allowClear>
+                  <Select.Option value="G">G - General Audiences</Select.Option>
+                  <Select.Option value="PG">PG - Parental Guidance Suggested</Select.Option>
+                  <Select.Option value="PG-13">PG-13 - Parents Strongly Cautioned</Select.Option>
+                  <Select.Option value="R">R - Restricted</Select.Option>
+                  <Select.Option value="NC-17">NC-17 - Adults Only</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="status" label="Status">
+                <Select placeholder="Automatically calculated from release date">
+                  <Select.Option value="NOW_SHOWING">Now Showing</Select.Option>
+                  <Select.Option value="COMING_SOON">Coming Soon</Select.Option>
+                  <Select.Option value="ENDED">Ended</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="cast" label="Cast" rules={[{ max: 1000 }]}>
+                <Input placeholder="Enter cast list..." />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="productionCompany" label="Production Company" rules={[{ max: 100 }]}>
+                <Input placeholder="Enter production company..." />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Poster Image">
+                <Upload
+                  listType="picture-card"
+                  fileList={posterFileList}
+                  beforeUpload={handlePosterUpload}
+                  onRemove={handleRemovePoster}
+                  maxCount={1}
+                  accept="image/*"
+                >
+                  {posterFileList.length === 0 && (
+                    <div>
+                      <PlusOutlined />
+                      <div style={{ marginTop: 8 }}>Upload Poster</div>
+                    </div>
+                  )}
+                </Upload>
+                {posterPreview && (
+                  <Image
+                    width={200}
+                    src={posterPreview}
+                    alt="Poster Preview"
+                    style={{ marginTop: 8 }}
+                  />
+                )}
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Backdrop Image">
+                <Upload
+                  listType="picture-card"
+                  fileList={backdropFileList}
+                  beforeUpload={handleBackdropUpload}
+                  onRemove={handleRemoveBackdrop}
+                  maxCount={1}
+                  accept="image/*"
+                >
+                  {backdropFileList.length === 0 && (
+                    <div>
+                      <PlusOutlined />
+                      <div style={{ marginTop: 8 }}>Upload Backdrop</div>
+                    </div>
+                  )}
+                </Upload>
+                {backdropPreview && (
+                  <Image
+                    width={200}
+                    src={backdropPreview}
+                    alt="Backdrop Preview"
+                    style={{ marginTop: 8 }}
+                  />
+                )}
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="trailerUrl" label="Trailer URL">
+                <Input placeholder="Enter trailer URL..." />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="isFeatured" label="Featured Movie" valuePropName="checked" initialValue={true}>
+                <Space>
+                  <Switch 
+                    checkedChildren="Featured" 
+                    unCheckedChildren="Normal" 
+                    style={{ backgroundColor: '#52c41a' }}
+                  />
+                </Space>
+              </Form.Item>
+            </Col>
+          </Row>
+        </>
+      ),
+    },
+  ];
+
   return (
     <Modal
-      title={editingMovie ? 'Edit Movie' : 'Create New Movie'}
+      title={editingMovie ? 'Edit Movie' : 'Add New Movie'}
       open={open}
       onCancel={onCancel}
-      width={900}
+      width={800}
       footer={[
         <Button key="cancel" onClick={onCancel}>
           Cancel
         </Button>,
-        <Button key="submit" type="primary" loading={loading} onClick={handleSubmit}>
-          {editingMovie ? 'Update Movie' : 'Create Movie'}
-        </Button>,
+        <Button key="submit" type="primary" onClick={handleSubmit} loading={loading}>
+          {editingMovie ? 'Update' : 'Create'}
+        </Button>
       ]}
-      destroyOnHidden={true}
     >
       <Form
         form={form}
         layout="vertical"
-        name="movieForm"
         scrollToFirstError
+        name="movieForm"
+        preserve={false}
       >
-        {/* Basic Information */}
-        <div style={{ marginBottom: 24 }}>
-          <Text strong style={{ fontSize: 16, color: '#1890ff' }}>Basic Information</Text>
-          <Row gutter={16} style={{ marginTop: 16 }}>
-            <Col span={12}>
-              <Form.Item
-                name="title"
-                label="Movie Title"
-                rules={[
-                  { required: true, message: 'Movie title is required!' },
-                  { max: 255, message: 'Title cannot exceed 255 characters' }
-                ]}
-              >
-                <Input placeholder="Enter movie title" showCount maxLength={255} />
-              </Form.Item>
-            </Col>
-            
-            <Col span={12}>
-              <Form.Item
-                name="duration"
-                label="Duration (minutes)"
-                rules={[
-                  { required: true, message: 'Duration is required!' },
-                  { type: 'number', min: 1, max: 600, message: 'Duration must be between 1-600 minutes' }
-                ]}
-              >
-                <InputNumber
-                  min={1}
-                  max={600}
-                  style={{ width: '100%' }}
-                  placeholder="120"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="description"
-                label="Description"
-                rules={[
-                  { required: true, message: 'Description is required!' },
-                  { min: 10, message: 'Description must be at least 10 characters' },
-                  { max: 2000, message: 'Description cannot exceed 2000 characters' }
-                ]}
-              >
-                <TextArea
-                  rows={3}
-                  placeholder="Enter movie description"
-                  showCount
-                  maxLength={2000}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item
-                name="genre"
-                label="Genres"
-                rules={[{ required: true, message: 'At least one genre is required!' }]}
-              >
-                <Select
-                  mode="multiple"
-                  placeholder="Select genres"
-                  options={GENRE_OPTIONS.map(genre => ({ value: genre, label: genre }))}
-                />
-              </Form.Item>
-            </Col>
-            
-            <Col span={8}>
-              <Form.Item
-                name="language"
-                label="Language"
-                rules={[{ required: true, message: 'Language is required!' }]}
-              >
-                <Select
-                  showSearch
-                  placeholder="Select language"
-                  options={LANGUAGE_OPTIONS.map(lang => ({ value: lang, label: lang }))}
-                />
-              </Form.Item>
-            </Col>
-            
-            <Col span={8}>
-              <Form.Item
-                name="country"
-                label="Country"
-                rules={[{ required: true, message: 'Country is required!' }]}
-              >
-                <Select
-                  showSearch
-                  placeholder="Select country"
-                  options={COUNTRY_OPTIONS.map(country => ({ value: country, label: country }))}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="director"
-                label={<span>Director <span style={{ color: 'red' }}>*</span></span>}
-                rules={[{ max: 100, message: 'Director name cannot exceed 100 characters' }]}
-              >
-                <Input placeholder="Enter director name" />
-              </Form.Item>
-            </Col>
-            
-            <Col span={12}>
-              <Form.Item
-                name="cast"
-                label={<span>Cast <span style={{ color: 'red' }}>*</span></span>}
-                rules={[{ max: 1000, message: 'Cast list cannot exceed 1000 characters' }]}
-              >
-                <Input placeholder="Enter main cast members" />
-              </Form.Item>
-            </Col>
-          </Row>
-        </div>
-
-        {/* Scheduling & Status */}
-        <div style={{ marginBottom: 24 }}>
-          <Text strong style={{ fontSize: 16, color: '#1890ff' }}>Scheduling & Status</Text>
-          <Row gutter={16} style={{ marginTop: 16 }}>
-            <Col span={8}>
-              <Form.Item
-                name="releaseDate"
-                label="Release Date"
-                rules={[{ required: true, message: 'Release date is required!' }]}
-              >
-                <DatePicker
-                  style={{ width: '100%' }}
-                  format="YYYY-MM-DD"
-                  onChange={handleReleaseDateChange}
-                />
-              </Form.Item>
-            </Col>
-            
-            <Col span={8}>
-              <Form.Item 
-                name="endDate" 
-                label={
-                  <span>
-                    End Date
-                    <Tooltip title="Auto-set to 1 month after release date. You can modify if needed.">
-                      <InfoCircleOutlined style={{ marginLeft: 4 }} />
-                    </Tooltip>
-                  </span>
-                }
-              >
-                <DatePicker
-                  style={{ width: '100%' }}
-                  format="YYYY-MM-DD"
-                />
-              </Form.Item>
-            </Col>
-            
-            <Col span={8}>
-              <Form.Item
-                name="status"
-                label="Status"
-                rules={[{ required: true, message: 'Status is required!' }]}
-              >
-                <Select 
-                  options={STATUS_OPTIONS} 
-                  disabled
-                  placeholder="Auto-set based on release date"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item
-                name="rating"
-                label="Rating"
-                rules={[{ required: true, message: 'Rating is required!' }]}
-              >
-                <Select options={RATING_OPTIONS.map(r => ({ value: r, label: r }))} />
-              </Form.Item>
-            </Col>
-            
-            <Col span={8}>
-              <Form.Item
-                name="price"
-                label="Price (VND)"
-                rules={[
-                  { required: true, message: 'Price is required!' },
-                  { type: 'number', min: 1, message: 'Price must be greater than 0' },
-                  { type: 'number', max: 1000000, message: 'Price cannot exceed 1,000,000 VND' }
-                ]}
-              >
-                <InputNumber
-                  min={1}
-                  max={1000000}
-                  step={1000}
-                  style={{ width: '100%' }}
-                  formatter={(value) => value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-                  parser={(value: string | undefined) => value ? Number(value.replace(/,/g, '')) : 0}
-                />
-              </Form.Item>
-            </Col>
-            
-            <Col span={8}>
-              <Form.Item name="imdbRating" label="IMDb Rating">
-                <InputNumber
-                  min={0}
-                  max={10}
-                  step={0.1}
-                  style={{ width: '100%' }}
-                  placeholder="8.5"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="isActive" valuePropName="checked">
-                <Space>
-                  <Switch />
-                  <Text>Active</Text>
-                  <Tooltip title="Whether this movie is active in the system">
-                    <InfoCircleOutlined style={{ marginLeft: 4 }} />
-                  </Tooltip>
-                </Space>
-              </Form.Item>
-            </Col>
-            
-            <Col span={12}>
-              <Form.Item name="isFeatured" valuePropName="checked">
-                <Space>
-                  <Switch />
-                  <Text>Featured</Text>
-                  <Tooltip title="Featured movies appear prominently on the homepage">
-                    <InfoCircleOutlined style={{ marginLeft: 4 }} />
-                  </Tooltip>
-                </Space>
-              </Form.Item>
-            </Col>
-          </Row>
-        </div>
-
-        {/* Media & Links */}
-        <div style={{ marginBottom: 24 }}>
-          <Text strong style={{ fontSize: 16, color: '#1890ff' }}>Media & Links</Text>
-          <Row gutter={16} style={{ marginTop: 16 }}>
-            <Col span={12}>
-              <Form.Item
-                name="posterUrl"
-                label={
-                  <span>
-                    Poster URL
-                    <Tooltip title="Main poster image URL">
-                      <InfoCircleOutlined style={{ marginLeft: 4 }} />
-                    </Tooltip>
-                  </span>
-                }
-                rules={[
-                  { required: true, message: 'Poster URL is required!' },
-                  { type: 'url', message: 'Please enter a valid URL' }
-                ]}
-              >
-                <Input
-                  placeholder="https://example.com/poster.jpg"
-                  onChange={(e) => setPosterPreview(e.target.value)}
-                />
-              </Form.Item>
-              {posterPreview && (
-                <div style={{ textAlign: 'center', marginTop: 8 }}>
-                  <Image
-                    width={100}
-                    height={150}
-                    src={posterPreview}
-                    alt="Poster Preview"
-                    style={{ objectFit: 'cover' }}
-                  />
-                </div>
-              )}
-            </Col>
-            
-            <Col span={12}>
-              <Form.Item
-                name="backdropUrl"
-                label="Backdrop URL"
-                rules={[{ type: 'url', message: 'Please enter a valid URL' }]}
-              >
-                <Input
-                  placeholder="https://example.com/backdrop.jpg"
-                  onChange={(e) => setBackdropPreview(e.target.value)}
-                />
-              </Form.Item>
-              {backdropPreview && (
-                <div style={{ textAlign: 'center', marginTop: 8 }}>
-                  <Image
-                    width={200}
-                    height={113}
-                    src={backdropPreview}
-                    alt="Backdrop Preview"
-                    style={{ objectFit: 'cover' }}
-                  />
-                </div>
-              )}
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="trailerUrl"
-                label="Trailer URL (YouTube)"
-                rules={[{ type: 'url', message: 'Please enter a valid URL' }]}
-              >
-                <Input
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  onChange={(e) => handleTrailerUrlChange(e.target.value)}
-                />
-              </Form.Item>
-              {trailerPreview && (
-                <div style={{ textAlign: 'center', marginTop: 8 }}>
-                  <iframe
-                    width="300"
-                    height="169"
-                    src={trailerPreview}
-                    title="Trailer Preview"
-                    frameBorder="0"
-                    allowFullScreen
-                  />
-                </div>
-              )}
-            </Col>
-          </Row>
-        </div>
-
-        {/* Optional Fields */}
-        <div>
-          <Text strong style={{ fontSize: 16, color: '#1890ff' }}>Additional Information</Text>
-          <Row gutter={16} style={{ marginTop: 16 }}>
-            <Col span={8}>
-              <Form.Item name="productionCompany" label="Production Company">
-                <Input placeholder="Warner Bros., Disney, etc." />
-              </Form.Item>
-            </Col>
-            
-            <Col span={8}>
-              <Form.Item name="budget" label="Budget (USD)">
-                <InputNumber
-                  min={0}
-                  style={{ width: '100%' }}
-                  formatter={(value) => value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-                  parser={(value: string | undefined) => value ? Number(value.replace(/,/g, '')) : 0}
-                />
-              </Form.Item>
-            </Col>
-            
-            <Col span={8}>
-              <Form.Item name="boxOffice" label="Box Office (USD)">
-                <InputNumber
-                  min={0}
-                  style={{ width: '100%' }}
-                  formatter={(value) => value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-                  parser={(value: string | undefined) => value ? Number(value.replace(/,/g, '')) : 0}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </div>
+        <Tabs items={items} />
       </Form>
     </Modal>
   );

@@ -78,16 +78,25 @@ export const createMovieColumns = (
     title: 'Featured',
     dataIndex: 'isFeatured',
     key: 'isFeatured',
-    render: (isFeatured: boolean, record: MovieData) => (
-      <Tooltip title={isFeatured ? "Unfeature" : "Feature"}>
-        <Button
-          icon={isFeatured ? <StarFilled style={{ color: '#fadb14' }} /> : <StarOutlined />}
-          onClick={() => handleToggleFeature(record)}
-          type="text"
-          shape="circle"
-        />
-      </Tooltip>
-    ),
+    render: (isFeatured: boolean, record: MovieData) => {
+      console.log('🌟 Featured column render:', { 
+        movieId: record.id, 
+        title: record.title, 
+        isFeatured: isFeatured, 
+        type: typeof isFeatured 
+      });
+      
+      return (
+        <Tooltip title={isFeatured ? "Unfeature" : "Feature"}>
+          <Button
+            icon={isFeatured ? <StarFilled style={{ color: '#fadb14' }} /> : <StarOutlined />}
+            onClick={() => handleToggleFeature(record)}
+            type="text"
+            shape="circle"
+          />
+        </Tooltip>
+      );
+    },
   },
   {
     title: <div style={{ textAlign: 'center' }}>Actions</div>,

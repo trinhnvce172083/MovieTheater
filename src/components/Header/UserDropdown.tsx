@@ -9,23 +9,11 @@ import { Logout_API } from "@/api/auth/Logout_API";
 import { useDispatch } from "react-redux";
 import { logout } from "@/store/slices/authSlice";
 
-type User = {
-  name?: string;
-  fullName?: string;
-  username?: string;
-  email?: string;
-  avatar?: string | null;
-  [key: string]: unknown;
-};
-
-export default function UserDropdown({ user }: { user: User }) {
+// Accept userName as a string
+export default function UserDropdown({ userName }: { userName: string | null }) {
   const [open, setOpen] = useState(false);
   const dispatch = useDispatch();
   const router = useRouter();
-
-  // Ưu tiên hiển thị fullName, sau đó đến name, username, email
-  const displayName =
-    user.fullName || user.name || user.username || user.email || "User";
 
   return (
     <Dropdown
@@ -49,16 +37,11 @@ export default function UserDropdown({ user }: { user: User }) {
             onClick: () => {
               Logout_API()
                 .then(() => {
-                  // Clear localStorage
                   localStorage.removeItem("accessToken");
                   localStorage.removeItem("refreshToken");
                   localStorage.removeItem("userInfo");
                   localStorage.removeItem("isLoggedIn");
-
-                  // Update Redux store
                   dispatch(logout());
-
-                  // Redirect to home page
                   router.push(ROUTES.HOME);
                 })
                 .catch((error) => {
@@ -74,12 +57,11 @@ export default function UserDropdown({ user }: { user: User }) {
     >
       <div className="flex items-center cursor-pointer">
         <Avatar
-          src={user.avatar || undefined}
           size={40}
           style={{ backgroundColor: "#87d068" }}
-          icon={!user.avatar && <UserOutlined />}
+          icon={<UserOutlined />}
         />
-        <span className="ml-2">{displayName}</span>
+        <span className="ml-2">{userName || "User"}</span>
       </div>
     </Dropdown>
   );

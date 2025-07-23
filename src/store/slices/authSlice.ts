@@ -37,8 +37,20 @@ const authSlice = createSlice({
       state.token = action.payload.token;
       state.isLoggedIn = true;
       const payload = decodeJwt(action.payload.token);
+      console.log('🔍 authSlice login - Decoded payload:', payload);
+      
       state.role = payload?.role || "CUSTOMER";
-      state.user = payload || null;
+      state.user = payload ? {
+        id: payload.accountId || payload.sub,
+        username: payload.username,
+        fullName: payload.fullName,
+        email: payload.email,
+        phoneNumber: payload.phoneNumber,
+        role: payload.role,
+        ...payload // Spread để giữ các field khác
+      } : null;
+      
+      console.log('✅ authSlice login - User state updated:', state.user);
     },
     // Đăng nhập: truyền vào user và token từ ngoài (nếu đã decode sẵn)
     setCredentials(state, action: PayloadAction<{ user: User; token: string }>) {

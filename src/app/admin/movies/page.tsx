@@ -174,6 +174,11 @@ export default function AdminMovieManagement() {
                 filterStatus: newFilters.status !== undefined ? newFilters.status : prev.filterStatus,
                 filterGenre: newFilters.genre !== undefined ? newFilters.genre : prev.filterGenre
               }));
+              // Reset pagination to page 1 when filters change
+              setPagination(prev => ({
+                ...prev,
+                currentPage: 1
+              }));
             }}
           />
 

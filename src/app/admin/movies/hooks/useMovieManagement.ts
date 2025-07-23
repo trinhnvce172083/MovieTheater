@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { message } from 'antd';
 import { MovieData, MovieStatistics, CurrentUser, MovieFilters, PaginationState } from '../types';
 import { MovieCreateRequest, MovieUpdateRequest } from '@/types/Admin/movie';
-import { getMovies, getMovieStatistics } from '@/api/admin/getAllMovies';
+import { getMovies } from '@/api/admin/getAllMovies';
 import { MovieApiService } from '@/api/admin/movie-api';
 import { useAuth } from '@/hooks/useAuth';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -16,7 +16,6 @@ import { Movie } from '@/types/Admin/movie';
 
 // Mock data for offline/demo mode
 import { mockMovies } from '../mock/movies';
-import { mockMovieStatistics } from '../mock/statistics';
 
 export const useMovieManagement = () => {
   const { token } = useAuth();
@@ -41,11 +40,11 @@ export const useMovieManagement = () => {
   
   // State management
   const [movieData, setMovieData] = useState<MovieData[]>([]);
+  const [allMovieData, setAllMovieData] = useState<MovieData[]>([]); // Store ALL movies for statistics
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [showAuthWarning, setShowAuthWarning] = useState(false);
   const [isUsingApiData, setIsUsingApiData] = useState(true);
-  const [statistics, setStatistics] = useState<MovieStatistics>(mockMovieStatistics);
 
   // Filters and pagination
   const [filters, setFilters] = useState<MovieFilters>({
@@ -101,6 +100,7 @@ export const useMovieManagement = () => {
         }
         
         setMovieData(filteredMockData);
+        setAllMovieData(mockMovies); // Store ALL mock movies for statistics
         setIsUsingApiData(false);
         return;
       }
@@ -114,17 +114,17 @@ export const useMovieManagement = () => {
         const movieResponse = await getMovies({
           page: 0,
           size: 100,
-          sortBy: "title",
+          sortBy: "movieId",
           sortDirection: "asc",
         });
         console.log('API Response:', movieResponse);
         
         if (movieResponse && movieResponse.content && Array.isArray(movieResponse.content)) {
           // Transform Movie[] to MovieData[] 
-          let transformedData: MovieData[] = [];
+          let allTransformedData: MovieData[] = [];
           
           try {
-            transformedData = movieResponse.content.map((movie: Movie) => {
+            allTransformedData = movieResponse.content.map((movie: Movie) => {
               // Ensure movie has required properties before transformation
               if (!movie || typeof movie !== 'object') {
                 console.warn('Invalid movie object:', movie);
@@ -140,41 +140,46 @@ export const useMovieManagement = () => {
             return;
           }
           
-          // Apply client-side filtering with safety checks
-          if (debouncedSearchTerm && transformedData.length > 0) {
-            transformedData = transformedData.filter(movie => 
+          // Apply client-side filtering for display
+          let filteredData = [...allTransformedData];
+          
+          if (debouncedSearchTerm && filteredData.length > 0) {
+            filteredData = filteredData.filter(movie => 
               movie && movie.title && movie.genre &&
               (movie.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
                movie.genre.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
             );
           }
           
-          if (filters.filterStatus && transformedData.length > 0) {
-            transformedData = transformedData.filter(movie => 
+          if (filters.filterStatus && filteredData.length > 0) {
+            filteredData = filteredData.filter(movie => 
               movie && movie.status === filters.filterStatus
             );
           }
           
-          if (filters.filterGenre && transformedData.length > 0) {
-            transformedData = transformedData.filter(movie => 
+          if (filters.filterGenre && filteredData.length > 0) {
+            filteredData = filteredData.filter(movie => 
               movie && movie.genre && 
               movie.genre.toLowerCase().includes(filters.filterGenre.toLowerCase())
             );
           }
           
-          setMovieData(transformedData);
+          setMovieData(filteredData);
+          setAllMovieData(allTransformedData); // Store ALL movies for statistics
           setIsUsingApiData(true);
-          console.log('Successfully loaded movies from API:', transformedData.length);
+          console.log('Successfully loaded movies from API:', filteredData.length, 'displayed out of', allTransformedData.length, 'total');
         } else {
           console.error('API returned unexpected response structure:', movieResponse);
           message.error('Unable to load movie list - unexpected response format.');
           setMovieData(mockMovies);
+          setAllMovieData(mockMovies); // Store ALL mock movies for statistics
           setIsUsingApiData(false);
         }
       } catch (apiError) {
         console.error('API call failed:', apiError);
         message.error('An error occurred while loading the movie list.');
         setMovieData(mockMovies);
+        setAllMovieData(mockMovies); // Store ALL mock movies for statistics
         setIsUsingApiData(false);
       }
     } catch (error) {
@@ -187,30 +192,10 @@ export const useMovieManagement = () => {
     }
   }, [actualToken, debouncedSearchTerm, filters]);
 
-  // Fetch statistics
-  const fetchStatistics = useCallback(async () => {
-    if (!actualToken || actualToken.length === 0) {
-      setStatistics(mockMovieStatistics);
-      return;
-    }
-    
-    try {
-      const statsResponse = await getMovieStatistics();
-      if (statsResponse) {
-        setStatistics(statsResponse);
-      } else {
-        setStatistics(mockMovieStatistics);
-      }
-    } catch {
-      setStatistics(mockMovieStatistics);
-    }
-  }, [actualToken]);
-
   // Initial data fetch
   useEffect(() => {
     fetchMovies();
-    fetchStatistics();
-  }, [fetchMovies, fetchStatistics]);
+  }, [fetchMovies]);
 
   // Filter and search logic - client side for better UX
   const filteredData = useMemo(() => {
@@ -245,65 +230,187 @@ export const useMovieManagement = () => {
     return filteredData.slice(startIndex, endIndex);
   }, [filteredData, pagination]);
 
+  // Calculate statistics from ALL movies (not filtered) for consistent stats display
+  const calculatedStatistics = useMemo((): MovieStatistics => {
+    if (!allMovieData || allMovieData.length === 0) {
+      return {
+        totalMovies: 0,
+        nowShowingCount: 0,
+        comingSoonCount: 0,
+        endedCount: 0,
+        featuredCount: 0,
+      };
+    }
+
+    const stats = allMovieData.reduce((acc, movie) => {
+      // Only count active/visible movies
+      acc.totalMovies += 1;
+      
+      if (movie.status === 'NOW_SHOWING') {
+        acc.nowShowingCount += 1;
+      } else if (movie.status === 'COMING_SOON') {
+        acc.comingSoonCount += 1;
+      } else if (movie.status === 'ENDED') {
+        acc.endedCount += 1;
+      }
+      
+      if (movie.isFeatured) {
+        acc.featuredCount += 1;
+      }
+      
+      return acc;
+    }, {
+      totalMovies: 0,
+      nowShowingCount: 0,
+      comingSoonCount: 0,
+      endedCount: 0,
+      featuredCount: 0,
+    });
+
+    console.log('📊 Statistics calculated from ALL movies (not filtered):', stats);
+    return stats;
+  }, [allMovieData]); // Changed dependency from filteredData to allMovieData
+
   // CRUD Operations
-  const createMovie = async (movieCreateData: MovieCreateRequest): Promise<boolean> => {
+  const createMovie = async (movieCreateData: any): Promise<boolean> => {
     if (!actualToken || actualToken.length === 0) return false;
     
     setLoading(true);
     try {
-      // Transform to match backend expected format
-      const backendData: MovieCreateRequest = {
-  title: movieCreateData.title,
-  description: movieCreateData.description     || '',
-  duration: movieCreateData.duration,
-  releaseDate: movieCreateData.releaseDate,
-  genre: movieCreateData.genre,
-  // đưa director thành chuỗi rỗng nếu undefined
-  director: movieCreateData.director           || '',
-  cast: movieCreateData.cast,
-  language: movieCreateData.language,
-  country: movieCreateData.country,
-  rating: movieCreateData.rating,
-  price: movieCreateData.price,
-  status: movieCreateData.status,
-  isFeatured: movieCreateData.isFeatured,
-  isAdultContent: false,
-  // thêm trailerUrl và endDate
-  trailerUrl: movieCreateData.trailerUrl       || '',
-  endDate: movieCreateData.endDate             || null,
-};
+      console.log('🎬 Creating movie with data:', movieCreateData);
       
-      const response = await MovieApiService.createMovie(backendData, actualToken);
-      if (response.success) {
-        message.success('Movie created successfully!');
-        fetchMovies();
-        fetchStatistics();
-        return true;
+      // Check if there are images to upload
+      if (movieCreateData.hasImages) {
+        // Use the new image upload endpoint
+        const response = await MovieApiService.createMovieWithImages(
+          {
+            title: movieCreateData.title,
+            description: movieCreateData.description || '',
+            duration: movieCreateData.duration,
+            releaseDate: movieCreateData.releaseDate,
+            genre: movieCreateData.genre,
+            director: movieCreateData.director || '',
+            cast: movieCreateData.cast || '',
+            language: movieCreateData.language || 'English',
+            country: movieCreateData.country || 'United States',
+            rating: movieCreateData.rating || 'G',
+            price: movieCreateData.price,
+            status: movieCreateData.status,
+            isFeatured: movieCreateData.isFeatured === true,
+            imdbRating: movieCreateData.imdbRating || 0,
+            productionCompany: movieCreateData.productionCompany || '',
+            budget: movieCreateData.budget || 0,
+            boxOffice: movieCreateData.boxOffice || 0
+          },
+          movieCreateData.posterFile,
+          movieCreateData.backdropFile,
+          actualToken
+        );
+        
+        if (response.success) {
+          message.success('Movie created successfully with images!');
+          fetchMovies();
+          return true;
+        } else {
+          message.error(response.message || 'Unable to create movie with images.');
+          return false;
+        }
       } else {
-        message.error(response.message || 'Unable to create movie.');
-        return false;
+        // Use regular creation without images
+        const backendData: MovieCreateRequest = {
+          title: movieCreateData.title,
+          originalTitle: movieCreateData.originalTitle || movieCreateData.title,
+          description: movieCreateData.description || '',
+          duration: movieCreateData.duration,
+          releaseDate: movieCreateData.releaseDate,
+          endDate: movieCreateData.endDate || null,
+          genre: movieCreateData.genre,
+          director: movieCreateData.director || '',
+          cast: movieCreateData.cast || '',
+          language: movieCreateData.language || 'English',
+          country: movieCreateData.country || 'United States',
+          rating: movieCreateData.rating || 'G',
+          price: movieCreateData.price,
+          status: movieCreateData.status,
+          isFeatured: movieCreateData.isFeatured === true,
+          isAdultContent: false,
+          trailerUrl: movieCreateData.trailerUrl || '',
+        };
+        
+        console.log('🎬 Backend data isFeatured:', backendData.isFeatured, typeof backendData.isFeatured);
+
+        const response = await MovieApiService.createMovie(backendData, actualToken);
+        if (response.success) {
+          message.success('Movie created successfully!');
+          fetchMovies();
+          return true;
+        } else {
+          message.error(response.message || 'Unable to create movie.');
+          return false;
+        }
       }
-    } catch {
-      message.error('An error occurred while creating the movie.');
+    } catch (error) {
+      console.error('🎬 Create movie error:', error);
+      message.error('An error occurred while creating the movie. Please check all required fields.');
       return false;
     } finally {
       setLoading(false);
     }
   };
 
-  const updateMovie = async (movieId: number, movieUpdateData: MovieUpdateRequest): Promise<boolean> => {
+  const updateMovie = async (movieId: number, movieUpdateData: any): Promise<boolean> => {
     if (!actualToken || actualToken.length === 0) return false;
     
     setLoading(true);
     try {
-      const response = await MovieApiService.updateMovie(movieId, movieUpdateData, actualToken);
-      if (response.success) {
-        message.success('Movie updated successfully!');
-        fetchMovies();
-        return true;
+      // Check if there are images to upload
+      if (movieUpdateData.hasImages) {
+        // Use the new image upload endpoint
+        const response = await MovieApiService.updateMovieWithImages(
+          movieId,
+          {
+            title: movieUpdateData.title,
+            originalTitle: movieUpdateData.originalTitle || movieUpdateData.title,
+            description: movieUpdateData.description || '',
+            duration: movieUpdateData.duration,
+            releaseDate: movieUpdateData.releaseDate,
+            endDate: movieUpdateData.endDate || null,
+            genre: movieUpdateData.genre,
+            director: movieUpdateData.director || '',
+            cast: movieUpdateData.cast || '',
+            language: movieUpdateData.language || 'English',
+            country: movieUpdateData.country || 'United States',
+            rating: movieUpdateData.rating || 'G',
+            price: movieUpdateData.price,
+            status: movieUpdateData.status,
+            isFeatured: movieUpdateData.isFeatured === true,
+            isAdultContent: false,
+            trailerUrl: movieUpdateData.trailerUrl || '',
+          },
+          movieUpdateData.posterFile,
+          movieUpdateData.backdropFile,
+          actualToken
+        );
+        
+        if (response.success) {
+          message.success('Movie updated successfully with images!');
+          fetchMovies();
+          return true;
+        } else {
+          message.error(response.message || 'Unable to update movie with images.');
+          return false;
+        }
       } else {
-        message.error(response.message || 'Unable to update movie.');
-        return false;
+        // Use regular update without images
+        const response = await MovieApiService.updateMovie(movieId, movieUpdateData, actualToken);
+        if (response.success) {
+          message.success('Movie updated successfully!');
+          fetchMovies();
+          return true;
+        } else {
+          message.error(response.message || 'Unable to update movie.');
+          return false;
+        }
       }
     } catch {
       message.error('An error occurred while updating the movie.');
@@ -321,8 +428,7 @@ export const useMovieManagement = () => {
       const response = await MovieApiService.deleteMovie(movieId, actualToken);
       if (response.success) {
         message.success('Movie deleted successfully!');
-        fetchMovies();
-        fetchStatistics();
+        fetchMovies(); // This will trigger recalculation of statistics
       } else {
         message.error(response.message || 'Unable to delete movie.');
       }
@@ -339,17 +445,17 @@ export const useMovieManagement = () => {
     setLoading(true);
     try {
       // Only send the isFeatured field to avoid any unintended side effects
+      const newFeaturedStatus = !isFeatured;
       const updateData = {
-        isFeatured: !isFeatured
+        isFeatured: newFeaturedStatus === true // Explicit boolean comparison
       };
       
-      console.log(`🌟 Toggling feature for movie ${movieId}:`, updateData);
+      console.log(`🌟 Toggling feature for movie ${movieId}:`, updateData, 'Type:', typeof updateData.isFeatured);
       
       const response = await MovieApiService.updateMovie(movieId, updateData as MovieUpdateRequest, actualToken);
       if (response.success) {
-        message.success(`${!isFeatured ? 'Movie featured' : 'Movie unfeatured'} successfully!`);
-        fetchMovies();
-        fetchStatistics();
+        message.success(`${newFeaturedStatus ? 'Movie featured' : 'Movie unfeatured'} successfully!`);
+        fetchMovies(); // This will trigger recalculation of statistics
       } else {
         message.error(response.message || 'Unable to change featured status.');
       }
@@ -365,7 +471,7 @@ export const useMovieManagement = () => {
     // Data
     paginatedData,
     filteredData,
-    statistics,
+    statistics: calculatedStatistics, // Use calculated statistics from displayed data
     currentUser,
 
     // State

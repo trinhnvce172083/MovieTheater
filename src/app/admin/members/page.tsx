@@ -65,6 +65,13 @@ export default function AdminMemberManagement() {
     router.push(`/admin/members/MemberDetail?id=${record.id}`);
   };
 
+  // Handle filter changes with pagination reset
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    setFilters(newFilters);
+    // Reset pagination to page 1 when filters change
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+  };
+
   const handleModalSubmit = async (memberData: MemberCreateRequest) => {
     try {
       let success = false;
@@ -116,6 +123,27 @@ export default function AdminMemberManagement() {
       if (success) {
         setLockModalVisible(false);
         setSelectedMember(null);
+        
+        // If we just locked the current user, trigger banned notification
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        if (currentUser.id === parseInt(selectedMember.id)) {
+          console.log('🚫 User locked themselves! Triggering banned notification...');
+          const windowWithCallback = window as typeof window & { __triggerAccountBannedCheck?: (error: unknown) => void };
+          if (windowWithCallback.__triggerAccountBannedCheck) {
+            // Simulate account locked error
+            const mockError = {
+              response: {
+                status: 403,
+                data: {
+                  message: lockData.reason || "Tài khoản đã bị khóa",
+                  errorCode: "ACCOUNT_LOCKED",
+                  code: 1105
+                }
+              }
+            };
+            windowWithCallback.__triggerAccountBannedCheck(mockError);
+          }
+        }
       }
     }
   };
@@ -216,7 +244,7 @@ export default function AdminMemberManagement() {
           {/* Filters Section */}
           <MemberFilters
             filters={filters}
-            onFiltersChange={setFilters}
+            onFiltersChange={handleFiltersChange}
           />
 
           {/* Table Section */}
