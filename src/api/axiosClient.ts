@@ -141,4 +141,28 @@ axiosClient.interceptors.response.use(
   }
 );
 
+// Debug response interceptor
+axiosClient.interceptors.response.use(
+  (response) => {
+    console.log(
+      `✅ API Success [${response.config.method?.toUpperCase()}] ${response.config.url}`,
+      {
+        status: response.status,
+        data: response.data,
+      }
+    );
+    return response;
+  },
+  (error) => {
+    console.error(
+      `🔴 API Error [${error.config?.method?.toUpperCase()}] ${error.config?.url}`,
+      {
+        status: error.response?.status,
+        data: error.response?.data,
+      }
+    );
+    return Promise.reject(error);
+  }
+);
+
 export default axiosClient;

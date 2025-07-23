@@ -178,10 +178,10 @@ export default function SeatSelectionPage() {
   return (
     <App>
       {contextHolder}
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row gap-8">
+      <div className="container mx-auto px-2 sm:px-4">
+        <div className="flex flex-col gap-4 md:flex-row md:gap-8">
           {/* Left: Seat layout */}
-          <div className="flex-1 p-6 bg-white/90 rounded-2xl shadow-lg">
+          <div className="flex-1 p-2 md:p-6 bg-white/90 rounded-lg md:rounded-2xl shadow-lg overflow-x-auto">
             <TheaterLayout
               seats={seats}
               selectedSeats={selectedSeats}

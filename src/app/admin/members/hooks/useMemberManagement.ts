@@ -53,17 +53,50 @@ export const useMemberManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      console.log("🔍 [useMemberManagement] Starting fetchUsers...");
+      
       const response = await getAllUsers();
+      console.log("📦 [useMemberManagement] getAllUsers response:", response);
+      console.log("📦 [useMemberManagement] Response type:", typeof response);
+      console.log("📦 [useMemberManagement] Response keys:", response ? Object.keys(response) : 'null');
 
-      if (!response || !response.content || !Array.isArray(response.content)) {
+      if (!response) {
+        console.log("⚠️ [useMemberManagement] No response received");
         setMemberData([]);
         return;
       }
 
-      const transformedData: MemberData[] = response.content.map(transformApiUserToMemberData);
-      setMemberData(transformedData || []);
-      setIsUsingApiData(true);
+      // Check if response has content property (paginated response)
+      if (response.content && Array.isArray(response.content)) {
+        console.log("📋 [useMemberManagement] Found content array with", response.content.length, "items");
+        const transformedData: MemberData[] = response.content.map(transformApiUserToMemberData);
+        console.log("✨ [useMemberManagement] Transformed data:", transformedData);
+        setMemberData(transformedData || []);
+        setIsUsingApiData(true);
+      } 
+      // Check if response is direct array
+      else if (Array.isArray(response)) {
+        console.log("📋 [useMemberManagement] Response is direct array with", response.length, "items");
+        const transformedData: MemberData[] = response.map(transformApiUserToMemberData);
+        console.log("✨ [useMemberManagement] Transformed data:", transformedData);
+        setMemberData(transformedData || []);
+        setIsUsingApiData(true);
+      }
+      // Check if response has data property
+      else if ('data' in response && Array.isArray((response as { data: unknown[] }).data)) {
+        const responseData = (response as { data: unknown[] }).data;
+        console.log("📋 [useMemberManagement] Found data array with", responseData.length, "items");
+        const transformedData: MemberData[] = responseData.map(transformApiUserToMemberData);
+        console.log("✨ [useMemberManagement] Transformed data:", transformedData);
+        setMemberData(transformedData || []);
+        setIsUsingApiData(true);
+      }
+      else {
+        console.log("⚠️ [useMemberManagement] Unexpected response structure:", response);
+        setMemberData([]);
+      }
     } catch (error) {
+      console.error("❌ [useMemberManagement] fetchUsers error:", error);
       message.warning("Using sample data - please check your connection or login status");
       setMemberData([]);
       setIsUsingApiData(false);

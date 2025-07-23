@@ -12,8 +12,8 @@ interface ConcessionsListProps {
 
 export default function ConcessionsList({ concessions, quantities, onQuantityChange, loading, error }: ConcessionsListProps) {
   return (
-    <div className="lg:col-span-2">
-      <div className="grid grid-cols-4 gap-x-4 mb-4 font-bold text-gray-400">
+    <div className="lg:col-span-2 w-full">
+      <div className="grid grid-cols-4 gap-x-2 md:gap-x-4 mb-2 md:mb-4 font-bold text-gray-400 text-xs md:text-base">
         <div className="col-span-2">COMBO</div>
         <div className="text-right">PRICE</div>
         <div className="text-center">QUANTITY</div>
@@ -23,14 +23,14 @@ export default function ConcessionsList({ concessions, quantities, onQuantityCha
       ) : error ? (
         <p className="text-red-500">{error}</p>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-2 md:space-y-4">
           {concessions.map((item, idx) => {
             const concessionId = item.concessionId;
             const currentQuantity = quantities[concessionId] || 0;
             
             return (
-              <div key={concessionId ?? `concession-${idx}`} className="flex items-center gap-4 p-2 border-b">
-                <div className="flex items-center gap-4 flex-1 min-w-0">
+              <div key={concessionId ?? `concession-${idx}`} className="flex flex-col md:flex-row items-center gap-2 md:gap-4 p-2 border-b">
+                <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0 w-full">
                   <img
                     src={item.imageUrl || '/popcorn.jpg'}
                     alt={item.name}
@@ -42,10 +42,10 @@ export default function ConcessionsList({ concessions, quantities, onQuantityCha
                     <div className="text-sm text-gray-400 truncate">{item.description}</div>
                   </div>
                 </div>
-                <div className="w-32 text-right font-semibold">
+                <div className="w-full md:w-32 text-right font-semibold">
                   {item.price.toLocaleString('vi-VN')} VND
                 </div>
-                <div className="w-40 flex items-center justify-center gap-4">
+                <div className="w-full md:w-40 flex items-center justify-center gap-2 md:gap-4 mt-2 md:mt-0">
                   <Button 
                     variant="outline" 
                     size="icon" 

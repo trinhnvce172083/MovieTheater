@@ -126,14 +126,15 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex items-center justify-center min-h-screen">
       <Card
         className={cn(
-          "w-full max-w-md shadow-lg p-8 bg-white/60 backdrop-blur-sm rounded-2xl"
+          // Responsive width & padding
+          "w-full max-w-xs sm:max-w-md md:max-w-lg p-4 sm:p-8 bg-white/60 backdrop-blur-sm rounded-2xl border-none shadow-lg"
         )}
       >
-        <div className="flex flex-col items-center mb-0">
-          <Typography.Title level={4} className="text-white mb-0">
+        <div className="flex flex-col items-center mb-2">
+          <Typography.Title level={4} className="text-white mb-0 text-lg sm:text-xl md:text-2xl">
             Register
           </Typography.Title>
         </div>
@@ -159,7 +160,8 @@ export default function RegisterPage() {
                   : "opacity-0 absolute top-0 left-0 -translate-x-full pointer-events-none"
               )}
             >
-              <div className="flex gap-4">
+              {/* Responsive group: flex-col on mobile, flex-row on md+ */}
+              <div className="flex flex-col gap-2 md:flex-row md:gap-4">
                 <Form.Item
                   label="Full Name"
                   name="fullname"
@@ -172,11 +174,11 @@ export default function RegisterPage() {
                     prefix={<UserOutlined />}
                     placeholder="Full Name"
                     size="large"
-                    className="border-2 border-white focus:border-purple-500"
+                    className="border-2 border-white focus:border-purple-500 w-full"
                   />
                 </Form.Item>
               </div>
-              <div className="flex gap-4">
+              <div className="flex flex-col gap-2 md:flex-row md:gap-4">
                 <Form.Item
                   label="Date of Birth"
                   name="dob"
@@ -196,24 +198,6 @@ export default function RegisterPage() {
                     disabledDate={(d) => d && d > dayjs()}
                   />
                 </Form.Item>
-                <Form.Item
-                  label="ID Card"
-                  name="identity"
-                  className="flex-1 !mb-0"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Please enter your ID card number!",
-                    },
-                  ]}
-                >
-                  <Input
-                    prefix={<IdcardOutlined />}
-                    placeholder="ID Card"
-                    size="large"
-                    className="border-2 border-white focus:border-purple-500"
-                  />
-                </Form.Item>
               </div>
               <Form.Item
                 label="Phone Number"
@@ -230,7 +214,7 @@ export default function RegisterPage() {
                   prefix={<PhoneOutlined />}
                   placeholder="Phone Number"
                   size="large"
-                  className="border-2 border-white focus:border-purple-500"
+                  className="border-2 border-white focus:border-purple-500 w-full"
                 />
               </Form.Item>
               <Form.Item
@@ -246,28 +230,18 @@ export default function RegisterPage() {
                   prefix={<MailOutlined />}
                   placeholder="Email"
                   size="large"
-                  className="border-2 border-white focus:border-purple-500"
+                  className="border-2 border-white focus:border-purple-500 w-full"
                 />
               </Form.Item>
               <Form.Item label="Address" name="address" className="!mb-0">
                 <Input.TextArea
                   placeholder="Enter your address"
                   size="large"
-                  className="border-2 border-white focus:border-purple-500"
+                  className="border-2 border-white focus:border-purple-500 w-full"
                   rows={3}
                 />
               </Form.Item>
-              <Form.Item className="mt-4">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  className="w-full mt-2 bg-gradient-to-r from-purple-500 to-orange-400 text-white font-semibold"
-                  size="large"
-                  loading={loading}
-                >
-                  Save changes
-                </Button>
-              </Form.Item>
+              {/* Đã xóa nút Save changes ở tab 0 */}
             </div>
             <div
               className={cn(
@@ -289,7 +263,7 @@ export default function RegisterPage() {
                   prefix={<UserOutlined />}
                   placeholder="Username"
                   size="large"
-                  className="border-2 border-white focus:border-purple-500"
+                  className="border-2 border-white focus:border-purple-500 w-full"
                 />
               </Form.Item>
               <Form.Item
@@ -313,7 +287,7 @@ export default function RegisterPage() {
                   prefix={<LockOutlined />}
                   placeholder="Password"
                   size="large"
-                  className="border-2 border-white focus:border-purple-500"
+                  className="border-2 border-white focus:border-purple-500 w-full"
                 />
               </Form.Item>
               <Form.Item
@@ -339,7 +313,7 @@ export default function RegisterPage() {
                   prefix={<LockOutlined />}
                   placeholder="Confirm Password"
                   size="large"
-                  className="border-2 border-white focus:border-purple-600"
+                  className="border-2 border-white focus:border-purple-600 w-full"
                 />
               </Form.Item>
               <Form.Item
