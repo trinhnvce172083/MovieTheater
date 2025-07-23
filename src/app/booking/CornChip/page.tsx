@@ -108,8 +108,8 @@ export default function CornChipPage() {
 
   return (
     <>
-      <div className="bg-[#151a23] text-white min-h-screen px-2 sm:px-4 md:px-8 pt-2">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 bg-[#151a23] rounded-xl">
+      <div className="bg-[#151a23] text-white min-h-screen px-1 sm:px-2 md:px-8 pt-2">
+        <div className="max-w-xs md:max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-8 bg-[#151a23] rounded-xl">
           <ConcessionsList
             concessions={concessions}
             quantities={selectedConcessions.reduce((acc, item) => ({
@@ -120,7 +120,7 @@ export default function CornChipPage() {
             loading={loading}
             error={error}
           />
-          <div className="lg:col-span-1 h-full flex items-stretch w-full max-w-sm mx-auto md:max-w-full md:mx-0">
+          <div className="lg:col-span-1 h-full flex items-stretch w-full max-w-xs md:max-w-full mx-auto md:mx-0">
             <OrderSummary 
               movieDetails={movieSummary} 
               totalOrder={bookingData.finalAmount}

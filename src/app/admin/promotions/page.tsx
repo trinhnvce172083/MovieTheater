@@ -91,6 +91,7 @@ export default function PromotionPage() {
     handleBulkDelete,
     handleSavePromotion,
     refreshPromotions,
+    handleExportData, // <-- lấy từ usePromotions
   } = usePromotions();
 
   // Modal and selection state
@@ -100,6 +101,7 @@ export default function PromotionPage() {
   const [editingPromotion, setEditingPromotion] = React.useState(null);
   const [viewingPromotion, setViewingPromotion] = React.useState(null);
   const [selectedPromotion, setSelectedPromotion] = React.useState(null);
+  const [form] = Form.useForm();
 
   // Handlers
   const handleAdd = () => {
@@ -115,84 +117,9 @@ export default function PromotionPage() {
     setIsViewModalVisible(true);
   };
 
-  const handleBulkDelete = async () => {
-    try {
-      const promises = selectedPromotions.map((promotion) =>
-        deletePromotion(promotion.promotionId)
-      );
-
-      await Promise.all(promises);
-      toast.success(
-        `Deleted ${selectedPromotions.length} promotions successfully`
-      );
-      setSelectedRowKeys([]);
-      setSelectedPromotions([]);
-      fetchPromotions(currentPage - 1, pageSize);
-    } catch (error) {
-      console.error("Error bulk deleting:", error);
-      toast.error("Không thể xóa khuyến mãi");
-    }
-  };
-
-  const handleExportData = () => {
-    const exportData = filteredData.map((promotion) => ({
-      "Promotion Code": promotion.promotionCode,
-      "Promotion Name": promotion.promotionName,
-      Description: promotion.description,
-      "Discount Type": promotion.discountType,
-      "Discount Value": promotion.discountDisplay,
-      "Min Purchase": promotion.minPurchaseAmount,
-      "Max Discount": promotion.maxDiscountAmount || "N/A",
-      "Start Date": promotion.startDate,
-      "End Date": promotion.endDate,
-      Status: promotion.statusDisplay,
-      Usage: promotion.usageDisplay,
-      Membership: promotion.membershipDisplay,
-      "Promotion Type": promotion.promotionTypeDisplay,
-      "Points Required": promotion.pointsDisplay || "N/A",
-      Featured: promotion.isFeatured ? "Yes" : "No",
-      "Created At": promotion.createdAt,
-    }));
-
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      Object.keys(exportData[0]).join(",") +
-      "\n" +
-      exportData
-        .map((row) =>
-          Object.values(row)
-            .map((val) => `"${val}"`)
-            .join(",")
-        )
-        .join("\n");
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute(
-      "download",
-      `promotions-${new Date().toISOString().split("T")[0]}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    toast.success("Data exported successfully");
-  };
-
-  const handleDelete = async (record: PromotionDto) => {
-    try {
-      await deletePromotion(record.promotionId);
-      message.success(`Deleted "${record.promotionName}" successfully`);
-      // Refresh the data
-      fetchPromotions(currentPage - 1, pageSize);
-    } catch (error) {
-      console.error('Error deleting promotion:', error);
-      toast.error('Không thể xóa khuyến mãi');
-    }
-  };
-
-
+  // Xoá các khai báo trùng lặp của handleBulkDelete, handleDelete, handleExportData
+  // Sửa các chỗ gọi fetchPromotions thành refreshPromotions
+  // Giữ lại các hàm modal, selection, page change, reset, ...
   const handleModalOk = async () => {
     console.log("handleModalOk called"); // Debug log
     try {
@@ -416,7 +343,7 @@ export default function PromotionPage() {
 
       // Refresh the data - wait a bit to ensure backend is updated
       setTimeout(() => {
-        fetchPromotions(currentPage - 1, pageSize);
+        refreshPromotions();
       }, 500);
 
       setIsModalVisible(false);
@@ -463,9 +390,6 @@ export default function PromotionPage() {
     setCurrentPage(page);
     setPageSize(size);
   };
-  const handleExportData = () => {
-    // ...export logic...
-  };
   const handleReset = () => {
     setSearchTerm("");
     refreshPromotions();
@@ -504,6 +428,7 @@ export default function PromotionPage() {
         onOk={handleModalOk}
         onCancel={handleModalCancel}
         handleSavePromotion={handleSavePromotion}
+        form={form}
       />
       <PromotionViewModal
         isVisible={isViewModalVisible}
