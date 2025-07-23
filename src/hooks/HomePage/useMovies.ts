@@ -13,6 +13,10 @@ export function useMovies() {
       MovieApiService.getNowShowingMovies(),
       MovieApiService.getUpComingMovies(),
     ]).then(([nowRes, upRes]) => {
+      console.log("Now Showing Response:", nowRes);
+      console.log("Upcoming Response:", upRes);
+      console.log("Now Showing Data:", nowRes && nowRes.data ? nowRes.data : []);
+      console.log("Upcoming Data:", upRes && upRes.data ? upRes.data : []);
       setNowShowingMovies(nowRes && nowRes.data ? nowRes.data : []);
       setUpcomingMovies(upRes && upRes.data ? upRes.data : []);
       setLoading(false);

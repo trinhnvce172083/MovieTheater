@@ -56,10 +56,10 @@ export default function PromotionDetailModal({
   };
 
   const getStatusBadge = () => {
-    if (!promotion.isActive) return <Badge variant="secondary">Không hoạt động</Badge>;
-    if (promotion.isExpired) return <Badge variant="destructive">Đã hết hạn</Badge>;
-    if (promotion.isNotStarted) return <Badge variant="outline">Chưa bắt đầu</Badge>;
-    if (promotion.isUsageLimitReached) return <Badge variant="destructive">Hết lượt</Badge>;
+    if (!promotion.valid) return <Badge variant="secondary">Không hoạt động</Badge>;
+    if (promotion.expired) return <Badge variant="destructive">Đã hết hạn</Badge>;
+    if (promotion.notStarted) return <Badge variant="outline">Chưa bắt đầu</Badge>;
+    if (promotion.usageLimitReached) return <Badge variant="destructive">Hết lượt</Badge>;
     return <Badge variant="default">Đang hoạt động</Badge>;
   };
 
@@ -123,17 +123,17 @@ export default function PromotionDetailModal({
               )}
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center gap-2">
-                  {getDiscountTypeIcon()}
-                  <span className="font-semibold">{promotion.discountDisplay}</span>
-                </div>
+                              <div className="flex items-center gap-2">
+                {getDiscountTypeIcon()}
+                <span className="font-semibold">{promotion.discountDisplayText}</span>
+              </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   <span>{promotion.validityDisplay}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4" />
-                  <span>{promotion.usageDisplay}</span>
+                  <span>{promotion.currentUsageCount}/{promotion.maxUsageCount || '∞'} used</span>
                 </div>
               </div>
             </CardContent>
@@ -247,7 +247,7 @@ export default function PromotionDetailModal({
           </Card>
 
           {/* Points Information (for POINT_BASED promotions) */}
-          {promotion.isPointsPromotion && (
+          {promotion.pointsDiscount && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -263,7 +263,7 @@ export default function PromotionDetailModal({
                   </div>
                   <div>
                     <h4 className="font-medium mb-2">Giá trị điểm</h4>
-                    <p className="text-muted-foreground">{promotion.pointsValue} điểm</p>
+                    <p className="text-muted-foreground">{promotion.discountValue} VNĐ</p>
                   </div>
                   <div>
                     <h4 className="font-medium mb-2">Thời hạn mã</h4>
@@ -287,24 +287,24 @@ export default function PromotionDetailModal({
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <h4 className="font-medium mb-2">Số lượt sử dụng hiện tại</h4>
-                    <p className="text-2xl font-bold">{usageData.currentUsage}</p>
+                    <p className="text-2xl font-bold">{promotion.currentUsageCount}</p>
                   </div>
                   <div>
                     <h4 className="font-medium mb-2">Số lượt tối đa</h4>
                     <p className="text-2xl font-bold">
-                      {usageData.maxUsage !== undefined ? usageData.maxUsage : 'Không giới hạn'}
+                      {promotion.maxUsageCount || 'Không giới hạn'}
                     </p>
                   </div>
                   <div>
                     <h4 className="font-medium mb-2">Số lượt mỗi người</h4>
                     <p className="text-2xl font-bold">
-                      {usageData.maxUserUsage !== undefined ? usageData.maxUserUsage : 'Không giới hạn'}
+                      {promotion.maxUsagePerUser || 'Không giới hạn'}
                     </p>
                   </div>
                   <div>
                     <h4 className="font-medium mb-2">Số lượt còn lại</h4>
                     <p className="text-2xl font-bold">
-                      {usageData.remainingUsage !== undefined ? usageData.remainingUsage : 'Không xác định'}
+                      {promotion.remainingUsage || 'Không xác định'}
                     </p>
                   </div>
                 </div>
@@ -333,7 +333,7 @@ export default function PromotionDetailModal({
                 </div>
                 <div>
                   <h4 className="font-medium mb-2">Loại khuyến mãi</h4>
-                  <p className="text-muted-foreground">{promotion.promotionTypeDisplay}</p>
+                  <p className="text-muted-foreground">{promotion.pointsDiscount ? "Points-based" : "Public"}</p>
                 </div>
               </div>
             </CardContent>

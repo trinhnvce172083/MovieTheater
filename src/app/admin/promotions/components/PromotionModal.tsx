@@ -14,22 +14,32 @@ import {
 } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { PromotionModalProps } from '../types';
+import { PromotionDto } from '@/types/Admin/promotion';
 
 const { Option } = Select;
+
+interface PromotionModalProps {
+  isVisible: boolean;
+  editingPromotion: PromotionDto | null;
+  onOk: () => void;
+  onCancel: () => void;
+  form: any;
+}
 
 export const PromotionModal: React.FC<PromotionModalProps> = ({
   isVisible,
   editingPromotion,
   onOk,
   onCancel,
-  handleSavePromotion,
+  form,
 }) => {
+  // Lấy giá trị discountType và promotionType bằng Form.useWatch
+  const discountType = Form.useWatch('discountType', form);
+  const promotionType = Form.useWatch('promotionType', form);
+
   const handleSubmit = async (values: any) => {
-    const success = await handleSavePromotion(values, editingPromotion);
-    if (success) {
-      onOk();
-    }
+    // Form validation is handled in the parent component
+    onOk();
   };
 
   return (
@@ -43,12 +53,13 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
       destroyOnHidden
     >
       <Form
+        form={form}
         key={isVisible ? 'open' : 'closed'}
         layout="vertical"
         className="mt-6"
         onFinish={handleSubmit}
         initialValues={editingPromotion ? {
-          code: editingPromotion.promotionCode,
+          promoCode: editingPromotion.promotionCode,
           name: editingPromotion.promotionName,
           description: editingPromotion.description,
           discountType: editingPromotion.discountType,
@@ -58,9 +69,9 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
           minPurchase: editingPromotion.minPurchaseAmount,
           maxDiscount: editingPromotion.maxDiscountAmount,
           status: editingPromotion.isActive ? 'ACTIVE' : 'INACTIVE',
-          promotionType: editingPromotion.promotionType,
-          memberOnly: editingPromotion.memberOnly,
-          membershipLevels: editingPromotion.membershipLevels,
+          promotionType: editingPromotion.pointsDiscount ? 'POINT_BASED' : 'PUBLIC',
+          memberOnly: false,
+          membershipLevels: '',
           maxUsageCount: editingPromotion.maxUsageCount,
           maxUsagePerUser: editingPromotion.maxUsagePerUser,
           pointsRequired: editingPromotion.pointsRequired,
@@ -106,11 +117,14 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
                     type="text"
                     size="small"
                     onClick={() => {
-                      const randomCode = Math.random()
-                        .toString(36)
-                        .substring(2, 8)
-                        .toUpperCase();
-                      // form.setFieldsValue({ promoCode: randomCode }); // Removed
+                      // Tạo mã gồm 6 ký tự in hoa và số
+                      const length = 6 + Math.floor(Math.random() * 3); // 6-8 ký tự
+                      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                      let randomCode = '';
+                      for (let i = 0; i < length; i++) {
+                        randomCode += chars.charAt(Math.floor(Math.random() * chars.length));
+                      }
+                      form.setFieldsValue({ promoCode: randomCode });
                     }}
                   >
                     Generate
@@ -164,32 +178,27 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
               ]}
               dependencies={["discountType"]}
             >
-              {(form) => {
-                const discountType = form.getFieldValue("discountType");
-                return (
-                  <InputNumber
-                    min={0}
-                    max={discountType === "PERCENTAGE" ? 100 : undefined}
-                    className="w-full h-10"
-                    placeholder={
-                      discountType === "PERCENTAGE"
-                        ? "Enter percentage (1-100)"
-                        : discountType === "BUY_ONE_GET_ONE"
-                        ? "1"
-                        : "Enter amount in VND"
-                    }
-                    disabled={discountType === "BUY_ONE_GET_ONE"}
-                    value={discountType === "BUY_ONE_GET_ONE" ? 1 : undefined}
-                    addonAfter={
-                      discountType === "PERCENTAGE"
-                        ? "%"
-                        : discountType === "FIXED_AMOUNT"
-                        ? "VND"
-                        : ""
-                    }
-                  />
-                );
-              }}
+              <InputNumber
+                min={0}
+                max={discountType === "PERCENTAGE" ? 100 : undefined}
+                className="w-full h-10"
+                placeholder={
+                  discountType === "PERCENTAGE"
+                    ? "Enter percentage (1-100)"
+                    : discountType === "POINTS"
+                    ? "Enter points required"
+                    : "Enter amount in VND"
+                }
+                addonAfter={
+                  discountType === "PERCENTAGE"
+                    ? "%"
+                    : discountType === "FIXED"
+                    ? "VND"
+                    : discountType === "POINTS"
+                    ? "points"
+                    : ""
+                }
+              />
             </Form.Item>
           </Col>
         </Row>
@@ -295,43 +304,12 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
           </Col>
         </Row>
 
-        {/* Member Restrictions */}
-        <Row gutter={16}>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              name="memberOnly"
-              label="Member Only"
-              valuePropName="checked"
-            >
-              <Switch />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              name="membershipLevels"
-              label="Membership Levels"
-              tooltip="Leave empty for all membership levels"
-            >
-              <Select
-                mode="multiple"
-                placeholder="Select applicable membership levels"
-                allowClear
-              >
-                <Option value="BRONZE">Bronze</Option>
-                <Option value="SILVER">Silver</Option>
-                <Option value="GOLD">Gold</Option>
-                <Option value="PLATINUM">Platinum</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-
         {/* Usage Limits */}
         <Row gutter={16}>
           <Col xs={24} sm={12}>
             <Form.Item
               name="maxUsageCount"
-              label="Max Usage Count"
+              label={<span>Max Usage Count <span style={{ color: 'red' }}>*</span></span>}
               tooltip="Maximum number of times this promotion can be used"
             >
               <InputNumber
@@ -344,7 +322,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
           <Col xs={24} sm={12}>
             <Form.Item
               name="maxUsagePerUser"
-              label="Max Usage Per User"
+              label={<span>Max Usage Per User <span style={{ color: 'red' }}>*</span></span>}
               tooltip="Maximum number of times each user can use this promotion"
             >
               <InputNumber
@@ -362,20 +340,13 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
             <Form.Item
               name="pointsRequired"
               label="Points Required"
-              tooltip="Required points to redeem (for POINT_BASED promotions only)"
-              dependencies={["promotionType"]}
             >
-              {(form) => {
-                const promotionType = form.getFieldValue("promotionType");
-                return (
-                  <InputNumber
-                    min={0}
-                    className="w-full"
-                    disabled={promotionType !== "POINT_BASED"}
-                    placeholder="Enter points required"
-                  />
-                );
-              }}
+              <InputNumber
+                min={0}
+                className="w-full"
+                disabled={discountType !== "POINTS"}
+                placeholder="Enter points required"
+              />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12}>
