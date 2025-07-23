@@ -252,7 +252,7 @@ INSERT INTO movietheater_account (
 ) VALUES (
              'admin',
              'admin@lumierecinema.com',
-             '$2a$12$LQv3c1yqBWVHxkd0LQ1lsO.9wXpKzOGSWUQsNs6QQqBXvGFxl6.0S', -- BCrypt hash cho "12345Aa!"
+             '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', -- BCrypt hash cho "12345Aa!"
              'Administrator',
              '0123456789',
              'ADMIN',
@@ -285,7 +285,7 @@ INSERT INTO movietheater_account (
 ) VALUES (
              'member',
              'member@lumierecinema.com',
-             '$2a$12$LQv3c1yqBWVHxkd0LQ1lsO.9wXpKzOGSWUQsNs6QQqBXvGFxl6.0S', -- BCrypt hash cho "12345Aa!"
+             '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', -- BCrypt hash cho "12345Aa!"
              'Member User',
              '0987654321',
              'MEMBER',
@@ -298,6 +298,185 @@ INSERT INTO movietheater_account (
              NOW(),
              'SYSTEM'
          );
+-- Employee 1: Trần Quang Thuận
+INSERT INTO movietheater_account (username,
+                                  email,
+                                  password,
+                                  full_name,
+                                  phone_number,
+                                  role,
+                                  is_active,
+                                  is_verified,
+                                  email_verified,
+                                  membership_points,
+                                  membership_level,
+                                  created_at,
+                                  updated_at,
+                                  created_by)
+VALUES ('thuan.tq',
+        'thuan.tq@lumierecinema.com',
+        '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
+        'Trần Quang Thuận',
+        '0123456781',
+        'EMPLOYEE',
+        TRUE,
+        TRUE,
+        TRUE,
+        10000,
+        'PLATINUM',
+        NOW(),
+        NOW(),
+        'SYSTEM');
+
+-- Employee 2: Lê Đức Anh
+INSERT INTO movietheater_account (username,
+                                  email,
+                                  password,
+                                  full_name,
+                                  phone_number,
+                                  role,
+                                  is_active,
+                                  is_verified,
+                                  email_verified,
+                                  membership_points,
+                                  membership_level,
+                                  created_at,
+                                  updated_at,
+                                  created_by)
+VALUES ('anh.ld',
+        'anh.ld@lumierecinema.com',
+        '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
+        'Lê Đức Anh',
+        '0123456782',
+        'EMPLOYEE',
+        TRUE,
+        TRUE,
+        TRUE,
+        10000,
+        'PLATINUM',
+        NOW(),
+        NOW(),
+        'SYSTEM');
+
+-- Employee 3: Ngô Việt Trinh
+INSERT INTO movietheater_account (username,
+                                  email,
+                                  password,
+                                  full_name,
+                                  phone_number,
+                                  role,
+                                  is_active,
+                                  is_verified,
+                                  email_verified,
+                                  membership_points,
+                                  membership_level,
+                                  created_at,
+                                  updated_at,
+                                  created_by)
+VALUES ('trinh.nv',
+        'trinh.nv@lumierecinema.com',
+        '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
+        'Ngô Việt Trinh',
+        '0123456783',
+        'EMPLOYEE',
+        TRUE,
+        TRUE,
+        TRUE,
+        10000,
+        'PLATINUM',
+        NOW(),
+        NOW(),
+        'SYSTEM');
+
+-- Employee 4: Nguyễn Tiến Dũng
+INSERT INTO movietheater_account (username,
+                                  email,
+                                  password,
+                                  full_name,
+                                  phone_number,
+                                  role,
+                                  is_active,
+                                  is_verified,
+                                  email_verified,
+                                  membership_points,
+                                  membership_level,
+                                  created_at,
+                                  updated_at,
+                                  created_by)
+VALUES ('dung.nt',
+        'dung.nt@lumierecinema.com',
+        '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
+        'Nguyễn Tiến Dũng',
+        '0123456784',
+        'EMPLOYEE',
+        TRUE,
+        TRUE,
+        TRUE,
+        10000,
+        'PLATINUM',
+        NOW(),
+        NOW(),
+        'SYSTEM');
+
+-- Employee 5: Phạm Thị Minh Ánh
+INSERT INTO movietheater_account (username,
+                                  email,
+                                  password,
+                                  full_name,
+                                  phone_number,
+                                  role,
+                                  is_active,
+                                  is_verified,
+                                  email_verified,
+                                  membership_points,
+                                  membership_level,
+                                  created_at,
+                                  updated_at,
+                                  created_by)
+VALUES ('minhanh.pt',
+        'minhanh.pt@lumierecinema.com',
+        '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
+        'Phạm Thị Minh Ánh',
+        '0123456785',
+        'EMPLOYEE',
+        TRUE,
+        TRUE,
+        TRUE,
+        10000,
+        'PLATINUM',
+        NOW(),
+        NOW(),
+        'SYSTEM');
+
+-- Employee 6: Lê Công Vinh
+INSERT INTO movietheater_account (username,
+                                  email,
+                                  password,
+                                  full_name,
+                                  phone_number,
+                                  role,
+                                  is_active,
+                                  is_verified,
+                                  email_verified,
+                                  membership_points,
+                                  membership_level,
+                                  created_at,
+                                  updated_at,
+                                  created_by)
+VALUES ('vinh.lc',
+        'vinh.lc@lumierecinema.com',
+        '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
+        'Lê Công Vinh',
+        '0123456786',
+        'EMPLOYEE',
+        TRUE,
+        TRUE,
+        TRUE,
+        10000,
+        'PLATINUM',
+        NOW(),
+        NOW(),
+        'SYSTEM');
 
 -- Thông báo tài khoản đã tạo
 SELECT
@@ -309,9 +488,9 @@ SELECT
 
 
 INSERT IGNORE INTO movietheater_cinema_room (
-    cinema_room_name, seat_quantity, room_type, is_active, description, row_count, column_count, 
+    cinema_room_name, seat_quantity, room_type, is_active, description, row_count, column_count,
     has_3d, has_dolby_atmos, has_recliner_seats, price_multiplier, is_imax, is_4dx, is_vip, created_at, updated_at
-) VALUES 
+) VALUES
 -- 3 phòng Standard chính
 ('Standard Room 1', 120, 'STANDARD', true, 'Phòng chiếu tiêu chuẩn với hệ thống âm thanh Dolby Atmos', 10, 12, true, true, false, 1.0, false, false, false, NOW(), NOW()),
 ('Standard Room 2', 120, 'STANDARD', true, 'Phòng chiếu lớn với sức chứa tối đa', 10, 12, true, true, false, 1.0, false, false, false, NOW(), NOW()),
@@ -369,14 +548,14 @@ INSERT IGNORE INTO movietheater_schedule (
     is_active, status, is_3d, is_imax, is_4dx, subtitle_language,
     audio_language, available_seats, booked_seats, auto_generated,
     time_slot_type, created_at, updated_at
-) VALUES 
-(@ballerina_id, @std_room1, CURDATE(), '09:00:00', '10:49:00', 150000, true, 'SCHEDULED', 
+) VALUES
+(@ballerina_id, @std_room1, CURDATE(), '09:00:00', '10:49:00', 150000, true, 'SCHEDULED',
  false, false, false, 'Vietnamese', 'English', 120, 0, false, 'MORNING', NOW(), NOW()),
-(@httyd_id, @std_room2, CURDATE(), '14:30:00', '16:14:00', 140000, true, 'SCHEDULED', 
+(@httyd_id, @std_room2, CURDATE(), '14:30:00', '16:14:00', 140000, true, 'SCHEDULED',
  false, false, false, 'Vietnamese', 'English', 140, 0, false, 'AFTERNOON', NOW(), NOW()),
-(@materialists_id, @vip_room, CURDATE(), '21:00:00', '22:55:00', 234000, true, 'SCHEDULED', 
+(@materialists_id, @vip_room, CURDATE(), '21:00:00', '22:55:00', 234000, true, 'SCHEDULED',
  false, false, false, 'Vietnamese', 'English', 60, 0, false, 'EVENING', NOW(), NOW());
- 
+
 -- Promotion table (simplified structure)
 CREATE TABLE IF NOT EXISTS movietheater_promotion
 (
@@ -466,35 +645,40 @@ VALUES
 ('SUMMER2025', 'Khuyến mãi hè 2025', 'Giảm giá 20% cho tất cả các vé trong tháng 7', 'PERCENTAGE', 20.0,
  50000, 100000, '2025-07-01', '2025-07-31',
  1000, 0, 2, TRUE,
- 'https://example.com/banners/summer2025.jpg', 0, 24, TRUE,
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/433a0240-fed0-4ccd-a6cc-8e5b58145a4b.png',
+ 0, 24, TRUE,
  NOW(), NOW(), 'SYSTEM'),
 
 -- Fixed amount discount promotion
 ('WELCOME50K', 'Chào mừng khách hàng mới', 'Giảm 50,000 VNĐ cho đơn hàng đầu tiên', 'FIXED', 50000,
  50000, 150000, '2025-06-01', '2025-12-31',
  500, 0, 1, FALSE,
- 'https://example.com/banners/welcome.jpg', 0, 24, TRUE,
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/833459f5-e190-4a63-b163-360b4637f3ec.png',
+ 0, 24, TRUE,
  NOW(), NOW(), 'SYSTEM'),
 
 -- Points-based promotion
 ('POINTS100', 'Đổi điểm ưu đãi', 'Đổi 100 điểm để giảm 30,000 VNĐ', 'POINTS', 30000,
  30000, 50000, '2025-06-01', '2025-12-31',
  200, 0, 5, TRUE,
- 'https://example.com/banners/points.jpg', 100, 24, TRUE,
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/09d5aa8a-73e9-4c96-9654-fcf1315e9fbc.png',
+ 100, 24, TRUE,
  NOW(), NOW(), 'SYSTEM'),
 
 -- VIP promotion
 ('VIP30', 'Ưu đãi VIP', 'Giảm 30% cho khách hàng VIP', 'PERCENTAGE', 30.0,
  100000, 200000, '2025-06-01', '2025-12-31',
  100, 0, 3, TRUE,
- 'https://example.com/banners/vip.jpg', 0, 24, TRUE,
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/d2c37620-7794-433a-a52c-c11a18cf76c3.png',
+ 0, 24, TRUE,
  NOW(), NOW(), 'SYSTEM'),
 
 -- Student promotion
 ('STUDENT15', 'Ưu đãi sinh viên', 'Giảm 15% cho sinh viên', 'PERCENTAGE', 15.0,
  30000, 80000, '2025-06-01', '2025-12-31',
  2000, 0, 2, FALSE,
- 'https://example.com/banners/student.jpg', 0, 24, TRUE,
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/0e17ab77-38f3-4dd7-b86f-e51b3b64e009.png',
+ 0, 24, TRUE,
  NOW(), NOW(), 'SYSTEM');
 
 -- User Promotion Code table (for tracking individual user codes)
@@ -640,50 +824,57 @@ INSERT INTO movietheater_concession (name, description, category, price, image_u
 VALUES
 -- Popcorn
 ('Bắp rang bơ', 'Bắp rang bơ vị truyền thống, thơm ngon, giòn rụm', 'POPCORN', 35000,
- 'https://example.com/images/popcorn-butter.jpg', 'Truyền thống', 'Lớn',
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/bap.webp', 'Truyền thống',
+ 'Lớn',
  100, TRUE, TRUE, 1,
  NOW(), NOW(), 'SYSTEM'),
 
 ('Bắp rang phô mai', 'Bắp rang phô mai đậm đà, béo ngậy', 'POPCORN', 40000,
- 'https://example.com/images/popcorn-cheese.jpg', 'Phô mai', 'Lớn',
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/bap3.jpg', 'Phô mai',
+ 'Lớn',
  80, TRUE, TRUE, 2,
  NOW(), NOW(), 'SYSTEM'),
 
 ('Bắp rang caramel', 'Bắp rang caramel ngọt ngào, giòn tan', 'POPCORN', 45000,
- 'https://example.com/images/popcorn-caramel.jpg', 'Caramel', 'Lớn',
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/bapcaramel.png', 'Caramel',
+ 'Lớn',
  60, TRUE, TRUE, 3,
  NOW(), NOW(), 'SYSTEM'),
 
 -- Drinks
 ('Coca Cola', 'Nước ngọt Coca Cola mát lạnh', 'DRINKS', 25000,
- 'https://example.com/images/coca-cola.jpg', 'Cola', 'Lớn',
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/coca.webp  ', 'Cola',
+ 'Lớn',
  150, TRUE, TRUE, 4,
  NOW(), NOW(), 'SYSTEM'),
 
 ('Pepsi', 'Nước ngọt Pepsi sảng khoái', 'DRINKS', 25000,
- 'https://example.com/images/pepsi.jpg', 'Cola', 'Lớn',
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/pepsi.webp', 'Cola', 'Lớn',
  120, TRUE, TRUE, 5,
  NOW(), NOW(), 'SYSTEM'),
 
 ('Sprite', 'Nước ngọt Sprite thanh mát', 'DRINKS', 25000,
- 'https://example.com/images/sprite.jpg', 'Chanh', 'Lớn',
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/7up.webp', 'Chanh', 'Lớn',
  100, TRUE, TRUE, 6,
  NOW(), NOW(), 'SYSTEM'),
 
 ('Nước suối', 'Nước suối tinh khiết', 'DRINKS', 15000,
- 'https://example.com/images/water.jpg', 'Không vị', '500ml',
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/nuocsuoi.webp', 'Không vị',
+ '500ml',
  200, TRUE, TRUE, 7,
  NOW(), NOW(), 'SYSTEM'),
 
 
 -- Combos
 ('Combo Bắp + Nước', 'Bắp rang bơ lớn + Coca Cola lớn', 'COMBO', 55000,
- 'https://example.com/images/combo-popcorn-drink.jpg', 'Truyền thống', 'Lớn',
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/combobapnuoc.png',
+ 'Truyền thống', 'Lớn',
  60, TRUE, TRUE, 11,
  NOW(), NOW(), 'SYSTEM'),
 
 ('Combo VIP', 'Bắp rang phô mai + Coca Cola + Khoai tây chiên', 'COMBO', 95000,
- 'https://example.com/images/combo-vip.jpg', 'Phô mai', 'Lớn',
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/848ffea4-8796-45e8-9af3-4d406d217de3.png',
+ 'Phô mai', 'Lớn',
  30, TRUE, TRUE, 12,
  NOW(), NOW(), 'SYSTEM');
 

@@ -2,8 +2,6 @@ package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.movie.MovieCreateRequest;
 import com.swp.MovieTheaterService.dto.movie.MovieFilterRequest;
-import com.swp.MovieTheaterService.dto.movie.NowShowingFilterRequest;
-import com.swp.MovieTheaterService.dto.movie.ComingSoonFilterRequest;
 import com.swp.MovieTheaterService.dto.movie.MovieListResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieResponse;
 import com.swp.MovieTheaterService.dto.movie.MovieSummaryResponse;
@@ -226,7 +224,8 @@ public class MovieController {
             @RequestParam(defaultValue = "title") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDirection) {
 
-        log.info("Fetching movies - page: {}, size: {}", page, size);
+        log.info("Fetching all movies with pagination: page={}, size={}, sortBy={}, sortDirection={}",
+                page, size, sortBy, sortDirection);
 
         Sort sort = Sort.by(sortDirection.equals("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
@@ -235,25 +234,123 @@ public class MovieController {
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách phim thành công", movies));
     }
 
-    @PostMapping("/now-showing/filter")
-    @Operation(summary = "Filter now showing movies", description = "Filter currently showing movies with advanced criteria including genre, rating, etc.")
-    public ResponseEntity<ApiResponse<MovieListResponse>> filterNowShowingMovies(@Valid @RequestBody NowShowingFilterRequest filterRequest) {
-        log.info("Filtering now showing movies with criteria: keyword={}, genres={}",
-                filterRequest.getKeyword(), filterRequest.getGenres());
+    @GetMapping("/now-showing")
+    @Operation(summary = "Get now showing movies", description = "Retrieve currently showing movies")
+    public ResponseEntity<ApiResponse<List<MovieSummaryResponse>>> getNowShowingMovies() {
+        log.info("Fetching now showing movies");
 
-        MovieFilterRequest generalRequest = filterRequest.toMovieFilterRequest();
-        MovieListResponse response = movieService.getMoviesWithFilter(generalRequest);
+        List<MovieSummaryResponse> movies = movieService.getMoviesByStatus("NOW_SHOWING");
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách phim đang chiếu thành công", movies));
+    }
+
+    @GetMapping("/coming-soon")
+    @Operation(summary = "Get coming soon movies", description = "Retrieve upcoming movies")
+    public ResponseEntity<ApiResponse<List<MovieSummaryResponse>>> getComingSoonMovies() {
+        log.info("Fetching coming soon movies");
+
+        List<MovieSummaryResponse> movies = movieService.getMoviesByStatus("COMING_SOON");
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách phim sắp chiếu thành công", movies));
+    }
+
+    @GetMapping("/now-showing/filter")
+    @Operation(summary = "Get now showing movies with filters", description = "Get currently showing movies with optional filtering by keyword, genre, rating, etc.")
+    public ResponseEntity<ApiResponse<MovieListResponse>> getNowShowingMoviesWithFilter(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) List<String> genres,
+            @RequestParam(required = false) String rating,
+            @RequestParam(required = false) String language,
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate releaseDateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate releaseDateTo,
+            @RequestParam(required = false) Integer durationMin,
+            @RequestParam(required = false) Integer durationMax,
+            @RequestParam(required = false) Double imdbRatingMin,
+            @RequestParam(required = false, defaultValue = "true") Boolean isActive,
+            @RequestParam(required = false, defaultValue = "true") Boolean isFeatured,
+            @RequestParam(required = false) Boolean isAdultContent,
+            @RequestParam(required = false, defaultValue = "true") Boolean availableToday,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "releaseDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection) {
+
+        log.info("Getting now showing movies with filters: keyword={}, genres={}, page={}, size={}",
+                keyword, genres, page, size);
+
+        MovieFilterRequest filterRequest = MovieFilterRequest.builder()
+                .keyword(keyword)
+                .genres(genres)
+                .rating(rating)
+                .language(language)
+                .country(country)
+                .releaseDateFrom(releaseDateFrom)
+                .releaseDateTo(releaseDateTo)
+                .durationMin(durationMin)
+                .durationMax(durationMax)
+                .imdbRatingMin(imdbRatingMin)
+                .isActive(isActive)
+                .isFeatured(isFeatured)
+                .isAdultContent(isAdultContent)
+                .availableToday(availableToday)
+                .page(page)
+                .size(size)
+                .sortBy(sortBy)
+                .sortDirection(sortDirection)
+                .status("NOW_SHOWING")
+                .build();
+
+        MovieListResponse response = movieService.getMoviesWithFilter(filterRequest);
         return ResponseEntity.ok(ApiResponse.success("Lọc phim đang chiếu thành công", response));
     }
 
-    @PostMapping("/coming-soon/filter")
-    @Operation(summary = "Filter coming soon movies", description = "Filter upcoming movies with advanced criteria including genre, rating, etc.")
-    public ResponseEntity<ApiResponse<MovieListResponse>> filterComingSoonMovies(@Valid @RequestBody ComingSoonFilterRequest filterRequest) {
-        log.info("Filtering coming soon movies with criteria: keyword={}, genres={}",
-                filterRequest.getKeyword(), filterRequest.getGenres());
+    @GetMapping("/coming-soon/filter")
+    @Operation(summary = "Get coming soon movies with filters", description = "Get upcoming movies with optional filtering by keyword, genre, rating, etc.")
+    public ResponseEntity<ApiResponse<MovieListResponse>> getComingSoonMoviesWithFilter(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) List<String> genres,
+            @RequestParam(required = false) String rating,
+            @RequestParam(required = false) String language,
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate releaseDateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate releaseDateTo,
+            @RequestParam(required = false) Integer durationMin,
+            @RequestParam(required = false) Integer durationMax,
+            @RequestParam(required = false) Double imdbRatingMin,
+            @RequestParam(required = false, defaultValue = "true") Boolean isActive,
+            @RequestParam(required = false, defaultValue = "true") Boolean isFeatured,
+            @RequestParam(required = false) Boolean isAdultContent,
+            @RequestParam(required = false, defaultValue = "true") Boolean availableToday,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "releaseDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection) {
 
-        MovieFilterRequest generalRequest = filterRequest.toMovieFilterRequest();
-        MovieListResponse response = movieService.getMoviesWithFilter(generalRequest);
+        log.info("Getting coming soon movies with filters: keyword={}, genres={}, page={}, size={}",
+                keyword, genres, page, size);
+
+        MovieFilterRequest filterRequest = MovieFilterRequest.builder()
+                .keyword(keyword)
+                .genres(genres)
+                .rating(rating)
+                .language(language)
+                .country(country)
+                .releaseDateFrom(releaseDateFrom)
+                .releaseDateTo(releaseDateTo)
+                .durationMin(durationMin)
+                .durationMax(durationMax)
+                .imdbRatingMin(imdbRatingMin)
+                .isActive(isActive)
+                .isFeatured(isFeatured)
+                .isAdultContent(isAdultContent)
+                .availableToday(availableToday)
+                .page(page)
+                .size(size)
+                .sortBy(sortBy)
+                .sortDirection(sortDirection)
+                .status("COMING_SOON")
+                .build();
+
+        MovieListResponse response = movieService.getMoviesWithFilter(filterRequest);
         return ResponseEntity.ok(ApiResponse.success("Lọc phim sắp chiếu thành công", response));
     }
 
@@ -278,24 +375,6 @@ public class MovieController {
 
         List<MovieSummaryResponse> movies = movieService.getMoviesByGenre(genre);
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách phim theo thể loại thành công", movies));
-    }
-
-    @GetMapping("/now-showing")
-    @Operation(summary = "Get now showing movies", description = "Retrieve currently showing movies")
-    public ResponseEntity<ApiResponse<List<MovieSummaryResponse>>> getNowShowingMovies() {
-        log.info("Fetching now showing movies");
-
-        List<MovieSummaryResponse> movies = movieService.getMoviesByStatus("NOW_SHOWING");
-        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách phim đang chiếu thành công", movies));
-    }
-
-    @GetMapping("/coming-soon")
-    @Operation(summary = "Get coming soon movies", description = "Retrieve upcoming movies")
-    public ResponseEntity<ApiResponse<List<MovieSummaryResponse>>> getComingSoonMovies() {
-        log.info("Fetching coming soon movies");
-
-        List<MovieSummaryResponse> movies = movieService.getMoviesByStatus("COMING_SOON");
-        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách phim sắp chiếu thành công", movies));
     }
 
     @GetMapping("/popular")
