@@ -19,7 +19,6 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
   onPageChange,
 }) => {
   const formatVND = (amount: number) => {
-    if (typeof amount !== 'number') amount = Number(amount);
     return amount.toLocaleString('vi-VN') + '₫';
   };
 
@@ -89,11 +88,10 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
       align: "left",
       render: (_: unknown, record: PromotionDto) => (
         <div style={{ paddingLeft: 12 }}>
-          {/* Hiển thị đầy đủ các loại discount */}
-          {record.discountType === 'FIXED_AMOUNT' || record.discountType === 'FIXED' ? (
+          {record.discountType === 'FIXED' || record.discountType === 'FIXED_AMOUNT' ? (
             <div>
               <span style={{ color: '#1677ff', fontWeight: 600 }}>
-                {Number(record.discountValue).toLocaleString('vi-VN')}₫ OFF
+                {formatVND(record.discountValue)} OFF
               </span>
               <div style={{ fontSize: 12, color: '#888' }}>Fixed Amount</div>
             </div>
@@ -104,12 +102,7 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
               </span>
               <div style={{ fontSize: 12, color: '#888' }}>Percentage</div>
             </div>
-          ) : record.discountType === 'BUY_ONE_GET_ONE' || record.discountType === 'BOGO' ? (
-            <div>
-              <span style={{ color: '#1677ff', fontWeight: 600 }}>Mua 1 tặng 1</span>
-              <div style={{ fontSize: 12, color: '#888' }}>BOGO</div>
-            </div>
-          ) : record.discountType === 'POINTS' || record.isPointsPromotion ? (
+          ) : record.discountType === 'POINTS' || record.pointsDiscount ? (
             <div>
               <span style={{ color: '#722ed1', fontWeight: 600 }}>
                 Đổi {record.pointsRequired || record.discountValue} điểm
@@ -146,10 +139,10 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
         let color = "default";
         let text = "Inactive";
         
-        if (record.isActive && !record.isExpired) {
+        if (record.valid && !record.expired) {
           color = "success";
           text = "Active";
-        } else if (record.isExpired) {
+        } else if (record.expired) {
           color = "error";
           text = "Expired";
         }
@@ -198,11 +191,11 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
       align: "center",
       render: (_: unknown, record: PromotionDto) => (
         <div className="text-center">
-          <Tag color={record.memberOnly ? "green" : "blue"} className="text-xs">
-            {record.memberOnly ? "Members" : "Public"}
+          <Tag color={record.pointsDiscount ? "purple" : "blue"} className="text-xs">
+            {record.pointsDiscount ? "Points" : "Public"}
           </Tag>
-          {record.isPointsPromotion && (
-            <div className="text-xs text-purple-600 mt-1">Points</div>
+          {record.isFeatured && (
+            <div className="text-xs text-orange-600 mt-1">Featured</div>
           )}
         </div>
       ),

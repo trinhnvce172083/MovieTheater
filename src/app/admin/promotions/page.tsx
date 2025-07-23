@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState } from "react";
 import dayjs from "dayjs";
 import {
   Card,
@@ -25,6 +25,7 @@ import {
   InputNumber,
   Switch,
   Upload,
+  Alert,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
@@ -40,25 +41,10 @@ import {
   PercentageOutlined,
 } from "@ant-design/icons";
 import { PromotionDto } from "@/types/Admin/promotion";
-import {
-  getAllPromotions,
-  deletePromotion,
-  activatePromotion,
-  deactivatePromotion,
-  getPromotionUsage,
-  createPromotion,
-  updatePromotion,
-  uploadPromotionBanner,
-  updatePromotionBanner,
-  deletePromotionBanner,
-  type PromotionCreateRequest,
-  type PromotionUpdateRequest,
-  type PromotionSearchParams
-} from '@/api/admin/getAllPromotions';
 import { toast } from 'react-toastify';
 import Image from "next/image";
 
-// Đảm bảo các import component như sau:
+// Import components
 import { usePromotions } from './hooks/usePromotions';
 import { PromotionTable } from './components/PromotionTable';
 import { PromotionFilters } from './components/PromotionFilters';
@@ -91,16 +77,15 @@ export default function PromotionPage() {
     handleBulkDelete,
     handleSavePromotion,
     refreshPromotions,
-    handleExportData, // <-- lấy từ usePromotions
   } = usePromotions();
 
   // Modal and selection state
   const [isModalVisible, setIsModalVisible] = React.useState(false);
   const [isViewModalVisible, setIsViewModalVisible] = React.useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
-  const [editingPromotion, setEditingPromotion] = React.useState(null);
-  const [viewingPromotion, setViewingPromotion] = React.useState(null);
-  const [selectedPromotion, setSelectedPromotion] = React.useState(null);
+  const [editingPromotion, setEditingPromotion] = React.useState<PromotionDto | null>(null);
+  const [viewingPromotion, setViewingPromotion] = React.useState<PromotionDto | null>(null);
+  const [selectedPromotion, setSelectedPromotion] = React.useState<PromotionDto | null>(null);
   const [form] = Form.useForm();
 
   // Handlers
@@ -108,24 +93,21 @@ export default function PromotionPage() {
     setEditingPromotion(null);
     setIsModalVisible(true);
   };
-  const handleEdit = (promotion) => {
+
+  const handleEdit = (promotion: PromotionDto) => {
     setEditingPromotion(promotion);
     setIsModalVisible(true);
   };
-  const handleView = (promotion) => {
+
+  const handleView = (promotion: PromotionDto) => {
     setViewingPromotion(promotion);
     setIsViewModalVisible(true);
   };
 
-  // Xoá các khai báo trùng lặp của handleBulkDelete, handleDelete, handleExportData
-  // Sửa các chỗ gọi fetchPromotions thành refreshPromotions
-  // Giữ lại các hàm modal, selection, page change, reset, ...
   const handleModalOk = async () => {
-    console.log("handleModalOk called"); // Debug log
     try {
-      console.log("Starting form validation..."); // Debug log
       const values = await form.validateFields();
-      console.log("Form values received:", values); // Debug log
+      
       // Validate required fields
       if (!values.startDate || !values.endDate) {
         message.error("Please select start and end dates");
@@ -135,7 +117,8 @@ export default function PromotionPage() {
       if (!values.promoCode || !values.name) {
         message.error("Please fill in all required fields");
         return;
-      } // More thorough validation
+      }
+
       if (!values.discountType || !values.discountValue) {
         message.error("Please select discount type and enter discount value");
         return;
@@ -156,11 +139,11 @@ export default function PromotionPage() {
       }
 
       if (
-        values.discountType === "BUY_ONE_GET_ONE" &&
-        values.discountValue !== 1
+        values.discountType === "POINTS" &&
+        (!values.pointsRequired || values.pointsRequired <= 0)
       ) {
-        // For BOGO, set discount value to 1
-        values.discountValue = 1;
+        message.error("Please enter points required for points discount");
+        return;
       }
 
       if (!values.status) {
@@ -172,231 +155,69 @@ export default function PromotionPage() {
         message.error("Please select promotion type");
         return;
       }
-      if (!values.minPurchase && values.minPurchase !== 0) {
-        message.error("Please enter minimum purchase amount");
-        return;
+
+      // Call the save function from usePromotions hook
+      const success = await handleSavePromotion(values, editingPromotion);
+      
+      if (success) {
+        setIsModalVisible(false);
+        setEditingPromotion(null);
+        form.resetFields();
       }
-
-      if (!values.maxDiscount && values.maxDiscount !== 0) {
-        message.error("Please enter maximum discount amount");
-        return;
-      }
-
-      // Prepare data for backend with proper typing
-      console.log("Form values before processing:", values);
-
-      const payload: {
-        promotionCode: string;
-        promotionName: string;
-        description: string;
-        discountType: string;
-        discountValue: number;
-        isActive: boolean;
-        startDate?: string;
-        endDate?: string;
-        minPurchaseAmount?: number;
-        maxDiscountAmount?: number;
-        pointsRequired?: number;
-        maxUsageCount?: number;
-        maxUsagePerUser?: number;
-        memberOnly: boolean;
-        isFeatured: boolean;
-        promotionType: string;
-        membershipLevels?: string;
-      } = {
-        promotionCode: values.promoCode.toString().toUpperCase().trim(),
-        promotionName: values.name.toString().trim(),
-        description: values.description?.toString()?.trim() || "",
-        discountType: values.discountType || "PERCENTAGE",
-        discountValue: Number(values.discountValue) || 0,
-        isActive: values.status === "ACTIVE",
-        memberOnly: Boolean(values.memberOnly),
-        isFeatured: Boolean(values.isFeatured),
-        promotionType: values.promotionType || "PUBLIC",
-      };
-
-      // Required fields with validation
-      if (!values.promoCode?.trim()) {
-        message.error("Promotion code is required");
-        return;
-      }
-      if (!values.name?.trim()) {
-        message.error("Promotion name is required");
-        return;
-      }
-
-      // Date fields
-      if (values.startDate) {
-        payload.startDate = values.startDate?.format
-          ? values.startDate.format("YYYY-MM-DD")
-          : values.startDate;
-      }
-      if (values.endDate) {
-        payload.endDate = values.endDate?.format
-          ? values.endDate.format("YYYY-MM-DD")
-          : values.endDate;
-      }
-
-      // Optional numeric fields - only include if they have valid values
-      if (
-        values.minPurchase !== undefined &&
-        values.minPurchase !== null &&
-        values.minPurchase !== ""
-      ) {
-        payload.minPurchaseAmount = Number(values.minPurchase);
-      } else {
-        payload.minPurchaseAmount = 0; // Default value
-      }
-
-      if (
-        values.maxDiscount !== undefined &&
-        values.maxDiscount !== null &&
-        values.maxDiscount !== ""
-      ) {
-        payload.maxDiscountAmount = Number(values.maxDiscount);
-      }
-
-      if (
-        values.pointsRequired !== undefined &&
-        values.pointsRequired !== null &&
-        values.pointsRequired !== ""
-      ) {
-        payload.pointsRequired = Number(values.pointsRequired);
-      }
-
-      if (
-        values.maxUsageCount !== undefined &&
-        values.maxUsageCount !== null &&
-        values.maxUsageCount !== ""
-      ) {
-        payload.maxUsageCount = Number(values.maxUsageCount);
-      }
-
-      if (
-        values.maxUsagePerUser !== undefined &&
-        values.maxUsagePerUser !== null &&
-        values.maxUsagePerUser !== ""
-      ) {
-        payload.maxUsagePerUser = Number(values.maxUsagePerUser);
-      }
-
-      // Boolean fields
-      // payload.memberOnly = Boolean(values.memberOnly);
-      // payload.isFeatured = Boolean(values.isFeatured);
-
-      // String fields
-      // payload.promotionType = values.promotionType || "PUBLIC";
-
-      // Array field
-      if (
-        values.membershipLevels &&
-        Array.isArray(values.membershipLevels) &&
-        values.membershipLevels.length > 0
-      ) {
-        payload.membershipLevels = values.membershipLevels
-          .filter(Boolean)
-          .join(",");
-      }
-
-      console.log("Final payload:", payload); // Debug log
-      console.log("Editing promotion:", editingPromotion); // Debug log
-
-      // Check if we have access token
-      const accessToken = localStorage.getItem("accessToken");
-      if (!accessToken) {
-        throw new Error(
-          "Login token not found. Please login again."
-        );
-      }
-
-      let result: PromotionDto;
-      if (editingPromotion) {
-        // Update existing promotion
-        console.log(
-          "Updating promotion with ID:",
-          editingPromotion.promotionId
-        );
-        result = await updatePromotion(editingPromotion.promotionId, payload as PromotionUpdateRequest);
-      } else {
-        // Create new promotion
-        console.log("Creating new promotion");
-        result = await createPromotion(payload as PromotionCreateRequest);
-      }
-
-      console.log("API call successful, result:", result);
-
-      // Upload banner if provided
-      if (values.banner && values.banner.length > 0) {
-        const bannerFile = values.banner[0].originFileObj;
-        await uploadPromotionBanner(result.promotionId, bannerFile);
-      }
-
-      toast.success(
-        editingPromotion
-          ? `Promotion updated successfully: ${
-              result.promotionCode || result.promotionName
-            }`
-          : `New promotion created successfully: ${
-              result.promotionCode || result.promotionName
-            }`
-      );
-
-      // Refresh the data - wait a bit to ensure backend is updated
-      setTimeout(() => {
-        refreshPromotions();
-      }, 500);
-
-      setIsModalVisible(false);
-      setEditingPromotion(null);
-      form.resetFields();
     } catch (error) {
       console.error("Error saving promotion:", error);
-
-      // Improved error handling
-      let errorMessage = "Unable to save promotion";
-      if (error.message) {
-        errorMessage = error.message;
-      }
-
-      // Show user-friendly error message
-      toast.error(errorMessage);
-
-      // If it's a 401 error, might need to refresh token
-      if (error.message && error.message.includes("401")) {
-        toast.warning(
-          "Login session may have expired. Please try again after refreshing the page."
-        );
-      }
+      toast.error("Unable to save promotion");
     }
   };
 
   const handleModalCancel = () => {
     setIsModalVisible(false);
     setEditingPromotion(null);
+    form.resetFields();
   };
+
   const handleViewModalClose = () => {
     setIsViewModalVisible(false);
     setViewingPromotion(null);
   };
+
   const handleDetailModalClose = () => {
     setIsDetailModalOpen(false);
     setSelectedPromotion(null);
   };
-  const handleSelectionChange = (keys, rows) => {
+
+  const handleSelectionChange = (keys: React.Key[], rows: PromotionDto[]) => {
     setSelectedRowKeys(keys);
     setSelectedPromotions(rows);
   };
-  const handlePageChange = (page, size) => {
+
+  const handlePageChange = (page: number, size: number) => {
     setCurrentPage(page);
     setPageSize(size);
+    // Gọi lại fetchPromotions với page - 1 nếu backend phân trang từ 0
+    // Nếu usePromotions đã tự động fetch khi currentPage thay đổi thì không cần gọi lại ở đây
   };
+
   const handleReset = () => {
     setSearchTerm("");
     refreshPromotions();
   };
-        
-        return (
-            <div>
+
+  const handleExportData = () => {
+    // Simple export function - can be enhanced later
+    toast.info("Export feature coming soon!");
+  };
+
+  return (
+    <div>
+      {totalCount < 7 && (
+        <Alert
+          message="Chỉ hiển thị các khuyến mãi đang hoạt động. Nếu không thấy promotion mới tạo, hãy kiểm tra ngày bắt đầu/kết thúc và trạng thái active."
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
       <PromotionHeader
         statistics={statistics}
         selectedRowKeys={selectedRowKeys}
@@ -413,7 +234,7 @@ export default function PromotionPage() {
         promotions={promotions}
         loading={loading}
         currentPage={currentPage}
-                pageSize={pageSize}
+        pageSize={pageSize}
         totalCount={totalCount}
         selectedRowKeys={selectedRowKeys}
         onEdit={handleEdit}
@@ -427,7 +248,6 @@ export default function PromotionPage() {
         editingPromotion={editingPromotion}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
-        handleSavePromotion={handleSavePromotion}
         form={form}
       />
       <PromotionViewModal
