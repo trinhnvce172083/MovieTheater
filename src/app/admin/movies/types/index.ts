@@ -7,6 +7,7 @@ export interface MovieData {
   key: string;
   id: number;
   title: string;
+  originalTitle?: string;
   genre: string;
   duration: number;
   releaseDate: string;
@@ -24,8 +25,6 @@ export interface MovieData {
   language?: string;
   country?: string;
   productionCompany?: string;
-  budget?: number;
-  boxOffice?: number;
   backdropUrl?: string;
   trailerUrl?: string;
   endDate?: string;
@@ -36,6 +35,7 @@ export interface MovieData {
 export interface ApiMovie {
   movieId: number;
   title: string;
+  originalTitle?: string;
   description?: string;
   duration: number;
   genre: string;  // Changed from 'genres' to 'genre' to match API response
@@ -55,11 +55,10 @@ export interface ApiMovie {
   isActive: boolean;
   imdbRating?: number;
   productionCompany?: string;
-  budget?: number;
-  boxOffice?: number;
   formattedDuration?: string;
   createdAt?: string;
   updatedAt?: string;
+  isAdultContent?: boolean;
 }
 
 // Interface for creating movies

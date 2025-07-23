@@ -4,16 +4,28 @@ import { MovieData, ApiMovie, CurrentUser } from '../types';
  * Transform API Movie response to MovieData for display
  */
 export const transformApiMovieToMovieData = (apiMovie: ApiMovie): MovieData => {
+  // Debug featured status conversion
+  console.log(`🌟 Transform API movie ${apiMovie.movieId}:`, {
+    title: apiMovie.title,
+    rawIsFeatured: apiMovie.isFeatured,
+    type: typeof apiMovie.isFeatured,
+    stringCheck: apiMovie.isFeatured === 'true',
+    numberCheck: apiMovie.isFeatured === 1,
+    booleanCheck: apiMovie.isFeatured === true,
+    finalValue: apiMovie.isFeatured === true || apiMovie.isFeatured === 1 || apiMovie.isFeatured === 'true'
+  });
+  
   return {
     key: apiMovie.movieId.toString(),
     id: apiMovie.movieId,
     title: apiMovie.title || '',
+    originalTitle: apiMovie.originalTitle || apiMovie.title || '',
     genre: apiMovie.genre || '',  // Changed from apiMovie.genres to apiMovie.genre
     duration: apiMovie.duration || 0,
     releaseDate: apiMovie.releaseDate || '',
     status: (apiMovie.status as 'NOW_SHOWING' | 'COMING_SOON' | 'ENDED') || 'COMING_SOON',
     posterUrl: apiMovie.posterUrl,
-    isFeatured: apiMovie.isFeatured || false,
+    isFeatured: apiMovie.isFeatured === true || apiMovie.isFeatured === 1 || apiMovie.isFeatured === 'true', // Handle multiple types
     price: apiMovie.price || 0,
     rating: apiMovie.rating,
     imdbRating: apiMovie.imdbRating,
@@ -24,12 +36,11 @@ export const transformApiMovieToMovieData = (apiMovie: ApiMovie): MovieData => {
     language: apiMovie.language,
     country: apiMovie.country,
     productionCompany: apiMovie.productionCompany,
-    budget: apiMovie.budget,
-    boxOffice: apiMovie.boxOffice,
     backdropUrl: apiMovie.backdropUrl,
     trailerUrl: apiMovie.trailerUrl,
     endDate: apiMovie.endDate,
-    isActive: apiMovie.isActive
+    isActive: apiMovie.isActive,
+    isAdultContent: apiMovie.isAdultContent
   };
 };
 

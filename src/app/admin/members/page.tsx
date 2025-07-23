@@ -65,6 +65,13 @@ export default function AdminMemberManagement() {
     router.push(`/admin/members/MemberDetail?id=${record.id}`);
   };
 
+  // Handle filter changes with pagination reset
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    setFilters(newFilters);
+    // Reset pagination to page 1 when filters change
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+  };
+
   const handleModalSubmit = async (memberData: MemberCreateRequest) => {
     try {
       let success = false;
@@ -231,40 +238,13 @@ export default function AdminMemberManagement() {
               >
                 Add New Member
               </Button>
-              
-              {/* Test Button - Remove this in production */}
-              <Button
-                type="default"
-                size="small"
-                danger
-                onClick={() => {
-                  console.log('🧪 Testing banned notification...');
-                  const windowWithCallback = window as typeof window & { __triggerAccountBannedCheck?: (error: unknown) => void };
-                  if (windowWithCallback.__triggerAccountBannedCheck) {
-                    const mockError = {
-                      response: {
-                        status: 403,
-                        data: {
-                          message: "Tài khoản đã bị khóa do vi phạm điều khoản sử dụng",
-                          errorCode: "ACCOUNT_LOCKED",
-                          code: 1105
-                        }
-                      }
-                    };
-                    windowWithCallback.__triggerAccountBannedCheck(mockError);
-                  }
-                }}
-                title="Test banned notification (Remove in production)"
-              >
-                🧪 Test Ban
-              </Button>
             </div>
           </div>
 
           {/* Filters Section */}
           <MemberFilters
             filters={filters}
-            onFiltersChange={setFilters}
+            onFiltersChange={handleFiltersChange}
           />
 
           {/* Table Section */}

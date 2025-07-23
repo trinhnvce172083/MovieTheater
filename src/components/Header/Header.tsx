@@ -1,7 +1,6 @@
-//Header
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,7 +12,20 @@ import LanguageDropdown from "./LanguageDropdown";
 
 // Dynamic import để tránh hydration mismatch
 const HeaderComponent = () => {
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn } = useAuth();
+  const [username, setUsername] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const userInfoStr = localStorage.getItem("userInfo");
+    if (userInfoStr) {
+      try {
+        const userInfo = JSON.parse(userInfoStr);
+        setUsername(userInfo.userName || null);
+      } catch {
+        setUsername(null);
+      }
+    }
+  }, []);
 
   return (
     <header className="flex items-center justify-between px-2 sm:px-4 md:px-6 bg-black py-2 md:py-0 text-white relative z-10 border-b border-black/30 shadow-sm">
@@ -57,8 +69,8 @@ const HeaderComponent = () => {
             <div className="rounded-full bg-white/10 p-2 md:p-0">
               <NotificationDropdown />
             </div>
-            <div className="rounded-full bg-white/10 p-2 md:p-0">
-              <UserDropdown user={user} />
+            <div>
+              <UserDropdown userName={username} />
             </div>
           </>
         )}

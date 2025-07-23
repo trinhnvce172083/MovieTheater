@@ -1,16 +1,16 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
-  Modal, Form, Input, Select, DatePicker, InputNumber, Switch, Button, 
-  Row, Col, Tabs, Space, Typography, Tooltip
+  Modal, Form, Input, Select, DatePicker, InputNumber, Switch, Button, message,
+  Row, Col, Tabs, Space, Upload, Image
 } from 'antd';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { UploadOutlined, PlusOutlined } from '@ant-design/icons';
+import type { UploadFile, UploadProps } from 'antd';
 import { MovieData, MovieCreateRequest, MovieUpdateRequest } from '../types';
 import dayjs, { Dayjs } from 'dayjs';
 
 const { TextArea } = Input;
-const { Text } = Typography;
 
 
 const GENRE_OPTIONS = [
@@ -47,6 +47,10 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
   loading
 }) => {
   const [form] = Form.useForm();
+  const [posterFileList, setPosterFileList] = useState<UploadFile[]>([]);
+  const [backdropFileList, setBackdropFileList] = useState<UploadFile[]>([]);
+  const [posterPreview, setPosterPreview] = useState<string>('');
+  const [backdropPreview, setBackdropPreview] = useState<string>('');
 
   // Initialize form with editing data
   useEffect(() => {
@@ -54,18 +58,76 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
       form.setFieldsValue({
         ...editingMovie,
         releaseDate: editingMovie.releaseDate ? dayjs(editingMovie.releaseDate) : null,
+        endDate: editingMovie.endDate ? dayjs(editingMovie.endDate) : null,
       });
+      
+      // Set image previews for editing
+      if (editingMovie.posterUrl) {
+        setPosterPreview(editingMovie.posterUrl);
+      }
+      if (editingMovie.backdropUrl) {
+        setBackdropPreview(editingMovie.backdropUrl);
+      }
     } else if (open) {
       form.resetFields();
+      setPosterPreview('');
+      setBackdropPreview('');
+      setPosterFileList([]);
+      setBackdropFileList([]);
     }
   }, [editingMovie, form, open]);
 
   // Reset form when modal closes
   useEffect(() => {
     if (!open) {
-      form.resetFields();
+      // form.resetFields();
+      setPosterPreview('');
+      setBackdropPreview('');
+      setPosterFileList([]);
+      setBackdropFileList([]);
     }
   }, [open, form]);
+
+  // Upload handlers
+  const handlePosterUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPosterPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    setPosterFileList([{
+      uid: '-1',
+      name: file.name,
+      status: 'done',
+      originFileObj: file,
+    } as UploadFile]);
+    return false; // Prevent auto upload
+  };
+
+  const handleBackdropUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setBackdropPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    setBackdropFileList([{
+      uid: '-1',
+      name: file.name,
+      status: 'done',
+      originFileObj: file,
+    } as UploadFile]);
+    return false; // Prevent auto upload
+  };
+
+  const handleRemovePoster = () => {
+    setPosterPreview('');
+    setPosterFileList([]);
+  };
+
+  const handleRemoveBackdrop = () => {
+    setBackdropPreview('');
+    setBackdropFileList([]);
+  };
 
   // Smart status calculation
   const calculateStatus = (releaseDate: Dayjs | null): string => {
@@ -78,7 +140,14 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
   const handleReleaseDateChange = (date: Dayjs | null) => {
     if (date) {
       const newStatus = calculateStatus(date);
-      form.setFieldValue('status', newStatus);
+      form.setFieldsValue({ status: newStatus });
+      
+      // Always auto-set end date to 1 month after release date when release date changes
+      const autoEndDate = date.add(1, 'month');
+      form.setFieldsValue({ endDate: autoEndDate });
+    } else {
+      // Clear end date if release date is cleared
+      form.setFieldValue('endDate', null);
     }
   };
 
@@ -87,20 +156,45 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
     try {
       const values = await form.validateFields();
       
+      console.log('🎬 Form Values before processing:', values);
+      
       const movieData = {
         ...values,
         releaseDate: values.releaseDate ? (values.releaseDate as Dayjs).format('YYYY-MM-DD') : null,
+        endDate: values.endDate ? (values.endDate as Dayjs).format('YYYY-MM-DD') : null,
         genre: Array.isArray(values.genre) ? values.genre.join(', ') : values.genre,
-        status: values.status || calculateStatus(values.releaseDate)
+        status: values.status || calculateStatus(values.releaseDate),
+        isFeatured: Boolean(values.isFeatured), // Ensure boolean value
+        isAdultContent: false // Always false since we removed the field
       };
 
+      console.log('🎬 Movie Data after processing:', movieData);
+
+      // Check if there are image files to upload
+      const hasImages = posterFileList.length > 0 || backdropFileList.length > 0;
+      
       if (editingMovie) {
-        onSubmit({ id: editingMovie.id, ...movieData });
+        // For editing, pass the movie data along with image files for backend to handle upload
+        onSubmit({ 
+          id: editingMovie.id, 
+          ...movieData,
+          posterFile: posterFileList[0]?.originFileObj,
+          backdropFile: backdropFileList[0]?.originFileObj,
+          hasImages
+        });
       } else {
-        onSubmit(movieData);
+        // For creating, include image files
+        onSubmit({
+          ...movieData,
+          posterFile: posterFileList[0]?.originFileObj,
+          backdropFile: backdropFileList[0]?.originFileObj,
+          hasImages
+        });
+        console.log('isFeatured value:', values.isFeatured)
       }
     } catch (error) {
       console.error('Form validation failed:', error);
+      message.error('Please fill all required fields correctly!');
     }
   };
 
@@ -111,12 +205,21 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
       children: (
         <>
           {/* Title */}
-          <Form.Item 
+          <Form.Item
             name="title" 
             label="Movie Title"
             rules={[{ required: true, message: 'Please enter movie title!' }, { max: 200 }]}
           >
             <Input placeholder="Enter movie title..." />
+          </Form.Item>
+
+          {/* Original Title */}
+          <Form.Item 
+            name="originalTitle" 
+            label="Original Title"
+            rules={[{ max: 200 }]}
+          >
+            <Input placeholder="Enter original title (if different)..." />
           </Form.Item>
 
           {/* Genre */}
@@ -156,6 +259,29 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
                   style={{ width: '100%' }} 
                   onChange={handleReleaseDateChange}
                   format="YYYY-MM-DD"
+                  disabledDate={(current) => {
+                    // Disable dates before today
+                    return current && current < dayjs().startOf('day');
+                  }}
+                  placeholder="Select future release date"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item 
+                name="endDate" 
+                label="End Date"
+                rules={[{ required: false }]}
+              >
+                <DatePicker 
+                  style={{ width: '100%' }} 
+                  format="YYYY-MM-DD"
+                  disabledDate={(current) => {
+                    const releaseDate = form.getFieldValue('releaseDate');
+                    // End date must be after release date
+                    return current && releaseDate && current <= releaseDate;
+                  }}
+                  placeholder="Auto: +1 month from release"
                 />
               </Form.Item>
             </Col>
@@ -181,7 +307,11 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
           <Form.Item 
             name="description" 
             label="Description"
-            rules={[{ max: 2000 }]}
+            rules={[
+              { required: true, message: 'Please enter movie description!' },
+              { max: 2000, message: 'Description cannot exceed 2000 characters!' },
+              { min: 10, message: 'Description must be at least 10 characters!' }
+            ]}
           >
             <TextArea rows={4} placeholder="Enter movie description..." maxLength={2000} showCount />
           </Form.Item>
@@ -195,12 +325,25 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
         <>
           <Row gutter={16}>
             <Col span={8}>
-              <Form.Item name="director" label="Director" rules={[{ max: 100 }]}>
+              <Form.Item 
+                name="director" 
+                label="Director" 
+                rules={[
+                  { required: true, message: 'Please enter director name!' },
+                  { max: 100, message: 'Director name cannot exceed 100 characters!' }
+                ]}
+              >
                 <Input placeholder="Enter director name..." />
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="language" label="Language" rules={[{ max: 50 }]}>
+              <Form.Item 
+                name="language" 
+                label="Language" 
+                rules={[
+                  { required: true, message: 'Please select language!' }
+                ]}
+              >
                 <Select
                   placeholder="Select language"
                   allowClear
@@ -213,7 +356,13 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="country" label="Country" rules={[{ max: 50 }]}>
+              <Form.Item 
+                name="country" 
+                label="Country" 
+                rules={[
+                  { required: true, message: 'Please select country!' }
+                ]}
+              >
                 <Select
                   placeholder="Select country"
                   allowClear
@@ -229,7 +378,13 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
 
           <Row gutter={16}>
             <Col span={8}>
-              <Form.Item name="rating" label="Rating">
+              <Form.Item 
+                name="rating" 
+                label="Rating"
+                rules={[
+                  { required: true, message: 'Please select rating!' }
+                ]}
+              >
                 <Select placeholder="Select rating" allowClear>
                   <Select.Option value="G">G - General Audiences</Select.Option>
                   <Select.Option value="PG">PG - Parental Guidance Suggested</Select.Option>
@@ -256,39 +411,71 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
           </Row>
 
           <Row gutter={16}>
-            <Col span={8}>
+            <Col span={12}>
               <Form.Item name="productionCompany" label="Production Company" rules={[{ max: 100 }]}>
                 <Input placeholder="Enter production company..." />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="budget" label="Budget" rules={[{ type: 'number', min: 0 }]}>
-                <InputNumber 
-                  min={0} 
-                  style={{ width: '100%' }} 
-                  formatter={(value) => value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-                  addonAfter="$"
-                />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="boxOffice" label="Box Office" rules={[{ type: 'number', min: 0 }]}>
-                <InputNumber 
-                  min={0} 
-                  style={{ width: '100%' }} 
-                  formatter={(value) => value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-                  addonAfter="$"
-                />
               </Form.Item>
             </Col>
           </Row>
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="posterUrl" label="Poster URL">
-                <Input placeholder="Enter poster image URL..." />
+              <Form.Item label="Poster Image">
+                <Upload
+                  listType="picture-card"
+                  fileList={posterFileList}
+                  beforeUpload={handlePosterUpload}
+                  onRemove={handleRemovePoster}
+                  maxCount={1}
+                  accept="image/*"
+                >
+                  {posterFileList.length === 0 && (
+                    <div>
+                      <PlusOutlined />
+                      <div style={{ marginTop: 8 }}>Upload Poster</div>
+                    </div>
+                  )}
+                </Upload>
+                {posterPreview && (
+                  <Image
+                    width={200}
+                    src={posterPreview}
+                    alt="Poster Preview"
+                    style={{ marginTop: 8 }}
+                  />
+                )}
               </Form.Item>
             </Col>
+            <Col span={12}>
+              <Form.Item label="Backdrop Image">
+                <Upload
+                  listType="picture-card"
+                  fileList={backdropFileList}
+                  beforeUpload={handleBackdropUpload}
+                  onRemove={handleRemoveBackdrop}
+                  maxCount={1}
+                  accept="image/*"
+                >
+                  {backdropFileList.length === 0 && (
+                    <div>
+                      <PlusOutlined />
+                      <div style={{ marginTop: 8 }}>Upload Backdrop</div>
+                    </div>
+                  )}
+                </Upload>
+                {backdropPreview && (
+                  <Image
+                    width={200}
+                    src={backdropPreview}
+                    alt="Backdrop Preview"
+                    style={{ marginTop: 8 }}
+                  />
+                )}
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="trailerUrl" label="Trailer URL">
                 <Input placeholder="Enter trailer URL..." />
@@ -297,27 +484,14 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
           </Row>
 
           <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item name="isFeatured" valuePropName="checked">
+            <Col span={12}>
+              <Form.Item name="isFeatured" label="Featured Movie" valuePropName="checked" initialValue={true}>
                 <Space>
-                  <Switch checkedChildren="Có" unCheckedChildren="Không" />
-                  <Text>Featured Movie</Text>
-                </Space>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="isAdultContent" valuePropName="checked">
-                <Space>
-                  <Switch checkedChildren="Có" unCheckedChildren="Không" />
-                  <Text>Adult Content</Text>
-                </Space>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="isActive" valuePropName="checked" initialValue={true}>
-                <Space>
-                  <Switch checkedChildren="Có" unCheckedChildren="Không" defaultChecked />
-                  <Text>Active</Text>
+                  <Switch 
+                    checkedChildren="Featured" 
+                    unCheckedChildren="Normal" 
+                    style={{ backgroundColor: '#52c41a' }}
+                  />
                 </Space>
               </Form.Item>
             </Col>
@@ -354,15 +528,5 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
     </Modal>
   );
 };
-
-// Helper component for required labels
-const RequiredLabel: React.FC<{children: React.ReactNode}> = ({ children }) => (
-  <span>
-    <Text strong>{children}</Text>
-    <Tooltip title="Required field">
-      <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
-    </Tooltip>
-  </span>
-);
 
 export default MovieFormModal;

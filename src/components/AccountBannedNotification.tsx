@@ -3,7 +3,8 @@
 import React from 'react';
 import { Modal, Result, Button, Typography } from 'antd';
 import { ExclamationCircleOutlined, HomeOutlined } from '@ant-design/icons';
-import { useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import { logout } from '@/store/slices/authSlice';
 
 const { Text } = Typography;
 
@@ -11,6 +12,7 @@ interface AccountBannedNotificationProps {
   visible: boolean;
   banReason?: string;
   banUntil?: string;
+  userName?: string;
   onClose?: () => void;
 }
 
@@ -18,26 +20,41 @@ export const AccountBannedNotification: React.FC<AccountBannedNotificationProps>
   visible,
   banReason = "Vi phạm điều khoản sử dụng",
   banUntil,
+  userName,
   onClose
 }) => {
-  const router = useRouter();
+  const dispatch = useDispatch();
 
   const handleGoHome = () => {
-    // Clear user session
+    console.log('🚪 Logging out banned user...');
+    
+    // 1. Dispatch Redux logout action
+    dispatch(logout());
+    
+    // 2. Clear all storage
     localStorage.removeItem('accessToken');
     localStorage.removeItem('access_token');
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     localStorage.removeItem('currentUser');
     sessionStorage.clear();
+    
+    // 3. Clear cookies if any
+    document.cookie.split(";").forEach((c) => {
+      const eqPos = c.indexOf("=");
+      const name = eqPos > -1 ? c.substr(0, eqPos) : c;
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+    });
 
-    // Close modal if callback provided
+    console.log('✅ User logged out successfully');
+
+    // 4. Close modal if callback provided
     if (onClose) {
       onClose();
     }
 
-    // Redirect to homepage
-    router.push('/');
+    // 5. Force page reload to clear all states and redirect to homepage
+    window.location.href = '/';
   };
 
   const formatBanUntil = (dateString?: string) => {
@@ -71,9 +88,16 @@ export const AccountBannedNotification: React.FC<AccountBannedNotificationProps>
       <Result
         icon={<ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />}
         title={
-          <span style={{ color: '#ff4d4f', fontSize: '24px', fontWeight: 600 }}>
-            Tài khoản đã bị khóa
-          </span>
+          <div className="text-center">
+            <div style={{ color: '#ff4d4f', fontSize: '24px', fontWeight: 600 }}>
+              Tài khoản đã bị khóa
+            </div>
+            {userName && (
+              <div style={{ color: '#666', fontSize: '16px', fontWeight: 400, marginTop: '8px' }}>
+                Người dùng: <strong>{userName}</strong>
+              </div>
+            )}
+          </div>
         }
         subTitle={
           <div className="space-y-3">

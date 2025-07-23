@@ -22,18 +22,23 @@ export default function AuthInitializer() {
           const payload = decodeJwt(accessToken);
           const currentTime = Date.now() / 1000;
           
+          console.log('🔍 AuthInitializer - Token payload:', payload);
+          
           // Check if token is expired
           if (payload && payload.exp && Number(payload.exp) > currentTime) {
             // Token is valid, restore auth state
             dispatch(login({ token: accessToken }));
+            console.log('✅ AuthInitializer - Auth state restored');
           } else {
             // Token is expired, clear it
+            console.log('⚠️ AuthInitializer - Token expired, clearing storage');
             localStorage.removeItem("accessToken");
             localStorage.removeItem("refreshToken");
             localStorage.removeItem("userInfo");
             localStorage.removeItem("isLoggedIn");
           }
         } catch (error) {
+          console.log('❌ AuthInitializer - Error decoding token:', error);
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
           localStorage.removeItem("userInfo");
