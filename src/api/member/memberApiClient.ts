@@ -377,9 +377,13 @@ export class MemberApiClient {
     request: BookingCancelRequest
   ): Promise<ApiResponse<{ success: boolean }>> {
     try {
-      await axiosClient.post(`/bookings/${request.bookingId}/cancel`, {
-        reason: request.reason,
-      });
+      // Backend nhận reason như @RequestParam, không phải @RequestBody
+      const params = new URLSearchParams();
+      if (request.reason) {
+        params.append('reason', request.reason);
+      }
+      
+      await axiosClient.post(`/bookings/${request.bookingId}/cancel?${params.toString()}`);
 
       // Clear related caches
       this.cache.delete(`member:booking:${request.bookingId}`);
@@ -550,25 +554,53 @@ export class MemberApiClient {
         canCancel: false,
         canCheckIn: false,
         expiresAt: '',
+        schedule: null,
       };
     }
     const booking = item as Record<string, any>;
+    
+    // Xử lý thông tin schedule - workaround cho backend hiện tại
+    let showDate = '';
+    let startTime = '';
+    let endTime = '';
+    
+    // Thử nhiều cách để lấy thông tin thời gian
+    if (booking.schedule?.showDateTime) {
+      const showDateTime = new Date(booking.schedule.showDateTime);
+      showDate = showDateTime.toISOString().split('T')[0];
+      startTime = showDateTime.toTimeString().split(' ')[0];
+    } else if (booking.showDate && booking.startTime) {
+      showDate = booking.showDate;
+      startTime = booking.startTime;
+    } else if (booking.schedule?.showDate && booking.schedule?.startTime) {
+      showDate = booking.schedule.showDate;
+      startTime = booking.schedule.startTime;
+    }
+    
+    // Tính endTime nếu có duration
+    if (startTime && (booking.movie?.duration || booking.schedule?.movie?.duration)) {
+      const duration = booking.movie?.duration || booking.schedule?.movie?.duration;
+      const showDateTime = new Date(`${showDate}T${startTime}`);
+      const endDateTime = new Date(showDateTime.getTime() + duration * 60 * 1000);
+      endTime = endDateTime.toTimeString().split(' ')[0];
+    }
+    
     return {
       bookingId: booking.bookingId || booking.id,
-      movieTitle: booking.movieTitle || booking.movie?.title,
-      moviePoster: booking.moviePoster || booking.movie?.posterUrl,
-      movieId: booking.movieId || booking.movie?.movieId,
+      movieTitle: booking.movieTitle || booking.movie?.title || booking.schedule?.movie?.title,
+      moviePoster: booking.moviePoster || booking.movie?.posterUrl || booking.schedule?.movie?.posterUrl,
+      movieId: booking.movieId || booking.movie?.movieId || booking.schedule?.movie?.movieId,
       scheduleId: booking.scheduleId || booking.schedule?.scheduleId,
-      cinemaRoom: booking.cinemaRoom || booking.schedule?.cinemaRoom?.name,
-      showDate: booking.showDate || booking.schedule?.showDate,
-      startTime: booking.startTime || booking.schedule?.startTime,
-      endTime: booking.endTime || booking.schedule?.endTime,
+      cinemaRoom: booking.cinemaRoom || booking.schedule?.cinemaRoom?.name || booking.cinema?.cinemaRoomName,
+      showDate: showDate,
+      startTime: startTime,
+      endTime: endTime,
       seats: booking.seats || booking.bookingSeats || [],
       concessions: booking.concessions || booking.bookingConcessions || [],
       totalAmount: booking.totalAmount || 0,
       finalAmount: booking.finalAmount || booking.totalAmount || 0,
       discountAmount: booking.discountAmount || 0,
-      status: booking.status || "PENDING",
+      status: booking.status || booking.bookingStatus || "PENDING",
       paymentMethod: booking.paymentMethod,
       paymentStatus: booking.paymentStatus,
       bookingDate: booking.bookingDate || booking.createdAt,
@@ -576,9 +608,10 @@ export class MemberApiClient {
       qrCode: booking.qrCode,
       isCheckedIn: booking.isCheckedIn || false,
       checkInTime: booking.checkInTime,
-      canCancel: this.canCancelBooking(booking),
-      canCheckIn: this.canCheckInBooking(booking),
+      canCancel: booking.canBeCancelled || this.canCancelBooking(booking),
+      canCheckIn: booking.canBeCheckedIn || this.canCheckInBooking(booking),
       expiresAt: booking.expiresAt,
+      schedule: booking.schedule || null,
     };
   }
 
@@ -587,14 +620,9 @@ export class MemberApiClient {
    */
   private canCancelBooking(booking: any): boolean {
     const status = booking.status || booking.bookingStatus;
-    const showDate = new Date(booking.showDate || booking.schedule?.showDate);
-    const now = new Date();
-
-    return (
-      ["CONFIRMED", "PAID"].includes(status) &&
-      showDate > now &&
-      showDate.getTime() - now.getTime() > 2 * 60 * 60 * 1000
-    ); // 2 hours before
+    
+    // Always allow cancellation if status is not CANCELLED or COMPLETED
+    return status !== "CANCELLED" && status !== "COMPLETED";
   }
 
   /**
@@ -602,13 +630,30 @@ export class MemberApiClient {
    */
   private canCheckInBooking(booking: any): boolean {
     const status = booking.status || booking.bookingStatus;
-    const showDate = new Date(booking.showDate || booking.schedule?.showDate);
+    
+    // Workaround cho backend hiện tại - thử nhiều cách để lấy thời gian chiếu
+    let showDateTime: Date | null = null;
+    
+    if (booking.schedule?.showDateTime) {
+      showDateTime = new Date(booking.schedule.showDateTime);
+    } else if (booking.showDate && booking.startTime) {
+      showDateTime = new Date(`${booking.showDate}T${booking.startTime}`);
+    } else if (booking.schedule?.showDate && booking.schedule?.startTime) {
+      showDateTime = new Date(`${booking.schedule.showDate}T${booking.schedule.startTime}`);
+    }
+    
+    // Nếu không có thông tin thời gian, không thể check-in
+    if (!showDateTime) {
+      return false;
+    }
+    
     const now = new Date();
 
     return (
       status === "PAID" &&
       !booking.isCheckedIn &&
-      Math.abs(showDate.getTime() - now.getTime()) < 30 * 60 * 1000
+      showDateTime > now &&
+      showDateTime.getTime() - now.getTime() < 30 * 60 * 1000
     ); // 30 minutes window
   }
 
