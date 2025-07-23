@@ -8,11 +8,13 @@ import {
   uploadPromotionBanner,
   type PromotionCreateRequest,
   type PromotionUpdateRequest,
-  type PromotionSearchParams
+  type PromotionSearchParams,
+  getPromotionById
 } from '@/api/admin/getAllPromotions';
 import { toast } from 'react-toastify';
 import { PromotionStatistics } from '../types';
 import dayjs from 'dayjs';
+
 
 let isSavingPromotion = false;
 
@@ -27,10 +29,10 @@ export const usePromotions = () => {
   const [selectedPromotions, setSelectedPromotions] = useState<PromotionDto[]>([]);
 
   const fetchPromotions = async (
-    page = 0,
-    size = 10,
-    sortBy = "startDate",
-    sortDirection: "ASC" | "DESC" = "DESC",
+    page = currentPage - 1,
+    size = pageSize,
+    sortBy = "createdAt",
+    sortDirection: "DESC", // sửa mặc định thành in hoa
     isActive: boolean | null = null
   ) => {
     try {
@@ -46,13 +48,18 @@ export const usePromotions = () => {
       };
 
       const response = await getAllPromotions(params);
-      setPromotions(
-        (response.content || []).map(item => ({
-          ...item,
-          bannerImageUrl: item.bannerImageUrl || item.bannerImageUrl
-        }))
-      );
-      setTotalCount(response.page?.totalElements || 0);
+      const res: any = response;
+      let promotions: PromotionDto[] = [];
+      let totalCount = 0;
+      if (res && res.data && res.data.content) {
+        promotions = res.data.content;
+        totalCount = res.data.page?.totalElements || 0;
+      } else if (res.content) {
+        promotions = res.content;
+        totalCount = res.page?.totalElements || 0;
+      }
+      setPromotions(promotions);
+      setTotalCount(totalCount);
     } catch (error) {
       toast.error("Không thể tải danh sách khuyến mãi");
     } finally {
@@ -61,7 +68,7 @@ export const usePromotions = () => {
   };
 
   useEffect(() => {
-    fetchPromotions(currentPage - 1, pageSize, "startDate", "DESC", null);
+    fetchPromotions(currentPage - 1, pageSize, "createdAt", "DESC", null);
   }, [currentPage, pageSize, searchTerm]);
 
   const filteredData = useMemo(() => {
@@ -85,10 +92,10 @@ export const usePromotions = () => {
   const statistics: PromotionStatistics = useMemo(() => {
     const totalPromotions = totalCount;
     const activePromotions = promotions.filter(
-      (p) => p.isActive && !p.isExpired
+      (p) => p.valid && !p.expired
     ).length;
     const pointsPromotions = promotions.filter(
-      (p) => p.isPointsPromotion
+      (p) => p.pointsDiscount
     ).length;
     const featuredPromotions = promotions.filter((p) => p.isFeatured).length;
 
@@ -105,7 +112,7 @@ export const usePromotions = () => {
       await deletePromotion(record.promotionId);
       toast.success(`Deleted "${record.promotionName}" successfully`);
       // Fetch promotions for the current page
-      await fetchPromotions(currentPage - 1, pageSize);
+      await fetchPromotions(currentPage - 1, pageSize, "createdAt", "DESC", null);
       // After fetch, if no promotions and currentPage > 1, fallback to previous page
       setTimeout(() => {
         if (promotions.length === 1 && currentPage > 1) {
@@ -129,7 +136,7 @@ export const usePromotions = () => {
       );
       setSelectedRowKeys([]);
       setSelectedPromotions([]);
-      await fetchPromotions(currentPage - 1, pageSize);
+      await fetchPromotions(currentPage - 1, pageSize, "createdAt", "DESC", null);
       setTimeout(() => {
         if (promotions.length <= selectedPromotions.length && currentPage > 1) {
           setCurrentPage(currentPage - 1);
@@ -145,91 +152,73 @@ export const usePromotions = () => {
     isSavingPromotion = true;
     try {
       let result: PromotionDto;
+      
       // Tách riêng trường banner ra khỏi values
       const { banner, ...rest } = values;
-      // Map discountType FE -> BE
-      let discountType = rest.discountType;
-      // Không đổi giá trị discountType, giữ nguyên các giá trị: PERCENTAGE, FIXED_AMOUNT, BUY_ONE_GET_ONE
-      // Map dữ liệu sang đúng tên trường backend
-      const mappedCreate: any = {
-        code: rest.promotionCode || rest.promoCode,
-        name: rest.promotionName || rest.name,
-        description: rest.description,
-        discountType: discountType,
-        discountValue: rest.discountValue ? Number(rest.discountValue) : undefined,
-        maxDiscountAmount: rest.maxDiscountAmount ? Number(rest.maxDiscountAmount) : undefined,
-        minPurchaseAmount: rest.minPurchaseAmount ? Number(rest.minPurchaseAmount) : undefined,
+      
+      // Map dữ liệu sang đúng format backend
+      const mappedData: any = {
+        code: rest.promoCode?.toString().toUpperCase().trim(),
+        name: rest.name?.toString().trim(),
+        description: rest.description?.toString().trim() || "",
+        discountType: rest.discountType,
+        discountValue: rest.discountValue ? Number(rest.discountValue) : 0,
+        isFeatured: Boolean(rest.isFeatured),
         startDate: rest.startDate ? dayjs(rest.startDate).format('YYYY-MM-DD') : undefined,
         endDate: rest.endDate ? dayjs(rest.endDate).format('YYYY-MM-DD') : undefined,
+        maxDiscountAmount: rest.maxDiscount ? Number(rest.maxDiscount) : undefined,
+        minPurchaseAmount: rest.minPurchase ? Number(rest.minPurchase) : undefined,
         maxUsageCount: rest.maxUsageCount ? Number(rest.maxUsageCount) : undefined,
         maxUsagePerUser: rest.maxUsagePerUser ? Number(rest.maxUsagePerUser) : undefined,
-        isFeatured: !!rest.isFeatured,
-        bannerImageUrl: rest.bannerImageUrl || undefined,
-        pointsRequired: rest.pointsRequired ? Number(rest.pointsRequired) : undefined,
-        codeValidityHour: rest.codeValidityHour ? Number(rest.codeValidityHour) : undefined,
+        pointsRequired: rest.pointsRequired ? Number(rest.pointsRequired) : 0,
+        codeValidityHour: 24,
       };
-      // Xóa các trường undefined để không gửi lên backend
-      Object.keys(mappedCreate).forEach(key => (mappedCreate[key] === undefined) && delete mappedCreate[key]);
+      // Nếu có banner, truyền bannerImageUrl
+      if (rest.banner && rest.banner.length > 0 && rest.banner[0].url) {
+        mappedData.bannerImageUrl = rest.banner[0].url;
+      }
 
-      // Khi update chỉ gửi các trường user thực sự muốn sửa
-      let mappedUpdate: any = {};
-      if (editingPromotion) {
-        // Chỉ lấy các trường có trong rest (tức là user đã nhập/sửa)
-        Object.keys(rest).forEach(key => {
-          let backendKey = key;
-          if (key === 'promotionCode' || key === 'promoCode') backendKey = 'code';
-          if (key === 'promotionName' || key === 'name') backendKey = 'name';
-          if (key === 'discountType') backendKey = 'discountType';
-          if (key === 'discountValue') backendKey = 'discountValue';
-          if (key === 'maxDiscountAmount') backendKey = 'maxDiscountAmount';
-          if (key === 'minPurchaseAmount') backendKey = 'minPurchaseAmount';
-          if (key === 'startDate') backendKey = 'startDate';
-          if (key === 'endDate') backendKey = 'endDate';
-          if (key === 'maxUsageCount') backendKey = 'maxUsageCount';
-          if (key === 'maxUsagePerUser') backendKey = 'maxUsagePerUser';
-          if (key === 'isFeatured') backendKey = 'isFeatured';
-          if (key === 'bannerImageUrl') backendKey = 'bannerImageUrl';
-          if (key === 'pointsRequired') backendKey = 'pointsRequired';
-          if (key === 'codeValidityHour') backendKey = 'codeValidityHour';
-          // Format giá trị nếu cần
-          let value = rest[key];
-          if ((backendKey === 'startDate' || backendKey === 'endDate') && value) {
-            value = dayjs(value).format('YYYY-MM-DD');
-          }
-          if ([
-            'discountValue',
-            'maxDiscountAmount',
-            'minPurchaseAmount',
-            'maxUsageCount',
-            'maxUsagePerUser',
-            'pointsRequired',
-            'codeValidityHour'
-          ].includes(backendKey) && value !== undefined && value !== null && value !== "") {
-            value = Number(value);
-          }
-          if (value !== undefined && value !== null && value !== "") {
-            mappedUpdate[backendKey] = value;
-          }
-        });
+      // Optional numeric fields
+      if (rest.minPurchase !== undefined && rest.minPurchase !== null && rest.minPurchase !== "") {
+        mappedData.minPurchaseAmount = Number(rest.minPurchase);
       }
+      if (rest.maxDiscount !== undefined && rest.maxDiscount !== null && rest.maxDiscount !== "") {
+        mappedData.maxDiscountAmount = Number(rest.maxDiscount);
+      }
+      if (rest.pointsRequired !== undefined && rest.pointsRequired !== null && rest.pointsRequired !== "") {
+        mappedData.pointsRequired = Number(rest.pointsRequired);
+      }
+      if (rest.maxUsageCount !== undefined && rest.maxUsageCount !== null && rest.maxUsageCount !== "") {
+        mappedData.maxUsageCount = Number(rest.maxUsageCount);
+      }
+      if (rest.maxUsagePerUser !== undefined && rest.maxUsagePerUser !== null && rest.maxUsagePerUser !== "") {
+        mappedData.maxUsagePerUser = Number(rest.maxUsagePerUser);
+      }
+
       // Log JSON gửi lên
-      console.log('Promotion JSON gửi lên:', editingPromotion ? mappedUpdate : mappedCreate);
+      console.log('Promotion JSON gửi lên:', mappedData);
+      
       if (editingPromotion) {
-        result = await updatePromotion(editingPromotion.promotionId, mappedUpdate);
+        result = await updatePromotion(editingPromotion.promotionId, mappedData);
       } else {
-        result = await createPromotion(mappedCreate);
+        result = await createPromotion(mappedData);
       }
-      // Chỉ upload banner nếu có và đã tạo promotion thành công
+      
+      // Upload banner nếu có và đã tạo promotion thành công
       if (banner && banner.length > 0 && result?.promotionId) {
         const bannerFile = banner[0].originFileObj;
         await uploadPromotionBanner(result.promotionId, bannerFile);
+        // Lấy lại promotion mới nhất (có bannerImageUrl)
+        result = await getPromotionById(result.promotionId);
       }
+      
       toast.success(
         editingPromotion
           ? `Cập nhật promotion thành công: ${result.promotionCode || result.promotionName}`
           : `Tạo promotion mới thành công: ${result.promotionCode || result.promotionName}`
       );
-      fetchPromotions(currentPage - 1, pageSize);
+      
+      fetchPromotions(currentPage - 1, pageSize, "createdAt", "DESC", null);
       return true;
     } catch (error) {
       let errorMessage = "Không thể lưu promotion";
@@ -261,6 +250,6 @@ export const usePromotions = () => {
     handleDelete,
     handleBulkDelete,
     handleSavePromotion,
-    refreshPromotions: () => fetchPromotions(currentPage - 1, pageSize)
+    refreshPromotions: () => fetchPromotions(currentPage - 1, pageSize, "createdAt", "DESC", null)
   };
 }; 

@@ -18,17 +18,18 @@ const columns = [
   },
   {
     title: "BOOKING DATE",
-    dataIndex: "bookingDate",
     key: "bookingDate",
-    render: (date: string) => {
-      if (!date) return "—";
-      const d = new Date(date);
-      const day = d.getDate().toString().padStart(2, '0');
-      const month = (d.getMonth() + 1).toString().padStart(2, '0');
-      const year = d.getFullYear();
-      const hour = d.getHours().toString().padStart(2, '0');
-      const minute = d.getMinutes().toString().padStart(2, '0');
-      return `${day}/${month}/${year} ${hour}:${minute}`;
+    render: (_, record: MemberBooking) => {
+      if (record.bookingDate) {
+        const bookingDate = new Date(record.bookingDate);
+        const day = bookingDate.getDate().toString().padStart(2, '0');
+        const month = (bookingDate.getMonth() + 1).toString().padStart(2, '0');
+        const year = bookingDate.getFullYear();
+        const hour = bookingDate.getHours().toString().padStart(2, '0');
+        const minute = bookingDate.getMinutes().toString().padStart(2, '0');
+        return `${day}/${month}/${year} ${hour}:${minute}`;
+      }
+      return "—";
     },
   },
   {
@@ -84,6 +85,16 @@ export default function BookedTicketsPage() {
   console.log("bookings thực tế:", bookingsArray);
   console.log("filteredData:", filteredData);
   console.log("pagedData:", pagedData);
+  
+  // Debug showtime data
+  if (pagedData.length > 0) {
+    console.log("Sample booking data:", pagedData[0]);
+    console.log("showDate:", pagedData[0].showDate);
+    console.log("startTime:", pagedData[0].startTime);
+    console.log("bookingDate:", pagedData[0].bookingDate);
+    console.log("All booking fields:", Object.keys(pagedData[0]));
+    console.log("Full booking object:", JSON.stringify(pagedData[0], null, 2));
+  }
 
   const handlePageChange = (page: number, size?: number) => {
     setCurrent(page);
@@ -142,10 +153,10 @@ export default function BookedTicketsPage() {
               onChange={setPageSize}
               size="middle"
             >
-              {[10, 20, 50].map((num) => (
-                <Option key={num} value={num}>{num}</Option>
-              ))}
-            </Select>
+            {[10, 20, 50].map((num) => (
+              <Option key={num} value={num}>{num}</Option>
+            ))}
+          </Select>
             <span className="text-sm text-gray-600">entries</span>
           </div>
 
@@ -153,23 +164,23 @@ export default function BookedTicketsPage() {
           <div className="flex-1 lg:flex-none lg:ml-auto">
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600 hidden lg:block">Search:</span>
-              <Input
-                value={search}
-                onChange={e => { setSearch(e.target.value); setCurrent(1); }}
+          <Input
+            value={search}
+            onChange={e => { setSearch(e.target.value); setCurrent(1); }}
                 className="w-full lg:w-64"
-                allowClear
-                placeholder="Search by movie name or booking code"
+            allowClear
+            placeholder="Search by movie name or booking code"
                 prefix={<SearchOutlined />}
                 size="middle"
-              />
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={refresh}
-                loading={loading}
+          />
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={refresh}
+            loading={loading}
                 size="middle"
-              >
+          >
                 <span className="hidden lg:inline">Refresh</span>
-              </Button>
+          </Button>
             </div>
           </div>
         </div>
@@ -206,20 +217,20 @@ export default function BookedTicketsPage() {
                       <span className="text-xs text-gray-500">Movie:</span>
                       <p className="font-medium">{item.movieTitle || "—"}</p>
                     </div>
-                    <div>
-                      <span className="text-xs text-gray-500">Booking Date:</span>
-                      <p className="text-sm">
-                        {item.bookingDate ? (() => {
-                          const d = new Date(item.bookingDate);
-                          const day = d.getDate().toString().padStart(2, '0');
-                          const month = (d.getMonth() + 1).toString().padStart(2, '0');
-                          const year = d.getFullYear();
-                          const hour = d.getHours().toString().padStart(2, '0');
-                          const minute = d.getMinutes().toString().padStart(2, '0');
-                          return `${day}/${month}/${year} ${hour}:${minute}`;
-                        })() : "—"}
-                      </p>
-                    </div>
+                                       <div>
+                     <span className="text-xs text-gray-500">Booking Date:</span>
+                     <p className="text-sm">
+                       {item.bookingDate ? (() => {
+                         const bookingDate = new Date(item.bookingDate);
+                         const day = bookingDate.getDate().toString().padStart(2, '0');
+                         const month = (bookingDate.getMonth() + 1).toString().padStart(2, '0');
+                         const year = bookingDate.getFullYear();
+                         const hour = bookingDate.getHours().toString().padStart(2, '0');
+                         const minute = bookingDate.getMinutes().toString().padStart(2, '0');
+                         return `${day}/${month}/${year} ${hour}:${minute}`;
+                       })() : "—"}
+                     </p>
+                   </div>
                     <div>
                       <span className="text-xs text-gray-500">Amount:</span>
                       <p className="font-medium text-green-600">
@@ -233,16 +244,16 @@ export default function BookedTicketsPage() {
 
             {/* Desktop Table View */}
             <div className="hidden lg:block">
-              <Table
-                columns={columns}
-                dataSource={pagedData}
-                pagination={false}
-                bordered
-                size="middle"
-                loading={loading}
-                rowKey="bookingCode"
+            <Table
+              columns={columns}
+              dataSource={pagedData}
+              pagination={false}
+              bordered
+              size="middle"
+              loading={loading}
+              rowKey="bookingCode"
                 scroll={{ x: 800 }}
-              />
+            />
             </div>
             
             {/* Pagination */}

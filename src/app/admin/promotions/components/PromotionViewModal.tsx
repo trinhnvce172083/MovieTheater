@@ -103,7 +103,13 @@ export const PromotionViewModal: React.FC<PromotionViewModalProps> = ({
                   Discount Value
                 </label>
                 <div className="text-base bg-gray-50 p-2 rounded font-medium">
-                  {promotion.discountDisplay}
+                  {promotion.discountType === 'FIXED' || promotion.discountType === 'FIXED_AMOUNT'
+                    ? `${Number(promotion.discountValue).toLocaleString('vi-VN')}₫ OFF`
+                    : promotion.discountType === 'PERCENTAGE'
+                    ? `${promotion.discountValue}% OFF`
+                    : promotion.discountType === 'POINTS' || promotion.pointsDiscount
+                    ? `Đổi ${promotion.pointsRequired || promotion.discountValue} điểm`
+                    : promotion.discountDisplayText}
                 </div>
               </div>
             </Col>
@@ -156,14 +162,14 @@ export const PromotionViewModal: React.FC<PromotionViewModalProps> = ({
                 <div className="text-base bg-gray-50 p-2 rounded">
                   <Tag
                     color={
-                      promotion.isActive && !promotion.isExpired
+                      promotion.valid && !promotion.expired
                         ? "success"
-                        : promotion.isExpired
+                        : promotion.expired
                         ? "error"
                         : "warning"
                     }
                   >
-                    {promotion.statusDisplay}
+                    {promotion.valid && !promotion.expired ? "Active" : promotion.expired ? "Expired" : "Inactive"}
                   </Tag>
                   {promotion.isFeatured && (
                     <Tag color="orange" className="ml-2">
@@ -179,7 +185,7 @@ export const PromotionViewModal: React.FC<PromotionViewModalProps> = ({
                   Usage
                 </label>
                 <div className="text-base bg-gray-50 p-2 rounded">
-                  {promotion.usageDisplay}
+                  {promotion.currentUsageCount}/{promotion.maxUsageCount || '∞'} used
                 </div>
               </div>
             </Col>
@@ -189,7 +195,7 @@ export const PromotionViewModal: React.FC<PromotionViewModalProps> = ({
                   Membership
                 </label>
                 <div className="text-base bg-gray-50 p-2 rounded">
-                  {promotion.membershipDisplay}
+                  {promotion.pointsDiscount ? "Points-based" : "Public"}
                 </div>
               </div>
             </Col>
@@ -197,7 +203,7 @@ export const PromotionViewModal: React.FC<PromotionViewModalProps> = ({
         </div>
 
         {/* Points Information (if applicable) */}
-        {promotion.isPointsPromotion && (
+        {promotion.pointsDiscount && (
           <div className="border rounded-lg p-4">
             <h3 className="text-lg font-semibold mb-3 text-gray-800">
               Points Information
@@ -209,7 +215,7 @@ export const PromotionViewModal: React.FC<PromotionViewModalProps> = ({
                     Points Required
                   </label>
                   <div className="text-base bg-gray-50 p-2 rounded">
-                    {promotion.pointsDisplay}
+                    {promotion.pointsDisplayText}
                   </div>
                 </div>
               </Col>
@@ -240,7 +246,7 @@ export const PromotionViewModal: React.FC<PromotionViewModalProps> = ({
                 </label>
                 <div className="text-base bg-gray-50 p-2 rounded">
                   <Tag color="cyan">
-                    {promotion.promotionTypeDisplay}
+                    {promotion.pointsDiscount ? "Points-based" : "Public"}
                   </Tag>
                 </div>
               </div>
@@ -251,7 +257,7 @@ export const PromotionViewModal: React.FC<PromotionViewModalProps> = ({
                   Restrictions
                 </label>
                 <div className="text-base bg-gray-50 p-2 rounded">
-                  {promotion.applicabilityDisplay}
+                  All movies, All times
                 </div>
               </div>
             </Col>
@@ -259,7 +265,7 @@ export const PromotionViewModal: React.FC<PromotionViewModalProps> = ({
         </div>
 
         {/* Banner */}
-        {promotion.bannerUrl && (
+        {promotion.bannerImageUrl && (
           <div className="border rounded-lg p-4">
             <h3 className="text-lg font-semibold mb-3 text-gray-800">
               Banner
@@ -268,7 +274,7 @@ export const PromotionViewModal: React.FC<PromotionViewModalProps> = ({
               width={600}
               height={200}
               className="w-full h-auto object-cover rounded"
-              src={promotion.bannerUrl}
+              src={promotion.bannerImageUrl}
               alt="Promotion Banner"
             />
           </div>
