@@ -11,7 +11,6 @@ import {
 import { Card } from "@/components/ui/card";
 import {
   UserOutlined,
-  IdcardOutlined,
   PhoneOutlined,
   MailOutlined,
   LockOutlined,
@@ -21,7 +20,6 @@ import dayjs from "dayjs";
 import { cn } from "@/lib/utils";
 import { authApi, RegisterRequest } from "@/api/auth/Register_API";
 import { useRouter } from "next/navigation";
-import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 
 type TabsProps = {
@@ -37,11 +35,10 @@ function Tabs({ tabs, current, onChange }: TabsProps) {
         {tabs.map((tab, idx) => (
           <button
             key={tab}
-            className={`px-4 py-2 rounded-t-lg font-medium transition-all duration-200 ${
-              current === idx
+            className={`px-4 py-2 rounded-t-lg font-medium transition-all duration-200 ${current === idx
                 ? "bg-white !text-[#000000] shadow-sm"
                 : "bg-gray-100 !text-[#000000] hover:bg-gray-200"
-            }`}
+              }`}
             onClick={() => onChange(idx as 0 | 1)}
             type="button"
           >
@@ -98,25 +95,17 @@ export default function RegisterPage() {
       const response = await authApi.register(registerData);
 
       if (response) {
-        toast.success("Registration successful! Please log in to continue.");
+        if (response.message) {
+          toast.success(response.message);
+          console.log("API success message:", response.message);
+        }
         setTimeout(() => {
           router.push("/auth/Login");
         }, 1500);
       }
     } catch (errorInfo: unknown) {
-      if (errorInfo instanceof AxiosError) {
-        const errorMessage =
-          errorInfo.response?.data?.message ||
-          "Registration failed. Please try again!";
-        toast.error(errorMessage);
-      } else if (
-        typeof errorInfo === "object" &&
-        errorInfo !== null &&
-        "errorFields" in errorInfo
-      ) {
-        (errorInfo as { errorFields: { errors: string[] }[] }).errorFields.forEach(field => {
-          field.errors.forEach(err => toast.error(err));
-        });
+      if (errorInfo instanceof Error) {
+        toast.error(errorInfo.message);
       } else {
         toast.error("Registration failed. Please try again!");
       }
@@ -125,245 +114,245 @@ export default function RegisterPage() {
     }
   };
 
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Card
-        className={cn(
-          // Responsive width & padding
-          "w-full max-w-xs sm:max-w-md md:max-w-lg p-4 sm:p-8 bg-white/60 backdrop-blur-sm rounded-2xl border-none shadow-lg"
-        )}
+return (
+  <div className="flex items-center justify-center min-h-screen">
+    <Card
+      className={cn(
+        // Responsive width & padding
+        "w-full max-w-xs sm:max-w-md md:max-w-lg p-4 sm:p-8 bg-white/60 backdrop-blur-sm rounded-2xl border-none shadow-lg"
+      )}
+    >
+      <div className="flex flex-col items-center mb-2">
+        <Typography.Title level={4} className="text-white mb-0 text-lg sm:text-xl md:text-2xl">
+          Register
+        </Typography.Title>
+      </div>
+      <Tabs
+        tabs={["Personal Information", "Account"]}
+        current={tab}
+        onChange={handleTabChange}
+      />
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={onFinish}
+        autoComplete="off"
+        requiredMark={false}
+        className="flex-grow"
       >
-        <div className="flex flex-col items-center mb-2">
-          <Typography.Title level={4} className="text-white mb-0 text-lg sm:text-xl md:text-2xl">
-            Register
-          </Typography.Title>
-        </div>
-        <Tabs
-          tabs={["Personal Information", "Account"]}
-          current={tab}
-          onChange={handleTabChange}
-        />
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={onFinish}
-          autoComplete="off"
-          requiredMark={false}
-          className="flex-grow"
-        >
-          <div className="relative">
-            <div
-              className={cn(
-                "w-full transition-all duration-300",
-                tab === 0
-                  ? "opacity-100 relative translate-x-0"
-                  : "opacity-0 absolute top-0 left-0 -translate-x-full pointer-events-none"
-              )}
-            >
-              {/* Responsive group: flex-col on mobile, flex-row on md+ */}
-              <div className="flex flex-col gap-2 md:flex-row md:gap-4">
-                <Form.Item
-                  label="Full Name"
-                  name="fullname"
-                  className="flex-1 !mb-0"
-                  rules={[
-                    { required: true, message: "Please enter your full name!" },
-                  ]}
-                >
-                  <Input
-                    prefix={<UserOutlined />}
-                    placeholder="Full Name"
-                    size="large"
-                    className="border-2 border-white focus:border-purple-500 w-full"
-                  />
-                </Form.Item>
-              </div>
-              <div className="flex flex-col gap-2 md:flex-row md:gap-4">
-                <Form.Item
-                  label="Date of Birth"
-                  name="dob"
-                  className="flex-1 !mb-0"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Please select your date of birth!",
-                    },
-                  ]}
-                >
-                  <DatePicker
-                    format="DD-MM-YYYY"
-                    placeholder="DD-MM-YYYY"
-                    size="large"
-                    className="w-full"
-                    disabledDate={(d) => d && d > dayjs()}
-                  />
-                </Form.Item>
-              </div>
+        <div className="relative">
+          <div
+            className={cn(
+              "w-full transition-all duration-300",
+              tab === 0
+                ? "opacity-100 relative translate-x-0"
+                : "opacity-0 absolute top-0 left-0 -translate-x-full pointer-events-none"
+            )}
+          >
+            {/* Responsive group: flex-col on mobile, flex-row on md+ */}
+            <div className="flex flex-col gap-2 md:flex-row md:gap-4">
               <Form.Item
-                label="Phone Number"
-                name="phone"
-                className="!mb-0"
+                label="Full Name"
+                name="fullname"
+                className="flex-1 !mb-0"
                 rules={[
-                  {
-                    required: true,
-                    message: "Please enter your phone number!",
-                  },
-                ]}
-              >
-                <Input
-                  prefix={<PhoneOutlined />}
-                  placeholder="Phone Number"
-                  size="large"
-                  className="border-2 border-white focus:border-purple-500 w-full"
-                />
-              </Form.Item>
-              <Form.Item
-                label="Email"
-                name="email"
-                className="!mb-0"
-                rules={[
-                  { required: true, message: "Please enter your email!" },
-                  { type: "email", message: "Invalid email!" },
-                ]}
-              >
-                <Input
-                  prefix={<MailOutlined />}
-                  placeholder="Email"
-                  size="large"
-                  className="border-2 border-white focus:border-purple-500 w-full"
-                />
-              </Form.Item>
-              <Form.Item label="Address" name="address" className="!mb-0">
-                <Input.TextArea
-                  placeholder="Enter your address"
-                  size="large"
-                  className="border-2 border-white focus:border-purple-500 w-full"
-                  rows={3}
-                />
-              </Form.Item>
-              {/* Đã xóa nút Save changes ở tab 0 */}
-            </div>
-            <div
-              className={cn(
-                "w-full transition-all duration-300",
-                tab === 1
-                  ? "opacity-100 relative translate-x-0"
-                  : "opacity-0 absolute top-0 left-0 translate-x-full pointer-events-none"
-              )}
-            >
-              <Form.Item
-                label="Username"
-                name="username"
-                className="!mb-0"
-                rules={[
-                  { required: true, message: "Please enter your username!" },
+                  { required: true, message: "Please enter your full name!" },
                 ]}
               >
                 <Input
                   prefix={<UserOutlined />}
-                  placeholder="Username"
+                  placeholder="Full Name"
                   size="large"
                   className="border-2 border-white focus:border-purple-500 w-full"
                 />
-              </Form.Item>
-              <Form.Item
-                label="Password"
-                name="password"
-                className="!mb-0"
-                rules={[
-                  { required: true, message: "Please enter your password!" },
-                  {
-                    min: 6,
-                    message: "Password must be at least 6 characters!",
-                  },
-                ]}
-                extra={
-                  <span className="text-xs text-gray-400">
-                    Minimum length is 6 characters.
-                  </span>
-                }
-              >
-                <Input.Password
-                  prefix={<LockOutlined />}
-                  placeholder="Password"
-                  size="large"
-                  className="border-2 border-white focus:border-purple-500 w-full"
-                />
-              </Form.Item>
-              <Form.Item
-                label="Confirm Password"
-                name="confirm"
-                className="!mb-0"
-                dependencies={["password"]}
-                rules={[
-                  { required: true, message: "Please confirm your password!" },
-                  ({ getFieldValue }) => ({
-                    validator(_, value) {
-                      if (!value || getFieldValue("password") === value) {
-                        return Promise.resolve();
-                      }
-                      return Promise.reject(
-                        new Error("Passwords do not match!")
-                      );
-                    },
-                  }),
-                ]}
-              >
-                <Input.Password
-                  prefix={<LockOutlined />}
-                  placeholder="Confirm Password"
-                  size="large"
-                  className="border-2 border-white focus:border-purple-600 w-full"
-                />
-              </Form.Item>
-              <Form.Item
-                name="agreeToTerms"
-                valuePropName="checked"
-                className="!mb-0"
-                rules={[
-                  {
-                    validator: (_, value) =>
-                      value
-                        ? Promise.resolve()
-                        : Promise.reject(
-                            new Error("Bạn phải đồng ý với điều khoản dịch vụ!")
-                          ),
-                  },
-                ]}
-              >
-                <Checkbox>I agree to the Terms of Service</Checkbox>
-              </Form.Item>
-              <Form.Item name="acceptMarketing" valuePropName="checked" className="!mb-0">
-                <Checkbox>I want to receive marketing emails</Checkbox>
-              </Form.Item>
-              <Form.Item className="mt-4">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  className="w-full mt-2 bg-gradient-to-r from-purple-500 to-orange-400 text-white font-semibold"
-                  size="large"
-                  loading={loading}
-                >
-                  Save password
-                </Button>
               </Form.Item>
             </div>
+            <div className="flex flex-col gap-2 md:flex-row md:gap-4">
+              <Form.Item
+                label="Date of Birth"
+                name="dob"
+                className="flex-1 !mb-0"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please select your date of birth!",
+                  },
+                ]}
+              >
+                <DatePicker
+                  format="DD-MM-YYYY"
+                  placeholder="DD-MM-YYYY"
+                  size="large"
+                  className="w-full"
+                  disabledDate={(d) => d && d > dayjs()}
+                />
+              </Form.Item>
+            </div>
+            <Form.Item
+              label="Phone Number"
+              name="phone"
+              className="!mb-0"
+              rules={[
+                {
+                  required: true,
+                  message: "Please enter your phone number!",
+                },
+              ]}
+            >
+              <Input
+                prefix={<PhoneOutlined />}
+                placeholder="Phone Number"
+                size="large"
+                className="border-2 border-white focus:border-purple-500 w-full"
+              />
+            </Form.Item>
+            <Form.Item
+              label="Email"
+              name="email"
+              className="!mb-0"
+              rules={[
+                { required: true, message: "Please enter your email!" },
+                { type: "email", message: "Invalid email!" },
+              ]}
+            >
+              <Input
+                prefix={<MailOutlined />}
+                placeholder="Email"
+                size="large"
+                className="border-2 border-white focus:border-purple-500 w-full"
+              />
+            </Form.Item>
+            <Form.Item label="Address" name="address" className="!mb-0">
+              <Input.TextArea
+                placeholder="Enter your address"
+                size="large"
+                className="border-2 border-white focus:border-purple-500 w-full"
+                rows={3}
+              />
+            </Form.Item>
+            {/* Đã xóa nút Save changes ở tab 0 */}
           </div>
-        </Form>
-        <div className="mt-2 text-xs text-gray-600 text-center">
-          By creating an account, you agree to the{" "}
-          <a href="#" className="underline text-white">
-            Terms of Service
-          </a>
-          .
+          <div
+            className={cn(
+              "w-full transition-all duration-300",
+              tab === 1
+                ? "opacity-100 relative translate-x-0"
+                : "opacity-0 absolute top-0 left-0 translate-x-full pointer-events-none"
+            )}
+          >
+            <Form.Item
+              label="Username"
+              name="username"
+              className="!mb-0"
+              rules={[
+                { required: true, message: "Please enter your username!" },
+              ]}
+            >
+              <Input
+                prefix={<UserOutlined />}
+                placeholder="Username"
+                size="large"
+                className="border-2 border-white focus:border-purple-500 w-full"
+              />
+            </Form.Item>
+            <Form.Item
+              label="Password"
+              name="password"
+              className="!mb-0"
+              rules={[
+                { required: true, message: "Please enter your password!" },
+                {
+                  min: 6,
+                  message: "Password must be at least 6 characters!",
+                },
+              ]}
+              extra={
+                <span className="text-xs text-gray-400">
+                  Minimum length is 6 characters.
+                </span>
+              }
+            >
+              <Input.Password
+                prefix={<LockOutlined />}
+                placeholder="Password"
+                size="large"
+                className="border-2 border-white focus:border-purple-500 w-full"
+              />
+            </Form.Item>
+            <Form.Item
+              label="Confirm Password"
+              name="confirm"
+              className="!mb-0"
+              dependencies={["password"]}
+              rules={[
+                { required: true, message: "Please confirm your password!" },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (!value || getFieldValue("password") === value) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(
+                      new Error("Passwords do not match!")
+                    );
+                  },
+                }),
+              ]}
+            >
+              <Input.Password
+                prefix={<LockOutlined />}
+                placeholder="Confirm Password"
+                size="large"
+                className="border-2 border-white focus:border-purple-600 w-full"
+              />
+            </Form.Item>
+            <Form.Item
+              name="agreeToTerms"
+              valuePropName="checked"
+              className="!mb-0"
+              rules={[
+                {
+                  validator: (_, value) =>
+                    value
+                      ? Promise.resolve()
+                      : Promise.reject(
+                        new Error("Bạn phải đồng ý với điều khoản dịch vụ!")
+                      ),
+                },
+              ]}
+            >
+              <Checkbox>I agree to the Terms of Service</Checkbox>
+            </Form.Item>
+            <Form.Item name="acceptMarketing" valuePropName="checked" className="!mb-0">
+              <Checkbox>I want to receive marketing emails</Checkbox>
+            </Form.Item>
+            <Form.Item className="mt-4">
+              <Button
+                type="primary"
+                htmlType="submit"
+                className="w-full mt-2 bg-gradient-to-r from-purple-500 to-orange-400 text-white font-semibold"
+                size="large"
+                loading={loading}
+              >
+                Save password
+              </Button>
+            </Form.Item>
+          </div>
         </div>
-        <div className="mt-2 text-center text-sm text-gray-600">
-          Already have an account?{" "}
-          <a href="/auth/Login" className="text-yellow-400 hover:underline">
-            Login
-          </a>
-        </div>
-      </Card>
-    </div>
+      </Form>
+      <div className="mt-2 text-xs text-gray-600 text-center">
+        By creating an account, you agree to the{" "}
+        <a href="#" className="underline text-white">
+          Terms of Service
+        </a>
+        .
+      </div>
+      <div className="mt-2 text-center text-sm text-gray-600">
+        Already have an account?{" "}
+        <a href="/auth/Login" className="text-yellow-400 hover:underline">
+          Login
+        </a>
+      </div>
+    </Card>
+  </div>
   );
 }

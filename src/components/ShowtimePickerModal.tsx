@@ -8,31 +8,11 @@ import { Ring } from '@uiball/loaders';
 // Helper to generate next 7 days
 const generateDates = () => {
   const today = dayjs();
-  const currentDayOfWeek = today.day(); // 0 = CN, 1 = T2, ..., 6 = T7
   const dates = [];
-  // Thêm 7 ngày tiếp theo vào mảng
   for (let i = 0; i < 7; i++) {
     dates.push(dayjs().add(i, 'day'));
   }
-  // Sắp xếp lại ngày theo thứ tự mong muốn
-  return dates.sort((a, b) => {
-    const dayOfWeekA = a.day();
-    const dayOfWeekB = b.day();
-    // Hàm chuyển đổi thứ tự ưu tiên
-    const getPriority = (day: number) => {
-      // Nếu là ngày hiện tại, ưu tiên cao nhất
-      if (day === currentDayOfWeek) return -1;
-      
-      // Nếu ngày nhỏ hơn ngày hiện tại (thứ 2, 3 nếu hôm nay là thứ 4)
-      // thì đẩy xuống cuối
-      if (day < currentDayOfWeek) return day + 7;
-      
-      // Các ngày còn lại giữ nguyên thứ tự
-      return day;
-    };
-    
-    return getPriority(dayOfWeekA) - getPriority(dayOfWeekB);
-  });
+  return dates;
 };
 
 interface ShowtimePickerModalProps {
@@ -88,15 +68,19 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({
     fetchSchedules();
   }, [selectedDate, movieId, open]);
 
-  const groupedSchedules = schedules.reduce((acc, schedule) => {
-    const time = schedule.displayTime;
-    if (!acc[time]) {
-      acc[time] = [];
-    }
-    acc[time].push(schedule);
-    return acc;
-  }, {} as Record<string, Schedule[]>);
+  // Lọc lịch chiếu cho ngày được chọn
+  const filteredSchedules = schedules.filter(schedule => {
+    const scheduleDate = dayjs(schedule.showDate);
+    return scheduleDate.isSame(selectedDate, 'day');
+  });
 
+  // Fallback: Nếu không có lịch chiếu cho ngày được chọn, hiển thị tất cả lịch chiếu
+  const displaySchedules = filteredSchedules.length > 0 ? filteredSchedules : schedules;
+
+  // Lọc room type cho giờ đã chọn
+  const selectedTimeSchedules = selectedTime 
+    ? displaySchedules.filter(schedule => schedule.displayTime === selectedTime)
+    : [];
 
   if (!open) return null;
 
@@ -121,7 +105,7 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({
         <h2 className="text-3xl font-bold text-white text-center mb-2 tracking-wide">{movieTitle || 'Chọn suất chiếu'}</h2>
         <p className="text-white text-center mb-8 text-lg">Please select desired date and screen.</p>
 
-        {/* 1. Days */}
+        {/* Ngày chiếu */}
         <div className="flex justify-center flex-wrap gap-3 mb-8">
           {dates.map((date) => (
             <button
@@ -139,8 +123,8 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({
             </button>
           ))}
         </div>
-        
-        {/* 2. Content Area */}
+
+        {/* Nội dung */}
         <div className="min-h-[250px] bg-black/10 p-4 rounded-xl">
           {loading ? (
             <div className="flex justify-center items-center h-full">
@@ -151,38 +135,38 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({
               <p className="font-bold">Oops! Something went wrong.</p>
               <p>{error}</p>
             </div>
-          ) : schedules.length > 0 ? (
+          ) : displaySchedules.length > 0 ? (
             <div className="space-y-5">
-              {/* Time Selection */}
+              {/* Chọn giờ */}
               <div>
                 <h3 className="font-semibold text-lg text-purple-200 mb-3">Select time slot</h3>
                 <div className="flex flex-wrap gap-3">
-                  {Object.keys(groupedSchedules).map((time) => (
+                  {displaySchedules.map((schedule) => (
                     <button
-                      key={time}
+                      key={schedule.scheduleId}
                       onClick={() => {
-                        setSelectedTime(time);
-                        setSelectedScheduleId(null);
+                        setSelectedTime(schedule.displayTime);
+                        setSelectedScheduleId(null); // Reset selected schedule when changing time
                       }}
                       className={`px-4 py-2 rounded-lg font-bold transition-all duration-200
                         ${
-                          selectedTime === time
+                          selectedTime === schedule.displayTime
                             ? "bg-purple-400 text-black ring-2 ring-purple-200"
                             : "bg-white/10 text-white hover:bg-white/20"
                         }`}
                     >
-                      {time}
+                      {schedule.displayTime}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Room Selection (conditional) */}
-              {selectedTime && (
+              {/* Chọn phòng chiếu - chỉ hiện cho giờ đã chọn */}
+              {selectedTime && selectedTimeSchedules.length > 0 && (
                 <div className="border-t border-white/10 pt-5 animate-fadeIn">
                   <h3 className="font-semibold text-lg text-yellow-200 mb-3">Room type</h3>
                   <div className="flex flex-wrap gap-3">
-                    {groupedSchedules[selectedTime].map((schedule) => (
+                    {selectedTimeSchedules.map((schedule) => (
                       <button
                         key={schedule.scheduleId}
                         onClick={() => setSelectedScheduleId(schedule.scheduleId)}
@@ -210,14 +194,14 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({
           )}
         </div>
 
-        {/* Continue */}
+        {/* Nút tiếp tục */}
         <div className="flex justify-end mt-8">
           <button
             className={`px-8 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-purple-500 to-blue-500 shadow-lg transition-all duration-150 text-lg disabled:opacity-50 disabled:cursor-not-allowed`}
             disabled={!selectedScheduleId}
             onClick={handleContinue}
           >
-            Continue
+            Continue  
           </button>
         </div>
       </div>
