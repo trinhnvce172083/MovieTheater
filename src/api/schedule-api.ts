@@ -12,12 +12,24 @@ export class ScheduleApiService {
   static async getScheduleById(scheduleId: string | number): Promise<ApiResponse<Schedule>> {
     try {
       const response = await axiosClient.get(`/schedules/${scheduleId}`);
+      
+      // Xử lý response data
+      let scheduleData: Schedule;
+      
+      if (response.data && response.data.data) {
+        // Nếu response có cấu trúc { data: {...}, success: true }
+        scheduleData = response.data.data;
+      } else {
+        // Nếu response trực tiếp là object
+        scheduleData = response.data;
+      }
+      
       return {
-        data: response.data,
+        data: scheduleData,
         success: true,
+        message: response.data?.message || "Schedule fetched successfully"
       };
     } catch (error: unknown) {
-      console.error(`Error fetching schedule ${scheduleId}:`, error);
       return {
         data: {} as Schedule,
         success: false,
@@ -32,14 +44,29 @@ export class ScheduleApiService {
   ): Promise<ApiResponse<Schedule[]>> {
     try {
       const response = await axiosClient.get(`/schedules/movie/${movieId}`, {
-        params: { fromDate: date, toDate: date },
+        params: { 
+          fromDate: date, 
+          toDate: date 
+        },
       });
+      
+      // Xử lý response data
+      let schedulesData: Schedule[] = [];
+      
+      if (response.data && response.data.data) {
+        // Nếu response có cấu trúc { data: [...], success: true }
+        schedulesData = Array.isArray(response.data.data) ? response.data.data : [];
+      } else if (Array.isArray(response.data)) {
+        // Nếu response trực tiếp là array
+        schedulesData = response.data;
+      }
+      
       return {
-        data: response.data || [],
+        data: schedulesData,
         success: true,
+        message: response.data?.message || "Schedules fetched successfully"
       };
     } catch (error: unknown) {
-      console.error(`Error fetching schedules for movie ${movieId} on date ${date}:`, error);
       return {
         data: [],
         success: false,
@@ -56,7 +83,6 @@ export class ScheduleApiService {
         success: true,
       };
     } catch (error: unknown) {
-      console.error(`Error fetching schedules for movie ${movieId}:`, error);
       return {
         data: [],
         success: false,

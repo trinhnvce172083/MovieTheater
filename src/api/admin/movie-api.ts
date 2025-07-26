@@ -22,7 +22,7 @@ export class MovieApiService {
         token: string
     ): Promise<ApiResponse<MovieListResponse>> {
         try {
-            const response = await axiosClient.post("/api/movies/filter", filterRequest, {
+            const response = await axiosClient.post("movies/filter", filterRequest, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = response.data;

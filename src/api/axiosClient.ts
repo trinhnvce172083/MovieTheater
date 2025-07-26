@@ -94,8 +94,7 @@ axiosClient.interceptors.response.use(
             if (token) {
               originalRequest.headers.Authorization = `Bearer ${token}`;
               resolve(axiosClient(originalRequest));
-            } else {
-              reject(error);
+            } else {reject(error);
             }
           });
         });
@@ -166,3 +165,4 @@ axiosClient.interceptors.response.use(
 );
 
 export default axiosClient;
+

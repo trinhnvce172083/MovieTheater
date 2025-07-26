@@ -45,7 +45,7 @@ export class MovieApiService {
           message: data.message,
         };
       } else {
-        console.error("Unexpected API response structure for upcoming:", data);
+        console.error("Unexpected API response structure for upcoming:", data);    
         return {
           data: [],
           success: false,
@@ -91,8 +91,7 @@ export class MovieApiService {
     } catch (error: unknown) {
       console.error("Error fetching movies by genre:", error);
       return {
-        data: [],
-        success: false,
+        data: [],success: false,
         message: error instanceof Error ? error.message : "Failed to fetch movies",
       };
     }
