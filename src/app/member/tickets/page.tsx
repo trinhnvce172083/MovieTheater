@@ -48,11 +48,11 @@ const ManagedTickets: React.FC = () => {
       if (!accessToken) {
         throw new Error("Không có access token. Vui lòng đăng nhập lại.");
       }
-
+      
       // Sử dụng MemberApiService thay vì fetch trực tiếp
       const response = await MemberApiService.cancelBooking({
         bookingId: ticketToCancel.bookingId.toString(),
-        reason: "User cancelled"
+            reason: "User cancelled"
       });
 
       console.log("Cancel booking response:", response);
@@ -178,9 +178,9 @@ const ManagedTickets: React.FC = () => {
         Managed Tickets
       </Typography.Title>
       
-            <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
-            {/* Mobile Card View */}
-            <div className="lg:hidden space-y-4 mb-6">
+      <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
+        {/* Mobile Card View */}
+        <div className="lg:hidden space-y-4 mb-6">
           {managedTickets.map((ticket, index) => (
             <Card key={ticket.bookingId} className="border rounded-lg">
               <div className="space-y-3">
@@ -215,7 +215,7 @@ const ManagedTickets: React.FC = () => {
                           const year = showDateTime.getFullYear();
                           const hour = showDateTime.getHours().toString().padStart(2, '0');
                           const minute = showDateTime.getMinutes().toString().padStart(2, '0');
-                          return `${day}/${month}/${year} ${hour}:${minute}`;
+                        return `${day}/${month}/${year} ${hour}:${minute}`;
                         }
                         
                         return "—";
