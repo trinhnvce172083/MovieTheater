@@ -259,7 +259,7 @@ export default function BookedTicketsPage() {
                            const year = showDateTime.getFullYear();
                            const hour = showDateTime.getHours().toString().padStart(2, '0');
                            const minute = showDateTime.getMinutes().toString().padStart(2, '0');
-                           return `${day}/${month}/${year} ${hour}:${minute}`;
+                         return `${day}/${month}/${year} ${hour}:${minute}`;
                          }
                          
                          return "—";
