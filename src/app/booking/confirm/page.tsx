@@ -40,6 +40,7 @@ export default function BookingConfirmPage() {
         })),
         promotionCode: bookingData.promotionCode || undefined,
       };
+      
       const response = await BookingApiService.createBooking(bookingRequest);
       console.log('Booking API response:', response);
       const bookingId = response?.data?.bookingId;
