@@ -22,7 +22,7 @@ export class MovieApiService {
         token: string
     ): Promise<ApiResponse<MovieListResponse>> {
         try {
-            const response = await axiosClient.post("movies/filter", filterRequest, {
+            const response = await axiosClient.post("/movies/filter", filterRequest, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = response.data;
@@ -160,7 +160,7 @@ export class MovieApiService {
                 formData.append('backdrop', backdropFile);
             }
 
-            const response = await axiosClient.put(`/api/movies/${movieId}/with-images`, formData, {
+            const response = await axiosClient.put(`/movies/${movieId}/with-images`, formData, {
                 headers: { 
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
