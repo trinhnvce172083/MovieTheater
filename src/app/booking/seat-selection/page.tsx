@@ -38,6 +38,8 @@ export default function SeatSelectionPage() {
     scheduleInfo,
   } = useSelector((state: RootState) => state.booking);
 
+
+
   const {
     seats,
     selectedSeats,
@@ -77,11 +79,11 @@ export default function SeatSelectionPage() {
     if (scheduleId) {
       const fetchRelatedInfo = async () => {
         try {
-          
           const scheduleResponse = await ScheduleApiService.getScheduleById(Number(scheduleId));
           
           if (scheduleResponse.success && scheduleResponse.data) {
             const scheduleData = scheduleResponse.data;
+            
             dispatch(setScheduleInfo({
               scheduleId: scheduleData.scheduleId,
               displayTime: scheduleData.displayTime,
@@ -96,6 +98,7 @@ export default function SeatSelectionPage() {
               
               if (movieResponse.success && movieResponse.data) {
                 const movieData = movieResponse.data;
+                
                 dispatch(setMovieInfo({
                   movieId: Number(movieData.movieId),
                   title: movieData.title,
@@ -105,8 +108,6 @@ export default function SeatSelectionPage() {
               } else {
                 messageApi.error("Failed to load movie details");
               }
-            } else {
-              // No movieId found in schedule data
             }
           } else {
             messageApi.error("Failed to load schedule details");
