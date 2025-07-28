@@ -157,6 +157,27 @@
   .ant-typography a:visited {
     color: #ffffff !important;
   } */
+
+  /* Fix cho ShowtimePickerModal text colors */
+  .showtime-picker-modal .time-slot-button.selected {
+    color: #ffffff !important;
+    background-color: #a78bfa !important;
+  }
+  
+  .showtime-picker-modal .time-slot-button:not(.selected) {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+  
+  .showtime-picker-modal .room-type-button.selected {
+    color: #ffffff !important;
+    background-color: #facc15 !important;
+  }
+  
+  .showtime-picker-modal .room-type-button:not(.selected) {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
 }
 
 .admin-sidebar-menu .ant-menu-item,
