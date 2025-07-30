@@ -33,24 +33,24 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     // Đăng nhập: truyền vào token, tự decode user và role từ token
-    login(state, action: PayloadAction<{ token: string }>) {
-      state.token = action.payload.token;
-      state.isLoggedIn = true;
-      const payload = decodeJwt(action.payload.token);
-      console.log('🔍 authSlice login - Decoded payload:', payload);
+    login: (state, action: PayloadAction<{ token: string }>) => {
+      const { token } = action.payload;
       
-      state.role = payload?.role || "CUSTOMER";
-      state.user = payload ? {
-        id: payload.accountId || payload.sub,
-        username: payload.username,
-        fullName: payload.fullName,
-        email: payload.email,
-        phoneNumber: payload.phoneNumber,
-        role: payload.role,
-        ...payload // Spread để giữ các field khác
-      } : null;
-      
-      console.log('✅ authSlice login - User state updated:', state.user);
+      try {
+        const payload = decodeJwt(token);
+        
+        if (payload) {
+          state.user = {
+            id: payload.sub || payload.userId || payload.id,
+            username: payload.username || payload.userName || payload.name,
+            email: payload.email,
+            role: payload.role || payload.authorities?.[0] || 'USER',
+            isLoggedIn: true
+          };
+        }
+      } catch (error) {
+        // Silent fail - don't show error for token decode
+      }
     },
     // Đăng nhập: truyền vào user và token từ ngoài (nếu đã decode sẵn)
     setCredentials(state, action: PayloadAction<{ user: User; token: string }>) {

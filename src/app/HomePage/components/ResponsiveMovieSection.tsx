@@ -1,208 +1,95 @@
 "use client";
 
-import React, { useEffect, useState, memo } from "react";
-import { ResponsiveMovieCard } from "./ResponsiveMovieCard";
-import ResponsiveNavButton from "./ResponsiveNavButton";
-import { Movie } from "@/types/NowShowing/movie";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
-import Link from "next/link";
+import React from "react";
+import { Card, Typography, Button } from "antd";
+import { useRouter } from "next/navigation";
+import { Clock, Calendar } from "lucide-react";
+
+const { Title, Text } = Typography;
+
+interface Movie {
+  movieId: number;
+  title: string;
+  posterUrl: string;
+  duration: number;
+  rating: string;
+  genres: string;
+}
 
 interface ResponsiveMovieSectionProps {
   title: string;
   movies: Movie[];
-  scrollRef: React.RefObject<HTMLDivElement | null>;
   loading: boolean;
-  onScrollLeft: () => void;
-  onScrollRight: () => void;
-  isUpcoming?: boolean;
 }
 
-const ResponsiveMovieSection = memo(function ResponsiveMovieSection({
-  title,
-  movies,
-  scrollRef,
-  loading,
-  onScrollLeft,
-  onScrollRight,
-  isUpcoming = false,
-}: ResponsiveMovieSectionProps) {
-  console.log(`${title} - Movies:`, movies, `Loading: ${loading}`);
-  const [showLeftShadow, setShowLeftShadow] = useState(false);
-  const [showRightShadow, setShowRightShadow] = useState(true);
-  const [cardWidth, setCardWidth] = useState(0);
+export default function ResponsiveMovieSection({ title, movies, loading }: ResponsiveMovieSectionProps) {
+  const router = useRouter();
 
-  // Calculate card width for responsive scrolling
-  useEffect(() => {
-    const calculateCardWidth = () => {
-      const container = scrollRef.current;
-      if (
-        container &&
-        container.firstElementChild &&
-        container.children.length > 1
-      ) {
-        const firstCard = container.firstElementChild as HTMLElement;
-        const secondCard = container.children[1] as HTMLElement;
-        if (firstCard && secondCard) {
-          const fullWidth = secondCard.offsetLeft - firstCard.offsetLeft;
-          setCardWidth(fullWidth);
-        } else if (firstCard) {
-          const gap = window.innerWidth >= 640 ? 24 : 16; // sm:gap-6 = 24px, gap-4 = 16px
-          setCardWidth(firstCard.offsetWidth + gap);
-        }
-      }
-    };
-
-    calculateCardWidth();
-    window.addEventListener("resize", calculateCardWidth);
-
-    return () => window.removeEventListener("resize", calculateCardWidth);
-  }, [scrollRef, movies]);
-
-  // Update shadows on scroll
-  useEffect(() => {
-    const element = scrollRef.current;
-    if (!element) return;
-
-    const handleScroll = () => {
-      setShowLeftShadow(element.scrollLeft > 20);
-      setShowRightShadow(
-        element.scrollWidth > element.clientWidth &&
-          element.scrollLeft < element.scrollWidth - element.clientWidth - 20
-      );
-    };
-
-    const handleResize = () => {
-      handleScroll();
-    };
-
-    element.addEventListener("scroll", handleScroll);
-    window.addEventListener("resize", handleResize);
-
-    // Initial check
-    handleScroll();
-
-    return () => {
-      element.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [scrollRef, movies]);
-
-  // Custom scroll handlers
-  const handleScrollLeft = () => {
-    if (!scrollRef.current || cardWidth === 0) return;
-
-    scrollRef.current.scrollBy({
-      left: -cardWidth,
-      behavior: "smooth",
-    });
-
-    onScrollLeft();
-  };
-
-  const handleScrollRight = () => {
-    if (!scrollRef.current || cardWidth === 0) return;
-
-    scrollRef.current.scrollBy({
-      left: cardWidth,
-      behavior: "smooth",
-    });
-
-    onScrollRight();
+  const handleMovieClick = (movieId: number) => {
+    router.push(`/movies/${movieId}`);
   };
 
   if (loading) {
     return (
-      <div className="text-white">
-        <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">{title}</h2>
-          <div className="flex gap-2">
-            <div className="w-8 h-8 bg-gray-700 rounded animate-pulse" />
-            <div className="w-8 h-8 bg-gray-700 rounded animate-pulse" />
-          </div>
-        </div>
-        <div className="flex gap-4 sm:gap-6 overflow-hidden">
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={`loading-${i}`}
-              className="flex-shrink-0 w-48 sm:w-56 md:w-64"
-            >
-              <div className="aspect-[3/4] bg-gray-700 rounded animate-pulse mb-3" />
-              <div className="h-4 bg-gray-700 rounded animate-pulse mb-2" />
-              <div className="h-3 bg-gray-700 rounded animate-pulse w-3/4" />
-            </div>
+      <div className="mb-8">
+        <Title level={2} className="text-white mb-6">{title}</Title>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {[...Array(5)].map((_, index) => (
+            <Card key={index} loading={true} />
           ))}
         </div>
       </div>
     );
   }
 
+  if (!movies || movies.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="text-white">
-      <div className="flex items-center justify-between mb-4 sm:mb-6">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">{title}</h2>
-        <div className="flex items-center gap-2">
-          <Link
-            href={isUpcoming ? "/ComingSoon" : "/NowShowing"}
-            className="hidden sm:flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors"
-          >
-            View All
-            <ArrowRight size={16} />
-          </Link>
-          <div className="flex gap-2">
-            <ResponsiveNavButton
-              onClick={handleScrollLeft}
-              disabled={!showLeftShadow}
-              direction="left"
-              icon={<ChevronLeft size={16} />}
-            />
-            <ResponsiveNavButton
-              onClick={handleScrollRight}
-              disabled={!showRightShadow}
-              direction="right"
-              icon={<ChevronRight size={16} />}
-            />
+    <div className="mb-8">
+      <Title level={2} className="text-white mb-6">{title}</Title>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {movies.map((movie) => (
+          <div key={movie.movieId} className="group cursor-pointer">
+            <div className="relative overflow-hidden rounded-lg">
+              <img
+                src={movie.posterUrl || "/popcorn.jpg"}
+                alt={movie.title}
+                className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                onClick={() => handleMovieClick(movie.movieId)}
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                <Button
+                  onClick={() => handleMovieClick(movie.movieId)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+                >
+                  Xem chi tiết
+                </Button>
+              </div>
+            </div>
+            
+            <div className="mt-3">
+              <Title level={5} className="text-white truncate mb-1">
+                {movie.title}
+              </Title>
+              <div className="flex items-center gap-3 text-gray-400 text-xs">
+                <div className="flex items-center gap-1">
+                  <Clock size={12} />
+                  <span>{movie.duration} phút</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Calendar size={12} />
+                  <span>{movie.rating}</span>
+                </div>
+              </div>
+              <Text className="text-gray-500 text-xs truncate block mt-1">
+                {movie.genres}
+              </Text>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div className="relative">
-        {/* Left Shadow */}
-        {showLeftShadow && (
-          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none" />
-        )}
-
-        {/* Right Shadow */}
-        {showRightShadow && (
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none" />
-        )}
-
-        <div
-          ref={scrollRef}
-          className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide pb-4"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {movies.map((movie) => (
-            <ResponsiveMovieCard
-              key={movie.movieId}
-              movie={movie}
-              isUpcoming={isUpcoming}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Mobile View All Link */}
-      <div className="sm:hidden mt-4 text-center">
-        <Link
-          href={isUpcoming ? "/ComingSoon" : "/NowShowing"}
-          className="inline-flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors"
-        >
-          View All {title}
-          <ArrowRight size={16} />
-        </Link>
+        ))}
       </div>
     </div>
   );
-});
-
-export default ResponsiveMovieSection;
+}

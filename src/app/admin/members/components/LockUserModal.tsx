@@ -29,32 +29,27 @@ const LockUserModal: React.FC<LockUserModalProps> = ({
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (values: any) => {
     try {
-      const values = await form.validateFields();
-      console.log('Lock user form values:', values);
-      
-      // Additional validation
-      if (!values.reason || values.reason.trim().length < 10) {
-        message.error('Reason must be at least 10 characters long');
-        return;
-      }
-      
-      if (!values.lockHours || values.lockHours < 1) {
-        message.error('Lock duration must be at least 1 hour');
-        return;
-      }
-      
       setLoading(true);
-      await onConfirm(values);
-      form.resetFields();
-    } catch (error) {
-      console.error('Lock user form error:', error);
-      if (error instanceof Error && 'errorFields' in error) {
-        // Form validation error - don't show additional message
-        return;
+      
+      const lockData = {
+        reason: values.reason,
+        lockHours: values.lockHours,
+        sendNotificationEmail: values.sendNotificationEmail,
+        notes: values.notes
+      };
+
+      const success = await onLockConfirm(lockData);
+      
+      if (success) {
+        message.success('User locked successfully');
+        handleCancel();
+      } else {
+        message.error('Failed to lock user');
       }
-      message.error('Failed to lock user');
+    } catch (error) {
+      message.error('An error occurred while locking user');
     } finally {
       setLoading(false);
     }

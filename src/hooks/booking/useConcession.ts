@@ -35,18 +35,18 @@ export function useConcession() {
     setError(null);
     try {
       const response = await concessionApi.getAll();
-      // Nếu response.data là mảng, trả về luôn
-      if (Array.isArray(response.data)) {
-        return response.data;
-      }
-      // Nếu response.data có success, xử lý như cũ
+      
+      // Xử lý response theo cấu trúc API
       if (response.data && response.data.success) {
-        return response.data.data;
+        return response.data.data || [];
       } else {
-        throw new Error(response.data?.message || "Failed to fetch concessions");
+        const errorMessage = response.data?.message || "Failed to fetch concessions";
+        console.error('Concession API error:', errorMessage);
+        throw new Error(errorMessage);
       }
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || "Failed to load concessions";
+      console.error('Concession fetch error:', errorMessage);
       setError(errorMessage);
       message.error(errorMessage);
       throw new Error(errorMessage);
