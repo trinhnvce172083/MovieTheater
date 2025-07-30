@@ -2,7 +2,6 @@ import React from 'react';
 import { Space, Button, Tag, Popconfirm, Tooltip, Avatar } from 'antd';
 import { EditOutlined, DeleteOutlined, EyeOutlined, HomeOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { useRouter } from 'next/navigation';
 import { CinemaRoomResponse } from '../types';
 
 interface RoomTableColumnsProps {
@@ -20,7 +19,6 @@ export const createRoomTableColumns = ({
   loading = false,
   isUsingApiData = true
 }: RoomTableColumnsProps): ColumnsType<CinemaRoomResponse> => {
-  const router = useRouter();
 
   return [
     {
@@ -127,9 +125,7 @@ export const createRoomTableColumns = ({
               icon={<EyeOutlined />}
               size="small"
               className="text-blue-600 hover:bg-blue-50"
-              onClick={() =>
-                router.push(`/admin/rooms/RoomDetail?id=${record.cinemaRoomId}`)
-              }
+              onClick={() => onView(record)}
             />
           </Tooltip>
           <Tooltip title={isUsingApiData ? "Edit" : "Edit disabled - backend not connected"}>
@@ -149,9 +145,9 @@ export const createRoomTableColumns = ({
           <Tooltip title={isUsingApiData ? "Delete" : "Delete disabled - backend not connected"}>
             <Popconfirm
               title="Delete Room"
-              description="Are you sure?"
+              description={`Are you sure you want to delete "${record.cinemaRoomName}"? This action cannot be undone.`}
               onConfirm={() => onDelete(record.cinemaRoomId)}
-              okText="Delete"
+              okText="Yes, Delete"
               cancelText="Cancel"
               okButtonProps={{ danger: true }}
               disabled={!isUsingApiData}

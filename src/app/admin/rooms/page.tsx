@@ -16,6 +16,7 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 import { getAllRooms, createRoom, updateRoom, deleteRoom } from "@/api/admin/getAllRooms";
+import { useRouter } from 'next/navigation';
 
 // Import organized components
 import {
@@ -30,9 +31,27 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const { Text } = Typography;
 
+// Custom hook for debounced value
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
 export default function CinemaRoomManagement() {
   const isMobile = useIsMobile();
   const [form] = Form.useForm();
+  const router = useRouter();
   
   // State
   const [allRoomData, setAllRoomData] = useState<CinemaRoomResponse[]>([]);
@@ -43,12 +62,21 @@ export default function CinemaRoomManagement() {
   const [editingRoom, setEditingRoom] = useState<CinemaRoomResponse | null>(null);
   const [isUsingApiData, setIsUsingApiData] = useState(true);
 
-  // Filters
+  // Filters with debounced search
   const [filters, setFilters] = useState<RoomFilters>({
     searchTerm: '',
     filterType: undefined,
     filterStatus: undefined,
   });
+
+  // Debounce search term to improve performance
+  const debouncedSearchTerm = useDebounce(filters.searchTerm, 300);
+
+  // Create debounced filters object
+  const debouncedFilters = useMemo(() => ({
+    ...filters,
+    searchTerm: debouncedSearchTerm
+  }), [filters, debouncedSearchTerm]);
 
   // Fetch rooms function with filters
   const fetchRooms = useCallback(async () => {
@@ -81,8 +109,8 @@ export default function CinemaRoomManagement() {
     if (!allRoomData || !Array.isArray(allRoomData)) {
       return [];
     }
-    return filterRooms(allRoomData, filters);
-  }, [allRoomData, filters]);
+    return filterRooms(allRoomData, debouncedFilters);
+  }, [allRoomData, debouncedFilters]);
 
   const paginatedData = useMemo(() => {
     // Ensure filteredData is an array before slicing
@@ -104,12 +132,15 @@ export default function CinemaRoomManagement() {
   const createRoomFunction = async (roomData: RoomCreateRequest) => {
     try {
       setLoading(true);
-      await createRoom(roomData);
-      message.success("Room created successfully");
-      fetchRooms();
+      const response = await createRoom(roomData);
+      console.log('Create room response:', response);
+      message.success("Room created successfully!");
+      await fetchRooms(); // Wait for refresh to complete
       return true;
-    } catch {
-      message.error("Failed to create room");
+    } catch (error: unknown) {
+      console.error('Create room error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to create room";
+      message.error(errorMessage);
       return false;
     } finally {
       setLoading(false);
@@ -119,12 +150,33 @@ export default function CinemaRoomManagement() {
   const updateRoomFunction = async (id: number, roomData: RoomCreateRequest) => {
     try {
       setLoading(true);
-      await updateRoom(id, roomData);
-      message.success("Room updated successfully");
-      fetchRooms();
+      console.log('Updating room with ID:', id, 'Data:', roomData);
+      
+      // Show warning for features that will be lost due to backend limitations
+      if (roomData.has3D || roomData.hasDolbyAtmos || roomData.hasReclinerSeats || 
+          (roomData.priceMultiplier && roomData.priceMultiplier !== 1.0) ||
+          roomData.roomType === 'IMAX' || roomData.roomType === '4DX') {
+        message.warning(
+          'Note: Some advanced features (3D, Dolby Atmos, Recliner Seats, Custom Price Multiplier, IMAX/4DX types) ' +
+          'may not be fully preserved due to backend limitations. Only basic room information will be updated.',
+          5
+        );
+      }
+      
+      const response = await updateRoom(id, roomData);
+      console.log('Update room response:', response);
+      message.success("Room updated successfully!");
+      console.log('Refreshing room list after small delay...');
+      
+      // Small delay to ensure backend consistency
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await fetchRooms(); // Wait for refresh to complete
+      console.log('Room list refreshed');
       return true;
-    } catch {
-      message.error("Failed to update room");
+    } catch (error: unknown) {
+      console.error('Update room error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to update room";
+      message.error(errorMessage);
       return false;
     } finally {
       setLoading(false);
@@ -135,10 +187,12 @@ export default function CinemaRoomManagement() {
     try {
       setLoading(true);
       await deleteRoom(id);
-      message.success("Room deleted successfully");
-      fetchRooms();
-    } catch {
-      message.error("Failed to delete room");
+      message.success("Room deleted successfully!");
+      await fetchRooms(); // Wait for refresh to complete
+    } catch (error: unknown) {
+      console.error('Delete room error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete room";
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -155,12 +209,19 @@ export default function CinemaRoomManagement() {
   };
 
   const handleView = (record: CinemaRoomResponse) => {
-    message.info(`Viewing details for ${record.cinemaRoomName}`);
+    console.log('Navigating to room detail with ID:', record.cinemaRoomId);
+    router.push(`/admin/rooms/${record.cinemaRoomId}`);
   };
 
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
+      
+      // Additional validation
+      if (values.rows * values.columns !== values.seatQuantity) {
+        message.error('Seat quantity must equal rows × columns');
+        return;
+      }
 
       if (editingRoom) {
         const success = await updateRoomFunction(editingRoom.cinemaRoomId, values);
@@ -176,8 +237,9 @@ export default function CinemaRoomManagement() {
           form.resetFields();
         }
       }
-    } catch {
-      // Form validation failed
+    } catch (error) {
+      console.error('Form validation failed:', error);
+      // Form validation errors are automatically displayed by Ant Design
     }
   };
 
@@ -291,17 +353,41 @@ export default function CinemaRoomManagement() {
           {/* Table Section */}
           <div className="bg-white">
             <Spin spinning={loading}>
-              <Table
-                dataSource={paginatedData}
-                columns={columns}
-                pagination={false}
-                scroll={{ x: 950 }}
-                rowClassName="hover:bg-gray-50 transition-colors"
-                className="professional-table"
-                size="small"
-                loading={loading}
-                rowKey="cinemaRoomId"
-              />
+              {filteredData.length === 0 && !loading ? (
+                <div className="flex flex-col items-center justify-center py-16 px-4">
+                  <div className="text-gray-400 text-6xl mb-4">🏠</div>
+                  <h3 className="text-lg font-medium text-gray-600 mb-2">
+                    {allRoomData.length === 0 ? 'No rooms found' : 'No rooms match your filters'}
+                  </h3>
+                  <p className="text-gray-500 text-center mb-4">
+                    {allRoomData.length === 0 
+                      ? 'Create your first cinema room to get started'
+                      : 'Try adjusting your search terms or filters'
+                    }
+                  </p>
+                  {allRoomData.length === 0 && isUsingApiData && (
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={handleAddNewRoom}
+                    >
+                      Add Your First Room
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <Table
+                  dataSource={paginatedData}
+                  columns={columns}
+                  pagination={false}
+                  scroll={{ x: 950 }}
+                  rowClassName="hover:bg-gray-50 transition-colors"
+                  className="professional-table"
+                  size="small"
+                  loading={loading}
+                  rowKey="cinemaRoomId"
+                />
+              )}
             </Spin>
             
             {/* Pagination */}

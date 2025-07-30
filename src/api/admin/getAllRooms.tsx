@@ -1,4 +1,5 @@
 import axiosClient from "../axiosClient";
+import axios from 'axios';
 
 export interface CinemaRoom {
   cinemaRoomId: number;
@@ -15,8 +16,14 @@ export interface CinemaRoom {
   priceMultiplier: number;
   createdAt: string;
   updatedAt: string;
+  displayName?: string;
+  isVIP?: boolean;
+  isIMAX?: boolean;
+  is4DX?: boolean;
+  isPremium?: boolean;
   availableSeats?: number;
   occupiedSeats?: number;
+  temporarilyReservedSeats?: number;
   maintenanceSeats?: number;
   scheduleCount?: number;
 }
@@ -143,7 +150,20 @@ const mockRooms: CinemaRoom[] = [
   },
 ];
 
-// API Functions
+// # Create API Response error handler
+const handleApiError = (error: unknown, operation: string) => {
+  console.error(`${operation} failed:`, error);
+  
+  if (axios.isAxiosError(error)) {
+    const message = error.response?.data?.message || 
+                   error.response?.data?.error || 
+                   error.message || 
+                   `Failed to ${operation.toLowerCase()}`;
+    throw new Error(message);
+  }
+  
+  throw new Error(`Failed to ${operation.toLowerCase()}`);
+};
 export const getAllRooms = async (
   page = 0,
   size = 10,
@@ -151,12 +171,21 @@ export const getAllRooms = async (
   sortDirection = 'asc'
 ): Promise<PaginatedResponse<CinemaRoom>> => {
   try {
+    console.log('Making API call to GET /cinema-rooms'); // Debug log
     const response = await axiosClient.get('/cinema-rooms', {
-      params: { page, size, sortBy, sortDirection }
+      params: { 
+        page, 
+        size, 
+        sortBy, 
+        sortDirection,
+        _t: Date.now() // Cache busting parameter
+      }
     });
+    console.log('Get rooms API Response received:', response.data); // Debug log
     
-    // Check if response has expected structure
-    if (response.data && response.data.success && response.data.data) {
+    // Handle API response structure: {success, message, data}
+    if (response.data?.success && response.data?.data) {
+      console.log('Returning room list data:', response.data.data);
       return response.data.data; // Extract data from ApiResponse wrapper
     } else if (response.data && response.data.content) {
       return response.data; // Direct paginated response
@@ -164,6 +193,7 @@ export const getAllRooms = async (
       throw new Error('Unexpected API response structure');
     }
   } catch (error) {
+    console.error('Get rooms API call failed, using mock data:', error);
     // Return mock data as fallback
     const start = page * size;
     const end = start + size;
@@ -187,13 +217,25 @@ export const getAllRooms = async (
 
 export const getRoomById = async (id: number): Promise<CinemaRoom> => {
   try {
+    console.log(`Making API call to /cinema-rooms/${id}`);
     const response = await axiosClient.get(`/cinema-rooms/${id}`);
-    return response.data;
+    console.log('API Response:', response.data);
+    
+    // Handle API response structure: {success, message, data}
+    if (response.data?.success && response.data?.data) {
+      console.log('Returning room data:', response.data.data);
+      return response.data.data;
+    } else {
+      console.warn('Unexpected API response structure:', response.data);
+      throw new Error('Invalid API response structure');
+    }
   } catch (error) {
+    console.error('API call failed, falling back to mock data:', error);
     const mockRoom = mockRooms.find(room => room.cinemaRoomId === id);
     if (!mockRoom) {
       throw new Error('Room not found');
     }
+    console.log('Using mock room data:', mockRoom);
     return mockRoom;
   }
 };
@@ -201,9 +243,21 @@ export const getRoomById = async (id: number): Promise<CinemaRoom> => {
 export const createRoom = async (roomData: CinemaRoomCreateRequest): Promise<CinemaRoom> => {
   try {
     const response = await axiosClient.post('/cinema-rooms', roomData);
+    
+    // Handle different response structures
+    if (response.data?.success && response.data?.data) {
+      return response.data.data;
+    }
     return response.data;
   } catch (error) {
-    // Mock fallback for demo mode
+    // First try to handle API error with proper error message
+    try {
+      handleApiError(error, 'Create room');
+    } catch (handledError) {
+      throw handledError;
+    }
+    
+    // This shouldn't be reached, but fallback for demo mode
     console.warn('Backend unavailable, using mock response for create room');
     const newId = Math.max(...mockRooms.map(r => r.cinemaRoomId)) + 1;
     const newRoom: CinemaRoom = {
@@ -229,10 +283,45 @@ export const updateRoom = async (
   roomData: CinemaRoomUpdateRequest
 ): Promise<CinemaRoom> => {
   try {
-    const response = await axiosClient.put(`/cinema-rooms/${id}`, roomData);
-    return response.data;
+    console.log(`Making API call to PUT /cinema-rooms/${id}`, roomData);
+    
+    // Transform frontend data to match backend expectations
+    const backendPayload = {
+      cinemaRoomName: roomData.cinemaRoomName,
+      // Map frontend roomType to backend enum (only STANDARD and VIP are supported)
+      roomType: (roomData.roomType === 'IMAX' || roomData.roomType === '4DX') ? 'VIP' : roomData.roomType,
+      // Backend expects 'totalSeats' not 'seatQuantity'
+      totalSeats: roomData.seatQuantity,
+      rows: roomData.rows,
+      columns: roomData.columns,
+      description: roomData.description,
+      isActive: roomData.isActive
+      // Note: has3D, hasDolbyAtmos, hasReclinerSeats, priceMultiplier are not supported by backend DTO
+      // They will be reset to defaults (false, false, false, 1.0) due to backend limitations
+    };
+    
+    console.log('Transformed payload for backend:', backendPayload);
+    const response = await axiosClient.put(`/cinema-rooms/${id}`, backendPayload);
+    console.log('Update API Response:', response.data);
+    
+    // Handle API response structure: {success, message, data}
+    if (response.data?.success && response.data?.data) {
+      console.log('Returning updated room data:', response.data.data);
+      return response.data.data;
+    } else {
+      console.warn('Unexpected API response structure:', response.data);
+      throw new Error('Invalid API response structure');
+    }
   } catch (error) {
-    // Mock fallback for demo mode
+    console.error('Update API call failed:', error);
+    // First try to handle API error with proper error message
+    try {
+      handleApiError(error, 'Update room');
+    } catch (handledError) {
+      throw handledError;
+    }
+    
+    // This shouldn't be reached, but fallback for demo mode
     console.warn('Backend unavailable, using mock response for update room');
     const roomIndex = mockRooms.findIndex(room => room.cinemaRoomId === id);
     if (roomIndex === -1) {
@@ -255,7 +344,14 @@ export const deleteRoom = async (id: number): Promise<void> => {
   try {
     await axiosClient.delete(`/cinema-rooms/${id}`);
   } catch (error) {
-    // Mock fallback for demo mode (soft delete)
+    // First try to handle API error with proper error message
+    try {
+      handleApiError(error, 'Delete room');
+    } catch (handledError) {
+      throw handledError;
+    }
+    
+    // This shouldn't be reached, but fallback for demo mode (soft delete)
     console.warn('Backend unavailable, using mock response for delete room');
     const roomIndex = mockRooms.findIndex(room => room.cinemaRoomId === id);
     if (roomIndex === -1) {
@@ -313,7 +409,7 @@ export const getRoomsByType = async (type: string): Promise<CinemaRoom[]> => {
   try {
     const response = await axiosClient.get(`/cinema-rooms/type/${type}`);
     return response.data;
-  } catch (error) {
+  } catch {
     return mockRooms.filter(room => room.roomType === type);
   }
 };

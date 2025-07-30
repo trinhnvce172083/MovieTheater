@@ -1,298 +1,499 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Spin } from "antd";
+import { 
+  Card, 
+  Row, 
+  Col, 
+  Typography, 
+  Statistic, 
+  Table, 
+  Tag, 
+  Space,
+  Empty,
+  Alert,
+  Skeleton
+} from "antd";
 import {
-  // UserOutlined,
+  UserOutlined,
   VideoCameraOutlined,
   HomeOutlined,
   GiftOutlined,
-  DollarOutlined,
-  TagOutlined,
-  TeamOutlined,
+  CheckCircleOutlined
 } from "@ant-design/icons";
+
+// Import real APIs only
 import { getAllUsers } from "@/api/admin/getAllUsers";
 import { getMovies } from "@/api/admin/getAllMovies";
-import { getAllPromotions } from "@/api/admin/getAllPromotions";
 import { getAllRooms } from "@/api/admin/getAllRooms";
+import { getAllPromotions } from "@/api/admin/getAllPromotions";
 
+// Import chart components
 import AppBarChart from "@/components/AppBarChart";
 import AppLineChart from "@/components/AppLineChart";
 import AppPieChart from "@/components/AppPieChart";
-import { useIsMobile } from "@/hooks/use-mobile";
 
-interface MovieData {
-  status: string;
-  title: string;
-  revenue?: number;
+const { Title, Text } = Typography;
+
+// Interface definitions
+interface Movie {
+  movieId?: number;
+  id?: number;
+  title?: string;
+  genre?: string;
+  status?: string;
+  duration?: number;
+  director?: string;
+  releaseDate?: string;
+  rating?: number;
   price?: number;
+}
+
+interface CinemaRoom {
+  cinemaRoomId?: number;
+  id?: number;
+  cinemaRoomName?: string;
+  name?: string;
+  capacity?: number;
+  totalSeats?: number;
+  isActive?: boolean;
+  status?: string;
+  location?: string;
+}
+
+interface Promotion {
+  promotionId?: number;
+  id?: number;
+  promotionName?: string;
+  name?: string;
+  discountPercentage?: number;
+  discount?: number;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  isActive?: boolean;
+}
+
+interface DashboardStats {
+  totalUsers: number;
+  totalMovies: number;
+  totalRooms: number;
+  totalPromotions: number;
+  activeMovies: number;
+  activeRooms: number;
+  activePromotions: number;
 }
 
 export default function AdminDashboard() {
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
-  const [totalUsers, setTotalUsers] = useState<number | null>(null);
-  const [totalMovies, setTotalMovies] = useState<number | null>(null);
-  const [totalRooms, setTotalRooms] = useState<number | null>(null);
-  const [totalPromotions, setTotalPromotions] = useState<number | null>(null);
-  const [activeMovies, setActiveMovies] = useState<number | null>(null);
-  const [activeRooms, setActiveRooms] = useState<number | null>(null);
-  const [totalRevenue, setTotalRevenue] = useState<number>(0);
-  const [averagePrice, setAveragePrice] = useState<number>(0);
+  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<DashboardStats>({
+    totalUsers: 0,
+    totalMovies: 0,
+    totalRooms: 0,
+    totalPromotions: 0,
+    activeMovies: 0,
+    activeRooms: 0,
+    activePromotions: 0,
+  });
+  
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [rooms, setRooms] = useState<CinemaRoom[]>([]);
 
-  useEffect(() => {
-    fetchData();
-  }, []); // Empty dependency array to run only once
-
-  const fetchData = async () => {
+  const fetchRealData = React.useCallback(async () => {
     setLoading(true);
+    setError(null);
+    
     try {
-      // Fetch users
-      try {
-        const userData = await getAllUsers();
-        if (userData && Array.isArray(userData.content)) {
-          setTotalUsers(userData.content.length);
-        } else if (userData && userData.page && userData.page.totalElements) {
-          setTotalUsers(userData.page.totalElements);
+      console.log('🔄 Fetching real data from APIs...');
+      
+      const results = await Promise.allSettled([
+        getAllUsers(),
+        getMovies({ page: 0, size: 100, sortBy: "title", sortDirection: "asc" }),
+        getAllRooms(0, 100),
+        getAllPromotions({ page: 0, size: 100, sortBy: "promotionName", sortDirection: "ASC" })
+      ]);
+
+      console.log('📊 API Results:', results);
+
+      // Process Users
+      if (results[0].status === 'fulfilled') {
+        const userData = results[0].value;
+        console.log('👥 Users data:', userData);
+        
+        if (userData?.content && Array.isArray(userData.content)) {
+          setStats(prev => ({ ...prev, totalUsers: userData.content.length }));
+        } else if (Array.isArray(userData)) {
+          setStats(prev => ({ ...prev, totalUsers: userData.length }));
+        } else {
+          console.warn('Users data format not recognized:', userData);
         }
-      } catch {
+      } else {
+        console.error('❌ Failed to fetch users:', results[0].reason);
       }
 
-      // Fetch movies
-      try {
-        const movieData = await getMovies({
-          page: 0,
-          size: 100,
-          sortBy: "title",
-          sortDirection: "asc",
-        });
+      // Process Movies
+      if (results[1].status === 'fulfilled') {
+        const movieData = results[1].value;
+        console.log('🎬 Movies data:', movieData);
+        
         if (movieData?.content && Array.isArray(movieData.content)) {
-          setTotalMovies(movieData.content.length);
-          const activeMovieCount = movieData.content.filter((movie: { status: string }) => 
-            movie.status === 'NOW_SHOWING'
+          setMovies(movieData.content);
+          const activeCount = movieData.content.filter((movie: Movie) => 
+            movie.status === 'NOW_SHOWING' || movie.status === 'ACTIVE'
           ).length;
-          setActiveMovies(activeMovieCount);
-
-          // Calculate revenue and pricing data
-          const moviesWithRevenue = movieData.content.filter((movie: MovieData) => movie.revenue || movie.price);
-          const totalRev = moviesWithRevenue.reduce((sum: number, movie: MovieData) => 
-            sum + (movie.revenue || movie.price || 0), 0
-          );
-          setTotalRevenue(totalRev);
-
-          const moviesWithPrice = movieData.content.filter((movie: MovieData) => movie.price);
-          const avgPrice = moviesWithPrice.length > 0 
-            ? moviesWithPrice.reduce((sum: number, movie: MovieData) => sum + (movie.price || 0), 0) / moviesWithPrice.length
-            : 0;
-          setAveragePrice(avgPrice);
+          setStats(prev => {
+            const newStats = { 
+              ...prev, 
+              totalMovies: movieData.content.length,
+              activeMovies: activeCount
+            };
+            console.log('📊 Updated movie stats:', newStats);
+            return newStats;
+          });
+        } else if (Array.isArray(movieData)) {
+          setMovies(movieData);
+          const activeCount = movieData.filter((movie: Movie) => 
+            movie.status === 'NOW_SHOWING' || movie.status === 'ACTIVE'
+          ).length;
+          setStats(prev => ({ 
+            ...prev, 
+            totalMovies: movieData.length,
+            activeMovies: activeCount
+          }));
+        } else {
+          console.warn('Movies data format not recognized:', movieData);
         }
-      } catch {
+      } else {
+        console.error('❌ Failed to fetch movies:', results[1].reason);
       }
 
-      // Fetch rooms
-      try {
-        const roomData = await getAllRooms(0, 100);
+      // Process Rooms
+      if (results[2].status === 'fulfilled') {
+        const roomData = results[2].value;
+        console.log('🏠 Rooms data:', roomData);
+        
         if (roomData?.content && Array.isArray(roomData.content)) {
-          setTotalRooms(roomData.content.length);
-          const activeRoomCount = roomData.content.filter((room: { isActive: boolean }) => 
-            room.isActive === true
+          setRooms(roomData.content);
+          const activeCount = roomData.content.filter((room: CinemaRoom) => 
+            room.isActive === true || room.status === 'ACTIVE'
           ).length;
-          setActiveRooms(activeRoomCount);
+          setStats(prev => {
+            const newStats = { 
+              ...prev, 
+              totalRooms: roomData.content.length,
+              activeRooms: activeCount
+            };
+            console.log('🏠 Updated room stats:', newStats);
+            return newStats;
+          });
+        } else if (Array.isArray(roomData)) {
+          setRooms(roomData);
+          const activeCount = roomData.filter((room: CinemaRoom) => 
+            room.isActive === true || room.status === 'ACTIVE'
+          ).length;
+          setStats(prev => ({ 
+            ...prev, 
+            totalRooms: roomData.length,
+            activeRooms: activeCount
+          }));
+        } else {
+          console.warn('Rooms data format not recognized:', roomData);
         }
-      } catch {
+      } else {
+        console.error('❌ Failed to fetch rooms:', results[2].reason);
       }
 
-      // Fetch promotions
-      try {
-        const promotionData = await getAllPromotions({
-          page: 0,
-          size: 100,
-          sortBy: "promotionName",
-          sortDirection: "ASC",
-        });
+      // Process Promotions
+      if (results[3].status === 'fulfilled') {
+        const promotionData = results[3].value;
+        console.log('🎁 Promotions data:', promotionData);
+        
         if (promotionData?.content && Array.isArray(promotionData.content)) {
-          setTotalPromotions(promotionData.content.length);
+          const activeCount = promotionData.content.filter((promo: Promotion) => 
+            promo.isActive === true || promo.status === 'ACTIVE'
+          ).length;
+          setStats(prev => {
+            const newStats = { 
+              ...prev, 
+              totalPromotions: promotionData.content.length,
+              activePromotions: activeCount
+            };
+            console.log('🎁 Updated promotion stats:', newStats);
+            return newStats;
+          });
+        } else if (Array.isArray(promotionData)) {
+          const activeCount = promotionData.filter((promo: Promotion) => 
+            promo.isActive === true || promo.status === 'ACTIVE'
+          ).length;
+          setStats(prev => ({ 
+            ...prev, 
+            totalPromotions: promotionData.length,
+            activePromotions: activeCount
+          }));
+        } else {
+          console.warn('Promotions data format not recognized:', promotionData);
         }
-      } catch {
+      } else {
+        console.error('❌ Failed to fetch promotions:', results[3].reason);
       }
-    } catch {
-      // You may keep this error log for debugging if needed
+
+      console.log('✅ Final stats:', stats);
+      
+    } catch (error) {
+      console.error('❌ Critical error fetching dashboard data:', error);
+      setError('Failed to load dashboard data. Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    fetchRealData();
+  }, [fetchRealData]);
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <Spin size="large" />
-          <div className="mt-4 text-slate-700 text-lg">Loading dashboard...</div>
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-7xl mx-auto">
+          <Skeleton active paragraph={{ rows: 4 }} />
+          <div className="mt-8">
+            <Row gutter={[16, 16]}>
+              {[1, 2, 3, 4].map(i => (
+                <Col xs={24} sm={12} lg={6} key={i}>
+                  <Card>
+                    <Skeleton active paragraph={{ rows: 2 }} />
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          </div>
         </div>
       </div>
     );
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { 
-      style: 'currency', 
-      currency: 'VND',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
-
-  if (loading) {
+  if (error) {
     return (
-      <div className={`${isMobile ? 'p-4' : 'p-8'} bg-gray-50 min-h-screen flex items-center justify-center`}>
-        <div className="text-center">
-          <Spin size="large" />
-          <p className="mt-4 text-gray-600">Loading Dashboard...</p>
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-7xl mx-auto">
+          <Alert
+            message="Dashboard Error"
+            description={error}
+            type="error"
+            showIcon
+            action={
+              <Space>
+                <button 
+                  onClick={fetchRealData}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                >
+                  Retry
+                </button>
+              </Space>
+            }
+          />
         </div>
       </div>
     );
   }
+
+  // Movie table columns
+  const movieColumns = [
+    {
+      title: 'Title',
+      dataIndex: 'title',
+      key: 'title',
+    },
+    {
+      title: 'Genre',
+      dataIndex: 'genre',
+      key: 'genre',
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+    },
+    {
+      title: 'Duration',
+      dataIndex: 'duration',
+      key: 'duration',
+      render: (duration: number) => duration ? `${duration} min` : '-',
+    },
+  ];
+
+  // Room table columns
+  const roomColumns = [
+    {
+      title: 'Name',
+      dataIndex: ['cinemaRoomName', 'name'],
+      key: 'name',
+      render: (_: string, record: CinemaRoom) => (
+        record.cinemaRoomName || record.name || '-'
+      ),
+    },
+    {
+      title: 'Capacity',
+      dataIndex: ['capacity', 'totalSeats'],
+      key: 'capacity',
+      render: (_: number, record: CinemaRoom) => (
+        record.capacity || record.totalSeats || '-'
+      ),
+    },
+    {
+      title: 'Status',
+      dataIndex: ['isActive', 'status'],
+      key: 'status',
+      render: (_: boolean | string, record: CinemaRoom) => {
+        const isActive = record.isActive === true || record.status === 'ACTIVE';
+        return isActive ? 'Active' : 'Inactive';
+      },
+    },
+    {
+      title: 'Location',
+      dataIndex: 'location',
+      key: 'location',
+      render: (location: string) => location || '-',
+    },
+  ];
 
   return (
-    <div className={`${isMobile ? 'p-4' : 'p-8'} bg-gray-50 min-h-screen`}>
+    <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className={`${isMobile ? 'mb-6' : 'mb-8'}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-900`}>Admin Dashboard</h1>
-              <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600 mt-1`}>Cinema Management System Overview</p>
-            </div>
-          </div>
+        <div className="mb-6">
+          <Title level={2} className="!mb-1">Admin Dashboard</Title>
+          <Text type="secondary">
+            Cinema Management System
+          </Text>
         </div>
         
         {/* Key Metrics */}
-        <div className={`grid grid-cols-1 ${isMobile ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-4'} gap-3 sm:gap-5 mb-6 sm:mb-8`}>
-          {/* Members Card */}
-          <div className="bg-white rounded-md shadow-sm border border-gray-100">
-            <div className={`${isMobile ? 'p-3' : 'p-5'}`}>
-              <div className="flex items-center justify-between mb-2 sm:mb-3">
-                <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-500`}>Total Members</h3>
-                <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} flex items-center justify-center rounded-full bg-blue-50`}>
-                  <TeamOutlined className={`${isMobile ? 'text-sm' : 'text-base'} text-blue-500`} />
-                </div>
-              </div>
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-900`}>{totalUsers !== null ? totalUsers.toLocaleString() : '—'}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+        <Row gutter={[16, 16]} className="mb-6">
+          <Col xs={24} sm={12} lg={6}>
+            <Card className="text-center">
+              <Statistic
+                title="Total Members"
+                value={stats.totalUsers}
+                prefix={<UserOutlined />}
+                valueStyle={{ color: '#1890ff' }}
+              />
+            </Card>
+          </Col>
 
-          {/* Movies Card */}
-          <div className="bg-white rounded-md shadow-sm border border-gray-100">
-            <div className={`${isMobile ? 'p-3' : 'p-5'}`}>
-              <div className="flex items-center justify-between mb-2 sm:mb-3">
-                <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-500`}>Movies</h3>
-                <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} flex items-center justify-center rounded-full bg-green-50`}>
-                  <VideoCameraOutlined className={`${isMobile ? 'text-sm' : 'text-base'} text-green-500`} />
-                </div>
+          <Col xs={24} sm={12} lg={6}>
+            <Card className="text-center">
+              <Statistic
+                title="Movies"
+                value={stats.totalMovies}
+                prefix={<VideoCameraOutlined />}
+                valueStyle={{ color: '#52c41a' }}
+              />
+              <div className="text-sm text-gray-500 mt-2">
+                {stats.activeMovies} showing
               </div>
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-900`}>{totalMovies !== null ? totalMovies.toLocaleString() : '—'}</p>
-                  <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500 mt-1`}>
-                    {activeMovies !== null ? <span><span className="font-medium text-green-600">{activeMovies}</span> now showing</span> : '—'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+            </Card>
+          </Col>
 
-          {/* Cinema Halls Card */}
-          <div className="bg-white rounded-md shadow-sm border border-gray-100">
-            <div className={`${isMobile ? 'p-3' : 'p-5'}`}>
-              <div className="flex items-center justify-between mb-2 sm:mb-3">
-                <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-500`}>Cinema Halls</h3>
-                <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} flex items-center justify-center rounded-full bg-indigo-50`}>
-                  <HomeOutlined className={`${isMobile ? 'text-sm' : 'text-base'} text-indigo-500`} />
-                </div>
+          <Col xs={24} sm={12} lg={6}>
+            <Card className="text-center">
+              <Statistic
+                title="Cinema Halls"
+                value={stats.totalRooms}
+                prefix={<HomeOutlined />}
+                valueStyle={{ color: '#722ed1' }}
+              />
+              <div className="text-sm text-gray-500 mt-2">
+                {stats.activeRooms} active
               </div>
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-900`}>{totalRooms !== null ? totalRooms.toLocaleString() : '—'}</p>
-                  <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500 mt-1`}>
-                    {activeRooms !== null ? <span><span className="font-medium text-indigo-600">{activeRooms}</span> operational</span> : '—'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+            </Card>
+          </Col>
 
-          {/* Promotions Card */}
-          <div className="bg-white rounded-md shadow-sm border border-gray-100">
-            <div className={`${isMobile ? 'p-3' : 'p-5'}`}>
-              <div className="flex items-center justify-between mb-2 sm:mb-3">
-                <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-500`}>Promotions</h3>
-                <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} flex items-center justify-center rounded-full bg-orange-50`}>
-                  <GiftOutlined className={`${isMobile ? 'text-sm' : 'text-base'} text-orange-500`} />
-                </div>
+          <Col xs={24} sm={12} lg={6}>
+            <Card className="text-center">
+              <Statistic
+                title="Promotions"
+                value={stats.totalPromotions}
+                prefix={<GiftOutlined />}
+                valueStyle={{ color: '#fa8c16' }}
+              />
+              <div className="text-sm text-gray-500 mt-2">
+                {stats.activePromotions} active
               </div>
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-900`}>{totalPromotions !== null ? totalPromotions.toLocaleString() : '—'}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+            </Card>
+          </Col>
+        </Row>
 
-        {/* Financial Overview */}
-        <div className="mb-6 sm:mb-8">
-          <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-medium text-gray-900 mb-3 sm:mb-4`}>Financial Overview</h2>
-          <div className={`grid grid-cols-1 ${isMobile ? 'gap-3' : 'md:grid-cols-2 gap-5'}`}>
-            {/* Total Revenue */}
-            <div className="bg-white rounded-md shadow-sm border border-gray-100">
-              <div className={`${isMobile ? 'p-3' : 'p-5'}`}>
-                <div className="flex items-center justify-between mb-2 sm:mb-3">
-                  <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-500`}>Total Revenue</h3>
-                  <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} flex items-center justify-center rounded-full bg-emerald-50`}>
-                    <DollarOutlined className={`${isMobile ? 'text-sm' : 'text-base'} text-emerald-500`} />
-                  </div>
-                </div>
-                <div className="mt-1">
-                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-900`}>{formatCurrency(totalRevenue)}</p>
-                  <div className="flex items-center mt-1">
-                    <span className={`${isMobile ? 'text-xs' : 'text-xs'} font-medium text-emerald-500`}>↑ +8.2%</span>
-                    <span className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500 ml-1`}>from last month</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* Analytics Charts */}
+        <Row gutter={16} className="mb-6">
+          <Col xs={24} md={8}>
+            <Card title="Revenue" size="small">
+              <AppBarChart />
+            </Card>
+          </Col>
+          <Col xs={24} md={8}>
+            <Card title="Bookings" size="small">
+              <AppLineChart />
+            </Card>
+          </Col>
+          <Col xs={24} md={8}>
+            <Card title="Movies" size="small">
+              <AppPieChart />
+            </Card>
+          </Col>
+        </Row>
 
-            {/* Average Ticket Price */}
-            <div className="bg-white rounded-md shadow-sm border border-gray-100">
-              <div className={`${isMobile ? 'p-3' : 'p-5'}`}>
-                <div className="flex items-center justify-between mb-2 sm:mb-3">
-                  <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-500`}>Average Ticket Price</h3>
-                  <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} flex items-center justify-center rounded-full bg-cyan-50`}>
-                    <TagOutlined className={`${isMobile ? 'text-sm' : 'text-base'} text-cyan-500`} />
-                  </div>
-                </div>
-                <div className="mt-1">
-                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-900`}>{formatCurrency(averagePrice)}</p>
-                  <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500 mt-1`}>Premium experience</p>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Data Tables */}
+        <Row gutter={16}>
+          {/* Movies Table */}
+          <Col xs={24} lg={12}>
+            <Card title="Movies" size="small">
+              {movies.length > 0 ? (
+                <Table
+                  dataSource={movies}
+                  columns={movieColumns}
+                  pagination={{ pageSize: 5, showSizeChanger: false, size: 'small' }}
+                  rowKey={(record) => record.movieId || record.id || Math.random()}
+                  size="small"
+                />
+              ) : (
+                <Empty 
+                  description="No movies found"
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                />
+              )}
+            </Card>
+          </Col>
 
-          {/* Charts Section */}
-          <div className={`grid grid-cols-1 ${isMobile ? 'gap-3 mt-6' : 'md:grid-cols-3 gap-5 mt-8'}`}>
-            <AppBarChart />
-            <AppLineChart />
-            <AppPieChart />
-          </div>
+          {/* Rooms Table */}
+          <Col xs={24} lg={12}>
+            <Card title="Cinema Halls" size="small">
+              {rooms.length > 0 ? (
+                <Table
+                  dataSource={rooms}
+                  columns={roomColumns}
+                  pagination={{ pageSize: 5, showSizeChanger: false, size: 'small' }}
+                  rowKey={(record) => record.cinemaRoomId || record.id || Math.random()}
+                  size="small"
+                />
+              ) : (
+                <Empty 
+                  description="No cinema halls found"
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                />
+              )}
+            </Card>
+          </Col>
+        </Row>
+
+        {/* Footer */}
+        <div className="mt-6 text-center">
+          <Text type="secondary" className="text-xs">
+            Real data from database
+          </Text>
         </div>
       </div>
     </div>
