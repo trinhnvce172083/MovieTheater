@@ -5,6 +5,7 @@ import { Modal, Result, Button, Typography } from 'antd';
 import { ExclamationCircleOutlined, HomeOutlined } from '@ant-design/icons';
 import { useDispatch } from 'react-redux';
 import { logout } from '@/store/slices/authSlice';
+import { useRouter } from 'next/navigation';
 
 const { Text } = Typography;
 
@@ -24,37 +25,30 @@ export const AccountBannedNotification: React.FC<AccountBannedNotificationProps>
   onClose
 }) => {
   const dispatch = useDispatch();
+  const router = useRouter();
 
-  const handleGoHome = () => {
-    console.log('🚪 Logging out banned user...');
-    
-    // 1. Dispatch Redux logout action
-    dispatch(logout());
-    
-    // 2. Clear all storage
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    localStorage.removeItem('currentUser');
-    sessionStorage.clear();
-    
-    // 3. Clear cookies if any
-    document.cookie.split(";").forEach((c) => {
-      const eqPos = c.indexOf("=");
-      const name = eqPos > -1 ? c.substr(0, eqPos) : c;
-      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-    });
-
-    console.log('✅ User logged out successfully');
-
-    // 4. Close modal if callback provided
-    if (onClose) {
-      onClose();
+  const handleLogout = async () => {
+    try {
+      // Clear all auth data
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('userInfo');
+      localStorage.removeItem('isLoggedIn');
+      
+      // Clear Redux state
+      dispatch(logout());
+      
+      // Redirect to login
+      router.push('/auth/login');
+    } catch (error) {
+      // Even if logout fails, clear local data and redirect
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('userInfo');
+      localStorage.removeItem('isLoggedIn');
+      dispatch(logout());
+      router.push('/auth/login');
     }
-
-    // 5. Force page reload to clear all states and redirect to homepage
-    window.location.href = '/';
   };
 
   const formatBanUntil = (dateString?: string) => {
@@ -131,7 +125,7 @@ export const AccountBannedNotification: React.FC<AccountBannedNotificationProps>
               type="primary"
               size="large"
               icon={<HomeOutlined />}
-              onClick={handleGoHome}
+              onClick={handleLogout}
               className="bg-blue-600 hover:bg-blue-700 border-0"
             >
               Về trang chủ

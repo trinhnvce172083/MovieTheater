@@ -518,11 +518,11 @@ export default function ProfessionalBookingManagement() {
         okText={editingBooking ? "Update Booking" : "Add Booking"}
         cancelText="Cancel"
       >
-        <BookingForm
+        {/* <BookingForm
           initialValues={editingBooking}
           onFinish={handleModalOk}
           loading={loading}
-        />
+        /> */}
       </Modal>
 
       <style jsx global>{`

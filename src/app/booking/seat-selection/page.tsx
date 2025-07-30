@@ -36,9 +36,9 @@ export default function SeatSelectionPage() {
     roomId,
     movieInfo,
     scheduleInfo,
+    selectedSeats: persistedSelectedSeats,
+    selectedConcessions,
   } = useSelector((state: RootState) => state.booking);
-
-
 
   const {
     seats,
@@ -65,7 +65,26 @@ export default function SeatSelectionPage() {
       roomIdParam &&
       (scheduleIdParam !== scheduleId || roomIdParam !== roomId)
     ) {
-      dispatch(resetBooking());
+      // Nếu có booking data khác, hỏi user có muốn reset không
+      if (persistedSelectedSeats.length > 0 || selectedConcessions.length > 0) {
+        const shouldReset = window.confirm(
+          "Bạn có booking đang thực hiện. Bạn có muốn bắt đầu booking mới không?"
+        );
+        if (shouldReset) {
+          dispatch(resetBooking());
+        } else {
+          // Redirect về booking hiện tại
+          if (scheduleId && roomId) {
+            const currentParams = new URLSearchParams({
+              scheduleId: scheduleId,
+              roomId: roomId,
+            });
+            router.replace(`${ROUTES.BOOKING_SEAT_SELECTION}?${currentParams.toString()}`);
+            return;
+          }
+        }
+      }
+      
       dispatch(
         initializeBooking({
           scheduleId: scheduleIdParam,
@@ -73,7 +92,7 @@ export default function SeatSelectionPage() {
         })
       );
     }
-  }, [searchParams, dispatch, scheduleId, roomId]);
+  }, [searchParams, dispatch, scheduleId, roomId, persistedSelectedSeats, selectedConcessions, router]);
 
   useEffect(() => {
     if (scheduleId) {

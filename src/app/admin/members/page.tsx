@@ -97,7 +97,6 @@ export default function AdminMemberManagement() {
 
   // Lock/Unlock/Activate/Deactivate handlers
   const handleLock = (record: MemberData) => {
-    console.log('Lock button clicked for user:', record);
     setSelectedMember(record);
     setLockModalVisible(true);
   };
@@ -115,9 +114,6 @@ export default function AdminMemberManagement() {
   };
 
   const handleLockConfirm = async (lockData: { reason: string; lockHours: number; sendNotificationEmail: boolean; notes?: string }) => {
-    console.log('Lock confirm called with data:', lockData);
-    console.log('Selected member:', selectedMember);
-    
     if (selectedMember) {
       const success = await lockUserAccount(selectedMember.id, lockData.lockHours, lockData.reason, lockData.sendNotificationEmail);
       if (success) {
@@ -127,7 +123,6 @@ export default function AdminMemberManagement() {
         // If we just locked the current user, trigger banned notification
         const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
         if (currentUser.id === parseInt(selectedMember.id)) {
-          console.log('🚫 User locked themselves! Triggering banned notification...');
           const windowWithCallback = window as typeof window & { __triggerAccountBannedCheck?: (error: unknown) => void };
           if (windowWithCallback.__triggerAccountBannedCheck) {
             // Simulate account locked error

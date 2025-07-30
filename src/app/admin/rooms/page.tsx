@@ -54,7 +54,6 @@ export default function CinemaRoomManagement() {
     try {
       // Fetch all rooms data (we'll handle pagination on frontend due to no filter API)
       const response = await getAllRooms(0, 1000); // Get all rooms
-      console.log('API Response:', response); // Debug log
       
       // Check if response has the expected structure
       if (response && response.content && Array.isArray(response.content)) {

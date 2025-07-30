@@ -1,162 +1,125 @@
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Minus, Plus } from 'lucide-react';
+"use client";
+
+import React from "react";
+import { Card, Button, Typography, Space } from "antd";
+import { Minus, Plus } from "lucide-react";
+
+const { Text, Title } = Typography;
+
+interface Concession {
+  concessionId: number;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  category: string;
+}
 
 interface ConcessionsListProps {
-  concessions: any[];
+  concessions: Concession[];
   quantities: { [key: number]: number };
   onQuantityChange: (concessionId: number, delta: number) => void;
   loading: boolean;
   error: string | null;
 }
 
-export default function ConcessionsList({ concessions, quantities, onQuantityChange, loading, error }: ConcessionsListProps) {
-  // Debug logging
-  console.log('ConcessionsList - concessions:', concessions);
-  console.log('ConcessionsList - quantities:', quantities);
-  console.log('ConcessionsList - loading:', loading);
-  console.log('ConcessionsList - error:', error);
+export default function ConcessionsList({
+  concessions,
+  quantities,
+  onQuantityChange,
+  loading,
+  error
+}: ConcessionsListProps) {
+  if (loading) {
+    return (
+      <div className="text-center py-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+        <Text className="text-gray-400">Đang tải đồ ăn...</Text>
+      </div>
+    );
+  }
 
-  // Group concessions by category
-  const groupedConcessions = concessions.reduce((groups: any, item: any) => {
-    const category = item.category || 'OTHER';
-    if (!groups[category]) {
-      groups[category] = [];
-    }
-    groups[category].push(item);
-    return groups;
-  }, {});
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <Text className="text-red-400 text-lg mb-4">Có lỗi xảy ra khi tải đồ ăn</Text>
+        <Button onClick={() => window.location.reload()} className="bg-blue-500 hover:bg-blue-600">
+          Thử lại
+        </Button>
+      </div>
+    );
+  }
 
-  const categoryLabels = {
-    'POPCORN': '🍿 BẮP RANG',
-    'DRINKS': '🥤 NƯỚC UỐNG',
-    'COMBO': '🍽️ COMBO',
-    'OTHER': '📦 KHÁC'
-  };
+  if (!concessions || concessions.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Text className="text-gray-400 text-lg">Không có đồ ăn khả dụng</Text>
+      </div>
+    );
+  }
 
   return (
-    <div className="lg:col-span-2 w-full">
-      <div className="grid grid-cols-3 md:grid-cols-4 gap-x-1 md:gap-x-4 mb-2 md:mb-4 font-bold text-gray-400 text-[10px] md:text-base">
-        <div className="col-span-2 md:col-span-2">COMBO</div>
-        <div className="text-center md:text-right col-start-3">PRICE</div>
-        <div className="text-center hidden md:block">QUANTITY</div>
-      </div>
-      {loading ? (
-        <div className="text-center py-8">
-          <p className="text-white">Loading concessions...</p>
-        </div>
-      ) : error ? (
-        <div className="text-center py-8">
-          <p className="text-red-500">{error}</p>
-        </div>
-      ) : concessions && concessions.length > 0 ? (
-        <div className="space-y-6">
-          {Object.entries(groupedConcessions).map(([category, items]: [string, any]) => (
-            <div key={category}>
-              {/* Category Header */}
-              <div className="mb-3 pb-2 border-b border-gray-600">
-                <h3 className="text-lg font-bold text-yellow-400">
-                  {categoryLabels[category as keyof typeof categoryLabels] || category}
-                </h3>
-              </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {concessions.map((concession) => {
+        const quantity = quantities[concession.concessionId] || 0;
+        
+        return (
+          <Card
+            key={concession.concessionId}
+            className="bg-[#2a2f3a] border-gray-600 hover:border-gray-500 transition-colors"
+            bodyStyle={{ padding: '16px' }}
+          >
+            <div className="flex items-start space-x-4">
+              <img
+                src={concession.imageUrl || "/popcorn.jpg"}
+                alt={concession.name}
+                className="w-20 h-20 object-cover rounded-lg bg-gray-700"
+              />
               
-              {/* Concessions in this category */}
-              <div className="space-y-1 md:space-y-4">
-                {items.map((item: any) => {
-                  const concessionId = item.concessionId;
-                  const currentQuantity = quantities[concessionId] || 0;
-                  return (
-                    <div key={concessionId}>
-                      {/* Mobile layout */}
-                      <div className="block md:hidden grid grid-cols-3 items-center gap-x-1 p-1 border-b">
-                        <div className="flex items-center gap-1 min-w-0 w-full col-span-2">
-                          <img
-                            src={item.imageUrl || '/popcorn.jpg'}
-                            alt={item.name}
-                            className="w-10 h-10 object-cover rounded bg-white border flex-shrink-0"
-                            onError={e => { e.currentTarget.src = '/popcorn.jpg'; }}
-                          />
-                          <div className="min-w-0">
-                            <div className="font-semibold truncate text-xs">{item.name}</div>
-                            <div className="text-[10px] text-gray-400 truncate">{item.description}</div>
-                          </div>
-                        </div>
-                        <div className="flex flex-col col-start-3">
-                          <div className="text-center font-semibold text-xs flex items-center justify-center">
-                            {item.price.toLocaleString('vi-VN')} VND
-                          </div>
-                          <div className="flex items-center justify-center gap-1 mt-1">
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              className="bg-gray-700 hover:bg-gray-600 border-gray-600 w-6 h-6 p-0"
-                              onClick={() => onQuantityChange(concessionId, -1)} 
-                              disabled={currentQuantity <= 0}
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <span className="font-bold text-xs w-6 text-center">{currentQuantity}</span>
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              className="bg-gray-700 hover:bg-gray-600 border-gray-600 w-6 h-6 p-0"
-                              onClick={() => onQuantityChange(concessionId, 1)}
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                      {/* Desktop layout */}
-                      <div className="hidden md:grid grid-cols-4 items-center gap-x-4 p-2 border-b">
-                        <div className="flex items-center gap-4 min-w-0 w-full col-span-2">
-                          <img
-                            src={item.imageUrl || '/popcorn.jpg'}
-                            alt={item.name}
-                            className="w-12 h-12 object-cover rounded bg-white border flex-shrink-0"
-                            onError={e => { e.currentTarget.src = '/popcorn.jpg'; }}
-                          />
-                          <div className="min-w-0">
-                            <div className="font-semibold truncate text-base">{item.name}</div>
-                            <div className="text-sm text-gray-400 truncate">{item.description}</div>
-                          </div>
-                        </div>
-                        <div className="text-right font-semibold text-base flex items-center justify-end">
-                          {item.price.toLocaleString('vi-VN')} VND
-                        </div>
-                        <div className="flex items-center justify-center gap-4">
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            className="bg-gray-700 hover:bg-gray-600 border-gray-600 w-8 h-8 p-0"
-                            onClick={() => onQuantityChange(concessionId, -1)} 
-                            disabled={currentQuantity <= 0}
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                          <span className="font-bold text-lg w-8 text-center">{currentQuantity}</span>
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            className="bg-gray-700 hover:bg-gray-600 border-gray-600 w-8 h-8 p-0"
-                            onClick={() => onQuantityChange(concessionId, 1)}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="flex-1 min-w-0">
+                <Title level={4} className="text-white mb-1 truncate">
+                  {concession.name}
+                </Title>
+                <Text className="text-gray-400 text-sm mb-2 block">
+                  {concession.description}
+                </Text>
+                <Text className="text-yellow-400 font-semibold text-lg">
+                  {concession.price.toLocaleString()} VND
+                </Text>
               </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-8">
-          <p className="text-gray-400">No concessions available</p>
-        </div>
-      )}
+            
+            <div className="flex items-center justify-between mt-4">
+              <Space>
+                <Button
+                  type="text"
+                  icon={<Minus size={16} />}
+                  onClick={() => onQuantityChange(concession.concessionId, -1)}
+                  disabled={quantity === 0}
+                  className="text-white hover:text-red-400"
+                />
+                
+                <Text className="text-white font-semibold text-lg min-w-[2rem] text-center">
+                  {quantity}
+                </Text>
+                
+                <Button
+                  type="text"
+                  icon={<Plus size={16} />}
+                  onClick={() => onQuantityChange(concession.concessionId, 1)}
+                  className="text-white hover:text-green-400"
+                />
+              </Space>
+              
+              {quantity > 0 && (
+                <Text className="text-green-400 font-semibold">
+                  {(concession.price * quantity).toLocaleString()} VND
+                </Text>
+              )}
+            </div>
+          </Card>
+        );
+      })}
     </div>
   );
 } 

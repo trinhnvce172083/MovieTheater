@@ -33,31 +33,14 @@ export const PromotionDebug: React.FC = () => {
     setResult(null);
     
     try {
-      console.log('🔍 Testing Promotion API...');
-      
-      // Check environment first
       const envInfo = checkEnvironment();
-      console.log('Environment info:', envInfo);
       
-      // Test API call
-      console.log('📡 Making API call to /promotions...');
       const response = await getAllPromotions({ page: 0, size: 5 });
       
-      console.log('✅ API Response:', response);
       setResult(response);
       
     } catch (err: any) {
-      console.error('❌ API Error:', err);
       setError(err.message || 'Unknown error');
-      
-      // Log detailed error info
-      if (err.response) {
-        console.error('Response data:', err.response.data);
-        console.error('Response status:', err.response.status);
-        console.error('Response headers:', err.response.headers);
-      } else if (err.request) {
-        console.error('Request error:', err.request);
-      }
     } finally {
       setLoading(false);
     }
@@ -69,8 +52,6 @@ export const PromotionDebug: React.FC = () => {
     setResult(null);
     
     try {
-      console.log('🔍 Testing direct fetch...');
-      
       const token = localStorage.getItem('accessToken');
       const headers: any = {
         'Content-Type': 'application/json',
@@ -85,19 +66,14 @@ export const PromotionDebug: React.FC = () => {
         headers,
       });
       
-      console.log('📡 Direct fetch response status:', response.status);
-      console.log('📡 Direct fetch response headers:', response.headers);
-      
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
       const data = await response.json();
-      console.log('✅ Direct fetch data:', data);
       setResult(data);
       
     } catch (err: any) {
-      console.error('❌ Direct fetch error:', err);
       setError(err.message || 'Unknown error');
     } finally {
       setLoading(false);

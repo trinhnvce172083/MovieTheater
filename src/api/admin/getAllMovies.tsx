@@ -121,9 +121,7 @@ const mockGetMovieById = async (id: string) => {
 
 export const getMovies = async (params: GetMoviesParams = {}) => {
   try {
-    console.log('Calling API with params:', params);
     const response = await axiosClient.get("/movies", { params });
-    console.log('API Response:', response.data);
     
     // Backend returns ApiResponse format: { success: true, data: {...}, message: "..." }
     if (response.data && response.data.success) {
@@ -144,9 +142,7 @@ export const createMovie = async (movieData: Omit<Movie, 'movieId'>) => {
     // Transform frontend data to match backend expectations
     const backendData = transformToBackendFormat(movieData);
 
-    console.log('Creating movie with data:', backendData);
     const response = await axiosClient.post("/movies", backendData);
-    console.log('Movie created successfully:', response.data);
     return response.data.data || response.data;
   } catch (error) {
     console.warn("API call failed, falling back to mock data:", error);
@@ -164,9 +160,7 @@ export const updateMovie = async (id: number, movieData: Partial<Movie>) => {
     // Use smart update data preparation for backend
     const backendData = prepareSmartUpdateData(movieData);
 
-    console.log('Updating movie with data:', backendData);
     const response = await axiosClient.put(`/movies/${id}`, backendData);
-    console.log('Movie updated successfully:', response.data);
     return response.data.data || response.data;
   } catch {
     console.warn("API call failed, falling back to mock data");
@@ -176,9 +170,7 @@ export const updateMovie = async (id: number, movieData: Partial<Movie>) => {
 
 export const deleteMovie = async (id: number) => {
   try {
-    console.log('Deleting movie with ID:', id);
     await axiosClient.delete(`/movies/${id}`);
-    console.log('Movie deleted successfully');
   } catch {
     console.warn("API call failed, falling back to mock data");
     await mockDeleteMovie();
@@ -187,9 +179,7 @@ export const deleteMovie = async (id: number) => {
 
 export const getMovieById = async (id: number) => {
   try {
-    console.log('Fetching movie with ID:', id);
     const response = await axiosClient.get(`/movies/${id}`);
-    console.log('Movie fetched successfully:', response.data);
     return response.data.data || response.data;
   } catch {
     console.warn("API call failed, falling back to mock data");
@@ -199,9 +189,7 @@ export const getMovieById = async (id: number) => {
 
 export const getMovieStatistics = async () => {
   try {
-    console.log('Fetching movie statistics');
     const response = await axiosClient.get("/movies/statistics");
-    console.log('Statistics fetched successfully:', response.data);
     return response.data.data || response.data;
   } catch {
     console.warn("API call failed, returning default statistics");
@@ -219,13 +207,11 @@ export const uploadMoviePoster = async (id: number, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
     
-    console.log('Uploading poster for movie ID:', id);
     const response = await axiosClient.post(`/movies/${id}/poster`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
-    console.log('Poster uploaded successfully:', response.data);
     return response.data;
   } catch (error) {
     console.error('Failed to upload poster:', error);
@@ -235,11 +221,9 @@ export const uploadMoviePoster = async (id: number, file: File) => {
 
 export const searchMovies = async (keyword: string, page = 0, size = 10) => {
   try {
-    console.log('Searching movies with keyword:', keyword);
     const response = await axiosClient.get('/movies/search', {
       params: { keyword, page, size }
     });
-    console.log('Search results:', response.data);
     return response.data.data || response.data;
   } catch {
     console.warn("Search API failed, falling back to mock data");
@@ -257,9 +241,7 @@ export const searchMovies = async (keyword: string, page = 0, size = 10) => {
 
 export const getNowShowingMovies = async () => {
   try {
-    console.log('Fetching now showing movies from API');
     const response = await axiosClient.get('/movies/now-showing');
-    console.log('Now showing movies API response:', response.data);
     
     if (response.data && response.data.success) {
       return response.data.data;
@@ -275,9 +257,7 @@ export const getNowShowingMovies = async () => {
 
 export const getComingSoonMovies = async () => {
   try {
-    console.log('Fetching coming soon movies from API');
     const response = await axiosClient.get('/movies/coming-soon');
-    console.log('Coming soon movies API response:', response.data);
     
     if (response.data && response.data.success) {
       return response.data.data;

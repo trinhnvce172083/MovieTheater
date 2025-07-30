@@ -18,11 +18,7 @@ export const GlobalAccountBannedProvider: React.FC<GlobalAccountBannedProviderPr
     const windowWithCallback = window as typeof window & { __triggerAccountBannedCheck?: (error: unknown) => void };
     
     windowWithCallback.__triggerAccountBannedCheck = (error) => {
-      console.log('🔍 Checking if account is banned...', error);
-      const isBanned = checkAccountBanned(error as { response?: { status: number; data?: { message?: string; errorCode?: string; code?: number } } });
-      if (isBanned) {
-        console.log('🚫 Account banned detected!');
-      }
+      checkAccountBanned(error);
     };
 
     return () => {

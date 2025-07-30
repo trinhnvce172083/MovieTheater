@@ -151,11 +151,9 @@ export const getAllRooms = async (
   sortDirection = 'asc'
 ): Promise<PaginatedResponse<CinemaRoom>> => {
   try {
-    console.log('Making API call to /cinema-rooms'); // Debug log
     const response = await axiosClient.get('/cinema-rooms', {
       params: { page, size, sortBy, sortDirection }
     });
-    console.log('API Response received:', response.data); // Debug log
     
     // Check if response has expected structure
     if (response.data && response.data.success && response.data.data) {
@@ -166,7 +164,6 @@ export const getAllRooms = async (
       throw new Error('Unexpected API response structure');
     }
   } catch (error) {
-    console.error('API call failed, using mock data:', error);
     // Return mock data as fallback
     const start = page * size;
     const end = start + size;

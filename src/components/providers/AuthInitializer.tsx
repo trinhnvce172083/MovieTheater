@@ -13,39 +13,36 @@ export default function AuthInitializer() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // Only run on client side
-    if (typeof window !== "undefined") {
-      const accessToken = localStorage.getItem("accessToken");
-      if (accessToken) {
-        try {
-          // Validate token before using it
-          const payload = decodeJwt(accessToken);
-          const currentTime = Date.now() / 1000;
-          
-          console.log('🔍 AuthInitializer - Token payload:', payload);
-          
-          // Check if token is expired
-          if (payload && payload.exp && Number(payload.exp) > currentTime) {
-            // Token is valid, restore auth state
-            dispatch(login({ token: accessToken }));
-            console.log('✅ AuthInitializer - Auth state restored');
-          } else {
-            // Token is expired, clear it
-            console.log('⚠️ AuthInitializer - Token expired, clearing storage');
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-            localStorage.removeItem("userInfo");
-            localStorage.removeItem("isLoggedIn");
-          }
-        } catch (error) {
-          console.log('❌ AuthInitializer - Error decoding token:', error);
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
-          localStorage.removeItem("userInfo");
-          localStorage.removeItem("isLoggedIn");
+    const initializeAuth = () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return;
+
+        const payload = decodeJwt(token);
+        if (!payload) return;
+
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp < currentTime) {
+          // Token expired, clear storage
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('userInfo');
+          localStorage.removeItem('isLoggedIn');
+          return;
         }
+
+        // Token is valid, restore auth state
+        dispatch(login({ token }));
+      } catch (error) {
+        // Error decoding token, clear storage
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userInfo');
+        localStorage.removeItem('isLoggedIn');
       }
-    }
+    };
+
+    initializeAuth();
   }, [dispatch]);
 
   // This is a utility component, it doesn't render anything
