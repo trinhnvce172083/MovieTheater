@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { Modal, Form, Input, Select, InputNumber, Checkbox, Row, Col, Tooltip } from 'antd';
+import { Modal, Form, Input, Select, InputNumber, Checkbox, Row, Col, Tooltip, Tag } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { CinemaRoomResponse, RoomCreateRequest } from '../types';
+import { CinemaRoomResponse } from '../types';
+import type { FormInstance } from 'antd/es/form';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -12,7 +13,7 @@ interface RoomFormModalProps {
   onCancel: () => void;
   editingRoom: CinemaRoomResponse | null;
   loading: boolean;
-  form: any;
+  form: FormInstance;
 }
 
 export const RoomFormModal: React.FC<RoomFormModalProps> = ({
@@ -55,14 +56,52 @@ export const RoomFormModal: React.FC<RoomFormModalProps> = ({
         isActive: true,
         has3D: false,
         hasDolbyAtmos: false,
-        hasReclinerSeats: false
+        hasReclinerSeats: false,
+        seatQuantity: undefined,
+        rows: undefined,
+        columns: undefined,
       });
     }
   }, [visible, editingRoom, form]);
 
+
+  // Auto-calculate seatQuantity when rows or columns change
+  const handleValuesChange = (changedValues: Record<string, unknown>, allValues: Record<string, unknown>) => {
+    if (
+      (Object.prototype.hasOwnProperty.call(changedValues, 'rows') ||
+        Object.prototype.hasOwnProperty.call(changedValues, 'columns')) &&
+      typeof allValues.rows === 'number' && allValues.rows > 0 &&
+      typeof allValues.columns === 'number' && allValues.columns > 0
+    ) {
+      const calculatedSeats = allValues.rows * allValues.columns;
+      form.setFieldsValue({ seatQuantity: calculatedSeats });
+    }
+  };
+
+  // Custom validation for seat calculation
+  const validateSeatCalculation = async (_: unknown, value: number) => {
+    const formValues = form.getFieldsValue();
+    const { rows, columns } = formValues;
+    
+    if (typeof rows === 'number' && typeof columns === 'number' && value !== rows * columns) {
+      throw new Error('Seat quantity must equal rows × columns');
+    }
+    return Promise.resolve();
+  };
+
   return (
     <Modal
-      title={editingRoom ? "Edit Room" : "Add New Room"}
+      title={
+        <div className="flex items-center gap-2">
+          <span>{editingRoom ? "Edit Room" : "Add New Room"}</span>
+          {editingRoom && (
+            <Tag color="blue" className="ml-2">
+              ID: {editingRoom.cinemaRoomId}
+            </Tag>
+          )}
+        </div>
+      }
+      
       open={visible}
       onOk={onOk}
       onCancel={onCancel}
@@ -71,8 +110,10 @@ export const RoomFormModal: React.FC<RoomFormModalProps> = ({
       okText={editingRoom ? "Update Room" : "Add Room"}
       cancelText="Cancel"
       confirmLoading={loading}
+      destroyOnHidden={true}
+      maskClosable={false}
     >
-      <Form form={form} layout="vertical" className="mt-6">
+      <Form form={form} layout="vertical" className="mt-6" onValuesChange={handleValuesChange}>
         <Row gutter={16}>
           <Col xs={24} sm={12}>
             <Form.Item
@@ -81,7 +122,13 @@ export const RoomFormModal: React.FC<RoomFormModalProps> = ({
               rules={[
                 { required: true, message: "Please enter room name" },
                 { max: 50, message: "Room name cannot exceed 50 characters" },
+                { min: 2, message: "Room name must be at least 2 characters" },
+                {
+                  pattern: /^[A-Za-z0-9\s\-_]+$/,
+                  message: "Room name can only contain letters, numbers, spaces, hyphens, and underscores"
+                },
               ]}
+              tooltip="Use a unique, descriptive name for the room"
             >
               <Input placeholder="Enter room name" className="h-10" />
             </Form.Item>
@@ -119,13 +166,16 @@ export const RoomFormModal: React.FC<RoomFormModalProps> = ({
                   max: 500,
                   message: "Seats must be between 1 and 500",
                 },
+                { validator: validateSeatCalculation },
               ]}
             >
               <InputNumber
-                placeholder="Enter total seats"
+                placeholder="Total seats = Rows × Columns"
                 className="w-full h-10"
                 min={1}
                 max={500}
+                readOnly
+                style={{ backgroundColor: '#f5f5f5' }}
               />
             </Form.Item>
           </Col>
