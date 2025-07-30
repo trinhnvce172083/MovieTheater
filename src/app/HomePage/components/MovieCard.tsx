@@ -43,10 +43,7 @@ export function MovieCard({ movie, onViewDetails }: MovieCardProps) {
   // Format the price properly
   const formattedPrice = (price: number | string | undefined): string => {
     const numPrice = Number(price || 0);
-    return numPrice.toLocaleString(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
+    return numPrice.toLocaleString('vi-VN') + ' VND';
   };
 
   // Ensure genre is an array
@@ -61,15 +58,15 @@ export function MovieCard({ movie, onViewDetails }: MovieCardProps) {
   const movieDetailsUrl = `/movies/${movie.movieId || ''}`;
 
   return (
-    <Card className="w-full min-h-[480px] flex-shrink-0 rounded-xl overflow-hidden bg-black border border-orange-500/20 shadow-lg hover:shadow-orange-900/20 hover:border-orange-500/40 transition-all duration-300 transform hover:-translate-y-1 group" style={cardStyle}>
+    <Card className="w-full min-h-[400px] sm:min-h-[480px] flex-shrink-0 rounded-xl overflow-hidden bg-black border border-orange-500/20 shadow-lg hover:shadow-orange-900/20 hover:border-orange-500/40 transition-all duration-300 transform hover:-translate-y-1 group" style={cardStyle}>
       <Link href={movieDetailsUrl} className="block">
         {/* Movie Poster */}
-        <div className="relative w-full h-[480px] overflow-hidden">
+        <div className="relative w-full h-[320px] sm:h-[400px] md:h-[480px] overflow-hidden">
           <Image
             src={imageUrl || "/default-image.png"}
             alt={movie.title}
             fill
-            sizes="220px"
+            sizes="(max-width: 640px) 280px, (max-width: 768px) 300px, 320px"
             className="object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
             priority={movie.isFeatured}
           />
@@ -79,22 +76,22 @@ export function MovieCard({ movie, onViewDetails }: MovieCardProps) {
 
           {/* Featured Badge */}
           {movie.isFeatured && (
-            <Badge className="absolute top-2 left-2 bg-orange-500 text-black font-semibold z-10">
+            <Badge className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-orange-500 text-black font-semibold z-10 text-xs">
               Featured
             </Badge>
           )}
 
           {/* Rating Badge */}
           <Badge
-            className={`absolute top-2 right-2 ${getRatingColor(
+            className={`absolute top-1 right-1 sm:top-2 sm:right-2 ${getRatingColor(
               movie.rating
-            )} text-white font-semibold z-10`}
+            )} text-white font-semibold z-10 text-xs`}
           >
             {movie.rating}
           </Badge>
 
           {/* IMDB Rating */}
-          <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1 z-10">
+          <div className="absolute bottom-1 left-1 sm:bottom-2 sm:left-2 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1 z-10">
             <Star className="h-3 w-3 text-yellow-400 fill-current" />
             <span className="text-white text-xs font-semibold">
               {movie.imdbRating}
@@ -102,19 +99,19 @@ export function MovieCard({ movie, onViewDetails }: MovieCardProps) {
           </div>
         </div>
       </Link>      {/* Movie Info */}
-      <CardContent className="p-3 space-y-2 min-h-[160px] flex flex-col justify-between">
+      <CardContent className="p-2 sm:p-3 space-y-1.5 sm:space-y-2 min-h-[120px] sm:min-h-[160px] flex flex-col justify-between">
         <div>
           <Link href={movieDetailsUrl} className="block">
-            <h3 className="text-white font-bold text-base line-clamp-1 group-hover:text-orange-400 transition-colors">
+            <h3 className="text-white font-bold text-sm sm:text-base line-clamp-1 group-hover:text-orange-400 transition-colors">
               {movie.title}
             </h3>
           </Link>          {/* Genres */}
-          <div className="flex flex-wrap gap-1 mt-1.5 mb-1">
+          <div className="flex flex-wrap gap-1 mt-1 sm:mt-1.5 mb-1">
             {genreArr.slice(0, 2).map((genre) => (
               <Badge
                 key={genre}
                 variant="outline"
-                className="text-[10px] py-0 border-orange-500/30 text-orange-300"
+                className="text-[9px] sm:text-[10px] py-0 border-orange-500/30 text-orange-300"
               >
                 {genre}
               </Badge>
@@ -122,14 +119,14 @@ export function MovieCard({ movie, onViewDetails }: MovieCardProps) {
             {genreArr.length > 2 && (
               <Badge
                 variant="outline"
-                className="text-[10px] py-0 border-orange-500/30 text-orange-300"
+                className="text-[9px] sm:text-[10px] py-0 border-orange-500/30 text-orange-300"
               >
                 +{genreArr.length - 2}
               </Badge>
             )}
           </div>
 
-          {/* Movie Details */}          <div className="flex justify-between text-xs text-gray-400 mt-1.5 mb-2">
+          {/* Movie Details */}          <div className="flex justify-between text-[10px] sm:text-xs text-gray-400 mt-1 sm:mt-1.5 mb-1 sm:mb-2">
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3 text-orange-400" />
               <span>{movie.formattedDuration || '1h 41m'}</span>
@@ -141,14 +138,14 @@ export function MovieCard({ movie, onViewDetails }: MovieCardProps) {
             </div>
           </div>
         </div>        {/* Price and Action */}
-        <div className="flex items-center justify-between pt-2 mt-auto border-t border-orange-500/20">
-          <div className="text-orange-400 font-bold text-sm">
-            ${formattedPrice(movie.price)}
+        <div className="flex items-center justify-between pt-1.5 sm:pt-2 mt-auto border-t border-orange-500/20">
+          <div className="text-orange-400 font-bold text-xs sm:text-sm">
+            {formattedPrice(movie.price)}
           </div>
           <Link href={movieDetailsUrl}>
             <Button
               size="sm"
-              className="h-8 px-3 bg-orange-500 hover:bg-orange-600 text-black text-xs font-semibold"
+              className="h-7 sm:h-8 px-2 sm:px-3 bg-orange-500 hover:bg-orange-600 text-black text-[10px] sm:text-xs font-semibold"
               onClick={handleViewDetails}
             >
               View Details

@@ -95,7 +95,7 @@ export const formatDuration = (minutes: number): string => {
  * Format currency (VND)
  */
 export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('vi-VN', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'VND'
   }).format(amount);
@@ -109,7 +109,7 @@ export const formatDate = (dateString: string): string => {
   
   try {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('vi-VN', {
+    return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'

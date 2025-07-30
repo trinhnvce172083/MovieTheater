@@ -25,7 +25,7 @@ export default function LanguageDropdown() {
             English
           </DropdownMenuItem>
           <DropdownMenuItem className="flex justify-center hover:bg-red-500 hover:text-white cursor-pointer transition-colors focus:bg-red-500 focus:text-white">
-            Tiếng Việt
+            Vietnamese
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

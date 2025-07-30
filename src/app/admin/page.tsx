@@ -85,6 +85,7 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats>({

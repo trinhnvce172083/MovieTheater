@@ -47,46 +47,85 @@ export default function useConcessions() {
     setImageFile(null);
   };
 
+  // Hàm upload ảnh riêng biệt
+  const uploadImage = async (concessionId: number, file: File): Promise<boolean> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const token = localStorage.getItem("accessToken");
+      
+      const response = await fetch(`http://localhost:8080/cinema/api/concessions/${concessionId}/image`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        message.success('Image uploaded successfully');
+        return true;
+      } else {
+        throw new Error(result.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Image upload error:', error);
+      message.error('Failed to upload image. Please try again.');
+      return false;
+    }
+  };
+
   const handleFormSubmit = async (values: Omit<Concession, 'id'> & { imageUrl?: string }) => {
+    // Round numeric values to avoid decimal issues
+    const roundedValues = {
+      ...values,
+      price: Math.round(values.price || 0),
+      stockQuantity: Math.round(values.stockQuantity || 0),
+      displayOrder: Math.round(values.displayOrder || 0)
+    };
     try {
       setFormLoading(true);
       let concessionId: number | undefined;
+      let uploadSuccess = true;
+
       if (editingConcession) {
-        await updateConcession(editingConcession.id, values);
+        // Update existing concession
+        await updateConcession(editingConcession.id, roundedValues);
         concessionId = editingConcession.id;
+        
+        // Upload image if provided
         if (imageFile && concessionId) {
-          const formData = new FormData();
-          formData.append('file', imageFile);
-          const token = localStorage.getItem("accessToken");
-          await fetch(`http://localhost:8080/cinema/api/concessions/${concessionId}/image`, {
-            method: 'PUT',
-            body: formData,
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          uploadSuccess = await uploadImage(concessionId, imageFile);
         }
-        message.success('Đã chỉnh sửa thành công');
+        
+        // if (uploadSuccess) {
+        //   message.success('Đã chỉnh sửa thành công');
+        // }
       } else {
-        const res = await addConcession(values);
-        concessionId = res.data.id || res.data.concessionId;
+        // Create new concession
+        const res = await addConcession(roundedValues);
+        concessionId = res.data.data?.concessionId;
+        
+        // Upload image if provided
         if (imageFile && concessionId) {
-          const formData = new FormData();
-          formData.append('file', imageFile);
-          const token = localStorage.getItem("accessToken");
-          await fetch(`http://localhost:8080/cinema/api/concessions/${concessionId}/image`, {
-            method: 'POST',
-            body: formData,
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          uploadSuccess = await uploadImage(concessionId, imageFile);
         }
-        message.success('Đã thêm thành công');
+        
+        if (uploadSuccess) {
+          message.success('Added successfully');
+        }
       }
-      fetchConcessions();
+
+      // Refresh data to show updated image
+      await fetchConcessions();
       handleCancel();
     } catch (error) {
+      console.error('Form submit error:', error);
       message.error('Failed to save concession. Please try again.');
     } finally {
       setFormLoading(false);
@@ -97,7 +136,7 @@ export default function useConcessions() {
     try {
       setLoading(true);
       await deleteConcession(id);
-      message.success('Đã xóa thành công');
+      message.success('Deleted successfully');
       fetchConcessions();
     } catch (error) {
       message.error('Failed to delete concession. Please try again.');

@@ -1,7 +1,6 @@
 "use client";
-
+import Footer from "@/components/Footer";
 import React from "react";
-import { BookingProvider } from "@/contexts/BookingContext";
 
 export default function CornChipLayout({
   children,
@@ -9,8 +8,9 @@ export default function CornChipLayout({
   children: React.ReactNode;
 }) {
   return (
-    <BookingProvider>
+    <>
       {children}
-    </BookingProvider>
+      <Footer />
+    </> 
   );
 } 

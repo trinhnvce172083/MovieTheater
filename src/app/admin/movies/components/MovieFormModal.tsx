@@ -156,8 +156,6 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
     try {
       const values = await form.validateFields();
       
-      console.log('🎬 Form Values before processing:', values);
-      
       const movieData = {
         ...values,
         releaseDate: values.releaseDate ? (values.releaseDate as Dayjs).format('YYYY-MM-DD') : null,
@@ -167,8 +165,6 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
         isFeatured: Boolean(values.isFeatured), // Ensure boolean value
         isAdultContent: false // Always false since we removed the field
       };
-
-      console.log('🎬 Movie Data after processing:', movieData);
 
       // Check if there are image files to upload
       const hasImages = posterFileList.length > 0 || backdropFileList.length > 0;
@@ -190,10 +186,8 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
           backdropFile: backdropFileList[0]?.originFileObj,
           hasImages
         });
-        console.log('isFeatured value:', values.isFeatured)
       }
     } catch (error) {
-      console.error('Form validation failed:', error);
       message.error('Please fill all required fields correctly!');
     }
   };

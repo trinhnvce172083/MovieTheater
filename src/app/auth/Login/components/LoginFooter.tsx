@@ -10,14 +10,17 @@ const LoginFooter = memo(function LoginFooter() {
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState<string | null>(null);
 
-  const handleNavigation = useCallback(async (route: string, type: string) => {
-    setIsNavigating(type);
-    try {
-      await router.push(route);
-    } finally {
-      setIsNavigating(null);
-    }
-  }, [router]);
+  const handleNavigation = useCallback(
+    async (route: string, type: string) => {
+      setIsNavigating(type);
+      try {
+        await router.push(route);
+      } finally {
+        setIsNavigating(null);
+      }
+    },
+    [router]
+  );
 
   const footerSections = [
     {
@@ -40,7 +43,10 @@ const LoginFooter = memo(function LoginFooter() {
     <footer>
       <div className="flex flex-col items-center space-y-1 sm:space-y-2">
         {footerSections.map((section) => (
-          <div key={section.key} className="flex flex-col sm:flex-row items-center sm:gap-2 text-xs sm:text-sm text-center">
+          <div
+            key={section.key}
+            className="flex flex-col sm:flex-row items-center sm:gap-2 text-xs sm:text-sm text-center"
+          >
             <span className="text-gray-950!">{section.text}</span>
             <Button
               variant="link"

@@ -92,89 +92,80 @@ const MemberDetailPage: React.FC = () => {
   };
 
   // Fetch user details
-  const fetchUserDetail = async (id: string): Promise<UserDetail | null> => {
+  const fetchUserDetail = async (id: string) => {
     try {
-      console.log("🔍 [MemberDetail] Fetching user detail for ID:", id);
+      setLoading(true);
       
-      const token = localStorage.getItem('accessToken');
-      console.log("🔑 [MemberDetail] Token present:", !!token);
-      
+      const token = localStorage.getItem('accessToken') || 
+                   localStorage.getItem('access_token') || 
+                   localStorage.getItem('authToken');
+
       if (!token) {
-        console.log("⚠️ [MemberDetail] No token found, creating mock user");
-        // Return mock user data for testing
-        return {
-          accountId: parseInt(id),
-          username: `user_${id}`,
-          fullName: `Test User ${id}`,
-          email: `user${id}@cinema.com`,
-          phoneNumber: "0399927256",
-          address: "123 Test Street, Test City",
-          dateOfBirth: "1990-01-01",
-          role: "CUSTOMER",
-          isActive: true,
-          createdAt: "2025-07-21T02:45:24",
-          updatedAt: "2025-07-21T02:45:24",
-          avatar: undefined
-        };
+        setUserDetail(mockUserDetail);
+        return;
       }
 
-      const response = await axiosClient.get(`/admin/users/${id}`, {
+      const response = await axiosClient.get(`/cinema/api/admin/users/${id}`, {
         headers: {
-          Authorization: `Bearer ${token}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
-      console.log("📦 [MemberDetail] API Response:", response.data);
-      
-      // Backend returns ApiResponse format: { success: true, data: {...}, message: "..." }
-      const userData = response.data.data || response.data;
-      console.log("👤 [MemberDetail] Extracted user data:", userData);
-
-      if (userData) {
-        const userDetail: UserDetail = {
-          accountId: userData.accountId,
-          username: userData.username || 'N/A',
-          fullName: userData.fullName || 'N/A',
-          email: userData.email || 'N/A',
-          phoneNumber: userData.phoneNumber,
-          address: userData.address,
-          dateOfBirth: userData.dateOfBirth,
-          role: userData.role || 'CUSTOMER',
-          isActive: userData.isActive !== false,
-          createdAt: userData.createdAt || new Date().toISOString(),
-          updatedAt: userData.updatedAt,
-          avatar: userData.avatar
-        };
-        console.log("✨ [MemberDetail] Transformed user detail:", userDetail);
-        return userDetail;
+      if (response.data && response.data.success) {
+        const userData = response.data.data || response.data;
+        const transformedUser = transformUserData(userData);
+        setUserDetail(transformedUser);
+      } else {
+        setUserDetail(mockUserDetail);
       }
-      return null;
     } catch (error) {
-      console.error("❌ [MemberDetail] fetchUserDetail error:", error);
+      setUserDetail(mockUserDetail);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCurrentUserAndDetail = async () => {
+    try {
+      setLoading(true);
       
-      // Return mock user data as fallback
-      console.log("🔄 [MemberDetail] API failed, returning mock user");
-      return {
-        accountId: parseInt(id),
-        username: `user_${id}`,
-        fullName: `Test User ${id}`,
-        email: `user${id}@cinema.com`,
-        phoneNumber: "0399927256",
-        address: "123 Test Street, Test City", 
-        dateOfBirth: "1990-01-01",
-        role: "CUSTOMER",
-        isActive: true,
-        createdAt: "2025-07-21T02:45:24",
-        updatedAt: "2025-07-21T02:45:24",
-        avatar: undefined
-      };
+      const token = localStorage.getItem('accessToken') || 
+                   localStorage.getItem('access_token') || 
+                   localStorage.getItem('authToken');
+
+      if (!token) {
+        setUserDetail(mockUserDetail);
+        return;
+      }
+
+      const [currentUserResponse, userDetailResponse] = await Promise.all([
+        axiosClient.get('/cinema/api/admin/users/current', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        axiosClient.get(`/cinema/api/admin/users/${currentUserId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
+
+      if (currentUserResponse.data?.success && userDetailResponse.data?.success) {
+        const currentUserData = currentUserResponse.data.data || currentUserResponse.data;
+        const userDetailData = userDetailResponse.data.data || userDetailResponse.data;
+        
+        const transformedUser = transformUserData(userDetailData);
+        setUserDetail(transformedUser);
+      } else {
+        setUserDetail(mockUserDetail);
+      }
+    } catch (error) {
+      setUserDetail(mockUserDetail);
+    } finally {
+      setLoading(false);
     }
   };
 
   // Load user details
   const loadUserDetail = async () => {
     const currentUserId = userId || "1"; // Fallback to ID 1 for testing
-    console.log("🔍 [MemberDetail] Loading user detail for ID:", currentUserId);
     
     if (!currentUserId) {
       setError("User ID is required");
@@ -187,14 +178,10 @@ const MemberDetailPage: React.FC = () => {
       setError("");
       
       // Fetch both current user and target user details
-      console.log("📞 [MemberDetail] Fetching current user and user detail...");
       const [currentUserData, userDetailData] = await Promise.all([
         fetchCurrentUser(),
         fetchUserDetail(currentUserId)
       ]);
-
-      console.log("👤 [MemberDetail] Current user data:", currentUserData);
-      console.log("🎯 [MemberDetail] Target user data:", userDetailData);
 
       if (!currentUserData) {
         setError("Failed to authenticate. Please login again.");

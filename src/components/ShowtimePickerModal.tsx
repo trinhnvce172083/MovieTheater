@@ -91,6 +91,11 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({
     }
   };
 
+  const handleClearAll = () => {
+    setSelectedTime(null);
+    setSelectedScheduleId(null);
+  };
+
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose}></div>
@@ -139,7 +144,16 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({
             <div className="space-y-5">
               {/* Chọn giờ */}
               <div>
-                <h3 className="font-semibold text-lg text-purple-200 mb-3">Select time slot</h3>
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-semibold text-lg text-purple-200">Select time slot</h3>
+                  <button
+                    className={`px-3 py-1 rounded-lg font-medium text-white bg-red-500 hover:bg-red-600 transition-all duration-150 text-sm ${!selectedTime && !selectedScheduleId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={!selectedTime && !selectedScheduleId}
+                    onClick={handleClearAll}
+                  >
+                    Clear All
+                  </button>
+                </div>
                 <div className="flex flex-wrap gap-3">
                   {displaySchedules.map((schedule) => (
                     <button
@@ -151,7 +165,7 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({
                       className={`px-4 py-2 rounded-lg font-bold transition-all duration-200
                         ${
                           selectedTime === schedule.displayTime
-                            ? "bg-purple-400 text-black ring-2 ring-purple-200"
+                            ? "bg-purple-400 text-white ring-2 ring-purple-200"
                             : "bg-white/10 text-white hover:bg-white/20"
                         }`}
                     >
@@ -173,7 +187,7 @@ const ShowtimePickerModal: React.FC<ShowtimePickerModalProps> = ({
                         className={`px-4 py-2 rounded-lg font-semibold transition-all duration-200 flex flex-col text-center
                           ${
                             selectedScheduleId === schedule.scheduleId
-                              ? "bg-yellow-400 text-black ring-2 ring-yellow-200"
+                              ? "bg-yellow-400 text-white ring-2 ring-yellow-200"
                               : "bg-white/10 text-white hover:bg-white/20"
                           }`}
                       >

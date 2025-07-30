@@ -286,6 +286,46 @@ const bookingSlice = createSlice({
     resetBooking: (state) => {
       Object.assign(state, initialState);
     },
+
+    // Clear chỉ selectedSeats (giữ lại thông tin khác)
+    clearSelectedSeats: (state) => {
+      state.selectedSeats = [];
+      state.seatTotal = 0;
+      state.totalAmount = state.concessionsTotal;
+      state.finalAmount = state.totalAmount - state.discountAmount;
+    },
+
+    // Clear concessions (giữ lại ghế đã chọn)
+    clearConcessions: (state) => {
+      state.selectedConcessions = [];
+      state.concessionsTotal = 0;
+      state.totalAmount = state.seatTotal;
+      state.finalAmount = state.totalAmount - state.discountAmount;
+    },
+
+    // Clear promotion (giữ lại ghế và concessions)
+    clearPromotion: (state) => {
+      state.appliedPromotion = null;
+      state.promotionCode = '';
+      state.discountAmount = 0;
+      state.finalAmount = state.totalAmount;
+    },
+
+    // Update seat total và tính lại tổng
+    updateSeatTotal: (state, action: PayloadAction<number>) => {
+      state.seatTotal = action.payload;
+      state.totalAmount = state.seatTotal + state.concessionsTotal;
+      state.finalAmount = state.totalAmount - state.discountAmount;
+    },
+
+    // Recalculate totals (dùng khi cần tính lại)
+    recalculateTotals: (state) => {
+      state.concessionsTotal = state.selectedConcessions.reduce(
+        (total, item) => total + (item.quantity * item.concession.price), 0
+      );
+      state.totalAmount = state.seatTotal + state.concessionsTotal;
+      state.finalAmount = state.totalAmount - state.discountAmount;
+    },
   },
 });
 
@@ -311,6 +351,11 @@ export const {
   setSeatTotal,
   
   resetBooking,
+  clearSelectedSeats,
+  clearConcessions,
+  clearPromotion,
+  updateSeatTotal,
+  recalculateTotals,
 } = bookingSlice.actions;
 
 export default bookingSlice.reducer; 

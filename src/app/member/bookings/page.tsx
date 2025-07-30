@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Table, Input, Select, Typography, Pagination, Spin, Alert, Button, Empty } from "antd";
 import type { Breakpoint } from "antd/es/_util/responsiveObserver";
 import { useMemberBookings } from "@/hooks/member";
@@ -76,14 +76,15 @@ const columns = [
 
 export default function BookedTicketsPage() {
   const [pageSize, setPageSize] = useState(10);
-  const [current, setCurrent] = useState(1);
-  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   const { bookings, loading, error, refresh, totalElements } = useMemberBookings();
 
   // Reset lại trang khi bookings thay đổi
   useEffect(() => {
-    setCurrent(1);
+    setCurrentPage(1);
   }, [bookings]);
 
   // Đảm bảo bookings luôn là mảng
@@ -91,30 +92,35 @@ export default function BookedTicketsPage() {
 
   // Đảm bảo filter không lỗi khi bookings chưa có dữ liệu
   const filteredData = bookingsArray.filter((item: MemberBooking) =>
-    (item.movieTitle || "").toLowerCase().includes(search.toLowerCase()) ||
-    (item.bookingCode || "").toLowerCase().includes(search.toLowerCase())
+    (item.movieTitle || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.bookingCode || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const pagedData = filteredData.slice((current - 1) * pageSize, current * pageSize);
-
-  // Log kiểm tra dữ liệu
-  console.log("bookings thực tế:", bookingsArray);
-  console.log("filteredData:", filteredData);
-  console.log("pagedData:", pagedData);
-  
-  // Debug showtime data
-  if (pagedData.length > 0) {
-    console.log("Sample booking data:", pagedData[0]);
-    console.log("showDate:", pagedData[0].showDate);
-    console.log("startTime:", pagedData[0].startTime);
-    console.log("bookingDate:", pagedData[0].bookingDate);
-    console.log("All booking fields:", Object.keys(pagedData[0]));
-    console.log("Full booking object:", JSON.stringify(pagedData[0], null, 2));
-  }
+  const pagedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return filteredData.slice(startIndex, endIndex);
+  }, [filteredData, currentPage, pageSize]);
 
   const handlePageChange = (page: number, size?: number) => {
-    setCurrent(page);
+    setCurrentPage(page);
     if (size) setPageSize(size);
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusFilter = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("");
+    setCurrentPage(1);
   };
 
   // Hiển thị loading chỉ khi lần đầu load
@@ -181,8 +187,8 @@ export default function BookedTicketsPage() {
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600 hidden lg:block">Search:</span>
           <Input
-            value={search}
-            onChange={e => { setSearch(e.target.value); setCurrent(1); }}
+            value={searchTerm}
+            onChange={e => { handleSearch(e.target.value); }}
                 className="w-full lg:w-64"
             allowClear
             placeholder="Search by movie name or booking code"
@@ -215,7 +221,7 @@ export default function BookedTicketsPage() {
               {pagedData.map((item: MemberBooking, index: number) => (
                 <div key={item.bookingCode} className="border rounded-lg p-4 bg-gray-50">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="font-medium text-sm text-gray-600">#{((current - 1) * pageSize) + index + 1}</span>
+                    <span className="font-medium text-sm text-gray-600">#{((currentPage - 1) * pageSize) + index + 1}</span>
                     <span className={`text-xs px-2 py-1 rounded-full ${
                       item.status === "COMPLETED" || item.status === "PAID"
                         ? "bg-green-100 text-green-800"
@@ -294,10 +300,10 @@ export default function BookedTicketsPage() {
             {/* Pagination */}
             <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mt-6">
               <span className="text-sm text-gray-600 text-center lg:text-left">
-                Showing {((current - 1) * pageSize) + 1} to {Math.min(current * pageSize, filteredData.length)} of {filteredData.length} entries
+                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} entries
               </span>
               <Pagination
-                current={current}
+                current={currentPage}
                 pageSize={pageSize}
                 total={filteredData.length}
                 onChange={handlePageChange}
