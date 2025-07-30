@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { memberPromotionApi, MemberPromotion } from '../../api/member/promotionApi';
-import { MemberApiClient } from '../../api/member/memberApiClient';
+import { MemberApiService } from '../../api/member/memberApiClient';
 
 export interface UseMemberPromotionsReturn {
   promotions: MemberPromotion[];
@@ -8,6 +8,7 @@ export interface UseMemberPromotionsReturn {
   memberInfo: any;
   loading: boolean;
   error: string | null;
+  refetch: () => Promise<void>;
 }
 
 export function useMemberPromotions(): UseMemberPromotionsReturn {
@@ -24,7 +25,8 @@ export function useMemberPromotions(): UseMemberPromotionsReturn {
     try {
       const activePromotions = await memberPromotionApi.getActivePromotions();
       setPromotions(activePromotions);
-      const profile = await MemberApiClient.getProfile();
+      const profileRes = await MemberApiService.getProfile();
+      const profile = profileRes.data;
       setMemberInfo(profile);
       setMemberPoints(profile.membershipPoints || 0);
     } catch (error: any) {
@@ -44,5 +46,6 @@ export function useMemberPromotions(): UseMemberPromotionsReturn {
     memberInfo,
     loading,
     error,
+    refetch: loadPromotions,
   };
 } 
