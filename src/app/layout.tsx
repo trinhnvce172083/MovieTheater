@@ -10,7 +10,8 @@ import { GlobalAccountBannedProvider } from "@/components/providers/GlobalAccoun
 import ClientLayoutWrapper from "@/components/ClientLayoutWrapper";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { Provider } from "react-redux";
-import { store } from "@/store";
+import { PersistGate } from "redux-persist/integration/react";
+import { store, persistor } from "@/store";
 import { ToastContainer } from 'react-toastify';
 import { Toaster } from "sonner";
 
@@ -31,19 +32,21 @@ export default function RootLayout({
       >
         {/* <BackTop duration={100} visibilityHeight={50} /> */}
         <Provider key="redux-provider" store={store}>
-          <AntdRegistry key="antd-registry">
-          <ThemeProvider 
-            key="theme-provider"
-            attribute="class" 
-            defaultTheme="system" 
-            enableSystem
-            disableTransitionOnChange
-          >
-            <GlobalAccountBannedProvider key="global-banned-provider">
-              <ClientLayoutWrapper key="client-layout-wrapper">{children}</ClientLayoutWrapper>
-            </GlobalAccountBannedProvider>
-          </ThemeProvider>
-          </AntdRegistry>
+          <PersistGate key="persist-gate" loading={null} persistor={persistor}>
+            <AntdRegistry key="antd-registry">
+            <ThemeProvider 
+              key="theme-provider"
+              attribute="class" 
+              defaultTheme="system" 
+              enableSystem
+              disableTransitionOnChange
+            >
+              <GlobalAccountBannedProvider key="global-banned-provider">
+                <ClientLayoutWrapper key="client-layout-wrapper">{children}</ClientLayoutWrapper>
+              </GlobalAccountBannedProvider>
+            </ThemeProvider>
+            </AntdRegistry>
+          </PersistGate>
         </Provider>
         <ToastContainer key="toast-container" />
         <Toaster key="sonner-toaster" position="top-right" />

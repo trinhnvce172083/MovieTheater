@@ -34,6 +34,7 @@ import {
   UserOutlined,
   IdcardOutlined,
 } from "@ant-design/icons";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -99,8 +100,11 @@ const bookingData = [
   },
 ];
 
+
+
 // Booking Management Component
 export default function ProfessionalBookingManagement() {
+  const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string | undefined>(undefined);
   const [filterPaymentMethod, setFilterPaymentMethod] = useState<string | undefined>(undefined);
@@ -108,6 +112,7 @@ export default function ProfessionalBookingManagement() {
   const [pageSize, setPageSize] = useState(10);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingBooking, setEditingBooking] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
   // Filter and search logic
@@ -150,6 +155,7 @@ export default function ProfessionalBookingManagement() {
   };
 
   const handleModalOk = () => {
+    setLoading(true);
     form.validateFields().then((values) => {
       message.success(
         editingBooking ? "Booking updated successfully" : "Booking added successfully"
@@ -157,6 +163,9 @@ export default function ProfessionalBookingManagement() {
       setIsModalVisible(false);
       setEditingBooking(null);
       form.resetFields();
+      setLoading(false);
+    }).catch(() => {
+      setLoading(false);
     });
   };
 
@@ -511,18 +520,165 @@ export default function ProfessionalBookingManagement() {
       <Modal
         title={editingBooking ? "Edit Booking" : "Add New Booking"}
         open={isModalVisible}
-        onOk={handleModalOk}
+        onOk={() => form.submit()}
         onCancel={handleModalCancel}
         width={800}
         className="professional-modal"
         okText={editingBooking ? "Update Booking" : "Add Booking"}
         cancelText="Cancel"
+        confirmLoading={loading}
       >
-        <BookingForm
-          initialValues={editingBooking}
+        <Form
+          form={form}
+          layout="vertical"
           onFinish={handleModalOk}
-          loading={loading}
-        />
+          initialValues={editingBooking}
+        >
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="customerName"
+                label="Customer Name"
+                rules={[{ required: true, message: 'Please enter customer name' }]}
+              >
+                <Input placeholder="Enter customer name" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="customerEmail"
+                label="Customer Email"
+                rules={[
+                  { required: true, message: 'Please enter customer email' },
+                  { type: 'email', message: 'Please enter a valid email' }
+                ]}
+              >
+                <Input placeholder="Enter customer email" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="movieTitle"
+                label="Movie Title"
+                rules={[{ required: true, message: 'Please enter movie title' }]}
+              >
+                <Input placeholder="Enter movie title" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="roomId"
+                label="Room ID"
+                rules={[{ required: true, message: 'Please enter room ID' }]}
+              >
+                <Input placeholder="Enter room ID" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="showtime"
+                label="Showtime"
+                rules={[{ required: true, message: 'Please select showtime' }]}
+              >
+                <DatePicker
+                  showTime
+                  format="YYYY-MM-DD HH:mm"
+                  placeholder="Select showtime"
+                  className="w-full"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="bookingDate"
+                label="Booking Date"
+                rules={[{ required: true, message: 'Please select booking date' }]}
+              >
+                <DatePicker
+                  format="YYYY-MM-DD"
+                  placeholder="Select booking date"
+                  className="w-full"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="seats"
+                label="Seats"
+                rules={[{ required: true, message: 'Please enter seats' }]}
+              >
+                <Select
+                  mode="tags"
+                  placeholder="Select seats"
+                  className="w-full"
+                >
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <Option key={`A${i + 1}`} value={`A${i + 1}`}>A{i + 1}</Option>
+                  ))}
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <Option key={`B${i + 1}`} value={`B${i + 1}`}>B{i + 1}</Option>
+                  ))}
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <Option key={`C${i + 1}`} value={`C${i + 1}`}>C{i + 1}</Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="totalAmount"
+                label="Total Amount"
+                rules={[{ required: true, message: 'Please enter total amount' }]}
+              >
+                <Input
+                  type="number"
+                  placeholder="Enter total amount"
+                  prefix="$"
+                  min={0}
+                  step={0.01}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="status"
+                label="Status"
+                rules={[{ required: true, message: 'Please select status' }]}
+              >
+                <Select placeholder="Select status">
+                  <Option value="confirmed">Confirmed</Option>
+                  <Option value="pending">Pending</Option>
+                  <Option value="cancelled">Cancelled</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="paymentMethod"
+                label="Payment Method"
+                rules={[{ required: true, message: 'Please select payment method' }]}
+              >
+                <Select placeholder="Select payment method">
+                  <Option value="Credit Card">Credit Card</Option>
+                  <Option value="PayPal">PayPal</Option>
+                  <Option value="Cash">Cash</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
       </Modal>
 
       <style jsx global>{`

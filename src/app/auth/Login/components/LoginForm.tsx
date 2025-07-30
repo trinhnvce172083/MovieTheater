@@ -1,14 +1,21 @@
 import React from "react";
 import { Button, Form, Input, Checkbox, FormInstance } from "antd";
 import { LoginFormValues } from "@/types/Login/LoginFormValues";
+import LoginError from "./LoginError";
 
 interface LoginFormProps {
   loading: boolean;
   onFinish: (values: LoginFormValues) => void;
   form: FormInstance;
+  error?: Error | null;
 }
 
-const LoginForm = React.memo<LoginFormProps>(function LoginForm({ loading, onFinish, form }) {
+const LoginForm = React.memo<LoginFormProps>(function LoginForm({
+  loading,
+  onFinish,
+  form,
+  error,
+}) {
   const formItems = [
     {
       key: "username-field",
@@ -42,41 +49,46 @@ const LoginForm = React.memo<LoginFormProps>(function LoginForm({ loading, onFin
       key: "remember-me-field",
       name: "rememberMe",
       valuePropName: "checked",
-      component: <Checkbox className="sm:text-base text-sm">Remember me</Checkbox>,
+      component: (
+        <Checkbox className="sm:text-base text-sm">Remember me</Checkbox>
+      ),
     },
   ];
 
   return (
-    <Form
-      name="login"
-      layout="vertical"
-      onFinish={onFinish}
-      autoComplete="off"
-      form={form}
-    >
-      {formItems.map((item) => (
-        <Form.Item
-          key={item.key}
-          label={item.label}
-          name={item.name}
-          rules={item.rules}
-          valuePropName={item.valuePropName}
-        >
-          {item.component}
+    <>
+      <LoginError error={error} />
+      <Form
+        name="login"
+        layout="vertical"
+        onFinish={onFinish}
+        autoComplete="off"
+        form={form}
+      >
+        {formItems.map((item) => (
+          <Form.Item
+            key={item.key}
+            label={item.label}
+            name={item.name}
+            rules={item.rules}
+            valuePropName={item.valuePropName}
+          >
+            {item.component}
+          </Form.Item>
+        ))}
+        <Form.Item key="submit-button-field">
+          <Button
+            type="primary"
+            htmlType="submit"
+            className="w-full mt-1 sm:mt-2 sm:text-base text-sm"
+            size="large"
+            loading={loading}
+          >
+            Log In
+          </Button>
         </Form.Item>
-      ))}
-      <Form.Item key="submit-button-field">
-        <Button
-          type="primary"
-          htmlType="submit"
-          className="w-full mt-1 sm:mt-2 sm:text-base text-sm"
-          size="large"
-          loading={loading}
-        >
-          Log In
-        </Button>
-      </Form.Item>
-    </Form>
+      </Form>
+    </>
   );
 });
 

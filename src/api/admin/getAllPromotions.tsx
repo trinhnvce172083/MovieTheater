@@ -3,32 +3,21 @@ import { PromotionDto } from "@/types/Admin/promotion";
 
 // Types for API requests and responses
 export interface PromotionCreateRequest {
-  promotionCode: string;
-  promotionName: string;
+  code: string;
+  name: string;
   description: string;
-  promotionType: "PUBLIC" | "POINT_BASED";
-  discountType: "PERCENTAGE" | "FIXED_AMOUNT" | "BUY_ONE_GET_ONE";
+  discountType: "PERCENTAGE" | "FIXED" | "POINTS";
   discountValue: number;
   maxDiscountAmount?: number;
   minPurchaseAmount?: number;
   startDate: string; // YYYY-MM-DD format
   endDate: string; // YYYY-MM-DD format
-  isActive: boolean;
   maxUsageCount?: number;
   maxUsagePerUser?: number;
-  applicableDays?: "ALL" | "WEEKDAYS" | "WEEKENDS";
-  applicableTimes?: string; // "MORNING,AFTERNOON,EVENING" or specific combinations
-  applicableMovies?: string; // Comma-separated movie IDs
-  applicableRooms?: string; // Comma-separated room IDs
-  memberOnly: boolean;
-  membershipLevels?: string; // "BRONZE,SILVER,GOLD,PLATINUM"
   isFeatured?: boolean;
-  displayOrder?: number;
-  // Point-based fields
+  bannerImageUrl?: string;
   pointsRequired?: number;
-  pointsValue?: number;
-  codeValidityHours?: number;
-  maxCodesPerUser?: number;
+  codeValidityHour?: number;
 }
 
 export interface PromotionUpdateRequest extends Partial<PromotionCreateRequest> {}
@@ -132,10 +121,18 @@ export const getPromotionByCode = async (code: string): Promise<PromotionDto> =>
 // Create new promotion
 export const createPromotion = async (promotionData: PromotionCreateRequest): Promise<PromotionDto> => {
   try {
+    console.log('=== CREATE PROMOTION API CALL ===');
+    console.log('Request data:', promotionData);
     const response = await axiosClient.post(`/promotions`, promotionData);
+    console.log('Response status:', response.status);
+    console.log('Response data:', response.data);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
+    console.error('=== CREATE PROMOTION ERROR ===');
     console.error('Error creating promotion:', error);
+    console.error('Error response:', error.response?.data);
+    console.error('Error status:', error.response?.status);
+    console.error('Error message:', error.message);
     throw error;
   }
 };

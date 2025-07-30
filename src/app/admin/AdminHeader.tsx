@@ -1,6 +1,6 @@
 "use client";
 
-import { UserCircle } from "lucide-react";
+import { UserCircle, BarChart3 } from "lucide-react";
 import Image from "next/image";
 import {
   DropdownMenu,
@@ -11,12 +11,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import ROUTES from "@/constants/routes";
 import { Logout_API } from "@/api/auth/Logout_API";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useDispatch } from "react-redux";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function AdminHeader() {
+  const isMobile = useIsMobile();
   const router = useRouter();
   const dispatch = useDispatch();
+  const pathname = usePathname();
 
   const handleLogout = async () => {
     try {
@@ -35,25 +38,60 @@ export default function AdminHeader() {
   };
 
   return (
-    <header className="w-full flex items-center justify-between px-8 py-4 bg-white border-b border-gray-200 shadow-sm rounded-t-2xl">
-      <div className="flex items-center gap-3">
+    <header className={`w-full flex items-center justify-between ${isMobile ? 'px-4 py-3' : 'px-8 py-4'} bg-white border-b border-gray-200 shadow-sm rounded-t-2xl`}>
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Mobile Menu Button */}
+        {isMobile && (
+          <button
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('toggleMobileMenu'));
+            }}
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 transition-all duration-200 shadow-md hover:shadow-lg"
+            title="Menu"
+          >
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
+        
+                {/* Dashboard Icon */}
+        <button
+          onClick={() => {
+            if (pathname !== ROUTES.ADMIN_DASHBOARD) {
+              router.push(ROUTES.ADMIN_DASHBOARD);
+            }
+          }}
+          className={`${isMobile ? 'w-8 h-8' : 'w-10 h-10'} flex items-center justify-center rounded-lg ${
+            pathname === ROUTES.ADMIN_DASHBOARD 
+              ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
+              : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
+          } transition-all duration-200 shadow-md hover:shadow-lg group relative overflow-hidden`}
+          title={pathname === ROUTES.ADMIN_DASHBOARD ? "Current Dashboard" : "Go to Dashboard"}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+          <BarChart3 className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-white group-hover:scale-110 transition-transform duration-200 relative z-10`} />
+        </button>
+        
         <Image
           src="/Logo.png"
           alt="Lumiere Logo"
-          width={40}
-          height={40}
+          width={isMobile ? 32 : 40}
+          height={isMobile ? 32 : 40}
           className="rounded-full"
         />
-        <span className="font-bold text-xl text-blue-900 tracking-wide">
-          Admin Panel
+        <span className={`font-bold ${isMobile ? 'text-lg' : 'text-xl'} text-blue-900 tracking-wide`}>
+          {isMobile ? 'Admin' : 'Admin Panel'}
         </span>
       </div>
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-3 sm:gap-6">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className="flex items-center gap-2 cursor-pointer select-none">
-              <UserCircle className="w-8 h-8 text-gray-500" />
-              <span className="font-medium text-gray-700">Admin</span>
+            <div className="flex items-center gap-1 sm:gap-2 cursor-pointer select-none">
+              <UserCircle className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-gray-500`} />
+              <span className={`font-medium text-gray-700 ${isMobile ? 'text-sm' : 'text-base'}`}>
+                {isMobile ? 'Admin' : 'Admin'}
+              </span>
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-[160px]">

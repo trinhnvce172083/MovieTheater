@@ -36,6 +36,7 @@ const ROUTES = {
   ADMIN_BOOKINGS: "/admin/bookings",
   ADMIN_ROOMS: "/admin/rooms",
   ADMIN_PROMOTIONS: "/admin/promotions",
+  ADMIN_CONCESSIONS: "/admin/concessions",
 
   // Email Verification Routes
   VERIFY_EMAIL: (token: string) => `/auth/verify-email/${token}`,

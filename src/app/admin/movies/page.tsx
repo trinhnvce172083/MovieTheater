@@ -14,10 +14,12 @@ import {
   createMovieColumns
 } from './components';
 import { MovieData, MovieCreateRequest } from './types';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const { Text } = Typography;
 
 export default function AdminMovieManagement() {
+  const isMobile = useIsMobile();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMovie, setEditingMovie] = useState<MovieData | null>(null);
   const router = useRouter();

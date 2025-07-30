@@ -26,10 +26,12 @@ import {
 } from './components';
 import { CinemaRoomResponse, RoomCreateRequest, RoomFilters } from './types';
 import { filterRooms, calculateRoomStatistics } from './utils';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const { Text } = Typography;
 
 export default function CinemaRoomManagement() {
+  const isMobile = useIsMobile();
   const [form] = Form.useForm();
   
   // State
@@ -54,7 +56,6 @@ export default function CinemaRoomManagement() {
     try {
       // Fetch all rooms data (we'll handle pagination on frontend due to no filter API)
       const response = await getAllRooms(0, 1000); // Get all rooms
-      console.log('API Response:', response); // Debug log
       
       // Check if response has the expected structure
       if (response && response.content && Array.isArray(response.content)) {

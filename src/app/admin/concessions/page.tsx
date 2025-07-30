@@ -35,14 +35,20 @@ import ConcessionImageUpload from './ConcessionImageUpload';
 import ConcessionTable from './ConcessionTable';
 import ConcessionForm from './ConcessionForm';
 import useConcessions from './useConcessions';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const { Title, Text } = Typography;
 
 const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  const roundedPrice = Math.round(price);
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(roundedPrice);
 };
 
+// Helper function to round numbers for display
+const roundNumber = (num: number) => Math.round(num);
+
 export default function AdminConcessionsPage() {
+  const isMobile = useIsMobile();
   const {
     loading,
     formLoading,
@@ -62,26 +68,48 @@ export default function AdminConcessionsPage() {
   const { Title, Text } = Typography;
 
   return (
-    <div className="space-y-6">
-      <Row gutter={[16, 16]}>
+    <div className="space-y-4 sm:space-y-6">
+      <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]}>
         <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic title="Total Concessions" value={filteredData.length} prefix={<ShoppingOutlined />} />
+          <Card className={isMobile ? 'p-3' : 'p-4'}>
+            <Statistic 
+              title={<span className={isMobile ? 'text-xs' : 'text-sm'}>Total Concessions</span>} 
+              value={filteredData.length} 
+              prefix={<ShoppingOutlined className={isMobile ? 'text-sm' : 'text-base'} />} 
+              valueStyle={{ fontSize: isMobile ? '16px' : '24px' }}
+            />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic title="Highest Price" value={filteredData.length ? Math.max(...filteredData.map(c => c.price)) : 0} precision={0} prefix={<ArrowUpOutlined />} valueStyle={{ color: '#cf1322' }} />
+          <Card className={isMobile ? 'p-3' : 'p-4'}>
+            <Statistic 
+              title={<span className={isMobile ? 'text-xs' : 'text-sm'}>Highest Price</span>} 
+              value={filteredData.length ? roundNumber(Math.max(...filteredData.map(c => c.price))) : 0} 
+              precision={0} 
+              prefix={<ArrowUpOutlined className={isMobile ? 'text-sm' : 'text-base'} />} 
+              valueStyle={{ color: '#cf1322', fontSize: isMobile ? '16px' : '24px' }} 
+            />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic title="Lowest Price" value={filteredData.length ? Math.min(...filteredData.map(c => c.price)) : 0} precision={0} prefix={<ArrowDownOutlined />} valueStyle={{ color: '#3f8600' }} />
+          <Card className={isMobile ? 'p-3' : 'p-4'}>
+            <Statistic 
+              title={<span className={isMobile ? 'text-xs' : 'text-sm'}>Lowest Price</span>} 
+              value={filteredData.length ? roundNumber(Math.min(...filteredData.map(c => c.price))) : 0} 
+              precision={0} 
+              prefix={<ArrowDownOutlined className={isMobile ? 'text-sm' : 'text-base'} />} 
+              valueStyle={{ color: '#3f8600', fontSize: isMobile ? '16px' : '24px' }} 
+            />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic title="Average Price" value={filteredData.length ? (filteredData.reduce((a, b) => a + b.price, 0) / filteredData.length) : 0} prefix={<DollarCircleOutlined />} />
+          <Card className={isMobile ? 'p-3' : 'p-4'}>
+            <Statistic
+              title="Average Price" 
+              value={filteredData.length ? Math.round((filteredData.reduce((a, b) => a + b.price, 0) / filteredData.length) * 100) / 100 : 0} 
+              prefix={<DollarCircleOutlined />} 
+              precision={0}
+            />
           </Card>
         </Col>
       </Row>

@@ -38,12 +38,7 @@ const ManagedTickets: React.FC = () => {
     if (!ticketToCancel) return;
 
     try {
-      console.log("Attempting to cancel booking:", ticketToCancel.bookingId);
-      console.log("Full ticket data:", ticketToCancel);
-
-      // Kiểm tra accessToken
       const accessToken = localStorage.getItem('accessToken');
-      console.log("Access token:", accessToken ? "Có token" : "Không có token");
       
       if (!accessToken) {
         throw new Error("Không có access token. Vui lòng đăng nhập lại.");
@@ -55,8 +50,6 @@ const ManagedTickets: React.FC = () => {
             reason: "User cancelled"
       });
 
-      console.log("Cancel booking response:", response);
-      
       message.success("Ticket cancelled successfully!");
 
       // Cập nhật local state ngay lập tức

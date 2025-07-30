@@ -45,7 +45,7 @@ const OrderSummary = ({ movieDetails, totalOrder, bookingData, concessions, quan
             </div>
           ))
         ) : (
-          <div className="text-gray-400 text-xs md:text-sm">Chưa chọn món nào</div>
+          <div className="text-gray-400 text-xs md:text-sm">No items selected</div>
         )}
       </div>
       <div className="font-bold text-right text-base md:text-lg mt-2 md:mt-4 mb-1 md:mb-2">

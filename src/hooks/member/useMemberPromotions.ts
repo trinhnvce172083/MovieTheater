@@ -24,9 +24,7 @@ export function useMemberPromotions(): UseMemberPromotionsReturn {
     setError(null);
     try {
       const activePromotions = await memberPromotionApi.getActivePromotions();
-      // Chỉ lấy promotion đổi điểm (loại POINTS)
-      const pointPromotions = activePromotions.filter(p => p.discountType === 'POINTS');
-      setPromotions(pointPromotions);
+      setPromotions(activePromotions);
       const profileRes = await MemberApiService.getProfile();
       const profile = profileRes.data;
       setMemberInfo(profile);

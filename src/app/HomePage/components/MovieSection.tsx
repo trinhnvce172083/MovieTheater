@@ -65,8 +65,9 @@ export default function MovieSection({
           const fullWidth = secondCard.offsetLeft - firstCard.offsetLeft;
           setCardWidth(fullWidth);
         } else if (firstCard) {
-          // Fallback if only one card
-          setCardWidth(firstCard.offsetWidth + 32); // 32px = 2rem (gap-8)
+          // Fallback with responsive gap calculation
+          const gap = window.innerWidth >= 768 ? 32 : window.innerWidth >= 640 ? 24 : 16;
+          setCardWidth(firstCard.offsetWidth + gap);
         }
       }
     };
@@ -110,11 +111,11 @@ export default function MovieSection({
   const navLinkPath = isUpcoming ? "/movies-api" : "/NowShowing";
 
   return (
-    <section className="mb-16 relative">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">{title}</h2>
+    <section className="mb-8 sm:mb-12 md:mb-16 relative">
+      <div className="flex justify-between items-center mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold">{title}</h2>
         <Link href={navLinkPath} className="flex items-center text-orange-500 hover:text-orange-400 transition-colors group">
-          <span className="mr-1">View All</span>
+          <span className="mr-1 text-sm sm:text-base">View All</span>
           <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>
@@ -134,9 +135,9 @@ export default function MovieSection({
         {/* Navigation buttons */}
         <NavButton direction="left" onClick={onScrollLeft} disabled={!showLeftShadow} />
         <NavButton direction="right" onClick={onScrollRight} disabled={!showRightShadow} />
-          {/* Movie cards container - improved scroll handling */}        <div
+        <div
           ref={scrollRef}
-          className="flex gap-8 overflow-x-auto scrollbar-hide py-4 px-1"
+          className="flex gap-4 sm:gap-6 md:gap-8 overflow-x-auto scrollbar-hide py-4 px-1"
           style={{ 
             scrollBehavior: "smooth",
             msOverflowStyle: "none",  /* IE and Edge */
@@ -152,8 +153,7 @@ export default function MovieSection({
           ) : (            movies.map((movie) => (
               <div 
                 key={movie.movieId || movie.title} 
-                className="flex-shrink-0"
-                style={{ width: 'calc(25% - 24px)', minWidth: '280px' }} // 25% for 4 cards per row, with min-width to ensure visibility
+                className="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px] lg:w-[340px]"
               >
                 <MovieCard movie={movie} />
               </div>

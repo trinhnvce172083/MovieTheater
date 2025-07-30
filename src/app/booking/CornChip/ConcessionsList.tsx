@@ -28,10 +28,10 @@ export default function ConcessionsList({ concessions, quantities, onQuantityCha
   }, {});
 
   const categoryLabels = {
-    'POPCORN': '🍿 BẮP RANG',
-    'DRINKS': '🥤 NƯỚC UỐNG',
+    'POPCORN': '🍿 POPCORN',
+    'DRINKS': '🥤 DRINKS',
     'COMBO': '🍽️ COMBO',
-    'OTHER': '📦 KHÁC'
+    'OTHER': '📦 OTHER'
   };
 
   return (

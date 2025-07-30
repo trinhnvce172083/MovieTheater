@@ -19,7 +19,7 @@ const DateTimeDisplay: React.FC<DateTimeDisplayProps> = ({
     
     switch (formatType) {
       case 'full':
-        return date.toLocaleDateString('vi-VN', {
+        return date.toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'long',
           day: 'numeric',
@@ -27,7 +27,7 @@ const DateTimeDisplay: React.FC<DateTimeDisplayProps> = ({
           minute: '2-digit'
         });
       case 'short':
-        return date.toLocaleDateString('vi-VN', {
+        return date.toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric',
@@ -35,14 +35,14 @@ const DateTimeDisplay: React.FC<DateTimeDisplayProps> = ({
           minute: '2-digit'
         });
       case 'date':
-        return date.toLocaleDateString('vi-VN');
+        return date.toLocaleDateString('en-US');
       case 'time':
-        return date.toLocaleTimeString('vi-VN', {
+        return date.toLocaleTimeString('en-US', {
           hour: '2-digit',
           minute: '2-digit'
         });
       default:
-        return date.toLocaleDateString('vi-VN');
+        return date.toLocaleDateString('en-US');
     }
   };
 
