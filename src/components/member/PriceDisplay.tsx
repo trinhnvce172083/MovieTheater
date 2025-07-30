@@ -20,7 +20,7 @@ const PriceDisplay: React.FC<PriceDisplayProps> = ({
 }) => {
   const formatPrice = (price: number, curr: string) => {
     if (curr === 'VND') {
-      return new Intl.NumberFormat('vi-VN', { 
+      return new Intl.NumberFormat('en-US', { 
         style: 'currency', 
         currency: 'VND'
       }).format(price);

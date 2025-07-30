@@ -16,10 +16,12 @@ import {
   createMemberColumns
 } from './components';
 import { MemberData, MemberCreateRequest } from './types';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const { Text } = Typography;
 
 export default function AdminMemberManagement() {
+  const isMobile = useIsMobile();
   const router = useRouter();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMember, setEditingMember] = useState<MemberData | null>(null);

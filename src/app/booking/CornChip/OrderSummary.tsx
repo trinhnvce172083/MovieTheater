@@ -1,122 +1,74 @@
-"use client";
+import React from 'react';
+import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
+import ROUTES from '@/constants/routes';
+import { ArrowLeft } from 'lucide-react';
+import { BookingApiService } from '@/api/booking-api';
+import { message } from 'antd';
 
-import React from "react";
-import { Card, Typography, Button, Space } from "antd";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store";
+interface OrderSummaryProps {
+  movieDetails: any;
+  totalOrder: number;
+  bookingData: any;
+  concessions: any[];
+  quantities: { [key: number]: number };
+}
 
-const { Title, Text } = Typography;
+const OrderSummary = ({ movieDetails, totalOrder, bookingData, concessions, quantities }: OrderSummaryProps) => {
+  const router = useRouter();
 
-export default function OrderSummary() {
-  const bookingData = useSelector((state: RootState) => state.booking);
-
-  const movieInfo = bookingData.movieInfo;
-  const scheduleInfo = bookingData.scheduleInfo;
-  const selectedSeats = bookingData.selectedSeats;
-  const selectedConcessions = bookingData.selectedConcessions;
+  const handleCheckout = () => {
+    router.push('/booking/confirm');
+  };
 
   return (
-    <Card 
-      title="Tóm tắt đơn hàng" 
-      className="bg-[#23283a] border-gray-700 text-white"
-    >
-      {/* Movie Info */}
-      <div className="mb-6">
-        <div className="flex items-start space-x-3">
-          {movieInfo?.posterUrl && (
-            <img
-              src={movieInfo.posterUrl}
-              alt={movieInfo.title}
-              className="w-16 h-24 object-cover rounded-lg"
-            />
-          )}
-          <div className="flex-1">
-            <Title level={4} className="text-white mb-1">
-              {movieInfo?.title || "Movie Title"}
-            </Title>
-            <Text className="text-gray-400 text-sm block">
-              {scheduleInfo?.displayTime} - {scheduleInfo?.displayDate}
-            </Text>
-            <Text className="text-gray-400 text-sm block">
-              {scheduleInfo?.cinemaRoomName}
-            </Text>
-          </div>
-        </div>
+    <div className="bg-white text-black rounded-lg md:rounded-xl shadow-lg p-1 md:p-4 flex flex-col w-full h-fit max-w-xs md:max-w-sm mx-auto">
+      {/* Ảnh phim */}
+      <div className="mb-2 md:mb-4">
+        <img src={movieDetails.image || '/popcorn.jpg'} alt={movieDetails.title} className="w-full h-24 md:h-32 object-cover rounded-md" />
       </div>
-
-      {/* Selected Seats */}
-      <div className="mb-4">
-        <Text className="text-gray-300 font-semibold block mb-2">
-          Ghế đã chọn ({selectedSeats.length}):
-        </Text>
-        <div className="flex flex-wrap gap-1">
-          {selectedSeats.map((seat) => (
-            <span
-              key={seat.seatId}
-              className="px-2 py-1 bg-blue-600 text-white text-xs rounded"
-            >
-              {seat.seatNumber}
-            </span>
-          ))}
-        </div>
+      <div className="font-bold text-sm md:text-lg mb-1 md:mb-2">Order Summary</div>
+      <div className="mb-1 md:mb-2">
+        <div className="font-semibold text-xs md:text-base">{movieDetails.title}</div>
+        <div className="text-xs md:text-sm text-gray-500">{movieDetails.date}</div>
+        <div className="text-xs md:text-sm text-gray-500">{movieDetails.details}</div>
       </div>
-
-      {/* Selected Concessions */}
-      {selectedConcessions.length > 0 && (
-        <div className="mb-4">
-          <Text className="text-gray-300 font-semibold block mb-2">
-            Đồ ăn đã chọn:
-          </Text>
-          <div className="space-y-1">
-            {selectedConcessions.map((item) => (
-              <div key={item.concessionId} className="flex justify-between text-sm">
-                <Text className="text-gray-400">
-                  {item.concession.name} x{item.quantity}
-                </Text>
-                <Text className="text-white">
-                  {(item.concession.price * item.quantity).toLocaleString()} VND
-                </Text>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Price Summary */}
-      <div className="border-t border-gray-600 pt-4 space-y-2">
-        <div className="flex justify-between">
-          <Text className="text-gray-400">Ghế:</Text>
-          <Text className="text-white">{bookingData.seatTotal?.toLocaleString()} VND</Text>
-        </div>
-        
-        <div className="flex justify-between">
-          <Text className="text-gray-400">Đồ ăn:</Text>
-          <Text className="text-white">{bookingData.concessionsTotal?.toLocaleString()} VND</Text>
-        </div>
-        
-        {bookingData.discountAmount > 0 && (
-          <div className="flex justify-between text-red-400">
-            <Text>Giảm giá:</Text>
-            <Text>-{bookingData.discountAmount?.toLocaleString()} VND</Text>
-          </div>
+      {/* Danh sách món đã chọn */}
+      <div className="mb-1 md:mb-2">
+        {concessions.filter(item => quantities[item.concessionId] > 0).length > 0 ? (
+          concessions.filter(item => quantities[item.concessionId] > 0).map(item => (
+            <div key={item.concessionId} className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+              <img src={item.imageUrl || '/popcorn.jpg'} alt={item.name} className="w-6 h-6 md:w-8 md:h-8 object-cover rounded bg-white border" />
+              <span className="flex-1 text-xs md:text-base">{item.name} x {quantities[item.concessionId]}</span>
+              <span className="text-xs md:text-base">{(item.price * quantities[item.concessionId]).toLocaleString()} VND</span>
+            </div>
+          ))
+        ) : (
+          <div className="text-gray-400 text-xs md:text-sm">No items selected</div>
         )}
-        
-        <div className="flex justify-between text-lg font-bold border-t border-gray-600 pt-2">
-          <Text className="text-white">Tổng cộng:</Text>
-          <Text className="text-yellow-400">{bookingData.finalAmount?.toLocaleString()} VND</Text>
-        </div>
       </div>
-
-      {/* Skip Button */}
-      <div className="mt-4">
-        <Button 
-          type="text" 
-          block 
-          className="text-gray-400 hover:text-white"
+      <div className="font-bold text-right text-base md:text-lg mt-2 md:mt-4 mb-1 md:mb-2">
+        Total: <span className="text-yellow-600">{totalOrder.toLocaleString()} VND</span>
+      </div>
+      <div className="flex gap-1 md:gap-4 mt-2 md:mt-4">
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-white text-black border-gray-300 hover:bg-gray-100 px-2 py-1 md:px-4 md:py-2"
+          onClick={() => router.push('/booking/seat-selection')}
         >
-          Bỏ qua đồ ăn
+          <ArrowLeft />
+        </Button>
+        <Button 
+          className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 md:py-2 rounded text-xs md:text-base"
+          onClick={handleCheckout}
+        >
+          Continue
         </Button>
       </div>
-    </Card>
+    </div>
   );
-} 
+};
+
+export default OrderSummary; 

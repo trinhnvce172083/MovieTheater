@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState} from "react";
-import { Layout, Menu, Button, Tooltip } from "antd";
+import React, { useState, useEffect } from "react";
+import { Layout, Menu, Button, Tooltip, Drawer } from "antd";
 import {
   DashboardOutlined,
   UserOutlined,
@@ -17,6 +17,7 @@ import { usePathname, useRouter } from "next/navigation";
 import ROUTES from "@/constants/routes";
 import Image from "next/image";
 import AdminHeader from "./AdminHeader";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const { Sider, Content } = Layout;
 
@@ -25,10 +26,33 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
+  // Auto-collapse sidebar on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setCollapsed(true);
+    }
+  }, [isMobile]);
+
+  // Listen for mobile menu toggle event
+  useEffect(() => {
+    const handleMobileMenuToggle = () => {
+      if (isMobile) {
+        setMobileDrawerOpen(!mobileDrawerOpen);
+      }
+    };
+
+    window.addEventListener('toggleMobileMenu', handleMobileMenuToggle);
+    return () => {
+      window.removeEventListener('toggleMobileMenu', handleMobileMenuToggle);
+    };
+  }, [isMobile, mobileDrawerOpen]);
 
   const menuItems = [
     {
@@ -47,35 +71,46 @@ export default function AdminLayout({
       label: "Movies",
     },
     {
-      key: "/admin/rooms",
+      key: ROUTES.ADMIN_ROOMS,
       icon: <BankOutlined />,
       label: "Rooms",
     },
     {
-      key: "/admin/promotions",
+      key: ROUTES.ADMIN_PROMOTIONS,
       icon: <GiftOutlined />,
       label: "Promotions",
     },
     {
-      key: "/admin/bookings",
+      key: ROUTES.ADMIN_BOOKINGS,
       icon: <CalendarOutlined />,
       label: "Bookings",
     },
     {
-      key: "/admin/concessions",
+      key: ROUTES.ADMIN_CONCESSIONS,
       icon: <ShoppingOutlined />,
       label: "Concessions",
     },
   ];
 
   const handleToggleCollapse = () => {
-    setIsAnimating(true);
-    setCollapsed(!collapsed);
-    
-    // Reset animation state after transition completes
-    setTimeout(() => {
-      setIsAnimating(false);
-    }, 300);
+    if (isMobile) {
+      setMobileDrawerOpen(!mobileDrawerOpen);
+    } else {
+      setIsAnimating(true);
+      setCollapsed(!collapsed);
+      
+      // Reset animation state after transition completes
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 300);
+    }
+  };
+
+  const handleMenuClick = ({ key }: { key: string }) => {
+    router.push(key);
+    if (isMobile) {
+      setMobileDrawerOpen(false);
+    }
   };
   // Enhanced styles with modern gradient and glass effect
   const siderStyle = {
@@ -120,7 +155,7 @@ export default function AdminLayout({
     transitionDelay: collapsed ? '0ms' : '150ms',
   };
   const contentStyle = {
-    marginLeft: collapsed ? 80 : 240,
+    marginLeft: isMobile ? 0 : (collapsed ? 80 : 240),
     transition: 'margin-left 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
     minHeight: "100vh",
     background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
@@ -129,17 +164,19 @@ export default function AdminLayout({
 
   return (
     <Layout>
-      <Sider
-        width={240}
-        theme="light"
-        className="shadow-lg"
-        style={siderStyle}
-        collapsible
-        collapsed={collapsed}
-        onCollapse={setCollapsed}
-        trigger={null}
-        collapsedWidth={80}
-      >
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <Sider
+          width={240}
+          theme="light"
+          className="shadow-lg"
+          style={siderStyle}
+          collapsible
+          collapsed={collapsed}
+          onCollapse={setCollapsed}
+          trigger={null}
+          collapsedWidth={80}
+        >
         {/* Enhanced Toggle Button */}
         <Tooltip 
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"} 
@@ -258,7 +295,7 @@ export default function AdminLayout({
             mode="inline"
             selectedKeys={[pathname]}
             items={menuItems}
-            onClick={({ key }) => router.push(key)}
+            onClick={handleMenuClick}
             className="bg-transparent font-medium admin-sidebar-menu"
             style={{ 
               background: "transparent", 
@@ -277,6 +314,56 @@ export default function AdminLayout({
           />
         </div>
       </Sider>
+      )}
+
+      {/* Mobile Drawer */}
+      {isMobile && (
+        <Drawer
+          title={
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                <Image 
+                  src="/Logo.png" 
+                  alt="Lumiere Logo" 
+                  width={24} 
+                  height={24}
+                  style={{ borderRadius: "50%" }}
+                />
+              </div>
+              <span className="text-lg font-semibold text-gray-800">Admin Panel</span>
+            </div>
+          }
+          placement="left"
+          onClose={() => setMobileDrawerOpen(false)}
+          open={mobileDrawerOpen}
+          width={280}
+          styles={{
+            body: {
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
+              padding: 0,
+            },
+            header: {
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+            }
+          }}
+        >
+          <Menu
+            mode="inline"
+            selectedKeys={[pathname]}
+            items={menuItems}
+            onClick={handleMenuClick}
+            className="bg-transparent font-medium admin-sidebar-menu"
+            style={{ 
+              background: "transparent", 
+              color: "#fff", 
+              border: "none",
+              height: "100%",
+            }}
+            theme="dark"
+          />
+        </Drawer>
+      )}
 
       <Layout style={contentStyle}>
         {/* Admin Header at the top of the content */}
@@ -291,7 +378,7 @@ export default function AdminLayout({
             border: "1px solid rgba(255, 255, 255, 0.2)",
             boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
           }}
-          className="m-8 p-8 rounded-2xl"
+          className={`${isMobile ? 'm-2 p-4' : 'm-8 p-8'} rounded-2xl`}
         >
           <div className="w-full" style={{ maxWidth: "100%" }}>
             {children}

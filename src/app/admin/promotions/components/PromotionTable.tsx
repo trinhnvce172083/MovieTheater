@@ -19,7 +19,7 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
   onPageChange,
 }) => {
   const formatVND = (amount: number) => {
-    return amount.toLocaleString('vi-VN') + '₫';
+    return amount.toLocaleString('en-US') + '₫';
   };
 
   const columns: ColumnsType<PromotionDto> = [
@@ -42,8 +42,39 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
       width: 220,
       render: (text, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {record.bannerImageUrl && (
-            <img src={record.bannerImageUrl} alt={record.promotionName} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, background: '#fff', border: '1px solid #eee' }} />
+          {record.bannerImageUrl ? (
+            <img 
+              src={record.bannerImageUrl} 
+              alt={record.promotionName} 
+              style={{ 
+                width: 40, 
+                height: 40, 
+                objectFit: 'cover', 
+                borderRadius: 8, 
+                background: '#fff', 
+                border: '1px solid #eee' 
+              }}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          ) : (
+            <div 
+              style={{ 
+                width: 40, 
+                height: 40, 
+                borderRadius: 8, 
+                background: '#f5f5f5', 
+                border: '1px solid #eee',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '12px',
+                color: '#999'
+              }}
+            >
+              No img
+            </div>
           )}
           <div>
             <div style={{ fontWeight: 600 }}>{record.promotionName}</div>
@@ -105,7 +136,7 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
           ) : record.discountType === 'POINTS' || record.pointsDiscount ? (
             <div>
               <span style={{ color: '#722ed1', fontWeight: 600 }}>
-                Đổi {record.pointsRequired || record.discountValue} điểm
+                Exchange {record.pointsRequired || record.discountValue} points
               </span>
               <div style={{ fontSize: 12, color: '#888' }}>Points</div>
             </div>
@@ -121,11 +152,11 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
       render: (_: unknown, record: PromotionDto) => (
         <div className="text-center text-sm">
           <div className="text-gray-900">
-            {new Date(record.startDate).toLocaleDateString('vi-VN')}
+            {new Date(record.startDate).toLocaleDateString('en-US')}
           </div>
           <div className="text-xs text-gray-500">to</div>
           <div className="text-gray-900">
-            {new Date(record.endDate).toLocaleDateString('vi-VN')}
+            {new Date(record.endDate).toLocaleDateString('en-US')}
           </div>
         </div>
       ),
@@ -179,7 +210,7 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
       render: (_: unknown, record: PromotionDto) => (
         <div className="text-right text-sm">
           {record.minPurchaseAmount && record.minPurchaseAmount > 0
-            ? `${Number(record.minPurchaseAmount).toLocaleString("vi-VN")}₫`
+            ? `${Number(record.minPurchaseAmount).toLocaleString("en-US")}₫`
             : "No minimum"}
         </div>
       ),

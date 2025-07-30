@@ -81,6 +81,13 @@ export default function useConcessions() {
   };
 
   const handleFormSubmit = async (values: Omit<Concession, 'id'> & { imageUrl?: string }) => {
+    // Round numeric values to avoid decimal issues
+    const roundedValues = {
+      ...values,
+      price: Math.round(values.price || 0),
+      stockQuantity: Math.round(values.stockQuantity || 0),
+      displayOrder: Math.round(values.displayOrder || 0)
+    };
     try {
       setFormLoading(true);
       let concessionId: number | undefined;
@@ -88,7 +95,7 @@ export default function useConcessions() {
 
       if (editingConcession) {
         // Update existing concession
-        await updateConcession(editingConcession.id, values);
+        await updateConcession(editingConcession.id, roundedValues);
         concessionId = editingConcession.id;
         
         // Upload image if provided
@@ -101,7 +108,7 @@ export default function useConcessions() {
         // }
       } else {
         // Create new concession
-        const res = await addConcession(values);
+        const res = await addConcession(roundedValues);
         concessionId = res.data.data?.concessionId;
         
         // Upload image if provided
@@ -110,7 +117,7 @@ export default function useConcessions() {
         }
         
         if (uploadSuccess) {
-          message.success('Đã thêm thành công');
+          message.success('Added successfully');
         }
       }
 
@@ -129,7 +136,7 @@ export default function useConcessions() {
     try {
       setLoading(true);
       await deleteConcession(id);
-      message.success('Đã xóa thành công');
+      message.success('Deleted successfully');
       fetchConcessions();
     } catch (error) {
       message.error('Failed to delete concession. Please try again.');
