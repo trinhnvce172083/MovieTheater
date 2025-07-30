@@ -18,6 +18,12 @@ interface AuthState {
   token: string | null;
   role: string; // Lưu role để kiểm tra nhanh
   isLoggedIn: boolean; // Trạng thái đăng nhập
+  userInfo: {
+    accountId: string;
+    userName: string;
+    Role: string;
+    [key: string]: unknown;
+  } | null;
 }
 
 // State mặc định ban đầu
@@ -26,30 +32,59 @@ const initialState: AuthState = {
   token: null,
   role: "CUSTOMER",
   isLoggedIn: false,
+  userInfo: null,
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    // Đăng nhập: truyền vào token, tự decode user và role từ token
-    login: (state, action: PayloadAction<{ token: string }>) => {
-      const { token } = action.payload;
+    // Đăng nhập: truyền vào token và userInfo object
+    login: (state, action: PayloadAction<{ 
+      token: string; 
+      userInfo?: {
+        accountId: string;
+        userName: string;
+        Role: string;
+        [key: string]: unknown;
+      }
+    }>) => {
+      const { token, userInfo } = action.payload;
       
-      try {
-        const payload = decodeJwt(token);
-        
-        if (payload) {
-          state.user = {
-            id: payload.sub || payload.userId || payload.id,
-            username: payload.username || payload.userName || payload.name,
-            email: payload.email,
-            role: payload.role || payload.authorities?.[0] || 'USER',
-            isLoggedIn: true
-          };
+      state.token = token;
+      state.isLoggedIn = true;
+      
+      if (userInfo) {
+        state.userInfo = userInfo;
+        state.role = userInfo.Role || "CUSTOMER";
+        state.user = {
+          id: userInfo.accountId,
+          username: userInfo.userName,
+          role: userInfo.Role,
+        };
+      } else {
+        // Fallback: decode từ token nếu không có userInfo
+        try {
+          const payload = decodeJwt(token);
+          
+          if (payload) {
+            const userInfoObj = {
+              accountId: String(payload.sub || payload.userId || payload.id || ""),
+              userName: String(payload.username || payload.userName || payload.name || ""),
+              Role: String(payload.role || payload.authorities?.[0] || 'CUSTOMER'),
+            };
+            
+            state.userInfo = userInfoObj;
+            state.role = userInfoObj.Role;
+            state.user = {
+              id: userInfoObj.accountId,
+              username: userInfoObj.userName,
+              role: userInfoObj.Role,
+            };
+          }
+        } catch {
+          // Silent fail - token decode error
         }
-      } catch (error) {
-        // Silent fail - don't show error for token decode
       }
     },
     // Đăng nhập: truyền vào user và token từ ngoài (nếu đã decode sẵn)
@@ -65,6 +100,7 @@ const authSlice = createSlice({
       state.isLoggedIn = false;
       state.role = "CUSTOMER";
       state.user = null;
+      state.userInfo = null;
     },
   },
 });

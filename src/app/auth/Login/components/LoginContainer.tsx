@@ -59,8 +59,11 @@ const LoginContainer = memo(function LoginContainer() {
           localStorage.setItem("userInfo", JSON.stringify(userInfoObj));
           localStorage.setItem("isLoggedIn", "true");
 
-          // Update Redux store
-          dispatch(login({ token: accessToken }));
+          // Update Redux store with both token and userInfo
+          dispatch(login({ 
+            token: accessToken,
+            userInfo: userInfoObj
+          }));
 
           // Navigate based on role
           if (userInfoObj?.Role === "ADMIN") {
