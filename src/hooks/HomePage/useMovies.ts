@@ -8,30 +8,22 @@ export function useMovies() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchMovies = async () => {
-      try {
-        setLoading(true);
-        
-        const [nowRes, upRes] = await Promise.all([
-          MovieApiService.getNowShowingMovies(),
-          MovieApiService.getComingSoonMovies()
-        ]);
-
-        if (nowRes.success && nowRes.data) {
-          setNowShowing(nowRes.data);
-        }
-        
-        if (upRes.success && upRes.data) {
-          setUpcoming(upRes.data);
-        }
-      } catch (error) {
-        setError('Failed to load movies');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMovies();
+    setLoading(true);
+    Promise.all([
+      MovieApiService.getNowShowingMovies(),
+      MovieApiService.getUpComingMovies(),
+    ]).then(([nowRes, upRes]) => {
+      console.log("Now Showing Response:", nowRes);
+      console.log("Upcoming Response:", upRes);
+      console.log("Now Showing Data:", nowRes && nowRes.data ? nowRes.data : []);
+      console.log("Upcoming Data:", upRes && upRes.data ? upRes.data : []);
+      setNowShowingMovies(nowRes && nowRes.data ? nowRes.data : []);
+      setUpcomingMovies(upRes && upRes.data ? upRes.data : []);
+      setLoading(false);
+    }).catch((error) => {
+      console.error("Error fetching movies:", error);
+      setLoading(false);
+    });
   }, []);
 
   return { nowShowingMovies, upcomingMovies, loading };

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { memberPromotionApi, MemberPromotion } from '../../api/member/promotionApi';
-import { memberApiClient } from '../../api/member/memberApiClient';
+import { MemberApiClient } from '../../api/member/memberApiClient';
 
 export interface UseMemberPromotionsReturn {
   promotions: MemberPromotion[];
@@ -24,7 +24,7 @@ export function useMemberPromotions(): UseMemberPromotionsReturn {
     try {
       const activePromotions = await memberPromotionApi.getActivePromotions();
       setPromotions(activePromotions);
-      const profile = await memberApiClient.getProfile();
+      const profile = await MemberApiClient.getProfile();
       setMemberInfo(profile);
       setMemberPoints(profile.membershipPoints || 0);
     } catch (error: any) {
