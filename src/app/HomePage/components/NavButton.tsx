@@ -19,8 +19,8 @@ export default function NavButton({
       disabled={disabled}
       className={`
         absolute top-1/2 -translate-y-1/2 z-20
-        ${isLeft ? "left-0" : "right-0"}
-        w-12 h-12 rounded-full
+        ${isLeft ? "left-2 sm:left-0" : "right-2 sm:right-0"}
+        w-10 h-10 sm:w-12 sm:h-12 rounded-full
         ${disabled 
           ? 'opacity-0 pointer-events-none' 
           : 'opacity-100 bg-black/80 backdrop-blur-sm text-white border border-white/10 hover:bg-neutral-800 hover:scale-105'}
@@ -31,9 +31,9 @@ export default function NavButton({
       aria-label={isLeft ? "Scroll left" : "Scroll right"}
     >
       {isLeft ? (
-        <ChevronLeftIcon className="h-6 w-6" />
+        <ChevronLeftIcon className="h-5 w-5 sm:h-6 sm:w-6" />
       ) : (
-        <ChevronRightIcon className="h-6 w-6" />
+        <ChevronRightIcon className="h-5 w-5 sm:h-6 sm:w-6" />
       )}
     </button>
   );
