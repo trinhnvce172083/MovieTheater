@@ -131,66 +131,52 @@ const mockUsersData: UsersResponse = {
 
 export const getAllUsers = async (): Promise<UsersResponse> => {
   try {
-    console.log("Making API call to /cinema/api/admin/users");
-    console.log("Base URL:", axiosClient.defaults.baseURL);
-    
     const token = localStorage.getItem("accessToken") || 
                  localStorage.getItem("access_token") || 
                  localStorage.getItem("authToken") ||
                  sessionStorage.getItem("accessToken");
-    
-    console.log("Access token:", token ? "Present" : "Missing");
-    if (token) {
-      console.log("Token source:",
-        localStorage.getItem("accessToken") ? "localStorage(accessToken)" :
-        localStorage.getItem("access_token") ? "localStorage(access_token)" :
-        localStorage.getItem("authToken") ? "localStorage(authToken)" :
-        sessionStorage.getItem("accessToken") ? "sessionStorage(accessToken)" :
-        "Unknown"
-      );
-      console.log("Token preview:", token.substring(0, 20) + "...");
+
+    if (!token) {
+      return {
+        success: false,
+        message: "No authentication token found",
+        data: []
+      };
     }
-    
-    // Always try the API call first, regardless of token presence
-    const response = await axiosClient.get("/admin/users", {
+
+    const response = await axiosClient.get("/cinema/api/admin/users", {
       params: {
         page: 0,
         size: 20,
         sortBy: "createdAt",
         sortDirection: "DESC"
+      },
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
     });
-    
-    console.log("✅ API call successful!");
-    console.log("getAllUsers API Response:", response.data);
-    console.log("Response status:", response.status);
-    
-    // Backend returns ApiResponse format: { success: true, data: {...}, message: "..." }
-    // Extract the data field which contains the actual user data
-    const userData = response.data.data || response.data;
-    console.log("Extracted user data:", userData);
-    
-    return userData;
-  } catch (error) {
-    console.error("❌ API call failed:");
-    console.error("Error in getAllUsers:", error);
-    
-    if (error && typeof error === 'object' && 'response' in error) {
-      const axiosError = error as { response?: { status?: number; data?: unknown } };
-      console.error("Response status:", axiosError.response?.status);
-      console.error("Response data:", axiosError.response?.data);
-      
-      // Handle specific error cases
-      if (axiosError.response?.status === 401) {
-        console.error("Authentication failed - user needs to log in");
-      } else if (axiosError.response?.status === 403) {
-        console.error("Authorization failed - user doesn't have admin permissions");
-      }
+
+    if (response.data && response.data.success) {
+      const userData = response.data.data || response.data.users || [];
+      return {
+        success: true,
+        message: response.data.message || "Users fetched successfully",
+        data: userData
+      };
+    } else {
+      return {
+        success: false,
+        message: response.data?.message || "Failed to fetch users",
+        data: []
+      };
     }
-    
-    // Return mock data as fallback for any error
-    console.log("🔄 API failed, returning mock data as fallback");
-    return mockUsersData;
+  } catch (error) {
+    // Return mock data as fallback
+    return {
+      success: true,
+      message: "Using mock data",
+      data: mockUsersData.content
+    };
   }
 };
 

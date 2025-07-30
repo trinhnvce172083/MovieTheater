@@ -14,7 +14,6 @@ import {
   Popconfirm,
   message,
   Modal,
-  Form,
   DatePicker,
   Tag,
   Statistic,
@@ -86,17 +85,21 @@ export default function PromotionPage() {
   const [editingPromotion, setEditingPromotion] = React.useState<PromotionDto | null>(null);
   const [viewingPromotion, setViewingPromotion] = React.useState<PromotionDto | null>(null);
   const [selectedPromotion, setSelectedPromotion] = React.useState<PromotionDto | null>(null);
-  const [form] = Form.useForm();
 
   // Handlers
   const handleAdd = () => {
-    setEditingPromotion(null);
+    setEditingPromotion(null); // Đảm bảo là null khi thêm mới
     setIsModalVisible(true);
   };
 
   const handleEdit = (promotion: PromotionDto) => {
     setEditingPromotion(promotion);
     setIsModalVisible(true);
+    // Đóng modal view nếu đang mở
+    if (isViewModalVisible) {
+      setIsViewModalVisible(false);
+      setViewingPromotion(null);
+    }
   };
 
   const handleView = (promotion: PromotionDto) => {
@@ -104,10 +107,8 @@ export default function PromotionPage() {
     setIsViewModalVisible(true);
   };
 
-  const handleModalOk = async () => {
+  const handleModalOk = async (values?: any) => {
     try {
-      const values = await form.validateFields();
-      
       // Validate required fields
       if (!values.startDate || !values.endDate) {
         message.error("Please select start and end dates");
@@ -156,13 +157,21 @@ export default function PromotionPage() {
         return;
       }
 
+      // Debug: Log form values
+      console.log('Form values:', values);
+      console.log('Banner file:', values.banner);
+      
       // Call the save function from usePromotions hook
       const success = await handleSavePromotion(values, editingPromotion);
       
       if (success) {
         setIsModalVisible(false);
         setEditingPromotion(null);
-        form.resetFields();
+        // Đóng modal view nếu đang mở
+        if (isViewModalVisible) {
+          setIsViewModalVisible(false);
+          setViewingPromotion(null);
+        }
       }
     } catch (error) {
       console.error("Error saving promotion:", error);
@@ -173,7 +182,11 @@ export default function PromotionPage() {
   const handleModalCancel = () => {
     setIsModalVisible(false);
     setEditingPromotion(null);
-    form.resetFields();
+    // Đóng modal view nếu đang mở
+    if (isViewModalVisible) {
+      setIsViewModalVisible(false);
+      setViewingPromotion(null);
+    }
   };
 
   const handleViewModalClose = () => {
@@ -212,12 +225,14 @@ export default function PromotionPage() {
     <div>
       {totalCount < 7 && (
         <Alert
-          message="Chỉ hiển thị các khuyến mãi đang hoạt động. Nếu không thấy promotion mới tạo, hãy kiểm tra ngày bắt đầu/kết thúc và trạng thái active."
+          message="Only showing active promotions. If you don't see newly created promotions, please check the start/end dates and active status."
           type="info"
           showIcon
           style={{ marginBottom: 16 }}
         />
       )}
+      
+
       <PromotionHeader
         statistics={statistics}
         selectedRowKeys={selectedRowKeys}
@@ -248,7 +263,6 @@ export default function PromotionPage() {
         editingPromotion={editingPromotion}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
-        form={form}
       />
       <PromotionViewModal
         isVisible={isViewModalVisible}

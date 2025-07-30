@@ -97,7 +97,6 @@ export default function RegisterPage() {
       if (response) {
         if (response.message) {
           toast.success(response.message);
-          console.log("API success message:", response.message);
         }
         setTimeout(() => {
           router.push("/auth/Login");

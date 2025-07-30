@@ -1,43 +1,31 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Space, Typography, Alert, Table, Tag } from 'antd';
+import { Card, Typography, Button, Alert, Tag, Space, Table } from 'antd';
 import { getAllPromotions } from '@/api/admin/getAllPromotions';
 import { PromotionDto } from '@/types/Admin/promotion';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Paragraph } = Typography;
 
-export const PromotionTest: React.FC = () => {
+export default function PromotionTest() {
   const [promotions, setPromotions] = useState<PromotionDto[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   const loadPromotions = async () => {
-    setLoading(true);
-    setError('');
-    
     try {
-      console.log('🔍 Loading promotions from API...');
+      setLoading(true);
+      setError(null);
+      
       const response = await getAllPromotions({ page: 0, size: 10 });
-      console.log('✅ API Response:', response);
       
-      // Handle both direct response and wrapped response
-      let promotionsData: PromotionDto[] = [];
-      if (response && typeof response === 'object') {
-        const responseAny = response as any;
-        if (responseAny.data && responseAny.data.content) {
-          // Wrapped response: { success: true, data: { content: [...] } }
-          promotionsData = responseAny.data.content;
-        } else if (responseAny.content) {
-          // Direct response: { content: [...] }
-          promotionsData = responseAny.content;
-        }
+      if (response && response.content) {
+        setPromotions(response.content);
+      } else {
+        setError('Failed to load promotions');
       }
-      
-      setPromotions(promotionsData);
-    } catch (err: any) {
-      console.error('❌ API Error:', err);
-      setError(err.message || 'Unknown error');
+    } catch (error) {
+      setError('An error occurred while loading promotions');
     } finally {
       setLoading(false);
     }

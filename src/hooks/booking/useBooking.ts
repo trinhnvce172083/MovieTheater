@@ -1,223 +1,218 @@
 import { useState, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/store";
-import {
-  initializeBooking,
-  setMovieInfo,
-  setScheduleInfo,
-  updateSelectedSeats,
-  setSeatTotal,
-  resetBooking
-} from "@/store/slices/bookingSlice";
-import { BookingApiService, BookingRequest, BookingResponse } from "@/api/booking-api";
 import { message } from "antd";
+import { BookingApiService } from "@/api/booking-api";
+import type { BookingRequest, BookingResponse, ApiResponse } from "@/api/booking-api";
+import { useDispatch } from "react-redux";
+import { 
+  clearSelectedSeats, 
+  clearConcessions, 
+  clearPromotion, 
+  updateSeatTotal, 
+  recalculateTotals 
+} from "@/store/slices/bookingSlice";
 
-export function useBooking() {
-  const dispatch = useDispatch();
-  const bookingData = useSelector((state: RootState) => state.booking);
-
+export const useBooking = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const dispatch = useDispatch();
 
-  // Lấy trạng thái ghế cho lịch chiếu
-  const getSeatStatus = useCallback(async (scheduleId: string | number) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await BookingApiService.getSeatStatus(scheduleId);
-      return response.data;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "Không thể lấy trạng thái ghế";
-      setError(errorMessage);
-      message.error(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
+  const handleApiResponse = useCallback((response: any, operation: string) => {
+    if (response?.data?.success) {
+      return response.data.data || response.data;
+    } else if (response?.success) {
+      return response.data || response;
+    } else {
+      throw new Error(`Invalid response structure for ${operation}`);
     }
   }, []);
 
-  // Giữ chỗ tạm thời
-  const reserveSeats = useCallback(async (scheduleId: string | number, seatIds: number[]) => {
+  const handleError = useCallback((err: any, operation: string, defaultMessage: string, shouldThrow: boolean = true) => {
+    let errorMessage = defaultMessage;
+    
+    if (err?.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err?.message) {
+      errorMessage = err.message;
+    }
+    
+    setError(errorMessage);
+    message.error(errorMessage);
+    
+    if (shouldThrow) {
+      throw new Error(errorMessage);
+    }
+  }, []);
+
+  const createBooking = useCallback(async (bookingData: BookingRequest): Promise<BookingResponse> => {
     setLoading(true);
     setError(null);
+    
+    try {
+      const response = await BookingApiService.createBooking(bookingData);
+      const result = handleApiResponse(response, 'createBooking');
+      
+      message.success("Đặt vé thành công!");
+      return result;
+    } catch (err: any) {
+      handleError(err, 'createBooking', "Không thể tạo booking");
+    } finally {
+      setLoading(false);
+    }
+  }, [handleApiResponse, handleError]);
+
+  const createGuestBooking = useCallback(async (bookingData: BookingRequest): Promise<BookingResponse> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await BookingApiService.createGuestBooking(bookingData);
+      const result = handleApiResponse(response, 'createGuestBooking');
+      
+      message.success("Đặt vé thành công!");
+      return result;
+    } catch (err: any) {
+      handleError(err, 'createGuestBooking', "Không thể tạo guest booking");
+    } finally {
+      setLoading(false);
+    }
+  }, [handleApiResponse, handleError]);
+
+  const getBookingDetails = useCallback(async (bookingId: string): Promise<BookingResponse> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await BookingApiService.getBookingDetails(bookingId);
+      return handleApiResponse(response, 'getBookingDetails');
+    } catch (err: any) {
+      handleError(err, 'getBookingDetails', "Không thể lấy thông tin booking");
+    } finally {
+      setLoading(false);
+    }
+  }, [handleApiResponse, handleError]);
+
+  const cancelBooking = useCallback(async (bookingId: string): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await BookingApiService.cancelBooking(bookingId);
+      handleApiResponse(response, 'cancelBooking');
+      message.success("Hủy vé thành công!");
+    } catch (err: any) {
+      handleError(err, 'cancelBooking', "Không thể hủy booking");
+    } finally {
+      setLoading(false);
+    }
+  }, [handleApiResponse, handleError]);
+
+  const getMyBookings = useCallback(async (): Promise<BookingResponse[]> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await BookingApiService.getMyBookings();
+      return handleApiResponse(response, 'getMyBookings');
+    } catch (err: any) {
+      handleError(err, 'getMyBookings', "Không thể lấy danh sách booking");
+    } finally {
+      setLoading(false);
+    }
+  }, [handleApiResponse, handleError]);
+
+  const getSeatStatus = useCallback(async (scheduleId: string | number): Promise<any> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await BookingApiService.getSeatStatus(scheduleId);
+      return handleApiResponse(response, 'getSeatStatus');
+    } catch (err: any) {
+      handleError(err, 'getSeatStatus', "Không thể lấy trạng thái ghế", false);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [handleApiResponse, handleError]);
+
+  const reserveSeats = useCallback(async (scheduleId: string | number, seatIds: number[]): Promise<any> => {
+    setLoading(true);
+    setError(null);
+    
     try {
       const response = await BookingApiService.reserveSeats({
         scheduleId,
         seatIds: seatIds.map(id => id.toString())
       });
-      message.success("Đã giữ chỗ tạm thời trong 15 phút");
-      return response.data;
+      return handleApiResponse(response, 'reserveSeats');
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "Không thể giữ chỗ";
-      setError(errorMessage);
-      message.error(errorMessage);
-      throw new Error(errorMessage);
+      handleError(err, 'reserveSeats', "Không thể đặt ghế tạm thời");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [handleApiResponse, handleError]);
 
-  // Hủy giữ chỗ
-  const releaseSeats = useCallback(async (sessionId: string) => {
-    try {
-      await BookingApiService.releaseSeats(sessionId);
-      message.info("Đã hủy giữ chỗ tạm thời");
-    } catch (err: any) {
-      console.error("Error releasing seats:", err);
-    }
-  }, []);
-
-  // Gia hạn giữ chỗ
-  const extendReservation = useCallback(async (sessionId: string, additionalMinutes: number = 5) => {
-    try {
-      await BookingApiService.extendSeatReservation(sessionId);
-      message.success(`Đã gia hạn giữ chỗ thêm ${additionalMinutes} phút`);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "Không thể gia hạn giữ chỗ";
-      message.error(errorMessage);
-    }
-  }, []);
-
-  // Tạo booking
-  const createBooking = useCallback(async (bookingData: BookingRequest): Promise<BookingResponse> => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await BookingApiService.createBooking(bookingData);
-      message.success("Đặt vé thành công!");
-      return response.data;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "Không thể tạo booking";
-      setError(errorMessage);
-      message.error(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Tạo guest booking
-  const createGuestBooking = useCallback(async (bookingData: BookingRequest): Promise<BookingResponse> => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await BookingApiService.createGuestBooking(bookingData);
-      message.success("Đặt vé thành công!");
-      return response.data;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "Không thể tạo booking";
-      setError(errorMessage);
-      message.error(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Lấy booking details
-  const getBookingDetails = useCallback(async (bookingId: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await BookingApiService.getBookingDetails(bookingId);
-      return response.data;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "Không thể lấy thông tin booking";
-      setError(errorMessage);
-      message.error(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Hủy booking
-  const cancelBooking = useCallback(async (bookingId: string, reason?: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await BookingApiService.cancelBooking(bookingId);
-      message.success("Đã hủy booking thành công");
-      return response.data;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "Không thể hủy booking";
-      setError(errorMessage);
-      message.error(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Lấy booking của user
-  const getMyBookings = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await BookingApiService.getMyBookings();
-      return response.data;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "Không thể lấy danh sách booking";
-      setError(errorMessage);
-      message.error(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Khởi tạo booking
-  const initializeBookingData = useCallback((scheduleId: string, roomId: string) => {
-    dispatch(initializeBooking({ scheduleId, roomId }));
+  // Helper functions for Redux Persist management
+  const clearSelectedSeatsData = useCallback(() => {
+    dispatch(clearSelectedSeats());
   }, [dispatch]);
 
-  // Cập nhật thông tin phim
-  const updateMovieInfo = useCallback((movieInfo: any) => {
-    dispatch(setMovieInfo(movieInfo));
+  const clearConcessionsData = useCallback(() => {
+    dispatch(clearConcessions());
   }, [dispatch]);
 
-  // Cập nhật thông tin lịch chiếu
-  const updateScheduleInfo = useCallback((scheduleInfo: any) => {
-    dispatch(setScheduleInfo(scheduleInfo));
+  const clearPromotionData = useCallback(() => {
+    dispatch(clearPromotion());
   }, [dispatch]);
 
-  // Cập nhật ghế đã chọn
-  const updateSelectedSeatsData = useCallback((seats: any[]) => {
-    dispatch(updateSelectedSeats(seats));
-    // Tính tổng tiền ghế (backend sẽ tính chính xác)
-    const seatTotal = seats.length * 150000; // Giá tạm thời
-    dispatch(setSeatTotal(seatTotal));
+  const updateSeatTotalData = useCallback((total: number) => {
+    dispatch(updateSeatTotal(total));
   }, [dispatch]);
 
-  // Reset booking
-  const resetBookingData = useCallback(() => {
-    dispatch(resetBooking());
+  const recalculateTotalsData = useCallback(() => {
+    dispatch(recalculateTotals());
   }, [dispatch]);
+
+  // Auto-cleanup logic for booking data
+  const clearBookingDataAfterTimeout = useCallback(() => {
+    const lastActivity = localStorage.getItem('booking_last_activity');
+    if (lastActivity) {
+      const lastActivityTime = new Date(lastActivity).getTime();
+      const currentTime = new Date().getTime();
+      const timeDiff = currentTime - lastActivityTime;
+      const hoursDiff = timeDiff / (1000 * 60 * 60);
+      
+      if (hoursDiff >= 24) {
+        clearSelectedSeatsData();
+        clearConcessionsData();
+        clearPromotionData();
+        localStorage.removeItem('booking_last_activity');
+        localStorage.removeItem('currentBookingId');
+      }
+    }
+  }, [clearSelectedSeatsData, clearConcessionsData, clearPromotionData]);
+
+  // Update last activity timestamp
+  const updateLastActivity = useCallback(() => {
+    localStorage.setItem('booking_last_activity', new Date().toISOString());
+  }, []);
 
   return {
-    // State
-    bookingData,
     loading,
     error,
-
-    // Seat management
-    getSeatStatus,
-    reserveSeats,
-    releaseSeats,
-    extendReservation,
-
-    // Booking management
     createBooking,
     createGuestBooking,
     getBookingDetails,
     cancelBooking,
     getMyBookings,
-
-    // Redux actions
-    initializeBookingData,
-    updateMovieInfo,
-    updateScheduleInfo,
-    updateSelectedSeatsData,
-    resetBookingData,
+    getSeatStatus,
+    reserveSeats,
+    clearSelectedSeatsData,
+    clearConcessionsData,
+    clearPromotionData,
+    updateSeatTotalData,
+    recalculateTotalsData,
+    clearBookingDataAfterTimeout,
+    updateLastActivity,
   };
-} 
+}; 

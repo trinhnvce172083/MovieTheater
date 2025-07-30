@@ -13,7 +13,8 @@ interface ConcessionTableProps {
 }
 
 const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  const roundedPrice = Math.round(price);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'VND' }).format(roundedPrice);
 };
 
 const ConcessionTable: React.FC<ConcessionTableProps> = ({ data, loading, onEdit, onDelete }) => {

@@ -23,7 +23,14 @@ export const PromotionViewModal: React.FC<PromotionViewModalProps> = ({
         <Button
           key="edit"
           type="primary"
-          onClick={() => onEdit(promotion)}
+          onClick={() => {
+            console.log('=== EDIT FROM VIEW MODAL ===');
+            console.log('Promotion object:', promotion);
+            console.log('Promotion bannerImageUrl:', promotion.bannerImageUrl);
+            console.log('All promotion fields:', Object.keys(promotion));
+            onEdit(promotion);
+            onClose(); // Đóng modal view khi chuyển sang edit
+          }}
         >
           Edit Promotion
         </Button>,
@@ -276,6 +283,9 @@ export const PromotionViewModal: React.FC<PromotionViewModalProps> = ({
               className="w-full h-auto object-cover rounded"
               src={promotion.bannerImageUrl}
               alt="Promotion Banner"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
             />
           </div>
         )}

@@ -19,6 +19,7 @@ import { getAllRooms } from "@/api/admin/getAllRooms";
 import AppBarChart from "@/components/AppBarChart";
 import AppLineChart from "@/components/AppLineChart";
 import AppPieChart from "@/components/AppPieChart";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MovieData {
   status: string;
@@ -28,6 +29,7 @@ interface MovieData {
 }
 
 export default function AdminDashboard() {
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [totalUsers, setTotalUsers] = useState<number | null>(null);
   const [totalMovies, setTotalMovies] = useState<number | null>(null);
@@ -37,6 +39,10 @@ export default function AdminDashboard() {
   const [activeRooms, setActiveRooms] = useState<number | null>(null);
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
   const [averagePrice, setAveragePrice] = useState<number>(0);
+
+  useEffect(() => {
+    fetchData();
+  }, []); // Empty dependency array to run only once
 
   const fetchData = async () => {
     setLoading(true);
@@ -132,7 +138,7 @@ export default function AdminDashboard() {
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { 
+    return new Intl.NumberFormat('en-US', { 
       style: 'currency', 
       currency: 'VND',
       minimumFractionDigits: 0,
@@ -140,33 +146,44 @@ export default function AdminDashboard() {
     }).format(amount);
   };
 
+  if (loading) {
+    return (
+      <div className={`${isMobile ? 'p-4' : 'p-8'} bg-gray-50 min-h-screen flex items-center justify-center`}>
+        <div className="text-center">
+          <Spin size="large" />
+          <p className="mt-4 text-gray-600">Loading Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className={`${isMobile ? 'p-4' : 'p-8'} bg-gray-50 min-h-screen`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className={`${isMobile ? 'mb-6' : 'mb-8'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Admin Dashboard</h1>
-              <p className="text-sm text-gray-600 mt-1">Cinema Management System Overview</p>
+              <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-900`}>Admin Dashboard</h1>
+              <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600 mt-1`}>Cinema Management System Overview</p>
             </div>
           </div>
         </div>
         
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <div className={`grid grid-cols-1 ${isMobile ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-4'} gap-3 sm:gap-5 mb-6 sm:mb-8`}>
           {/* Members Card */}
           <div className="bg-white rounded-md shadow-sm border border-gray-100">
-            <div className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-gray-500">Total Members</h3>
-                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50">
-                  <TeamOutlined className="text-blue-500" />
+            <div className={`${isMobile ? 'p-3' : 'p-5'}`}>
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-500`}>Total Members</h3>
+                <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} flex items-center justify-center rounded-full bg-blue-50`}>
+                  <TeamOutlined className={`${isMobile ? 'text-sm' : 'text-base'} text-blue-500`} />
                 </div>
               </div>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-2xl font-semibold text-gray-900">{totalUsers !== null ? totalUsers.toLocaleString() : '—'}</p>
+                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-900`}>{totalUsers !== null ? totalUsers.toLocaleString() : '—'}</p>
                 </div>
               </div>
             </div>
@@ -174,17 +191,17 @@ export default function AdminDashboard() {
 
           {/* Movies Card */}
           <div className="bg-white rounded-md shadow-sm border border-gray-100">
-            <div className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-gray-500">Movies</h3>
-                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-green-50">
-                  <VideoCameraOutlined className="text-green-500" />
+            <div className={`${isMobile ? 'p-3' : 'p-5'}`}>
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-500`}>Movies</h3>
+                <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} flex items-center justify-center rounded-full bg-green-50`}>
+                  <VideoCameraOutlined className={`${isMobile ? 'text-sm' : 'text-base'} text-green-500`} />
                 </div>
               </div>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-2xl font-semibold text-gray-900">{totalMovies !== null ? totalMovies.toLocaleString() : '—'}</p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-900`}>{totalMovies !== null ? totalMovies.toLocaleString() : '—'}</p>
+                  <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500 mt-1`}>
                     {activeMovies !== null ? <span><span className="font-medium text-green-600">{activeMovies}</span> now showing</span> : '—'}
                   </p>
                 </div>
@@ -194,17 +211,17 @@ export default function AdminDashboard() {
 
           {/* Cinema Halls Card */}
           <div className="bg-white rounded-md shadow-sm border border-gray-100">
-            <div className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-gray-500">Cinema Halls</h3>
-                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-indigo-50">
-                  <HomeOutlined className="text-indigo-500" />
+            <div className={`${isMobile ? 'p-3' : 'p-5'}`}>
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-500`}>Cinema Halls</h3>
+                <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} flex items-center justify-center rounded-full bg-indigo-50`}>
+                  <HomeOutlined className={`${isMobile ? 'text-sm' : 'text-base'} text-indigo-500`} />
                 </div>
               </div>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-2xl font-semibold text-gray-900">{totalRooms !== null ? totalRooms.toLocaleString() : '—'}</p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-900`}>{totalRooms !== null ? totalRooms.toLocaleString() : '—'}</p>
+                  <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500 mt-1`}>
                     {activeRooms !== null ? <span><span className="font-medium text-indigo-600">{activeRooms}</span> operational</span> : '—'}
                   </p>
                 </div>
@@ -214,16 +231,16 @@ export default function AdminDashboard() {
 
           {/* Promotions Card */}
           <div className="bg-white rounded-md shadow-sm border border-gray-100">
-            <div className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-gray-500">Promotions</h3>
-                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-50">
-                  <GiftOutlined className="text-orange-500" />
+            <div className={`${isMobile ? 'p-3' : 'p-5'}`}>
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-500`}>Promotions</h3>
+                <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} flex items-center justify-center rounded-full bg-orange-50`}>
+                  <GiftOutlined className={`${isMobile ? 'text-sm' : 'text-base'} text-orange-500`} />
                 </div>
               </div>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-2xl font-semibold text-gray-900">{totalPromotions !== null ? totalPromotions.toLocaleString() : '—'}</p>
+                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-900`}>{totalPromotions !== null ? totalPromotions.toLocaleString() : '—'}</p>
                 </div>
               </div>
             </div>
@@ -231,23 +248,23 @@ export default function AdminDashboard() {
         </div>
 
         {/* Financial Overview */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Financial Overview</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="mb-6 sm:mb-8">
+          <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-medium text-gray-900 mb-3 sm:mb-4`}>Financial Overview</h2>
+          <div className={`grid grid-cols-1 ${isMobile ? 'gap-3' : 'md:grid-cols-2 gap-5'}`}>
             {/* Total Revenue */}
             <div className="bg-white rounded-md shadow-sm border border-gray-100">
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
-                  <div className="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-50">
-                    <DollarOutlined className="text-emerald-500" />
+              <div className={`${isMobile ? 'p-3' : 'p-5'}`}>
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-500`}>Total Revenue</h3>
+                  <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} flex items-center justify-center rounded-full bg-emerald-50`}>
+                    <DollarOutlined className={`${isMobile ? 'text-sm' : 'text-base'} text-emerald-500`} />
                   </div>
                 </div>
                 <div className="mt-1">
-                  <p className="text-2xl font-semibold text-gray-900">{formatCurrency(totalRevenue)}</p>
+                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-900`}>{formatCurrency(totalRevenue)}</p>
                   <div className="flex items-center mt-1">
-                    <span className="text-xs font-medium text-emerald-500">↑ +8.2%</span>
-                    <span className="text-xs text-gray-500 ml-1">from last month</span>
+                    <span className={`${isMobile ? 'text-xs' : 'text-xs'} font-medium text-emerald-500`}>↑ +8.2%</span>
+                    <span className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500 ml-1`}>from last month</span>
                   </div>
                 </div>
               </div>
@@ -255,23 +272,23 @@ export default function AdminDashboard() {
 
             {/* Average Ticket Price */}
             <div className="bg-white rounded-md shadow-sm border border-gray-100">
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-gray-500">Average Ticket Price</h3>
-                  <div className="w-8 h-8 flex items-center justify-center rounded-full bg-cyan-50">
-                    <TagOutlined className="text-cyan-500" />
+              <div className={`${isMobile ? 'p-3' : 'p-5'}`}>
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-500`}>Average Ticket Price</h3>
+                  <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} flex items-center justify-center rounded-full bg-cyan-50`}>
+                    <TagOutlined className={`${isMobile ? 'text-sm' : 'text-base'} text-cyan-500`} />
                   </div>
                 </div>
                 <div className="mt-1">
-                  <p className="text-2xl font-semibold text-gray-900">{formatCurrency(averagePrice)}</p>
-                  <p className="text-xs text-gray-500 mt-1">Premium experience</p>
+                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-900`}>{formatCurrency(averagePrice)}</p>
+                  <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500 mt-1`}>Premium experience</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Charts Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-8">
+          <div className={`grid grid-cols-1 ${isMobile ? 'gap-3 mt-6' : 'md:grid-cols-3 gap-5 mt-8'}`}>
             <AppBarChart />
             <AppLineChart />
             <AppPieChart />
