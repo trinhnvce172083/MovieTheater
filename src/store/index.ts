@@ -31,8 +31,8 @@ const bookingPersistConfig = {
 const authPersistConfig = {
   key: "auth",
   storage,
-  whitelist: ["isLoggedIn", "userInfo"], // Chỉ persist thông tin cần thiết
-  blacklist: ["accessToken", "refreshToken"] // Không persist tokens
+  whitelist: ["isLoggedIn", "userInfo", "user", "role"], // Persist thông tin cần thiết
+  blacklist: ["token"] // Không persist tokens nhạy cảm
 };
 
 // Combine reducers với persist
