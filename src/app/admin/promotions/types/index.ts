@@ -21,14 +21,6 @@ export interface PromotionTableProps {
   onPageChange: (page: number, size: number) => void;
 }
 
-export interface PromotionModalProps {
-  isVisible: boolean;
-  editingPromotion: PromotionDto | null;
-  onOk: () => void;
-  onCancel: () => void;
-  form: any;
-}
-
 export interface PromotionViewModalProps {
   isVisible: boolean;
   promotion: PromotionDto | null;

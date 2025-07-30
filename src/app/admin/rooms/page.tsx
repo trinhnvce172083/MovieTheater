@@ -26,10 +26,12 @@ import {
 } from './components';
 import { CinemaRoomResponse, RoomCreateRequest, RoomFilters } from './types';
 import { filterRooms, calculateRoomStatistics } from './utils';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const { Text } = Typography;
 
 export default function CinemaRoomManagement() {
+  const isMobile = useIsMobile();
   const [form] = Form.useForm();
   
   // State

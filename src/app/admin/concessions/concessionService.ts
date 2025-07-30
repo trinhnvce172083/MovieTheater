@@ -4,11 +4,18 @@ import { Concession } from '@/types/Concession';
 export const getAllConcessions = async (): Promise<Concession[]> => {
   const response = await concessionApi.getAll();
   const data = response.data.data || response.data;
-  return data.map((item: any) => ({
-    ...item,
-    id: item.id ?? item.concessionId,
-    category: item.category
-  }));
+  if (Array.isArray(data)) {
+    return data.map((item: any) => ({
+      ...item,
+      id: item.id ?? item.concessionId,
+      category: item.category,
+      // Round numeric values to avoid decimal issues
+      price: Math.round(item.price || 0),
+      stockQuantity: Math.round(item.stockQuantity || 0),
+      displayOrder: Math.round(item.displayOrder || 0)
+    }));
+  }
+  return [];
 };
 
 export const addConcession = async (data: Omit<Concession, 'id'>) => {

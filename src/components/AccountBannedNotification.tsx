@@ -18,7 +18,7 @@ interface AccountBannedNotificationProps {
 
 export const AccountBannedNotification: React.FC<AccountBannedNotificationProps> = ({
   visible,
-  banReason = "Vi phạm điều khoản sử dụng",
+  banReason = "Terms of service violation",
   banUntil,
   userName,
   onClose
@@ -58,11 +58,11 @@ export const AccountBannedNotification: React.FC<AccountBannedNotificationProps>
   };
 
   const formatBanUntil = (dateString?: string) => {
-    if (!dateString) return "Vô thời hạn";
+    if (!dateString) return "Permanent";
     
     try {
       const date = new Date(dateString);
-      return date.toLocaleString('vi-VN', {
+      return date.toLocaleString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -70,7 +70,7 @@ export const AccountBannedNotification: React.FC<AccountBannedNotificationProps>
         minute: '2-digit'
       });
     } catch {
-      return "Vô thời hạn";
+      return "Permanent";
     }
   };
 
@@ -90,11 +90,11 @@ export const AccountBannedNotification: React.FC<AccountBannedNotificationProps>
         title={
           <div className="text-center">
             <div style={{ color: '#ff4d4f', fontSize: '24px', fontWeight: 600 }}>
-              Tài khoản đã bị khóa
+              Account Banned
             </div>
             {userName && (
               <div style={{ color: '#666', fontSize: '16px', fontWeight: 400, marginTop: '8px' }}>
-                Người dùng: <strong>{userName}</strong>
+                User: <strong>{userName}</strong>
               </div>
             )}
           </div>
@@ -102,25 +102,25 @@ export const AccountBannedNotification: React.FC<AccountBannedNotificationProps>
         subTitle={
           <div className="space-y-3">
             <Text className="block text-gray-600 text-base">
-              Tài khoản của bạn đã bị khóa và không thể tiếp tục sử dụng dịch vụ.
+              Your account has been banned and you cannot continue using the service.
             </Text>
             
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-2">
               <div className="flex items-start gap-2">
-                <Text strong className="text-red-800 min-w-[80px]">Lý do:</Text>
+                <Text strong className="text-red-800 min-w-[80px]">Reason:</Text>
                 <Text className="text-red-700">{banReason}</Text>
               </div>
               
               <div className="flex items-start gap-2">
-                <Text strong className="text-red-800 min-w-[80px]">Thời hạn:</Text>
+                <Text strong className="text-red-800 min-w-[80px]">Duration:</Text>
                 <Text className="text-red-700">{formatBanUntil(banUntil)}</Text>
               </div>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <Text className="text-blue-800 text-sm">
-                <strong>Lưu ý:</strong> Nếu bạn cho rằng đây là sự nhầm lẫn, vui lòng liên hệ 
-                với bộ phận hỗ trợ khách hàng để được giải quyết.
+                <strong>Note:</strong> If you believe this is a mistake, please contact 
+                customer support for resolution.
               </Text>
             </div>
           </div>
@@ -134,11 +134,11 @@ export const AccountBannedNotification: React.FC<AccountBannedNotificationProps>
               onClick={handleGoHome}
               className="bg-blue-600 hover:bg-blue-700 border-0"
             >
-              Về trang chủ
+              Go to Homepage
             </Button>
             
             <Text type="secondary" className="text-sm">
-              Bạn sẽ được chuyển về trang chủ và đăng xuất khỏi hệ thống
+              You will be redirected to the homepage and logged out of the system
             </Text>
           </div>
         }
