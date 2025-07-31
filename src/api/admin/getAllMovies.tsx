@@ -121,17 +121,31 @@ const mockGetMovieById = async (id: string) => {
 
 export const getMovies = async (params: GetMoviesParams = {}) => {
   try {
-    const response = await axiosClient.get("/movies", { params });
+    console.log('🎬 [API getMovies] Making API call to /admin/movies with params:', params);
+    
+    const response = await axiosClient.get("/admin/movies", { params });
+    
+    console.log('🎬 [API getMovies] Response status:', response.status);
+    console.log('🎬 [API getMovies] Response data:', response.data);
     
     // Backend returns ApiResponse format: { success: true, data: {...}, message: "..." }
     if (response.data && response.data.success) {
+      console.log('🎬 [API getMovies] Successful response, returning data:', response.data.data);
       return response.data.data;
     } else {
-      console.error('API returned unsuccessful response:', response.data);
+      console.error('❌ [API getMovies] API returned unsuccessful response:', response.data);
       throw new Error(response.data?.message || 'API call unsuccessful');
     }
   } catch (error) {
-    console.error("API call failed:", error);
+    console.error("❌ [API getMovies] API call failed:", error);
+    
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response: { status: number; data: unknown; statusText: string } };
+      console.error('❌ [API getMovies] Error status:', axiosError.response.status);
+      console.error('❌ [API getMovies] Error data:', axiosError.response.data);
+      console.error('❌ [API getMovies] Error status text:', axiosError.response.statusText);
+    }
+    
     // Instead of falling back to mock data, re-throw the error so the UI can handle it properly
     throw error;
   }
@@ -139,134 +153,147 @@ export const getMovies = async (params: GetMoviesParams = {}) => {
 
 export const createMovie = async (movieData: Omit<Movie, 'movieId'>) => {
   try {
+    console.log('🎬 [API createMovie] Creating movie with data:', movieData);
+    
     // Transform frontend data to match backend expectations
     const backendData = transformToBackendFormat(movieData);
+    console.log('🎬 [API createMovie] Transformed backend data:', backendData);
 
-    const response = await axiosClient.post("/movies", backendData);
+    const response = await axiosClient.post("/admin/movies", backendData);
+    console.log('🎬 [API createMovie] Create response:', response.data);
     return response.data.data || response.data;
   } catch (error) {
-    console.warn("API call failed, falling back to mock data:", error);
-    try {
-      const mockResult = await mockCreateMovie(movieData);
-      return mockResult;
-    } catch {
-      throw new Error('Failed to create movie in both API and mock data');
-    }
+    console.error("❌ [API createMovie] API call failed:", error);
+    throw error;
   }
 };
 
 export const updateMovie = async (id: number, movieData: Partial<Movie>) => {
   try {
+    console.log('🎬 [API updateMovie] Updating movie', id, 'with data:', movieData);
+    
     // Use smart update data preparation for backend
     const backendData = prepareSmartUpdateData(movieData);
+    console.log('🎬 [API updateMovie] Prepared backend data:', backendData);
 
-    const response = await axiosClient.put(`/movies/${id}`, backendData);
+    const response = await axiosClient.put(`/admin/movies/${id}`, backendData);
+    console.log('🎬 [API updateMovie] Update response:', response.data);
     return response.data.data || response.data;
-  } catch {
-    console.warn("API call failed, falling back to mock data");
-    return await mockUpdateMovie(id.toString(), movieData);
+  } catch (error) {
+    console.error("❌ [API updateMovie] API call failed:", error);
+    throw error;
   }
 };
 
 export const deleteMovie = async (id: number) => {
   try {
-    await axiosClient.delete(`/movies/${id}`);
-  } catch {
-    console.warn("API call failed, falling back to mock data");
-    await mockDeleteMovie();
+    console.log('🎬 [API deleteMovie] Deleting movie:', id);
+    
+    await axiosClient.delete(`/admin/movies/${id}`);
+    console.log('🎬 [API deleteMovie] Movie deleted successfully');
+  } catch (error) {
+    console.error("❌ [API deleteMovie] API call failed:", error);
+    throw error;
   }
 };
 
 export const getMovieById = async (id: number) => {
   try {
-    const response = await axiosClient.get(`/movies/${id}`);
+    console.log('🎬 [API getMovieById] Getting movie by ID:', id);
+    
+    const response = await axiosClient.get(`/admin/movies/${id}`);
+    console.log('🎬 [API getMovieById] Response:', response.data);
     return response.data.data || response.data;
-  } catch {
-    console.warn("API call failed, falling back to mock data");
-    return await mockGetMovieById(id.toString());
+  } catch (error) {
+    console.error("❌ [API getMovieById] API call failed:", error);
+    throw error;
   }
 };
 
 export const getMovieStatistics = async () => {
   try {
-    const response = await axiosClient.get("/movies/statistics");
+    console.log('🎬 [API getMovieStatistics] Getting movie statistics');
+    
+    const response = await axiosClient.get("/admin/movies/statistics");
+    console.log('🎬 [API getMovieStatistics] Statistics response:', response.data);
     return response.data.data || response.data;
-  } catch {
-    console.warn("API call failed, returning default statistics");
-    return {
-      totalMovies: 12,
-      activeMovies: 7,
-      totalRevenue: 1830000,
-      avgDuration: 125,
-    };
+  } catch (error) {
+    console.error("❌ [API getMovieStatistics] API call failed:", error);
+    throw error;
   }
 };
 
 export const uploadMoviePoster = async (id: number, file: File) => {
   try {
+    console.log('🎬 [API uploadMoviePoster] Uploading poster for movie:', id);
+    
     const formData = new FormData();
     formData.append('file', file);
     
-    const response = await axiosClient.post(`/movies/${id}/poster`, formData, {
+    const response = await axiosClient.post(`/admin/movies/${id}/poster`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
+    console.log('🎬 [API uploadMoviePoster] Upload response:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Failed to upload poster:', error);
-    throw new Error('Failed to upload poster');
+    console.error('❌ [API uploadMoviePoster] Failed to upload poster:', error);
+    throw error;
   }
 };
 
 export const searchMovies = async (keyword: string, page = 0, size = 10) => {
   try {
-    const response = await axiosClient.get('/movies/search', {
+    console.log('🎬 [API searchMovies] Searching movies with keyword:', keyword);
+    
+    const response = await axiosClient.get('/admin/movies/search', {
       params: { keyword, page, size }
     });
+    console.log('🎬 [API searchMovies] Search response:', response.data);
     return response.data.data || response.data;
-  } catch {
-    console.warn("Search API failed, falling back to mock data");
-    return {
-      content: [],
-      totalElements: 0,
-      totalPages: 0,
-      size: size,
-      number: page,
-      first: true,
-      last: true,
-    };
+  } catch (error) {
+    console.error("❌ [API searchMovies] Search API failed:", error);
+    throw error;
   }
 };
 
 export const getNowShowingMovies = async () => {
   try {
-    const response = await axiosClient.get('/movies/now-showing');
+    console.log('🎬 [API getNowShowingMovies] Getting now showing movies');
+    
+    const response = await axiosClient.get('/admin/movies/now-showing');
+    
+    console.log('🎬 [API getNowShowingMovies] Response:', response.data);
     
     if (response.data && response.data.success) {
       return response.data.data;
     } else {
-      console.error('API returned unsuccessful response:', response.data);
+      console.error('❌ [API getNowShowingMovies] API returned unsuccessful response:', response.data);
       throw new Error(response.data?.message || 'Failed to fetch now showing movies');
     }
   } catch (error) {
-    console.error("Failed to fetch now showing movies:", error);
+    console.error("❌ [API getNowShowingMovies] Failed to fetch now showing movies:", error);
     throw error;
   }
 };
 
 export const getComingSoonMovies = async () => {
   try {
-    const response = await axiosClient.get('/movies/coming-soon');
+    console.log('🎬 [API getComingSoonMovies] Getting coming soon movies');
+    
+    const response = await axiosClient.get('/admin/movies/coming-soon');
+    
+    console.log('🎬 [API getComingSoonMovies] Response:', response.data);
     
     if (response.data && response.data.success) {
       return response.data.data;
     } else {
-      console.error('API returned unsuccessful response:', response.data);
+      console.error('❌ [API getComingSoonMovies] API returned unsuccessful response:', response.data);
       throw new Error(response.data?.message || 'Failed to fetch coming soon movies');
     }
   } catch (error) {
-    console.error("Failed to fetch coming soon movies:", error);
+    console.error("❌ [API getComingSoonMovies] Failed to fetch coming soon movies:", error);
     throw error;
   }
 };

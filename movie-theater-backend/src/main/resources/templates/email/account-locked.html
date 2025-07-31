@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông báo khóa tài khoản - Lumiere Cinema</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 30px;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .info-table th,
+        .info-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .info-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+        .button {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .highlight {
+            color: #dc3545;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 Thông báo khóa tài khoản</h1>
+            <p>Lumiere Cinema</p>
+        </div>
+        
+        <div class="content">
+            <p>Xin chào <strong th:text="${fullName}">Người dùng</strong>,</p>
+            
+            <div class="warning-box">
+                <p><strong>⚠️ Tài khoản của bạn đã bị khóa</strong></p>
+                <p>Tài khoản <strong th:text="${username}">username</strong> của bạn đã bị khóa tạm thời do vi phạm quy định sử dụng dịch vụ.</p>
+            </div>
+
+            <table class="info-table">
+                <tr>
+                    <th>Tên đăng nhập</th>
+                    <td th:text="${username}">username</td>
+                </tr>
+                <tr>
+                    <th>Lý do khóa</th>
+                    <td th:text="${reason}">Lý do khóa tài khoản</td>
+                </tr>
+                <tr>
+                    <th>Thời gian khóa</th>
+                    <td><span class="highlight" th:text="${lockHours}">24</span> giờ</td>
+                </tr>
+                <tr>
+                    <th>Thời gian mở khóa</th>
+                    <td th:text="${#temporals.format(unlockTime, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</td>
+                </tr>
+                <tr th:if="${notes}" >
+                    <th>Ghi chú</th>
+                    <td th:text="${notes}">Ghi chú thêm</td>
+                </tr>
+            </table>
+
+            <h3>📋 Các hành động bạn có thể thực hiện:</h3>
+            <ul>
+                <li>Đợi đến thời gian mở khóa tự động</li>
+                <li>Liên hệ bộ phận hỗ trợ để được giải thích chi tiết</li>
+                <li>Tham khảo <a href="#">điều khoản sử dụng</a> để tránh tái phạm</li>
+            </ul>
+
+            <p><strong>Lưu ý quan trọng:</strong></p>
+            <ul>
+                <li>Tài khoản sẽ được mở khóa tự động vào thời gian đã định</li>
+                <li>Trong thời gian bị khóa, bạn không thể đăng nhập hệ thống</li>
+                <li>Các đặt vé hiện tại vẫn có hiệu lực bình thường</li>
+            </ul>
+
+            <a href="mailto:support@lumiere.com" class="button">
+                📧 Liên hệ hỗ trợ
+            </a>
+        </div>
+        
+        <div class="footer">
+            <p>Cảm ơn bạn đã sử dụng dịch vụ Lumiere Cinema</p>
+            <p>Email này được gửi tự động, vui lòng không trả lời trực tiếp.</p>
+            <p>Nếu có thắc mắc, hãy liên hệ: <a th:href="'mailto:' + ${supportEmail}" th:text="${supportEmail}">support@lumiere.com</a></p>
+        </div>
+    </div>
+</body>
+</html> 

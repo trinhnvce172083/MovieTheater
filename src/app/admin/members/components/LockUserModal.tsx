@@ -29,9 +29,21 @@ const LockUserModal: React.FC<LockUserModalProps> = ({
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (values: any) => {
+  // Debug logging when modal opens
+  React.useEffect(() => {
+    if (visible) {
+      console.log('🔒 [LockUserModal] Modal opened with user:', user);
+    }
+  }, [visible, user]);
+
+  const handleSubmit = async () => {
     try {
       setLoading(true);
+      
+      // Validate and get form values
+      const values = await form.validateFields();
+      console.log('🔒 [LockUserModal] Form values received:', values);
+      console.log('🔒 [LockUserModal] Current user:', user);
       
       const lockData = {
         reason: values.reason,
@@ -40,15 +52,20 @@ const LockUserModal: React.FC<LockUserModalProps> = ({
         notes: values.notes
       };
 
-      const success = await onLockConfirm(lockData);
+      console.log('🔒 [LockUserModal] Calling onConfirm with lockData:', lockData);
+      await onConfirm(lockData);
       
-      if (success) {
-        message.success('User locked successfully');
-        handleCancel();
-      } else {
-        message.error('Failed to lock user');
-      }
+      message.success('User locked successfully');
+      handleCancel();
     } catch (error) {
+      console.error('❌ [LockUserModal] Error in handleSubmit:', error);
+      
+      // Check if it's a form validation error
+      if (error && typeof error === 'object' && 'errorFields' in error) {
+        console.log('❌ [LockUserModal] Form validation failed');
+        return; // Don't show error message for validation failures
+      }
+      
       message.error('An error occurred while locking user');
     } finally {
       setLoading(false);

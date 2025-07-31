@@ -110,6 +110,8 @@ export const useMovieManagement = () => {
       console.log('Fetching movies from API with token:', actualToken ? 'present' : 'missing');
       
       try {
+        console.log('🎬 [useMovieManagement] Fetching movies from API with token:', actualToken ? 'present' : 'missing');
+        
         // Use the simpler getMovies endpoint first
         const movieResponse = await getMovies({
           page: 0,
@@ -117,7 +119,7 @@ export const useMovieManagement = () => {
           sortBy: "movieId",
           sortDirection: "asc",
         });
-        console.log('API Response:', movieResponse);
+        console.log('🎬 [useMovieManagement] API Response:', movieResponse);
         
         if (movieResponse && movieResponse.content && Array.isArray(movieResponse.content)) {
           // Transform Movie[] to MovieData[] 
@@ -134,10 +136,9 @@ export const useMovieManagement = () => {
               return transformApiMovieToMovieData({ ...movie, isActive: true });
             }).filter(Boolean) as MovieData[]; // Remove null values
           } catch (transformError) {
-            console.error('Error transforming movie data:', transformError);
-            setMovieData([]);
-            setIsUsingApiData(false);
-            return;
+            console.error('❌ [useMovieManagement] Error transforming movie data:', transformError);
+            throw new Error('Failed to transform movie data from API');
+          }
           }
           
           // Apply client-side filtering for display
@@ -167,25 +168,38 @@ export const useMovieManagement = () => {
           setMovieData(filteredData);
           setAllMovieData(allTransformedData); // Store ALL movies for statistics
           setIsUsingApiData(true);
-          console.log('Successfully loaded movies from API:', filteredData.length, 'displayed out of', allTransformedData.length, 'total');
+          console.log('✅ [useMovieManagement] Successfully loaded movies from API:', filteredData.length, 'displayed out of', allTransformedData.length, 'total');
         } else {
-          console.error('API returned unexpected response structure:', movieResponse);
-          message.error('Unable to load movie list - unexpected response format.');
-          setMovieData(mockMovies);
-          setAllMovieData(mockMovies); // Store ALL mock movies for statistics
-          setIsUsingApiData(false);
+          console.error('❌ [useMovieManagement] API returned unexpected response structure:', movieResponse);
+          throw new Error('API returned unexpected response format');
         }
       } catch (apiError) {
-        console.error('API call failed:', apiError);
-        message.error('An error occurred while loading the movie list.');
-        setMovieData(mockMovies);
-        setAllMovieData(mockMovies); // Store ALL mock movies for statistics
+        console.error('❌ [useMovieManagement] API call failed:', apiError);
+        
+        // Check if it's an authentication error
+        if (apiError && typeof apiError === 'object' && 'response' in apiError) {
+          const axiosError = apiError as { response: { status: number; data?: { message?: string } } };
+          if (axiosError.response.status === 401) {
+            message.error('Authentication failed. Please log in again.');
+            setShowAuthWarning(true);
+          } else if (axiosError.response.status === 403) {
+            message.error('Access denied. You may not have admin permissions.');
+          } else {
+            message.error(`Failed to load movies: ${axiosError.response.data?.message || 'Server error'}`);
+          }
+        } else {
+          message.error('Failed to load movies. Please check your connection.');
+        }
+        
+        setMovieData([]);
+        setAllMovieData([]);
         setIsUsingApiData(false);
       }
     } catch (error) {
-      console.error('Error in fetchMovies:', error);
+      console.error('❌ [useMovieManagement] Error in fetchMovies:', error);
       message.error('An error occurred while loading the movie list.');
-      setMovieData(mockMovies);
+      setMovieData([]);
+      setAllMovieData([]);
       setIsUsingApiData(false);
     } finally {
       setLoading(false);

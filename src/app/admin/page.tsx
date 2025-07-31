@@ -85,7 +85,6 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
-  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats>({
@@ -115,7 +114,6 @@ export default function AdminDashboard() {
         getAllPromotions({ page: 0, size: 100, sortBy: "promotionName", sortDirection: "ASC" })
       ]);
 
-      console.log('📊 API Results:', results);
 
       // Process Users
       if (results[0].status === 'fulfilled') {
@@ -489,12 +487,6 @@ export default function AdminDashboard() {
           </Col>
         </Row>
 
-        {/* Footer */}
-        <div className="mt-6 text-center">
-          <Text type="secondary" className="text-xs">
-            Real data from database
-          </Text>
-        </div>
       </div>
     </div>
   );

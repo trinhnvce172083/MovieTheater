@@ -116,31 +116,41 @@ export default function AdminMemberManagement() {
   };
 
   const handleLockConfirm = async (lockData: { reason: string; lockHours: number; sendNotificationEmail: boolean; notes?: string }) => {
-    if (selectedMember) {
-      const success = await lockUserAccount(selectedMember.id, lockData.lockHours, lockData.reason, lockData.sendNotificationEmail);
-      if (success) {
-        setLockModalVisible(false);
-        setSelectedMember(null);
-        
-        // If we just locked the current user, trigger banned notification
-        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-        if (currentUser.id === parseInt(selectedMember.id)) {
-          const windowWithCallback = window as typeof window & { __triggerAccountBannedCheck?: (error: unknown) => void };
-          if (windowWithCallback.__triggerAccountBannedCheck) {
-            // Simulate account locked error
-            const mockError = {
-              response: {
-                status: 403,
-                data: {
-                  message: lockData.reason || "Tài khoản đã bị khóa",
-                  errorCode: "ACCOUNT_LOCKED",
-                  code: 1105
-                }
-              }
-            };
-            windowWithCallback.__triggerAccountBannedCheck(mockError);
+    if (!selectedMember) {
+      throw new Error('No member selected for locking');
+    }
+
+    console.log('🔒 [page.tsx handleLockConfirm] Starting lock process for member:', selectedMember.id);
+    console.log('🔒 [page.tsx handleLockConfirm] Lock data:', lockData);
+
+    const success = await lockUserAccount(selectedMember.id, lockData.lockHours, lockData.reason, lockData.sendNotificationEmail);
+    
+    if (!success) {
+      throw new Error('Failed to lock user account');
+    }
+
+    console.log('🔒 [page.tsx handleLockConfirm] User locked successfully');
+    
+    setLockModalVisible(false);
+    setSelectedMember(null);
+    
+    // If we just locked the current user, trigger banned notification
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    if (currentUser.id === parseInt(selectedMember.id)) {
+      const windowWithCallback = window as typeof window & { __triggerAccountBannedCheck?: (error: unknown) => void };
+      if (windowWithCallback.__triggerAccountBannedCheck) {
+        // Simulate account locked error
+        const mockError = {
+          response: {
+            status: 403,
+            data: {
+              message: lockData.reason || "Tài khoản đã bị khóa",
+              errorCode: "ACCOUNT_LOCKED",
+              code: 1105
+            }
           }
-        }
+        };
+        windowWithCallback.__triggerAccountBannedCheck(mockError);
       }
     }
   };

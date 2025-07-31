@@ -131,20 +131,32 @@ const mockUsersData: UsersResponse = {
 
 export const getAllUsers = async (): Promise<UsersResponse> => {
   try {
+    console.log("Making API call to /api/admin/users");
+    console.log("Base URL:", axiosClient.defaults.baseURL);
+    
     const token = localStorage.getItem("accessToken") || 
                  localStorage.getItem("access_token") || 
                  localStorage.getItem("authToken") ||
                  sessionStorage.getItem("accessToken");
-
-    if (!token) {
-      return {
-        success: false,
-        message: "No authentication token found",
-        data: []
-      };
+    
+    console.log("Access token:", token ? "Present" : "Missing");
+    if (token) {
+      console.log("Token source:",
+        localStorage.getItem("accessToken") ? "localStorage(accessToken)" :
+        localStorage.getItem("access_token") ? "localStorage(access_token)" :
+        localStorage.getItem("authToken") ? "localStorage(authToken)" :
+        sessionStorage.getItem("accessToken") ? "sessionStorage(accessToken)" :
+        "Unknown"
+      );
+      console.log("Token preview:", token.substring(0, 20) + "...");
     }
 
-    const response = await axiosClient.get("/cinema/api/admin/users", {
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    // Use correct API endpoint (base URL already includes /api)
+    const response = await axiosClient.get("/admin/users", {
       params: {
         page: 0,
         size: 20,
@@ -156,37 +168,84 @@ export const getAllUsers = async (): Promise<UsersResponse> => {
       }
     });
 
-    if (response.data && response.data.success) {
-      const userData = response.data.data || response.data.users || [];
+    console.log("✅ API call successful!");
+    console.log("getAllUsers API Response:", response.data);
+    console.log("Response status:", response.status);
+
+    // Handle different response structures
+    if (response.data && response.data.success && response.data.data) {
+      // Backend returns { success: true, data: { content: [...], page: {...} } }
+      return response.data.data;
+    } else if (response.data && response.data.content) {
+      // Direct paginated response { content: [...], page: {...} }
+      return response.data;
+    } else if (Array.isArray(response.data)) {
+      // Direct array response
       return {
-        success: true,
-        message: response.data.message || "Users fetched successfully",
-        data: userData
+        content: response.data,
+        page: {
+          number: 0,
+          size: response.data.length,
+          totalElements: response.data.length,
+          totalPages: 1,
+          first: true,
+          last: true,
+          empty: response.data.length === 0,
+          numberOfElements: response.data.length
+        }
       };
     } else {
-      return {
-        success: false,
-        message: response.data?.message || "Failed to fetch users",
-        data: []
-      };
+      console.error("Unexpected response structure:", response.data);
+      throw new Error("Invalid response structure from API");
     }
   } catch (error) {
-    // Return mock data as fallback
-    return {
-      success: true,
-      message: "Using mock data",
-      data: mockUsersData.content
-    };
+    console.error("❌ API call failed:");
+    console.error("Error in getAllUsers:", error);
+    
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { status?: number; data?: unknown } };
+      console.error("Response status:", axiosError.response?.status);
+      console.error("Response data:", axiosError.response?.data);
+      
+      // Handle specific error cases
+      if (axiosError.response?.status === 401) {
+        console.error("Authentication failed - user needs to log in");
+        throw new Error("Authentication failed. Please log in again.");
+      } else if (axiosError.response?.status === 403) {
+        console.error("Authorization failed - user doesn't have admin permissions");
+        throw new Error("Access denied. You don't have admin permissions.");
+      }
+    }
+    
+    // Re-throw error to be handled by the hook
+    throw error;
   }
 };
 
 // Lock user account
 export const lockUser = async (userId: number, lockData: LockUserRequest): Promise<ApiUser> => {
   try {
+    console.log('🌐 [API lockUser] Making lock user API call...');
+    console.log('🌐 [API lockUser] URL:', `/admin/users/${userId}/lock`);
+    console.log('🌐 [API lockUser] User ID (number):', userId);
+    console.log('🌐 [API lockUser] Lock data:', lockData);
+    
     const response = await axiosClient.post(`/admin/users/${userId}/lock`, lockData);
+    
+    console.log('🌐 [API lockUser] Response status:', response.status);
+    console.log('🌐 [API lockUser] Response data:', response.data);
+    
     return response.data;
   } catch (error) {
-    console.error('Lock user error:', error);
+    console.error('❌ [API lockUser] Lock user API error:', error);
+    
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response: { status: number; data: unknown; statusText: string } };
+      console.error('❌ [API lockUser] Error status:', axiosError.response.status);
+      console.error('❌ [API lockUser] Error data:', axiosError.response.data);
+      console.error('❌ [API lockUser] Error status text:', axiosError.response.statusText);
+    }
+    
     throw error;
   }
 };

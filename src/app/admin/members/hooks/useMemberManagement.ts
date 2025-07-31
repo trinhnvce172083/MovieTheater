@@ -63,6 +63,7 @@ export const useMemberManagement = () => {
       if (!response) {
         console.log("⚠️ [useMemberManagement] No response received");
         setMemberData([]);
+        setIsUsingApiData(false);
         return;
       }
 
@@ -94,10 +95,26 @@ export const useMemberManagement = () => {
       else {
         console.log("⚠️ [useMemberManagement] Unexpected response structure:", response);
         setMemberData([]);
+        setIsUsingApiData(false);
       }
     } catch (error) {
       console.error("❌ [useMemberManagement] fetchUsers error:", error);
-      message.warning("Using sample data - please check your connection or login status");
+      
+      // Check if it's an authentication error
+      if (error && typeof error === 'object' && 'message' in error) {
+        const errorMessage = (error as { message: string }).message;
+        if (errorMessage.includes('Authentication failed')) {
+          message.error("Authentication failed. Please log in again.");
+          setShowAuthWarning(true);
+        } else if (errorMessage.includes('Access denied')) {
+          message.error("Access denied. You don't have admin permissions.");
+        } else {
+          message.error("Failed to fetch users: " + errorMessage);
+        }
+      } else {
+        message.error("Failed to fetch users. Please check your connection.");
+      }
+      
       setMemberData([]);
       setIsUsingApiData(false);
     } finally {
@@ -317,35 +334,55 @@ export const useMemberManagement = () => {
   const lockUserAccount = async (userId: string, lockDurationHours: number, reason: string, sendNotificationEmail: boolean = true): Promise<boolean> => {
     try {
       setLoading(true);
-      console.log('Locking user with data:', {
-        userId: parseInt(userId),
-        lockData: {
-          reason,
-          lockHours: lockDurationHours,
-          sendNotificationEmail,
-          notes: `Locked by admin: ${reason}`
-        }
-      });
+      console.log('🔒 [lockUserAccount] Starting lock user process...');
+      console.log('🔒 [lockUserAccount] User ID:', userId);
+      console.log('🔒 [lockUserAccount] Duration:', lockDurationHours);
+      console.log('🔒 [lockUserAccount] Reason:', reason);
+      console.log('🔒 [lockUserAccount] Send notification:', sendNotificationEmail);
       
       const lockData = {
-        reason,
+        reason: reason.trim(),
         lockHours: lockDurationHours,
         sendNotificationEmail,
-        notes: `Locked by admin: ${reason}`
+        notes: `Locked by admin: ${reason.trim()}`
       };
       
-      await lockUser(parseInt(userId), lockData);
+      console.log('🔒 [lockUserAccount] Lock data payload:', lockData);
+      
+      const result = await lockUser(parseInt(userId), lockData);
+      console.log('🔒 [lockUserAccount] Lock result:', result);
+      
       message.success('User locked successfully');
       await fetchUsers(); // Refresh data
       return true;
     } catch (error: unknown) {
-      console.error('Lock user error:', error);
+      console.error('❌ [lockUserAccount] Lock user error:', error);
+      
       if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response: { data?: { message?: string }; status: number } };
-        console.error('Error response:', axiosError.response.data);
-        console.error('Error status:', axiosError.response.status);
-        message.error(`Failed to lock user: ${axiosError.response.data?.message || axiosError.response.status}`);
+        const axiosError = error as { 
+          response: { 
+            data?: { message?: string; error?: string; details?: string }; 
+            status: number;
+            statusText?: string;
+          } 
+        };
+        
+        console.error('❌ [lockUserAccount] Error response data:', axiosError.response.data);
+        console.error('❌ [lockUserAccount] Error status:', axiosError.response.status);
+        console.error('❌ [lockUserAccount] Error status text:', axiosError.response.statusText);
+        
+        const errorMessage = axiosError.response.data?.message || 
+                            axiosError.response.data?.error || 
+                            axiosError.response.data?.details ||
+                            `HTTP ${axiosError.response.status}: ${axiosError.response.statusText}`;
+        
+        message.error(`Failed to lock user: ${errorMessage}`);
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        const errorMessage = (error as { message: string }).message;
+        console.error('❌ [lockUserAccount] Error message:', errorMessage);
+        message.error(`Failed to lock user: ${errorMessage}`);
       } else {
+        console.error('❌ [lockUserAccount] Unknown error:', error);
         message.error('Failed to lock user: Network or server error');
       }
       return false;
@@ -362,7 +399,8 @@ export const useMemberManagement = () => {
       message.success('User unlocked successfully');
       await fetchUsers(); // Refresh data
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('❌ [unlockUserAccount] Unlock user error:', error);
       message.error('Failed to unlock user');
       return false;
     } finally {
@@ -378,7 +416,8 @@ export const useMemberManagement = () => {
       message.success('User activated successfully');
       await fetchUsers(); // Refresh data
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('❌ [activateUserAccount] Activate user error:', error);
       message.error('Failed to activate user');
       return false;
     } finally {
@@ -394,7 +433,8 @@ export const useMemberManagement = () => {
       message.success('User deactivated successfully');
       await fetchUsers(); // Refresh data
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('❌ [deactivateUserAccount] Deactivate user error:', error);
       message.error('Failed to deactivate user');
       return false;
     } finally {
