@@ -55,7 +55,6 @@ const LockUserModal: React.FC<LockUserModalProps> = ({
       console.log('🔒 [LockUserModal] Calling onConfirm with lockData:', lockData);
       await onConfirm(lockData);
       
-      message.success('User locked successfully');
       handleCancel();
     } catch (error) {
       console.error('❌ [LockUserModal] Error in handleSubmit:', error);

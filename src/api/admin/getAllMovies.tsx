@@ -121,78 +121,72 @@ const mockGetMovieById = async (id: string) => {
 
 export const getMovies = async (params: GetMoviesParams = {}) => {
   try {
-    console.log('🎬 [API getMovies] Making API call to /admin/movies with params:', params);
+    // Ensure we have a clean params object
+    const cleanParams: any = {
+      page: params.page || 0,
+      size: params.size || 20,
+      sortBy: params.sortBy || "movieId",
+      sortDirection: params.sortDirection || "asc"
+    };
     
-    const response = await axiosClient.get("/admin/movies", { params });
+    // Add optional filters if they exist
+    if (params.search) cleanParams.search = params.search;
+    if (params.status) cleanParams.status = params.status;
+    if (params.genre) cleanParams.genre = params.genre;
     
-    console.log('🎬 [API getMovies] Response status:', response.status);
-    console.log('🎬 [API getMovies] Response data:', response.data);
+    const response = await axiosClient.get("/movies", { params: cleanParams });
     
     // Backend returns ApiResponse format: { success: true, data: {...}, message: "..." }
-    if (response.data && response.data.success) {
-      console.log('🎬 [API getMovies] Successful response, returning data:', response.data.data);
+    if (response.data && response.data.success && response.data.data) {
       return response.data.data;
+    } else if (response.data && Array.isArray(response.data)) {
+      // Handle case where backend returns direct array instead of wrapped response
+      return {
+        content: response.data,
+        totalElements: response.data.length,
+        totalPages: Math.ceil(response.data.length / cleanParams.size),
+        size: cleanParams.size,
+        number: cleanParams.page,
+        first: cleanParams.page === 0,
+        last: cleanParams.page >= Math.ceil(response.data.length / cleanParams.size) - 1
+      };
     } else {
-      console.error('❌ [API getMovies] API returned unsuccessful response:', response.data);
       throw new Error(response.data?.message || 'API call unsuccessful');
     }
   } catch (error) {
-    console.error("❌ [API getMovies] API call failed:", error);
-    
-    if (error && typeof error === 'object' && 'response' in error) {
-      const axiosError = error as { response: { status: number; data: unknown; statusText: string } };
-      console.error('❌ [API getMovies] Error status:', axiosError.response.status);
-      console.error('❌ [API getMovies] Error data:', axiosError.response.data);
-      console.error('❌ [API getMovies] Error status text:', axiosError.response.statusText);
-    }
-    
-    // Instead of falling back to mock data, re-throw the error so the UI can handle it properly
+    // Re-throw the error so the UI can handle it properly
     throw error;
   }
 };
 
 export const createMovie = async (movieData: Omit<Movie, 'movieId'>) => {
   try {
-    console.log('🎬 [API createMovie] Creating movie with data:', movieData);
-    
     // Transform frontend data to match backend expectations
     const backendData = transformToBackendFormat(movieData);
-    console.log('🎬 [API createMovie] Transformed backend data:', backendData);
 
-    const response = await axiosClient.post("/admin/movies", backendData);
-    console.log('🎬 [API createMovie] Create response:', response.data);
+    const response = await axiosClient.post("/movies", backendData);
     return response.data.data || response.data;
   } catch (error) {
-    console.error("❌ [API createMovie] API call failed:", error);
     throw error;
   }
 };
 
 export const updateMovie = async (id: number, movieData: Partial<Movie>) => {
   try {
-    console.log('🎬 [API updateMovie] Updating movie', id, 'with data:', movieData);
-    
     // Use smart update data preparation for backend
     const backendData = prepareSmartUpdateData(movieData);
-    console.log('🎬 [API updateMovie] Prepared backend data:', backendData);
 
-    const response = await axiosClient.put(`/admin/movies/${id}`, backendData);
-    console.log('🎬 [API updateMovie] Update response:', response.data);
+    const response = await axiosClient.put(`/movies/${id}`, backendData);
     return response.data.data || response.data;
   } catch (error) {
-    console.error("❌ [API updateMovie] API call failed:", error);
     throw error;
   }
 };
 
 export const deleteMovie = async (id: number) => {
   try {
-    console.log('🎬 [API deleteMovie] Deleting movie:', id);
-    
-    await axiosClient.delete(`/admin/movies/${id}`);
-    console.log('🎬 [API deleteMovie] Movie deleted successfully');
+    await axiosClient.delete(`/movies/${id}`);
   } catch (error) {
-    console.error("❌ [API deleteMovie] API call failed:", error);
     throw error;
   }
 };
@@ -201,7 +195,7 @@ export const getMovieById = async (id: number) => {
   try {
     console.log('🎬 [API getMovieById] Getting movie by ID:', id);
     
-    const response = await axiosClient.get(`/admin/movies/${id}`);
+    const response = await axiosClient.get(`/movies/${id}`);
     console.log('🎬 [API getMovieById] Response:', response.data);
     return response.data.data || response.data;
   } catch (error) {
@@ -214,7 +208,7 @@ export const getMovieStatistics = async () => {
   try {
     console.log('🎬 [API getMovieStatistics] Getting movie statistics');
     
-    const response = await axiosClient.get("/admin/movies/statistics");
+    const response = await axiosClient.get("/movies/statistics");
     console.log('🎬 [API getMovieStatistics] Statistics response:', response.data);
     return response.data.data || response.data;
   } catch (error) {
@@ -230,7 +224,7 @@ export const uploadMoviePoster = async (id: number, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
     
-    const response = await axiosClient.post(`/admin/movies/${id}/poster`, formData, {
+    const response = await axiosClient.post(`/movies/${id}/poster`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -247,7 +241,7 @@ export const searchMovies = async (keyword: string, page = 0, size = 10) => {
   try {
     console.log('🎬 [API searchMovies] Searching movies with keyword:', keyword);
     
-    const response = await axiosClient.get('/admin/movies/search', {
+    const response = await axiosClient.get('/movies/search', {
       params: { keyword, page, size }
     });
     console.log('🎬 [API searchMovies] Search response:', response.data);
@@ -262,7 +256,7 @@ export const getNowShowingMovies = async () => {
   try {
     console.log('🎬 [API getNowShowingMovies] Getting now showing movies');
     
-    const response = await axiosClient.get('/admin/movies/now-showing');
+    const response = await axiosClient.get('/movies/now-showing');
     
     console.log('🎬 [API getNowShowingMovies] Response:', response.data);
     
@@ -282,7 +276,7 @@ export const getComingSoonMovies = async () => {
   try {
     console.log('🎬 [API getComingSoonMovies] Getting coming soon movies');
     
-    const response = await axiosClient.get('/admin/movies/coming-soon');
+    const response = await axiosClient.get('/movies/coming-soon');
     
     console.log('🎬 [API getComingSoonMovies] Response:', response.data);
     

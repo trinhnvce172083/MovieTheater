@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Card, Table, Button, Typography, Alert, Pagination, message, Spin } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, StarFilled, StarOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 
 // Local imports
@@ -22,6 +22,7 @@ export default function AdminMovieManagement() {
   const isMobile = useIsMobile();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMovie, setEditingMovie] = useState<MovieData | null>(null);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const router = useRouter();
 
   // Use custom hook for all movie management logic
@@ -45,6 +46,8 @@ export default function AdminMovieManagement() {
     updateMovie,
     deleteMovie,
     toggleFeatureMovie,
+    bulkFeatureMovies,
+    bulkUnfeatureMovies,
   } = useMovieManagement();
 
   // Event handlers
@@ -88,12 +91,37 @@ export default function AdminMovieManagement() {
     await toggleFeatureMovie(record.id, record.isFeatured);
   };
 
+  // Bulk actions handlers
+  const handleBulkFeature = async () => {
+    const movieIds = selectedRowKeys.map(key => Number(key));
+    await bulkFeatureMovies(movieIds);
+    setSelectedRowKeys([]);
+  };
+
+  const handleBulkUnfeature = async () => {
+    const movieIds = selectedRowKeys.map(key => Number(key));
+    await bulkUnfeatureMovies(movieIds);
+    setSelectedRowKeys([]);
+  };
+
+  // Row selection configuration
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: setSelectedRowKeys,
+    selections: [
+      Table.SELECTION_ALL,
+      Table.SELECTION_INVERT,
+      Table.SELECTION_NONE,
+    ],
+  };
+
   // Create table columns with handlers
   const columns = createMovieColumns(
     handleViewDetail,
     handleEdit,
     handleDelete,
-    handleToggleFeature
+    handleToggleFeature,
+    statistics.featuredCount
   );
 
   return (
@@ -128,6 +156,18 @@ export default function AdminMovieManagement() {
         {/* Statistics Cards */}
         <MovieStatisticsCard statistics={statistics} loading={loading} />
 
+        {/* Featured Limit Warning */}
+        {statistics.featuredCount >= 5 && (
+          <Alert
+            message="Featured Limit Reached"
+            description={`You have reached the maximum limit of 5 featured movies (${statistics.featuredCount}/5). Please remove some movies from featured before adding new ones.`}
+            type="warning"
+            showIcon
+            className="mb-6"
+            closable
+          />
+        )}
+
         {/* Main Content Card */}
         <Card
           className="shadow-sm border-0"
@@ -145,6 +185,29 @@ export default function AdminMovieManagement() {
               </Text>
             </div>
             <div className="flex items-center gap-3">
+              {selectedRowKeys.length > 0 && (
+                <>
+                  <Button
+                    icon={<StarFilled />}
+                    size="middle"
+                    className="text-xs xl:text-sm h-10 px-4"
+                    onClick={handleBulkFeature}
+                    disabled={!isUsingApiData}
+                    style={{ color: "#faad14", borderColor: "#faad14" }}
+                  >
+                    Feature Selected ({selectedRowKeys.length})
+                  </Button>
+                  <Button
+                    icon={<StarOutlined />}
+                    size="middle"
+                    className="text-xs xl:text-sm h-10 px-4"
+                    onClick={handleBulkUnfeature}
+                    disabled={!isUsingApiData}
+                  >
+                    Un-feature Selected ({selectedRowKeys.length})
+                  </Button>
+                </>
+              )}
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -190,6 +253,7 @@ export default function AdminMovieManagement() {
               <Table
                 dataSource={paginatedData}
                 columns={columns}
+                rowSelection={rowSelection}
                 pagination={false}
                 scroll={{ x: 1200 }}
                 rowClassName="hover:bg-gray-50 transition-colors"

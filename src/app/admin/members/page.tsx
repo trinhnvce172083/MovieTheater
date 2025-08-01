@@ -119,17 +119,12 @@ export default function AdminMemberManagement() {
     if (!selectedMember) {
       throw new Error('No member selected for locking');
     }
-
-    console.log('🔒 [page.tsx handleLockConfirm] Starting lock process for member:', selectedMember.id);
-    console.log('🔒 [page.tsx handleLockConfirm] Lock data:', lockData);
-
+    
     const success = await lockUserAccount(selectedMember.id, lockData.lockHours, lockData.reason, lockData.sendNotificationEmail);
     
     if (!success) {
       throw new Error('Failed to lock user account');
     }
-
-    console.log('🔒 [page.tsx handleLockConfirm] User locked successfully');
     
     setLockModalVisible(false);
     setSelectedMember(null);

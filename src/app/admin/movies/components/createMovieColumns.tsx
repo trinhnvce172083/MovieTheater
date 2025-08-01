@@ -23,6 +23,7 @@ export const createMovieColumns = (
   handleEdit: (record: MovieData) => void,
   handleDelete: (record: MovieData) => void,
   handleToggleFeature: (record: MovieData) => void,
+  featuredCount: number,
 ) => [
   {
     title: '#',
@@ -78,13 +79,23 @@ export const createMovieColumns = (
     title: 'Featured',
     dataIndex: 'isFeatured',
     key: 'isFeatured',
-    render: (isFeatured: boolean, record: any) => (
-      <Tag
-        color={isFeatured ? "gold" : "default"}
-        className="font-medium"
-      >
-        {isFeatured ? "Featured" : "Regular"}
-      </Tag>
+    width: 80,
+    align: 'center' as const,
+    render: (isFeatured: boolean, record: MovieData) => (
+      <Tooltip title={isFeatured ? "Remove from Featured" : "Add to Featured"}>
+        <Button 
+          icon={isFeatured ? <StarFilled /> : <StarOutlined />} 
+          type={isFeatured ? "primary" : "default"}
+          size="small"
+          style={{ 
+            color: isFeatured ? "#faad14" : undefined,
+            borderColor: isFeatured ? "#faad14" : undefined,
+            backgroundColor: isFeatured ? "#fff7e6" : undefined
+          }}
+          onClick={() => handleToggleFeature(record)}
+          disabled={!isFeatured && featuredCount >= 5}
+        />
+      </Tooltip>
     ),
   },
   {

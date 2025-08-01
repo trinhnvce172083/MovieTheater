@@ -25,17 +25,19 @@ export const useMovieManagement = () => {
   
   // Check for token in localStorage if Redux token is null/empty
   useEffect(() => {
-    if (token && token.length > 0) {
-      setActualToken(token);
-    } else {
-      // Check localStorage as fallback
-      const storedToken = localStorage.getItem('token') || localStorage.getItem('authToken');
-      if (storedToken) {
-        setActualToken(storedToken);
-      } else {
-        setActualToken(null);
-      }
-    }
+    // Check multiple possible token storage locations
+    const checkTokenSources = () => {
+      const reduxToken = token && token.length > 0 ? token : null;
+      const accessToken = localStorage.getItem('accessToken');
+      const authToken = localStorage.getItem('token');
+      const userToken = localStorage.getItem('authToken');
+      
+      // Priority: Redux token > accessToken > token > authToken
+      return reduxToken || accessToken || authToken || userToken;
+    };
+    
+    const foundToken = checkTokenSources();
+    setActualToken(foundToken);
   }, [token]);
   
   // State management
@@ -62,141 +64,122 @@ export const useMovieManagement = () => {
 
   // Initialize auth and user data - watch for token changes
   useEffect(() => {
-    const hasToken = !!actualToken && actualToken.length > 0;
-    setShowAuthWarning(!hasToken);
+    // Only show auth warning if no token is found anywhere
+    const hasAnyToken = !!(actualToken || localStorage.getItem('accessToken') || localStorage.getItem('token'));
+    setShowAuthWarning(!hasAnyToken);
     
-    if (hasToken) {
+    if (hasAnyToken) {
       setCurrentUser(getCurrentUserFromStorage());
     } else {
       setCurrentUser(null);
     }
-  }, [token, actualToken]); // Watch both tokens
+  }, [actualToken]); // Only watch actualToken
 
   // Fetch movies from API
   const fetchMovies = useCallback(async () => {
     try {
       setLoading(true);
       
-      if (!actualToken || actualToken.length === 0) {
-        setShowAuthWarning(true);
-        // Use mock data and apply client-side filtering
-        let filteredMockData = [...mockMovies];
-        
-        if (debouncedSearchTerm) {
-          filteredMockData = filteredMockData.filter(movie => 
-            movie.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-            movie.genre.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-          );
-        }
-        
-        if (filters.filterStatus) {
-          filteredMockData = filteredMockData.filter(movie => movie.status === filters.filterStatus);
-        }
-        
-        if (filters.filterGenre) {
-          filteredMockData = filteredMockData.filter(movie => 
-            movie.genre.toLowerCase().includes(filters.filterGenre.toLowerCase())
-          );
-        }
-        
-        setMovieData(filteredMockData);
-        setAllMovieData(mockMovies); // Store ALL mock movies for statistics
-        setIsUsingApiData(false);
-        return;
-      }
-
-      // Token exists - use simple getAllMovies API
-      setShowAuthWarning(false);
-      console.log('Fetching movies from API with token:', actualToken ? 'present' : 'missing');
+      // Check for authentication token from multiple sources
+      const currentToken = actualToken || localStorage.getItem('accessToken') || localStorage.getItem('token');
       
+      // Try API call first - even if no token, let the backend handle authentication
       try {
-        console.log('🎬 [useMovieManagement] Fetching movies from API with token:', actualToken ? 'present' : 'missing');
-        
-        // Use the simpler getMovies endpoint first
         const movieResponse = await getMovies({
           page: 0,
           size: 100,
           sortBy: "movieId",
           sortDirection: "asc",
         });
-        console.log('🎬 [useMovieManagement] API Response:', movieResponse);
         
+        // Check if we got a valid response with content
         if (movieResponse && movieResponse.content && Array.isArray(movieResponse.content)) {
+          
           // Transform Movie[] to MovieData[] 
           let allTransformedData: MovieData[] = [];
           
           try {
-            allTransformedData = movieResponse.content.map((movie: Movie) => {
-              // Ensure movie has required properties before transformation
+            allTransformedData = movieResponse.content.map((movie: Movie, index: number) => {
               if (!movie || typeof movie !== 'object') {
-                console.warn('Invalid movie object:', movie);
                 return null;
               }
               
               return transformApiMovieToMovieData({ ...movie, isActive: true });
-            }).filter(Boolean) as MovieData[]; // Remove null values
+            }).filter(Boolean) as MovieData[];
+            
           } catch (transformError) {
-            console.error('❌ [useMovieManagement] Error transforming movie data:', transformError);
             throw new Error('Failed to transform movie data from API');
           }
+          
+          // Store ALL movies and apply any initial filtering
+          setAllMovieData(allTransformedData);
+          setMovieData(allTransformedData); // Initially show all movies
+          setIsUsingApiData(true);
+          setShowAuthWarning(false); // Clear any auth warnings since API worked
+          
+        } else {
+          throw new Error('API returned no movie data or unexpected format');
+        }
+      } catch (apiError) {
+        // Enhanced error handling with better fallback
+        let shouldFallbackToMock = false;
+        let errorMessage = 'Failed to load movies. Please check your connection.';
+        
+        if (apiError && typeof apiError === 'object' && 'response' in apiError) {
+          const axiosError = apiError as { response: { status: number; data?: { message?: string } } };
+          if (axiosError.response.status === 401) {
+            errorMessage = 'Authentication failed. Please log in again.';
+            setShowAuthWarning(true);
+          } else if (axiosError.response.status === 403) {
+            errorMessage = 'Access denied. You may not have admin permissions.';
+          } else if (axiosError.response.status >= 500) {
+            errorMessage = 'Server error. Using offline mode.';
+            shouldFallbackToMock = true;
+          } else {
+            errorMessage = `Failed to load movies: ${axiosError.response.data?.message || 'Server error'}`;
+            shouldFallbackToMock = true;
           }
+        } else if (apiError && 'code' in apiError && apiError.code === 'ERR_NETWORK') {
+          errorMessage = 'Network error. Backend server may be down. Using offline mode.';
+          shouldFallbackToMock = true;
+        } else {
+          shouldFallbackToMock = true;
+        }
+        
+        if (shouldFallbackToMock) {
+          message.warning(errorMessage + ' Loading sample data.');
           
-          // Apply client-side filtering for display
-          let filteredData = [...allTransformedData];
+          // Use mock data with filtering
+          let filteredMockData = [...mockMovies];
           
-          if (debouncedSearchTerm && filteredData.length > 0) {
-            filteredData = filteredData.filter(movie => 
-              movie && movie.title && movie.genre &&
-              (movie.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-               movie.genre.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
+          if (debouncedSearchTerm) {
+            filteredMockData = filteredMockData.filter(movie => 
+              movie.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+              movie.genre.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
             );
           }
           
-          if (filters.filterStatus && filteredData.length > 0) {
-            filteredData = filteredData.filter(movie => 
-              movie && movie.status === filters.filterStatus
-            );
+          if (filters.filterStatus) {
+            filteredMockData = filteredMockData.filter(movie => movie.status === filters.filterStatus);
           }
           
-          if (filters.filterGenre && filteredData.length > 0) {
-            filteredData = filteredData.filter(movie => 
-              movie && movie.genre && 
+          if (filters.filterGenre) {
+            filteredMockData = filteredMockData.filter(movie => 
               movie.genre.toLowerCase().includes(filters.filterGenre.toLowerCase())
             );
           }
           
-          setMovieData(filteredData);
-          setAllMovieData(allTransformedData); // Store ALL movies for statistics
-          setIsUsingApiData(true);
-          console.log('✅ [useMovieManagement] Successfully loaded movies from API:', filteredData.length, 'displayed out of', allTransformedData.length, 'total');
+          setMovieData(filteredMockData);
+          setAllMovieData(mockMovies);
+          setIsUsingApiData(false);
         } else {
-          console.error('❌ [useMovieManagement] API returned unexpected response structure:', movieResponse);
-          throw new Error('API returned unexpected response format');
+          message.error(errorMessage);
+          setMovieData([]);
+          setAllMovieData([]);
+          setIsUsingApiData(false);
         }
-      } catch (apiError) {
-        console.error('❌ [useMovieManagement] API call failed:', apiError);
-        
-        // Check if it's an authentication error
-        if (apiError && typeof apiError === 'object' && 'response' in apiError) {
-          const axiosError = apiError as { response: { status: number; data?: { message?: string } } };
-          if (axiosError.response.status === 401) {
-            message.error('Authentication failed. Please log in again.');
-            setShowAuthWarning(true);
-          } else if (axiosError.response.status === 403) {
-            message.error('Access denied. You may not have admin permissions.');
-          } else {
-            message.error(`Failed to load movies: ${axiosError.response.data?.message || 'Server error'}`);
-          }
-        } else {
-          message.error('Failed to load movies. Please check your connection.');
-        }
-        
-        setMovieData([]);
-        setAllMovieData([]);
-        setIsUsingApiData(false);
       }
     } catch (error) {
-      console.error('❌ [useMovieManagement] Error in fetchMovies:', error);
       message.error('An error occurred while loading the movie list.');
       setMovieData([]);
       setAllMovieData([]);
@@ -281,7 +264,6 @@ export const useMovieManagement = () => {
       featuredCount: 0,
     });
 
-    console.log('📊 Statistics calculated from ALL movies (not filtered):', stats);
     return stats;
   }, [allMovieData]); // Changed dependency from filteredData to allMovieData
 
@@ -291,7 +273,6 @@ export const useMovieManagement = () => {
     
     setLoading(true);
     try {
-      console.log('🎬 Creating movie with data:', movieCreateData);
       
       // Check if there are images to upload
       if (movieCreateData.hasImages) {
@@ -351,8 +332,6 @@ export const useMovieManagement = () => {
           trailerUrl: movieCreateData.trailerUrl || '',
         };
         
-        console.log('🎬 Backend data isFeatured:', backendData.isFeatured, typeof backendData.isFeatured);
-
         const response = await MovieApiService.createMovie(backendData, actualToken);
         if (response.success) {
           message.success('Movie created successfully!');
@@ -456,6 +435,13 @@ export const useMovieManagement = () => {
   const toggleFeatureMovie = async (movieId: number, isFeatured: boolean): Promise<void> => {
     if (!actualToken || actualToken.length === 0) return;
     
+    // Check featured limit when adding to featured
+    const currentFeaturedCount = allMovieData.filter(movie => movie.isFeatured).length;
+    if (!isFeatured && currentFeaturedCount >= 5) {
+      message.warning('You have reached the limit of 5 featured movies. Please unfeature some movies first.');
+      return;
+    }
+    
     setLoading(true);
     try {
       // Only send the isFeatured field to avoid any unintended side effects
@@ -463,8 +449,6 @@ export const useMovieManagement = () => {
       const updateData = {
         isFeatured: newFeaturedStatus === true // Explicit boolean comparison
       };
-      
-      console.log(`🌟 Toggling feature for movie ${movieId}:`, updateData, 'Type:', typeof updateData.isFeatured);
       
       const response = await MovieApiService.updateMovie(movieId, updateData as MovieUpdateRequest, actualToken);
       if (response.success) {
@@ -474,8 +458,56 @@ export const useMovieManagement = () => {
         message.error(response.message || 'Unable to change featured status.');
       }
     } catch (error) {
-      console.error('Feature toggle error:', error);
       message.error('An error occurred while changing the featured status.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Bulk Actions for Featured
+  const bulkFeatureMovies = async (movieIds: number[]): Promise<void> => {
+    if (!actualToken || actualToken.length === 0) return;
+    
+    const currentFeaturedCount = allMovieData.filter(movie => movie.isFeatured).length;
+    const newlyFeaturedCount = movieIds.filter(id => 
+      !allMovieData.find(movie => movie.id === id)?.isFeatured
+    ).length;
+    
+    if (currentFeaturedCount + newlyFeaturedCount > 5) {
+      message.warning(`Cannot feature ${movieIds.length} movies. Maximum limit is 5 featured movies. Current: ${currentFeaturedCount}/5`);
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const promises = movieIds.map(movieId => 
+        MovieApiService.updateMovie(movieId, { isFeatured: true } as MovieUpdateRequest, actualToken)
+      );
+      
+      await Promise.all(promises);
+      message.success(`Successfully featured ${movieIds.length} movies!`);
+      fetchMovies();
+    } catch (error) {
+      message.error('An error occurred while bulk featuring movies.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const bulkUnfeatureMovies = async (movieIds: number[]): Promise<void> => {
+    if (!actualToken || actualToken.length === 0) return;
+    
+    setLoading(true);
+    try {
+      const promises = movieIds.map(movieId => 
+        MovieApiService.updateMovie(movieId, { isFeatured: false } as MovieUpdateRequest, actualToken)
+      );
+      
+      await Promise.all(promises);
+      message.success(`Successfully unfeatured ${movieIds.length} movies!`);
+      fetchMovies();
+    } catch (error) {
+      message.error('An error occurred while bulk unfeaturing movies.');
     } finally {
       setLoading(false);
     }
@@ -502,5 +534,7 @@ export const useMovieManagement = () => {
     updateMovie,
     deleteMovie,
     toggleFeatureMovie,
+    bulkFeatureMovies,
+    bulkUnfeatureMovies,
   };
 };

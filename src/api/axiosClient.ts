@@ -30,6 +30,27 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Log error for debugging
+    console.error("API Error:", {
+      url: originalRequest?.url,
+      method: originalRequest?.method,
+      status: error.response?.status,
+      message: error.message,
+      data: error.response?.data
+    });
+
+    // Handle server errors (5xx)
+    if (error.response?.status >= 500) {
+      console.error("Server error detected:", error.response.status);
+      // You can add custom server error handling here
+    }
+
+    // Handle network errors
+    if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+      console.error("Network/Connection error:", error.message);
+      // You can add custom network error handling here
+    }
+
     // Nếu lỗi 401 và chưa retry
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
