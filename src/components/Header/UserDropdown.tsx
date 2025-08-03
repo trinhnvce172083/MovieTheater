@@ -5,15 +5,16 @@ import { Dropdown, Avatar } from "antd";
 import { UserOutlined, LogoutOutlined } from "@ant-design/icons";
 import ROUTES from "@/constants/routes";
 import { useRouter } from "next/navigation";
-import { Logout_API } from "@/api/auth/Logout_API";
 import { useDispatch } from "react-redux";
 import { logout } from "@/store/slices/authSlice";
+import { useLogout } from "@/hooks/useAuth";
 
 // Accept userName as a string
 export default function UserDropdown({ userName }: { userName: string | null }) {
   const [open, setOpen] = useState(false);
   const dispatch = useDispatch();
   const router = useRouter();
+  const { logout: performLogout } = useLogout();
 
   return (
     <Dropdown
@@ -34,19 +35,24 @@ export default function UserDropdown({ userName }: { userName: string | null }) 
             key: "logout",
             icon: <LogoutOutlined />,
             label: "Logout",
-            onClick: () => {
-              Logout_API()
-                .then(() => {
-                  localStorage.removeItem("accessToken");
-                  localStorage.removeItem("refreshToken");
-                  localStorage.removeItem("userInfo");
-                  localStorage.removeItem("isLoggedIn");
-                  dispatch(logout());
-                  router.push(ROUTES.HOME);
-                })
-                .catch((error) => {
-                  console.error("Logout failed:", error);
+            onClick: async () => {
+              try {
+                // Sử dụng hook useLogout để xử lý logout an toàn
+                await performLogout((message) => {
+                  console.log(message); // Có thể thay bằng notification
                 });
+                
+                // Dispatch Redux action để update state
+                dispatch(logout());
+                
+              } catch (error) {
+                console.error("Unexpected logout error:", error);
+                
+                // Fallback: force reload trang
+                if (typeof window !== "undefined") {
+                  window.location.href = "/auth/Login";
+                }
+              }
             },
           },
         ],
