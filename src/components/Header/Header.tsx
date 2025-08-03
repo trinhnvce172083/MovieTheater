@@ -58,7 +58,7 @@ const HeaderComponent = () => {
               <NotificationDropdown />
             </div>
             <div>
-              <UserDropdown userName={username} />
+              <UserDropdown userName={userInfo?.userName || null} />
             </div>
           </>
         )}

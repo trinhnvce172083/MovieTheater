@@ -208,30 +208,40 @@ export default function AdminDashboard() {
         const promotionData = results[3].value;
         console.log('🎁 Promotions data:', promotionData);
         
+        // Handle different response structures
+        let promotions: Promotion[] = [];
+        let totalCount = 0;
+        
         if (promotionData?.content && Array.isArray(promotionData.content)) {
-          const activeCount = promotionData.content.filter((promo: Promotion) => 
+          // Paginated response with content array
+          promotions = promotionData.content;
+          totalCount = promotionData.content.length;
+        } else if ((promotionData as any)?.data && Array.isArray((promotionData as any).data)) {
+          // Response with data property
+          promotions = (promotionData as any).data;
+          totalCount = (promotionData as any).data.length;
+        } else if (Array.isArray(promotionData)) {
+          // Direct array response
+          promotions = promotionData as Promotion[];
+          totalCount = (promotionData as Promotion[]).length;
+        } else {
+          console.warn('Promotions data format not recognized:', promotionData);
+        }
+
+        if (totalCount > 0) {
+          const activeCount = promotions.filter((promo: Promotion) => 
             promo.isActive === true || promo.status === 'ACTIVE'
           ).length;
+          
           setStats(prev => {
             const newStats = { 
               ...prev, 
-              totalPromotions: promotionData.content.length,
+              totalPromotions: totalCount,
               activePromotions: activeCount
             };
             console.log('🎁 Updated promotion stats:', newStats);
             return newStats;
           });
-        } else if (Array.isArray(promotionData)) {
-          const activeCount = promotionData.filter((promo: Promotion) => 
-            promo.isActive === true || promo.status === 'ACTIVE'
-          ).length;
-          setStats(prev => ({ 
-            ...prev, 
-            totalPromotions: promotionData.length,
-            activePromotions: activeCount
-          }));
-        } else {
-          console.warn('Promotions data format not recognized:', promotionData);
         }
       } else {
         console.error('❌ Failed to fetch promotions:', results[3].reason);
@@ -379,6 +389,9 @@ export default function AdminDashboard() {
                 prefix={<UserOutlined />}
                 valueStyle={{ color: '#1890ff' }}
               />
+              <div className="text-sm text-gray-500 mt-2">
+                registered users
+              </div>
             </Card>
           </Col>
 
