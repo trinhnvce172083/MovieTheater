@@ -106,6 +106,14 @@ public class SecurityConfig {
 
                 // General authenticated endpoints
                 .requestMatchers(Endpoints.AUTHENTICATED_OPERATIONS).authenticated()
+                
+                // Booking endpoints - Allow Employee to use existing booking APIs
+                .requestMatchers(HttpMethod.POST, "/api/bookings").hasAnyRole("MEMBER", "EMPLOYEE", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/bookings/guest").hasAnyRole("EMPLOYEE", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/bookings/search").hasAnyRole("EMPLOYEE", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/bookings/{bookingId}").hasAnyRole("MEMBER", "EMPLOYEE", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/bookings/{bookingId}/confirm").hasAnyRole("EMPLOYEE", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/bookings/{bookingId}/checkin").hasAnyRole("EMPLOYEE", "ADMIN")
 
                 // File and Image endpoints - Admin and authenticated users
                 .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll() // Public read access for images
@@ -222,10 +230,10 @@ public class SecurityConfig {
                 "/api/reports/**", "/api/analytics/**", "/api/auto-schedule/**"
         };
 
-        // Employee endpoints
+                // Employee endpoints
         static final String[] EMPLOYEE_OPERATIONS = {
-                "/api/staff/**", "/api/employees/ticket-selling/**", "/api/employees/booking-management/**",
-                "/api/employees/members/**", "/api/checkin/**", "/api/payment/staff/**"
+            "/api/staff/**", "/api/employees/ticket-selling/**", "/api/employees/booking-management/**",
+            "/api/employees/members/**", "/api/checkin/**", "/api/payment/staff/**"
         };
 
         // Member endpoints
