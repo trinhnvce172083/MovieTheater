@@ -26,6 +26,7 @@ public class MovieSummaryResponse {
     private LocalDate releaseDate;
     private String rating;
     private String posterUrl;
+    private String backdropUrl;
     private Double price;
     private String status;
     private Double imdbRating;

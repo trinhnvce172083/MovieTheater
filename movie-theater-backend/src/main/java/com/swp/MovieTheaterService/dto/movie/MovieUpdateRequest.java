@@ -73,6 +73,10 @@ public class MovieUpdateRequest {
     @Schema(description = "URL poster. Sử dụng 'CLEAR_FIELD' để xóa poster", example = "")
     private String posterUrl;
 
+    @Pattern(regexp = "^(https?://).*\\.(jpg|jpeg|png|gif|webp)$", message = "URL backdrop phải là đường dẫn hợp lệ đến file ảnh")
+    @Schema(description = "URL backdrop. Sử dụng 'CLEAR_FIELD' để xóa backdrop", example = "")
+    private String backdropUrl;
+
     @Pattern(regexp = "^(https?://).*", message = "URL trailer phải là đường dẫn hợp lệ")
     @Schema(description = "URL trailer. Sử dụng 'CLEAR_FIELD' để xóa trailer", example = "")
     private String trailerUrl;

@@ -41,7 +41,7 @@ public class EmailServiceImpl implements EmailService {
     @Value("${app.email.support-email:lumierecinema25@gmail.com}")
     private String supportEmail;
 
-    @Value("${app.email.website-url:http://localhost:8080}")
+    @Value("${email.verification.base-url:http://localhost:8080/cinema}")
     private String websiteUrl;
 
     @Value("${app.email.frontend-url:http://localhost:3000}")
@@ -261,7 +261,7 @@ public class EmailServiceImpl implements EmailService {
 
             Map<String, Object> variables = new HashMap<>();
             variables.put("fullName", customerName);
-            variables.put("verificationLink", frontendUrl + "/auth/verify-email/" + verificationToken);
+            variables.put("verificationLink", websiteUrl + "/api/auth/verify-email?token=" + verificationToken);
             variables.put("expirationHours", 24);
             variables.put("supportEmail", supportEmail);
             variables.put("appName", companyName);

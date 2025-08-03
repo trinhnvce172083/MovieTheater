@@ -32,6 +32,7 @@ public class MovieResponse {
     private LocalDate releaseDate;
     private String rating;
     private String posterUrl;
+    private String backdropUrl;
     private String trailerUrl;
     private Boolean isActive;
     private Boolean isFeatured;

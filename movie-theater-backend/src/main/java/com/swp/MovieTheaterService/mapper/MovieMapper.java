@@ -75,6 +75,9 @@ public class MovieMapper {
         movie.setCountry(request.getCountry());
         movie.setReleaseDate(request.getReleaseDate());
         movie.setRating(request.getRating());
+        movie.setPosterUrl(request.getPosterUrl());
+        movie.setBackdropUrl(request.getBackdropUrl());
+        movie.setTrailerUrl(request.getTrailerUrl());
 
         movie.setPrice(request.getPrice());
         movie.setStatus(request.getStatus() != null ? request.getStatus() : "COMING_SOON");
@@ -110,6 +113,7 @@ public class MovieMapper {
         updateStringField(request.getCountry(), movie::setCountry);
         updateStringField(request.getRating(), movie::setRating);
         updateStringField(request.getPosterUrl(), movie::setPosterUrl);
+        updateStringField(request.getBackdropUrl(), movie::setBackdropUrl);
         updateStringField(request.getTrailerUrl(), movie::setTrailerUrl);
         updateStringField(request.getStatus(), movie::setStatus);
         updateStringField(request.getProductionCompany(), movie::setProductionCompany);
@@ -166,6 +170,7 @@ public class MovieMapper {
         response.setReleaseDate(movie.getReleaseDate());
         response.setRating(movie.getRating());
         response.setPosterUrl(movie.getPosterUrl());
+        response.setBackdropUrl(movie.getBackdropUrl());
         response.setTrailerUrl(movie.getTrailerUrl());
         response.setIsActive(movie.getIsActive());
         response.setIsFeatured(movie.getIsFeatured());
@@ -207,6 +212,7 @@ public class MovieMapper {
         response.setReleaseDate(movie.getReleaseDate());
         response.setRating(movie.getRating());
         response.setPosterUrl(movie.getPosterUrl());
+        response.setBackdropUrl(movie.getBackdropUrl());
         response.setPrice(movie.getPrice());
         response.setStatus(movie.getStatus());
         response.setImdbRating(movie.getImdbRating());

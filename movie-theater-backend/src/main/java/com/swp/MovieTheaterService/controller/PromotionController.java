@@ -1,10 +1,15 @@
 package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.entity.Promotion;
+import com.swp.MovieTheaterService.entity.Account;
+import com.swp.MovieTheaterService.entity.UserPromotionCode;
+import com.swp.MovieTheaterService.entity.LoyaltyTransaction;
 import com.swp.MovieTheaterService.dto.promotion.PromotionCreateRequest;
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.service.PromotionService;
+import com.swp.MovieTheaterService.service.UserPromotionCodeService;
 import com.swp.MovieTheaterService.enums.DiscountType;
+import com.swp.MovieTheaterService.repository.AccountRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -46,6 +51,8 @@ public class PromotionController {
     private final PromotionService promotionService;
     private final LoyaltyService loyaltyService;
     private final ImageManagementService imageManagementService;
+    private final UserPromotionCodeService userPromotionCodeService;
+    private final AccountRepository accountRepository;
 
     @PostMapping
     // @PreAuthorize("hasRole('ADMIN')") // TEMPORARILY DISABLED FOR DEBUGGING
@@ -199,6 +206,42 @@ public class PromotionController {
                 .build());
     }
 
+    @PostMapping("/validate-user-code")
+    // @PreAuthorize("hasRole('MEMBER') or hasRole('ADMIN')") // TEMPORARILY DISABLED FOR DEBUGGING
+    @Operation(summary = "Validate user promotion code", description = "Validate a user-specific promotion code")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponse<Boolean>> validateUserPromotionCode(
+            @RequestParam String uniqueCode) {
+
+        log.info("Validating user promotion code: {}", uniqueCode);
+
+        try {
+            // Get current user from security context
+            String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+
+            // Get account by email
+            Account account = accountRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản: " + userEmail));
+
+            // Validate user promotion code
+            boolean isValid = userPromotionCodeService.isValidUserPromotionCode(uniqueCode, account);
+
+            ApiResponse<Boolean> apiResponse = ApiResponse.<Boolean>builder()
+                    .success(true)
+                    .message("Validation completed")
+                    .data(isValid)
+                    .build();
+
+            return ResponseEntity.ok(apiResponse);
+        } catch (Exception e) {
+            log.error("Error validating user promotion code: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(ApiResponse.<Boolean>builder()
+                    .success(false)
+                    .message("Lỗi khi validate mã khuyến mãi: " + e.getMessage())
+                    .build());
+        }
+    }
+
     @GetMapping("/type/{discountType}")
     @Operation(summary = "Get promotions by discount type", description = "Retrieve promotions filtered by discount type")
     public ResponseEntity<List<Promotion>> getPromotionsByDiscountType(
@@ -329,6 +372,40 @@ public class PromotionController {
                 .build());
     }
 
+    @GetMapping("/user-codes")
+    // @PreAuthorize("hasRole('MEMBER') or hasRole('ADMIN')") // TEMPORARILY DISABLED FOR DEBUGGING
+    @Operation(summary = "Get user promotion codes", description = "Get all promotion codes purchased by current user")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponse<List<UserPromotionCode>>> getUserPromotionCodes() {
+        log.info("Getting user promotion codes");
+
+        try {
+            // Get current user from security context
+            String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+
+            // Get account by email
+            Account account = accountRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản: " + userEmail));
+
+            // Get user promotion codes
+            List<UserPromotionCode> userCodes = userPromotionCodeService.findValidCodesByAccount(account);
+
+            ApiResponse<List<UserPromotionCode>> apiResponse = ApiResponse.<List<UserPromotionCode>>builder()
+                    .success(true)
+                    .message("Lấy danh sách mã khuyến mãi thành công")
+                    .data(userCodes)
+                    .build();
+
+            return ResponseEntity.ok(apiResponse);
+        } catch (Exception e) {
+            log.error("Error getting user promotion codes: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(ApiResponse.<List<UserPromotionCode>>builder()
+                    .success(false)
+                    .message("Lỗi khi lấy danh sách mã khuyến mãi: " + e.getMessage())
+                    .build());
+        }
+    }
+
     @PostMapping("/purchase")
     // @PreAuthorize("hasRole('MEMBER') or hasRole('ADMIN')") // TEMPORARILY DISABLED FOR DEBUGGING
     @Operation(summary = "Purchase promotion with points", description = "Purchase a promotion using loyalty points")
@@ -359,31 +436,53 @@ public class PromotionController {
                         .build());
             }
 
-            // Get account by email (you might need to implement this)
-            // For now, we'll create a mock account
-            // Account account = accountService.getAccountByEmail(userEmail);
+            // Check if promotion is valid and active
+            if (!promotion.isValid()) {
+                return ResponseEntity.badRequest().body(ApiResponse.<String>builder()
+                        .success(false)
+                        .message("Promotion không còn hiệu lực hoặc đã hết lượt sử dụng")
+                        .build());
+            }
+
+            // Get account by email
+            Account account = accountRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản: " + userEmail));
 
             // Check if user has enough points
-            // int availablePoints = loyaltyService.getAvailablePoints(account.getAccountId());
-            // if (availablePoints < promotion.getPointsRequired()) {
-            //     return ResponseEntity.badRequest().body(ApiResponse.<String>builder()
-            //             .success(false)
-            //             .message("Không đủ điểm. Cần: " + promotion.getPointsRequired() + ", Có: " + availablePoints)
-            //             .build());
-            // }
+            int availablePoints = loyaltyService.getAvailablePoints(account.getAccountId());
+            if (availablePoints < promotion.getPointsRequired()) {
+                return ResponseEntity.badRequest().body(ApiResponse.<String>builder()
+                        .success(false)
+                        .message("Không đủ điểm. Cần: " + promotion.getPointsRequired() + ", Có: " + availablePoints)
+                        .build());
+            }
+
+            // Check if user has reached usage limit for this promotion
+            Long currentUsage = userPromotionCodeService.countValidCodesByAccountAndPromotion(account, promotion);
+            if (currentUsage >= promotion.getMaxUsagePerUser()) {
+                return ResponseEntity.badRequest().body(ApiResponse.<String>builder()
+                        .success(false)
+                        .message("Bạn đã đạt giới hạn sử dụng cho promotion này (" + promotion.getMaxUsagePerUser() + " lần)")
+                        .build());
+            }
 
             // Redeem points for promotion
-            // LoyaltyTransaction transaction = loyaltyService.redeemPointsForPromotion(account, promotion);
+            LoyaltyTransaction transaction = loyaltyService.redeemPointsForPromotion(account, promotion);
 
-            // Generate unique user promotion code
-            String uniqueCode = "USER_" + promotionCode + "_" + System.currentTimeMillis();
+            // Create user promotion code
+            UserPromotionCode userPromotionCode = userPromotionCodeService.createUserPromotionCode(
+                    account, promotion, promotion.getPointsRequired());
 
-            log.info("Successfully purchased promotion {} with points for user {}", promotionCode, userEmail);
+            // Increment promotion usage count
+            promotionService.applyPromotion(promotionCode);
+
+            log.info("Successfully purchased promotion {} with points for user {}. Transaction ID: {}", 
+                    promotionCode, userEmail, transaction.getTransactionId());
 
             return ResponseEntity.ok(ApiResponse.<String>builder()
                     .success(true)
                     .message("Đổi promotion thành công với " + promotion.getPointsRequired() + " điểm")
-                    .data(uniqueCode)
+                    .data(userPromotionCode.getUniqueCode())
                     .build());
         } catch (Exception e) {
             log.error("Error purchasing promotion: {}", e.getMessage());
