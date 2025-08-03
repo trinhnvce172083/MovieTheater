@@ -55,20 +55,50 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
   // Initialize form with editing data
   useEffect(() => {
     if (editingMovie && open) {
-      form.setFieldsValue({
+      console.log('🎬 [MovieFormModal] Initializing form with editing data:', editingMovie);
+      
+      // Transform data for form fields
+      const formData = {
         ...editingMovie,
         releaseDate: editingMovie.releaseDate ? dayjs(editingMovie.releaseDate) : null,
         endDate: editingMovie.endDate ? dayjs(editingMovie.endDate) : null,
-      });
+        // Convert genre string to array for tags mode
+        genre: editingMovie.genre ? 
+          (typeof editingMovie.genre === 'string' ? 
+            editingMovie.genre.split(', ').filter(g => g.trim()) : 
+            editingMovie.genre) : 
+          [],
+        // Ensure other fields have proper defaults
+        director: editingMovie.director || '',
+        cast: editingMovie.cast || '',
+        language: editingMovie.language || '',
+        country: editingMovie.country || '',
+        rating: editingMovie.rating || '',
+        description: editingMovie.description || '',
+        originalTitle: editingMovie.originalTitle || '',
+        trailerUrl: editingMovie.trailerUrl || '',
+        productionCompany: editingMovie.productionCompany || '',
+        imdbRating: editingMovie.imdbRating || undefined,
+      };
+      
+      console.log('🔧 [MovieFormModal] Transformed form data:', formData);
+      form.setFieldsValue(formData);
       
       // Set image previews for editing
       if (editingMovie.posterUrl) {
         setPosterPreview(editingMovie.posterUrl);
+        console.log('🖼️ [MovieFormModal] Set poster preview:', editingMovie.posterUrl);
       }
       if (editingMovie.backdropUrl) {
         setBackdropPreview(editingMovie.backdropUrl);
+        console.log('🖼️ [MovieFormModal] Set backdrop preview:', editingMovie.backdropUrl);
       }
+      
+      // Clear file lists since we're showing existing images
+      setPosterFileList([]);
+      setBackdropFileList([]);
     } else if (open) {
+      console.log('🎬 [MovieFormModal] Resetting form for new movie');
       form.resetFields();
       setPosterPreview('');
       setBackdropPreview('');
@@ -398,9 +428,16 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="cast" label="Cast" rules={[{ max: 1000 }]}>
-                <Input placeholder="Enter cast list..." />
-              </Form.Item>
+          <Form.Item 
+            name="cast" 
+            label="Cast" 
+            rules={[
+              { required: true, message: 'Please enter cast information!' },
+              { max: 1000, message: 'Cast information cannot exceed 1000 characters!' }
+            ]}
+          >
+            <TextArea rows={2} placeholder="Enter main cast members..." maxLength={1000} showCount />
+          </Form.Item>
             </Col>
           </Row>
 
@@ -475,16 +512,33 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
                 <Input placeholder="Enter trailer URL..." />
               </Form.Item>
             </Col>
+            <Col span={12}>
+              <Form.Item 
+                name="imdbRating" 
+                label="IMDB Rating"
+                rules={[
+                  { type: 'number', min: 0, max: 10, message: 'Rating must be between 0 and 10!' }
+                ]}
+              >
+                <InputNumber 
+                  min={0} 
+                  max={10} 
+                  step={0.1} 
+                  style={{ width: '100%' }} 
+                  placeholder="Enter IMDB rating..."
+                  precision={1}
+                />
+              </Form.Item>
+            </Col>
           </Row>
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="isFeatured" label="Featured Movie" valuePropName="checked" initialValue={true}>
+              <Form.Item name="isFeatured" label="Featured Movie" valuePropName="checked" initialValue={false}>
                 <Space>
                   <Switch 
                     checkedChildren="Featured" 
                     unCheckedChildren="Normal" 
-                    style={{ backgroundColor: '#52c41a' }}
                   />
                 </Space>
               </Form.Item>

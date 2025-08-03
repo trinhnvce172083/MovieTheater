@@ -23,6 +23,7 @@ export const createMovieColumns = (
   handleEdit: (record: MovieData) => void,
   handleDelete: (record: MovieData) => void,
   handleToggleFeature: (record: MovieData) => void,
+  featuredCount: number,
 ) => [
   {
     title: '#',
@@ -78,13 +79,23 @@ export const createMovieColumns = (
     title: 'Featured',
     dataIndex: 'isFeatured',
     key: 'isFeatured',
-    render: (isFeatured: boolean, record: any) => (
-      <Tag
-        color={isFeatured ? "gold" : "default"}
-        className="font-medium"
-      >
-        {isFeatured ? "Featured" : "Regular"}
-      </Tag>
+    width: 80,
+    align: 'center' as const,
+    render: (isFeatured: boolean, record: MovieData) => (
+      <Tooltip title={isFeatured ? "Remove from Featured" : "Add to Featured"}>
+        <Button 
+          icon={isFeatured ? <StarFilled /> : <StarOutlined />} 
+          type={isFeatured ? "primary" : "default"}
+          size="small"
+          style={{ 
+            color: isFeatured ? "#faad14" : undefined,
+            borderColor: isFeatured ? "#faad14" : undefined,
+            backgroundColor: isFeatured ? "#fff7e6" : undefined
+          }}
+          onClick={() => handleToggleFeature(record)}
+          disabled={!isFeatured && featuredCount >= 5}
+        />
+      </Tooltip>
     ),
   },
   {
@@ -92,15 +103,33 @@ export const createMovieColumns = (
     key: 'actions',
     align: 'center' as const,
     render: (_: unknown, record: MovieData) => (
-      <Space size="middle">
+      <Space size="small">
         <Tooltip title="View Details">
-          <Button icon={<EyeOutlined />} onClick={() => handleViewDetail(record)} />
+          <Button 
+            type="text"
+            icon={<EyeOutlined />} 
+            size="small"
+            className="text-blue-600 hover:bg-blue-50"
+            onClick={() => handleViewDetail(record)} 
+          />
         </Tooltip>
         <Tooltip title="Edit Movie">
-          <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+          <Button 
+            type="text"
+            icon={<EditOutlined />} 
+            size="small"
+            className="text-green-600 hover:bg-green-50"
+            onClick={() => handleEdit(record)} 
+          />
         </Tooltip>
         <Tooltip title="Delete Movie">
-          <Button icon={<DeleteOutlined />} danger onClick={() => handleDelete(record)} />
+          <Button 
+            type="text"
+            icon={<DeleteOutlined />} 
+            size="small"
+            className="text-red-600 hover:bg-red-50"
+            onClick={() => handleDelete(record)} 
+          />
         </Tooltip>
       </Space>
     ),
