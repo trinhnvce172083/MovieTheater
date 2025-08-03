@@ -7,8 +7,8 @@ import { useRouter } from 'next/navigation';
 
 // Local imports
 import { useMovieManagement } from './hooks/useMovieManagement';
+import MovieStatisticsCard from './components/MovieStatisticsCard';
 import {
-  MovieStatisticsCard,
   MovieFilters,
   MovieFormModal,
   createMovieColumns

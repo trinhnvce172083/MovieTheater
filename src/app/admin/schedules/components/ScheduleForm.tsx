@@ -279,11 +279,11 @@ export const ScheduleForm: React.FC<ScheduleFormProps> = ({
           <Col span={12}>
             <Form.Item
               name="movieId"
-              label="Phim"
-              rules={[{ required: true, message: 'Vui lòng chọn phim' }]}
+              label="Movie"
+              rules={[{ required: true, message: 'Please select a movie' }]}
             >
               <Select
-                placeholder="Chọn phim"
+                placeholder="Select Movie"
                 onChange={handleMovieChange}
                 showSearch
                 filterOption={(input, option) => {
@@ -295,7 +295,7 @@ export const ScheduleForm: React.FC<ScheduleFormProps> = ({
                   <Option key={movie.movieId} value={movie.movieId}>
                     <Space>
                       <span>{movie.title}</span>
-                      <Text type="secondary">({movie.duration} phút)</Text>
+                      <Text type="secondary">({movie.duration} mins)</Text>
                     </Space>
                   </Option>
                 ))}
@@ -306,15 +306,15 @@ export const ScheduleForm: React.FC<ScheduleFormProps> = ({
           <Col span={12}>
             <Form.Item
               name="cinemaRoomId"
-              label="Phòng chiếu"
-              rules={[{ required: true, message: 'Vui lòng chọn phòng chiếu' }]}
+              label="Cinema Room"
+              rules={[{ required: true, message: 'Please select a cinema room' }]}
             >
-              <Select placeholder="Chọn phòng chiếu">
+              <Select placeholder="Select Cinema Room">
                 {roomOptions.map(room => (
                   <Option key={room.cinemaRoomId} value={room.cinemaRoomId} disabled={!room.isActive}>
                     <Space>
                       <span>{room.roomName}</span>
-                      <Text type="secondary">({room.roomType} - {room.totalSeats} chỗ)</Text>
+                      <Text type="secondary">({room.roomType} - {room.totalSeats} seats)</Text>
                     </Space>
                   </Option>
                 ))}

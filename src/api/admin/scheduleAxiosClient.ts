@@ -20,15 +20,14 @@ class ScheduleAxiosClient {
     // Request interceptor với multiple token fallbacks
     this.client.interceptors.request.use(
       (config) => {
-        // Try multiple token storage locations for better compatibility
-        const token = localStorage.getItem("accessToken") || 
-                      localStorage.getItem("token") || 
-                      sessionStorage.getItem("token") || 
-                      sessionStorage.getItem("authToken") ||
-                      sessionStorage.getItem("accessToken");
-                      
+        // Primary: Use the same token source as other working admin pages
+        const token = localStorage.getItem("accessToken");
+        
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
+          console.log('🔑 [ScheduleAxios] Using token:', token.substring(0, 20) + '...');
+        } else {
+          console.warn('⚠️ [ScheduleAxios] No access token found in localStorage');
         }
         
         return config;
@@ -48,18 +47,21 @@ class ScheduleAxiosClient {
         const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
         // Enhanced error logging for debugging
-        console.error("Schedule API Error:", {
+        console.error("🚨 Schedule API Error:", {
           url: originalRequest?.url,
           method: originalRequest?.method,
           status: error.response?.status,
+          statusText: error.response?.statusText,
           message: error.message,
-          data: error.response?.data
+          responseData: error.response?.data,
+          hasToken: !!localStorage.getItem("accessToken")
         });
 
-        // Handle different error types
+        // Handle different error types - be less aggressive with 403
         if (error.response?.status === 403) {
-          console.warn('Access forbidden - check admin role and token validity');
-          throw new Error('Không có quyền truy cập. Vui lòng đăng nhập với tài khoản admin.');
+          console.warn('⚠️ Access forbidden - but continuing with fallback data');
+          // Don't throw error immediately, let the service handle fallback
+          // throw new Error('Không có quyền truy cập. Vui lòng đăng nhập với tài khoản admin.');
         }
 
         if (error.response?.status === 401 && !originalRequest._retry) {

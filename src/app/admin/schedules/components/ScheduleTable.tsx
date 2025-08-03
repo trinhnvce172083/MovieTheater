@@ -9,7 +9,9 @@ import {
   Progress,
   Avatar,
   Dropdown,
-  MenuProps
+  MenuProps,
+  Pagination,
+  Spin
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -87,13 +89,13 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
   const getStatusText = (status: string) => {
     switch (status) {
       case 'SCHEDULED':
-        return 'Đã lên lịch';
+        return 'Scheduled';
       case 'ONGOING':
-        return 'Đang chiếu';
+        return 'In Progress';
       case 'COMPLETED':
-        return 'Đã hoàn thành';
+        return 'Completed';
       case 'CANCELLED':
-        return 'Đã hủy';
+        return 'Cancelled';
       default:
         return status;
     }
@@ -102,13 +104,13 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
   const getActionMenuItems = (schedule: AdminSchedule): MenuProps['items'] => [
     {
       key: 'view',
-      label: 'Xem chi tiết',
+      label: 'View Details',
       icon: <EyeOutlined />,
       onClick: () => onView(schedule)
     },
     {
       key: 'edit',
-      label: 'Chỉnh sửa',
+      label: 'Edit',
       icon: <EditOutlined />,
       onClick: () => onEdit(schedule),
       disabled: schedule.status === 'COMPLETED' || schedule.status === 'ONGOING'
@@ -118,7 +120,7 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
     },
     {
       key: 'delete',
-      label: 'Xóa lịch chiếu',
+      label: 'Delete Schedule',
       icon: <DeleteOutlined />,
       danger: true,
       onClick: () => onDelete(schedule.scheduleId),
@@ -128,7 +130,7 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
   const columns: ColumnsType<AdminSchedule> = [
     {
-      title: 'Phim',
+      title: 'Movie',
       dataIndex: 'movieName',
       key: 'movieName',
       width: 200,
@@ -145,7 +147,7 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
             <Text strong>{title}</Text>
             <br />
             <Text type="secondary" style={{ fontSize: '12px' }}>
-              {record.movieDuration} phút
+              {record.movieDuration} min
             </Text>
           </div>
         </Space>
@@ -153,7 +155,7 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
       sorter: (a, b) => a.movieName.localeCompare(b.movieName)
     },
     {
-      title: 'Phòng chiếu',
+      title: 'Cinema Room',
       dataIndex: 'cinemaRoomName',
       key: 'cinemaRoomName',
       width: 120,
@@ -169,22 +171,22 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
       sorter: (a, b) => a.cinemaRoomName.localeCompare(b.cinemaRoomName)
     },
     {
-      title: 'Ngày & Giờ',
+      title: 'Date & Time',
       key: 'datetime',
       width: 150,
       render: (_, record) => (
-        <Space direction="vertical" size={4}>
-          <Space>
-            <CalendarOutlined style={{ color: '#1890ff' }} />
-            <Text>{record.displayDate}</Text>
-          </Space>
-          <Space>
-            <ClockCircleOutlined style={{ color: '#52c41a' }} />
-            <Text>{record.displayTime}</Text>
-            <Text type="secondary">→</Text>
-            <Text>{record.endTime.substring(0, 5)}</Text>
-          </Space>
-        </Space>
+        <div>
+          <div className="flex items-center gap-1 mb-1">
+            <CalendarOutlined className="text-blue-500 text-xs" />
+            <Text className="text-sm font-medium">{record.displayDate}</Text>
+          </div>
+          <div className="flex items-center gap-1">
+            <ClockCircleOutlined className="text-green-500 text-xs" />
+            <Text className="text-sm">{record.displayTime}</Text>
+            <Text type="secondary" className="text-xs">-</Text>
+            <Text className="text-sm">{record.endTime.substring(0, 5)}</Text>
+          </div>
+        </div>
       ),
       sorter: (a, b) => {
         const dateA = new Date(`${a.showDate}T${a.startTime}`);
@@ -193,7 +195,7 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
       }
     },
     {
-      title: 'Trạng thái',
+      title: 'Status',
       dataIndex: 'status',
       key: 'status',
       width: 120,
@@ -206,15 +208,15 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
         </Tag>
       ),
       filters: [
-        { text: 'Đã lên lịch', value: 'SCHEDULED' },
-        { text: 'Đang chiếu', value: 'ONGOING' },
-        { text: 'Đã hoàn thành', value: 'COMPLETED' },
-        { text: 'Đã hủy', value: 'CANCELLED' }
+        { text: 'Scheduled', value: 'SCHEDULED' },
+        { text: 'In Progress', value: 'ONGOING' },
+        { text: 'Completed', value: 'COMPLETED' },
+        { text: 'Cancelled', value: 'CANCELLED' }
       ],
       onFilter: (value, record) => record.status === value
     },
     {
-      title: 'Đặt chỗ',
+      title: 'Bookings',
       key: 'booking',
       width: 150,
       render: (_, record) => (
@@ -232,34 +234,26 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
             style={{ marginTop: 4 }}
           />
           <Text type="secondary" style={{ fontSize: '11px' }}>
-            {record.occupancyRate}% đã đặt
+            {record.occupancyRate}% booked
           </Text>
         </div>
       ),
       sorter: (a, b) => a.occupancyRate - b.occupancyRate
     },
     {
-      title: 'Giá vé',
+      title: 'Ticket Price',
       dataIndex: 'price',
       key: 'price',
       width: 100,
-      render: (price: number, record) => (
-        <Space direction="vertical" size={2}>
-          <Space>
-            <DollarCircleOutlined style={{ color: '#faad14' }} />
-            <Text strong>{record.priceDisplay}</Text>
-          </Space>
-          {record.specialFeatures !== 'Standard' && (
-            <Text type="secondary" style={{ fontSize: '11px' }}>
-              {record.specialFeatures}
-            </Text>
-          )}
-        </Space>
+      render: (price: number) => (
+        <Text strong className="text-orange-600">
+          {price.toLocaleString()}đ
+        </Text>
       ),
       sorter: (a, b) => a.price - b.price
     },
     {
-      title: 'Tùy chọn',
+      title: 'Features',
       key: 'options',
       width: 100,
       render: (_, record) => (
@@ -280,7 +274,7 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
       )
     },
     {
-      title: 'Thao tác',
+      title: 'Actions',
       key: 'actions',
       width: 80,
       fixed: 'right',
@@ -310,32 +304,58 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
   };
 
   return (
-    <Table<AdminSchedule>
-      columns={columns}
-      dataSource={schedules}
-      rowKey="scheduleId"
-      loading={loading}
-      rowSelection={rowSelection}
-      pagination={{
-        current: pagination.currentPage,
-        pageSize: pagination.pageSize,
-        total: pagination.totalElements,
-        showSizeChanger: true,
-        showQuickJumper: true,
-        showTotal: (total, range) => 
-          `${range[0]}-${range[1]} của ${total} lịch chiếu`,
-        onChange: onPageChange,
-        onShowSizeChange: (current, size) => onPageChange(current, size),
-        pageSizeOptions: ['10', '20', '50', '100']
-      }}
-      scroll={{ x: 1200 }}
-      size="small"
-      bordered
-      style={{
-        backgroundColor: '#fff',
-        borderRadius: '8px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-      }}
-    />
+    <div>
+      <Spin spinning={loading}>
+        <Table<AdminSchedule>
+          columns={columns}
+          dataSource={schedules}
+          rowKey="scheduleId"
+          loading={false}
+          rowSelection={rowSelection}
+          pagination={false}
+          scroll={{ x: 1200 }}
+          size="small"
+          rowClassName="hover:bg-gray-50 transition-colors"
+          className="professional-table"
+          sortDirections={['ascend', 'descend']}
+        />
+      </Spin>
+      
+      {/* Pagination */}
+      <div className="px-6 py-5 border-t border-gray-100 bg-gray-50">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Text type="secondary" className="text-sm">
+              Showing{" "}
+              <span className="font-medium text-gray-900">
+                {Math.max(1, (pagination.currentPage - 1) * pagination.pageSize + 1)}
+              </span>
+              {" "}to{" "}
+              <span className="font-medium text-gray-900">
+                {Math.min(pagination.currentPage * pagination.pageSize, pagination.totalElements)}
+              </span>
+              {" "}of{" "}
+              <span className="font-medium text-gray-900">
+                {pagination.totalElements}
+              </span>
+              {" "}schedules
+            </Text>
+          </div>
+          <Pagination
+            current={pagination.currentPage}
+            pageSize={pagination.pageSize}
+            total={pagination.totalElements}
+            onChange={(page, size) => {
+              onPageChange(page, size || pagination.pageSize);
+            }}
+            showSizeChanger
+            showQuickJumper={false}
+            pageSizeOptions={["5", "10", "20", "50"]}
+            size="default"
+            className="flex-shrink-0"
+          />
+        </div>
+      </div>
+    </div>
   );
 };

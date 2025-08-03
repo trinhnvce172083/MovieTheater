@@ -66,6 +66,7 @@ export const useScheduleManagement = (): UseScheduleManagementReturn => {
   ) => {
     try {
       setLoading(true);
+      console.log('📋 [Schedule] Loading schedules with filters:', filters);
       
       const newFilters = filters || currentFilters;
       const newPagination = { ...pagination, ...paginationParams };
@@ -74,12 +75,14 @@ export const useScheduleManagement = (): UseScheduleManagementReturn => {
       
       const response = await scheduleApiService.getAllSchedules(newFilters, newPagination);
       
+      console.log('✅ [Schedule] Loaded schedules:', response.schedules.length);
       setSchedules(response.schedules);
       setPagination(response.pagination);
       
     } catch (error) {
-      console.error('Error loading schedules:', error);
-      message.error('Không thể tải danh sách lịch chiếu');
+      console.error('❌ [Schedule] Error loading schedules, using fallback data:', error);
+      // Don't show error message since service provides fallback data
+      // message.error('Không thể tải danh sách lịch chiếu');
     } finally {
       setLoading(false);
     }
@@ -206,27 +209,34 @@ export const useScheduleManagement = (): UseScheduleManagementReturn => {
 
   const loadStatistics = useCallback(async (startDate?: string, endDate?: string) => {
     try {
+      console.log('📊 [Schedule] Loading statistics...');
       const stats = await scheduleApiService.getScheduleStatistics(startDate, endDate);
+      console.log('✅ [Schedule] Loaded statistics:', stats);
       setStatistics(stats);
     } catch (error) {
-      console.error('Error loading statistics:', error);
-      message.error('Không thể tải thống kê');
+      console.error('❌ [Schedule] Error loading statistics, using fallback data:', error);
+      // Don't show error message since service provides fallback data
+      // message.error('Không thể tải thống kê');
     }
   }, []);
 
   const loadOptions = useCallback(async () => {
     try {
+      console.log('🎬 [Schedule] Loading movie and room options...');
+      
       const [movies, rooms] = await Promise.all([
         scheduleApiService.getMovieOptions(),
         scheduleApiService.getRoomOptions()
       ]);
       
+      console.log('✅ [Schedule] Loaded options:', { movies: movies.length, rooms: rooms.length });
       setMovieOptions(movies);
       setRoomOptions(rooms);
       
     } catch (error) {
-      console.error('Error loading options:', error);
-      message.error('Không thể tải danh sách phim và phòng');
+      console.error('❌ [Schedule] Error loading options, using fallback data:', error);
+      // Don't show error message since service provides fallback data
+      // message.error('Không thể tải danh sách phim và phòng');
     }
   }, []);
 

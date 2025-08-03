@@ -91,7 +91,7 @@ export const ScheduleFiltersComponent: React.FC<ScheduleFiltersProps> = ({
         <Space>
           <FilterOutlined />
           <Title level={5} style={{ margin: 0 }}>
-            Bộ lọc tìm kiếm
+            Search Filters
           </Title>
         </Space>
       }
@@ -107,10 +107,10 @@ export const ScheduleFiltersComponent: React.FC<ScheduleFiltersProps> = ({
           <Col xs={24} sm={12} md={8} lg={6}>
             <Form.Item
               name="searchTerm"
-              label="Tìm kiếm"
+              label="Search"
             >
               <Input
-                placeholder="Tên phim, phòng chiếu..."
+                placeholder="Search by movie, room..."
                 prefix={<SearchOutlined />}
                 allowClear
                 onPressEnter={handleSearch}
@@ -121,10 +121,10 @@ export const ScheduleFiltersComponent: React.FC<ScheduleFiltersProps> = ({
           <Col xs={24} sm={12} md={8} lg={6}>
             <Form.Item
               name="movieId"
-              label="Phim"
+              label="Movie"
             >
               <Select
-                placeholder="Chọn phim"
+                placeholder="Select Movie"
                 allowClear
                 showSearch
                 filterOption={(input, option) => {
@@ -136,7 +136,7 @@ export const ScheduleFiltersComponent: React.FC<ScheduleFiltersProps> = ({
                   <Option key={movie.movieId} value={movie.movieId} label={movie.title}>
                     {movie.title}
                     <span style={{ color: '#8c8c8c', marginLeft: 8 }}>
-                      ({movie.duration}p)
+                      ({movie.duration}min)
                     </span>
                   </Option>
                 ))}
@@ -147,10 +147,10 @@ export const ScheduleFiltersComponent: React.FC<ScheduleFiltersProps> = ({
           <Col xs={24} sm={12} md={8} lg={6}>
             <Form.Item
               name="cinemaRoomId"
-              label="Phòng chiếu"
+              label="Cinema Room"
             >
               <Select
-                placeholder="Chọn phòng"
+                placeholder="Select Room"
                 allowClear
               >
                 {roomOptions.map(room => (
@@ -168,16 +168,16 @@ export const ScheduleFiltersComponent: React.FC<ScheduleFiltersProps> = ({
           <Col xs={24} sm={12} md={8} lg={6}>
             <Form.Item
               name="status"
-              label="Trạng thái"
+              label="Status"
             >
               <Select
-                placeholder="Chọn trạng thái"
+                placeholder="Select Status"
                 allowClear
               >
-                <Option value="SCHEDULED">Đã lên lịch</Option>
-                <Option value="ONGOING">Đang chiếu</Option>
-                <Option value="COMPLETED">Đã hoàn thành</Option>
-                <Option value="CANCELLED">Đã hủy</Option>
+                <Option value="SCHEDULED">Scheduled</Option>
+                <Option value="ONGOING">In Progress</Option>
+                <Option value="COMPLETED">Completed</Option>
+                <Option value="CANCELLED">Cancelled</Option>
               </Select>
             </Form.Item>
           </Col>
@@ -185,16 +185,16 @@ export const ScheduleFiltersComponent: React.FC<ScheduleFiltersProps> = ({
           <Col xs={24} sm={12} md={8} lg={6}>
             <Form.Item
               name="dateRange"
-              label="Khoảng thời gian"
+              label="Date Range"
             >
               <RangePicker
                 style={{ width: '100%' }}
                 format="DD/MM/YYYY"
-                placeholder={['Từ ngày', 'Đến ngày']}
+                placeholder={['From Date', 'To Date']}
                 prefix={<CalendarOutlined />}
                 allowClear
                 disabledDate={current => {
-                  // Không cho chọn ngày quá xa trong tương lai (6 tháng)
+                  // Don't allow selecting dates too far in the future (6 months)
                   return current && current > dayjs().add(6, 'month');
                 }}
               />
@@ -210,14 +210,14 @@ export const ScheduleFiltersComponent: React.FC<ScheduleFiltersProps> = ({
                   icon={<SearchOutlined />}
                   loading={loading}
                 >
-                  Tìm kiếm
+                  Search
                 </Button>
                 <Button
                   type="default"
                   icon={<ClearOutlined />}
                   onClick={handleClear}
                 >
-                  Xóa bộ lọc
+                  Clear Filters
                 </Button>
               </Space>
             </Form.Item>

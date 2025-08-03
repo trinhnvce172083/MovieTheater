@@ -1,34 +1,15 @@
 "use client";
 
 import React, { useState } from 'react';
-import {
-  Layout,
-  Typography,
-  Button,
-  Space,
-  Card,
-  Statistic,
-  Row,
-  Col,
-  Modal,
-  message,
-  Divider
-} from 'antd';
-import {
-  PlusOutlined,
-  CalendarOutlined,
-  DeleteOutlined,
-  ExportOutlined,
-  ReloadOutlined,
-  ScheduleOutlined,
-  TeamOutlined,
-  DollarCircleOutlined,
-  TrophyOutlined
-} from '@ant-design/icons';
+import { Card, Button, Typography, message, Alert } from 'antd';
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+
+// Local imports
+import { useScheduleManagement } from './hooks/useScheduleManagement';
 import { ScheduleForm } from './components/ScheduleForm';
 import { ScheduleTable } from './components/ScheduleTable';
 import { ScheduleFiltersComponent } from './components/ScheduleFilters';
-import { useScheduleManagement } from './hooks/useScheduleManagement';
+import ScheduleStatisticsCard from './components/ScheduleStatisticsCard';
 import {
   AdminSchedule,
   ScheduleCreateRequest,
@@ -36,11 +17,14 @@ import {
   ScheduleFilters
 } from './types';
 
-const { Header, Content } = Layout;
-const { Title, Text } = Typography;
-const { confirm } = Modal;
+const { Text } = Typography;
 
-export default function ScheduleManagementPage() {
+export default function AdminScheduleManagement() {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<AdminSchedule | null>(null);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+
+  // Use custom hook for all schedule management logic
   const {
     schedules,
     loading,
@@ -62,324 +46,162 @@ export default function ScheduleManagementPage() {
     refreshData
   } = useScheduleManagement();
 
-  const [formVisible, setFormVisible] = useState(false);
-  const [editingSchedule, setEditingSchedule] = useState<AdminSchedule | null>(null);
-  const [currentFilters, setCurrentFilters] = useState<ScheduleFilters>({});
-
-  // Form handlers
-  const handleCreateNew = () => {
-    setEditingSchedule(null);
-    setFormVisible(true);
+  // Event handlers
+  const handleEdit = (record: AdminSchedule) => {
+    setEditingSchedule(record);
+    setIsModalVisible(true);
   };
 
-  const handleEdit = (schedule: AdminSchedule) => {
-    setEditingSchedule(schedule);
-    setFormVisible(true);
-  };
-
-  const handleFormSubmit = async (data: ScheduleCreateRequest | ScheduleUpdateRequest) => {
+  const handleModalSubmit = async (scheduleData: ScheduleCreateRequest | ScheduleUpdateRequest) => {
     try {
-      if ('scheduleId' in data) {
-        await updateSchedule(data);
+      let success = false;
+      if ('scheduleId' in scheduleData) {
+        await updateSchedule(scheduleData);
+        success = true;
       } else {
-        await createSchedule(data);
+        await createSchedule(scheduleData);
+        success = true;
       }
-      setFormVisible(false);
-      setEditingSchedule(null);
-    } catch (error) {
-      console.error('Error submitting form:', error);
+
+      if (success) {
+        setIsModalVisible(false);
+        setEditingSchedule(null);
+      }
+    } catch {
+      message.error('Please check required fields and try again.');
     }
   };
 
-  const handleFormCancel = () => {
-    setFormVisible(false);
+  const handleModalCancel = () => {
+    setIsModalVisible(false);
     setEditingSchedule(null);
   };
 
-  // Delete handlers
-  const handleDelete = (scheduleId: number) => {
-    const schedule = schedules.find(s => s.scheduleId === scheduleId);
-    
-    confirm({
-      title: 'Xác nhận xóa lịch chiếu',
-      content: (
-        <div>
-          <p>Bạn có chắc chắn muốn xóa lịch chiếu này?</p>
-          <div style={{ backgroundColor: '#f5f5f5', padding: 12, borderRadius: 4, marginTop: 8 }}>
-            <Text strong>{schedule?.movieName}</Text>
-            <br />
-            <Text type="secondary">
-              {schedule?.cinemaRoomName} - {schedule?.displayDate} {schedule?.displayTime}
-            </Text>
-          </div>
-          {schedule?.bookedSeats && schedule.bookedSeats > 0 && (
-            <div style={{ marginTop: 8, color: '#ff4d4f' }}>
-              <Text type="danger">
-                ⚠️ Lịch chiếu này đã có {schedule.bookedSeats} vé được đặt!
-              </Text>
-            </div>
-          )}
-        </div>
-      ),
-      okText: 'Xóa',
-      cancelText: 'Hủy',
-      okType: 'danger',
-      onOk: () => deleteSchedule(scheduleId)
-    });
+  const handleDelete = async (scheduleId: number) => {
+    await deleteSchedule(scheduleId);
   };
 
-  const handleBulkDelete = () => {
-    if (selectedSchedules.length === 0) {
-      message.warning('Vui lòng chọn lịch chiếu cần xóa');
-      return;
-    }
-
-    const selectedScheduleDetails = schedules.filter(s => selectedSchedules.includes(s.scheduleId));
-    const hasBookedSchedules = selectedScheduleDetails.some(s => s.bookedSeats > 0);
-
-    confirm({
-      title: 'Xác nhận xóa nhiều lịch chiếu',
-      content: (
-        <div>
-          <p>Bạn có chắc chắn muốn xóa {selectedSchedules.length} lịch chiếu đã chọn?</p>
-          {hasBookedSchedules && (
-            <div style={{ marginTop: 8, color: '#ff4d4f' }}>
-              <Text type="danger">
-                ⚠️ Một số lịch chiếu đã có vé được đặt!
-              </Text>
-            </div>
-          )}
-        </div>
-      ),
-      okText: 'Xóa tất cả',
-      cancelText: 'Hủy',
-      okType: 'danger',
-      onOk: () => bulkDeleteSchedules(selectedSchedules)
-    });
+  const handleViewDetail = (schedule: AdminSchedule) => {
+    // Navigate to detail view - can be implemented later
+    message.info(`Viewing details for schedule: ${schedule.movieName}`);
   };
 
-  // View handler
-  const handleView = (schedule: AdminSchedule) => {
-    Modal.info({
-      title: 'Chi tiết lịch chiếu',
-      width: 600,
-      content: (
-        <div style={{ marginTop: 16 }}>
-          <Row gutter={[16, 16]}>
-            <Col span={12}>
-              <Card size="small" title="Thông tin phim">
-                <Space direction="vertical" size={4}>
-                  <Text strong>{schedule.movieName}</Text>
-                  <Text type="secondary">Thời lượng: {schedule.movieDuration} phút</Text>
-                  {schedule.moviePoster && (
-                    <img 
-                      src={schedule.moviePoster} 
-                      alt={schedule.movieName}
-                      style={{ width: 80, height: 120, objectFit: 'cover', borderRadius: 4 }}
-                    />
-                  )}
-                </Space>
-              </Card>
-            </Col>
-            
-            <Col span={12}>
-              <Card size="small" title="Thông tin phòng">
-                <Space direction="vertical" size={4}>
-                  <Text strong>{schedule.cinemaRoomName}</Text>
-                  <Text type="secondary">Loại: {schedule.roomType}</Text>
-                  <Text type="secondary">Tổng ghế: {schedule.totalSeats}</Text>
-                </Space>
-              </Card>
-            </Col>
-            
-            <Col span={12}>
-              <Card size="small" title="Thời gian chiếu">
-                <Space direction="vertical" size={4}>
-                  <Text><CalendarOutlined /> {schedule.displayDate}</Text>
-                  <Text>{schedule.displayTime} - {schedule.endTime.substring(0, 5)}</Text>
-                </Space>
-              </Card>
-            </Col>
-            
-            <Col span={12}>
-              <Card size="small" title="Tình trạng đặt vé">
-                <Space direction="vertical" size={4}>
-                  <Text>Đã đặt: {schedule.bookedSeats}/{schedule.totalSeats}</Text>
-                  <Text>Tỷ lệ: {schedule.occupancyRate}%</Text>
-                  <Text strong>Giá vé: {schedule.priceDisplay}</Text>
-                </Space>
-              </Card>
-            </Col>
-            
-            <Col span={24}>
-              <Card size="small" title="Tùy chọn đặc biệt">
-                <Space wrap>
-                  <Text>Định dạng: {schedule.specialFeatures}</Text>
-                  <Text>Phụ đề: {schedule.subtitleLanguage}</Text>
-                  <Text>Âm thanh: {schedule.audioLanguage}</Text>
-                </Space>
-              </Card>
-            </Col>
-          </Row>
-        </div>
-      ),
-      okText: 'Đóng'
-    });
+  // Bulk actions handlers
+  const handleBulkDelete = async () => {
+    const scheduleIds = selectedRowKeys.map(key => Number(key));
+    await bulkDeleteSchedules(scheduleIds);
+    setSelectedRowKeys([]);
   };
 
-  // Filter handlers
-  const handleFiltersChange = (filters: ScheduleFilters) => {
-    setCurrentFilters(filters);
-    loadSchedules(filters, { currentPage: 1 });
-  };
-
-  const handleClearFilters = () => {
-    setCurrentFilters({});
-    loadSchedules({}, { currentPage: 1 });
-  };
-
-  // Table handlers
-  const handleSelectionChange = (selectedRowKeys: React.Key[]) => {
-    setSelectedSchedules(selectedRowKeys as number[]);
-  };
-
-  const handlePageChange = (page: number, pageSize?: number) => {
-    loadSchedules(currentFilters, { currentPage: page, pageSize });
+  // Table row selection
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: setSelectedRowKeys,
   };
 
   return (
-    <Layout style={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
-      <Header style={{ 
-        backgroundColor: '#fff', 
-        padding: '0 24px', 
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <Space>
-          <ScheduleOutlined style={{ fontSize: 24, color: '#1890ff' }} />
-          <Title level={3} style={{ margin: 0, color: '#1890ff' }}>
-            Quản lý lịch chiếu
-          </Title>
-        </Space>
-        
-        <Space>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleCreateNew}
-          >
-            Tạo lịch chiếu
-          </Button>
-          
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={refreshData}
-            loading={loading}
-          >
-            Làm mới
-          </Button>
-          
-          {selectedSchedules.length > 0 && (
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              onClick={handleBulkDelete}
-            >
-              Xóa ({selectedSchedules.length})
-            </Button>
-          )}
-        </Space>
-      </Header>
-
-      <Content style={{ padding: '24px' }}>
-        {/* Statistics Cards */}
-        {statistics && (
-          <Row gutter={16} style={{ marginBottom: 24 }}>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title="Tổng lịch chiếu"
-                  value={statistics.totalSchedules}
-                  prefix={<CalendarOutlined />}
-                  valueStyle={{ color: '#1890ff' }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title="Hôm nay"
-                  value={statistics.totalSchedules}
-                  prefix={<ScheduleOutlined />}
-                  valueStyle={{ color: '#52c41a' }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title="Tỷ lệ đặt vé TB"
-                  value={statistics.averageOccupancyRate}
-                  suffix="%"
-                  prefix={<TeamOutlined />}
-                  valueStyle={{ color: '#faad14' }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title="Doanh thu"
-                  value={statistics.totalRevenue}
-                  prefix={<DollarCircleOutlined />}
-                  suffix="đ"
-                  valueStyle={{ color: '#f5222d' }}
-                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                />
-              </Card>
-            </Col>
-          </Row>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        {/* Demo Data Warning - if needed */}
+        {!schedules?.length && !loading && (
+          <Alert
+            message="Demo Mode - Using Sample Data"
+            description="You are viewing sample data. Connect to backend server to use full CRUD functionality."
+            type="warning"
+            showIcon
+            className="mb-6"
+            closable
+          />
         )}
 
-        <Divider />
-
-        {/* Filters */}
-        <ScheduleFiltersComponent
-          filters={currentFilters}
-          movieOptions={movieOptions}
-          roomOptions={roomOptions}
-          onFiltersChange={handleFiltersChange}
-          onClearFilters={handleClearFilters}
+        {/* Statistics Cards */}
+        <ScheduleStatisticsCard 
+          statistics={{
+            totalSchedules: statistics?.totalSchedules || 0,
+            scheduledCount: statistics?.scheduledCount || 0,
+            averageOccupancyRate: statistics?.averageOccupancyRate || 0,
+            totalRevenue: statistics?.totalRevenue || 0
+          }}
           loading={loading}
         />
 
-        {/* Table */}
-        <ScheduleTable
-          schedules={schedules}
-          loading={loading}
-          pagination={pagination}
-          selectedSchedules={selectedSchedules}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onView={handleView}
-          onSelectionChange={handleSelectionChange}
-          onPageChange={handlePageChange}
-        />
+        {/* Main Content Card */}
+        <Card
+          className="shadow-sm border-0"
+          styles={{ body: { padding: 0 } }}
+          style={{ borderRadius: 16 }}
+        >
+          {/* Header */}
+          <div className="px-6 py-5 border-b border-gray-100 bg-white flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+            <div>
+              <h1 className="m-0 text-gray-900 text-xl xl:text-2xl font-semibold">
+                Schedule Management
+              </h1>
+              <Text type="secondary" className="text-sm xl:text-base">
+                Manage movie schedules, showtimes, and theater bookings
+              </Text>
+            </div>
+            <div className="flex items-center gap-3">
+              {selectedRowKeys.length > 0 && (
+                <Button
+                  danger
+                  icon={<DeleteOutlined />}
+                  size="middle"
+                  className="text-xs xl:text-sm h-10 px-4"
+                  onClick={handleBulkDelete}
+                >
+                  Delete Selected ({selectedRowKeys.length})
+                </Button>
+              )}
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                size="middle"
+                className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
+                onClick={() => setIsModalVisible(true)}
+                title="Add new schedule"
+              >
+                Add New Schedule
+              </Button>
+            </div>
+          </div>
 
-        {/* Form Modal */}
+          {/* Filters */}
+          <ScheduleFiltersComponent
+            filters={{}}
+            movieOptions={movieOptions || []}
+            roomOptions={roomOptions || []}
+            onFiltersChange={(filters) => loadSchedules(filters, { currentPage: 1 })}
+            onClearFilters={() => loadSchedules({}, { currentPage: 1 })}
+          />
+
+          {/* Table */}
+          <div className="bg-white">
+            <ScheduleTable
+              schedules={schedules || []}
+              loading={loading}
+              pagination={pagination}
+              selectedSchedules={selectedSchedules || []}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onView={handleViewDetail}
+              onSelectionChange={setSelectedRowKeys}
+              onPageChange={(page, pageSize) => loadSchedules({}, { currentPage: page, pageSize })}
+            />
+          </div>
+        </Card>
+
+        {/* Schedule Form Modal */}
         <ScheduleForm
-          visible={formVisible}
-          onCancel={handleFormCancel}
-          onSubmit={handleFormSubmit}
-          onCheckConflicts={checkConflicts}
-          movieOptions={movieOptions}
-          roomOptions={roomOptions}
+          visible={isModalVisible}
           editingSchedule={editingSchedule}
-          loading={loading}
+          onSubmit={handleModalSubmit}
+          onCancel={handleModalCancel}
+          movieOptions={movieOptions || []}
+          roomOptions={roomOptions || []}
+          onCheckConflicts={checkConflicts}
         />
-      </Content>
-    </Layout>
+      </div>
+    </div>
   );
 }

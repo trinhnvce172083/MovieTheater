@@ -103,15 +103,33 @@ export const createMovieColumns = (
     key: 'actions',
     align: 'center' as const,
     render: (_: unknown, record: MovieData) => (
-      <Space size="middle">
+      <Space size="small">
         <Tooltip title="View Details">
-          <Button icon={<EyeOutlined />} onClick={() => handleViewDetail(record)} />
+          <Button 
+            type="text"
+            icon={<EyeOutlined />} 
+            size="small"
+            className="text-blue-600 hover:bg-blue-50"
+            onClick={() => handleViewDetail(record)} 
+          />
         </Tooltip>
         <Tooltip title="Edit Movie">
-          <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+          <Button 
+            type="text"
+            icon={<EditOutlined />} 
+            size="small"
+            className="text-green-600 hover:bg-green-50"
+            onClick={() => handleEdit(record)} 
+          />
         </Tooltip>
         <Tooltip title="Delete Movie">
-          <Button icon={<DeleteOutlined />} danger onClick={() => handleDelete(record)} />
+          <Button 
+            type="text"
+            icon={<DeleteOutlined />} 
+            size="small"
+            className="text-red-600 hover:bg-red-50"
+            onClick={() => handleDelete(record)} 
+          />
         </Tooltip>
       </Space>
     ),
