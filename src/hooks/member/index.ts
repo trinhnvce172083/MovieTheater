@@ -56,16 +56,25 @@ function useAsyncData<T>(
   });
 
   const mountedRef = useRef(true);
+  const fetchFnRef = useRef(fetchFn);
+  
+  // Update ref when fetchFn changes
+  useEffect(() => {
+    fetchFnRef.current = fetchFn;
+  }, [fetchFn]);
 
   const fetchData = useCallback(async () => {
     if (!mountedRef.current) return;
 
+    console.log("🚀 useAsyncData: Starting fetch...");
     setState((prev) => {
       return { ...prev, loading: true, error: null };
     });
 
     try {
-      const response = await fetchFn();
+      console.log("📞 useAsyncData: Calling fetchFn...");
+      const response = await fetchFnRef.current();
+      console.log("📦 useAsyncData: Got response:", response);
 
       if (!mountedRef.current) return;
 
@@ -78,41 +87,39 @@ function useAsyncData<T>(
           lastUpdated: Date.now(),
         };
       });
-    } catch (error) {
-      if (!mountedRef.current) return;
+      console.log("✅ useAsyncData: Data loaded successfully");
+    } catch (error: any) {
+      console.error("❌ useAsyncData: Error occurred:", error);
 
-      const errorMessage =
-        error instanceof MemberApiError
-          ? error.message
-          : "An unexpected error occurred";
+      if (!mountedRef.current) return;
 
       setState((prev) => {
         return {
           ...prev,
           loading: false,
-          error: errorMessage,
+          error: error.message || "An error occurred",
         };
       });
-
-      console.error("useAsyncData error:", error);
     }
-  }, [fetchFn, ...dependencies]);
+  }, []); // Remove dependencies to prevent loop
 
   useEffect(() => {
     if (immediate) {
       fetchData();
     }
-  }, [fetchData, immediate]);
-
-  useEffect(() => {
+    
     return () => {
       mountedRef.current = false;
     };
-  }, []);
+  }, [immediate]); // Only depend on immediate flag
+
+  const refetch = useCallback(async () => {
+    await fetchData();
+  }, [fetchData]);
 
   return {
     ...state,
-    refetch: fetchData,
+    refetch,
   };
 }
 
@@ -173,13 +180,19 @@ function useAsyncMutation<T, P = unknown>(
  * Hook for member profile management
  */
 export function useMemberProfile() {
-  const fetchProfile = useCallback(() => MemberApiService.getProfile(), []);
-  const profileState = useAsyncData(fetchProfile, []);
+  const fetchProfile = useCallback(() => {
+    console.log("🔄 useMemberProfile: fetchProfile called");
+    // Always fetch fresh data to avoid cache issues
+    return MemberApiService.getProfile(false);
+  }, []);
+  
+  const profileState = useAsyncData(fetchProfile, [], true);
 
   const updateMutation = useAsyncMutation(
     (request: ProfileUpdateRequest) => MemberApiService.updateProfile(request),
     () => {
       message.success("Profile updated successfully!");
+      profileState.refetch(); // Refresh profile after update
     }
   );
 

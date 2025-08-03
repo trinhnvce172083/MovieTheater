@@ -120,16 +120,35 @@ export class MemberApiClient {
     const cacheKey = "member:profile";
 
     try {
-      // Check cache first
+      console.log("🔍 Starting getProfile API call...");
+      
+      // Always fetch fresh data on first load, use cache for subsequent calls
       if (useCache) {
         const cached = this.cache.get<MemberProfile>(cacheKey);
         if (cached) {
-          return { success: true, data: cached };
+          console.log("✅ Found cached profile:", cached);
+          // Verify cache is still valid by checking if it's recent (within 5 minutes)
+          const cacheAge = Date.now() - (cached.lastUpdated || 0);
+          if (cacheAge < 5 * 60 * 1000) {
+            return { success: true, data: cached };
+          } else {
+            console.log("🗑️ Cache expired, clearing...");
+            this.cache.delete(cacheKey);
+          }
         }
       }
 
+      console.log("📡 Making API call to /auth/profile...");
       const response = await axiosClient.get("/auth/profile");
-      const data = response.data.data;
+      console.log("📦 API Response:", response.data);
+      
+      // API trả về format: { success: true, message: "...", data: {...} }
+      const apiData = response.data;
+      if (!apiData.success || !apiData.data) {
+        throw new Error("Invalid API response format");
+      }
+      
+      const data = apiData.data;
       const profile: MemberProfile = {
         accountId: data.accountId,
         username: data.username,
@@ -150,14 +169,21 @@ export class MemberApiClient {
         updatedAt: data.updatedAt,
         totalBookings: data.totalBookings || 0,
         totalSpent: data.totalSpent || 0,
+        lastUpdated: Date.now(), // Add timestamp for cache validation
       };
 
-      // Cache the result
+      console.log("✅ Profile mapped successfully:", profile);
+
+      // Cache the result with timestamp
       this.cache.set(cacheKey, profile);
 
       return { success: true, data: profile };
     } catch (error) {
-      console.error("Error fetching member profile:", error);
+      console.error("❌ Error fetching member profile:", error);
+      if (error.response) {
+        console.error("📡 Response status:", error.response.status);
+        console.error("📡 Response data:", error.response.data);
+      }
       throw new MemberApiError(
         "Failed to fetch profile",
         "PROFILE_FETCH_ERROR",

@@ -32,25 +32,26 @@ export interface PaginatedResponse<T> {
 // ==================== MEMBER PROFILE TYPES ====================
 
 export interface MemberProfile {
-  accountId: number;
+  accountId: string;
   username: string;
   email: string;
   fullName: string;
-  phoneNumber?: string;
-  dateOfBirth?: string;
-  address?: string;
+  phoneNumber: string;
+  dateOfBirth: string;
+  address: string;
   avatarUrl?: string;
   role: string;
   isActive: boolean;
   isVerified: boolean;
   emailVerified: boolean;
-  membershipLevel: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM";
+  membershipLevel: string;
   membershipPoints: number;
   lastLogin?: string;
   createdAt: string;
   updatedAt: string;
   totalBookings: number;
   totalSpent: number;
+  lastUpdated?: number; // Add for cache validation
 }
 
 export interface ProfileUpdateRequest {

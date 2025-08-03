@@ -52,8 +52,12 @@ export default function MemberAccountPage() {
     refetch,
   } = useMemberProfile();
 
+  // Debug logs
+  console.log("🔍 MemberAccountPage state:", { profile, loading, error });
+
   // Initialize form when profile is loaded
   useEffect(() => {
+    console.log("📝 Form initialization effect triggered, profile:", profile);
     if (profile) {
       form.setFieldsValue({
         username: profile.username || "",
@@ -67,6 +71,7 @@ export default function MemberAccountPage() {
         address: profile.address || "",
       });
       setAvatarPreview(profile.avatarUrl || "");
+      console.log("✅ Form fields set successfully");
     }
   }, [profile, form]);
 

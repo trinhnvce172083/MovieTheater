@@ -14,8 +14,6 @@ import LanguageDropdown from "./LanguageDropdown";
 const HeaderComponent = () => {
   const { isLoggedIn, userInfo } = useAuth();
 
-  console.log("HeaderComponent rendered", isLoggedIn, userInfo);
-
   return (
     <header className="flex items-center justify-between px-2 sm:px-4 md:px-6 bg-black py-2 md:py-0 text-white relative z-10 border-b border-black/30 shadow-sm">
       <div className="flex items-center gap-2 md:gap-8">
