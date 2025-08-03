@@ -1,4 +1,5 @@
 import axios from "axios";
+import { AuthUtils } from "@/utils/authUtils";
 
 const axiosClient = axios.create({
   baseURL: "http://localhost:8080/cinema/api",
@@ -50,15 +51,13 @@ axiosClient.interceptors.response.use(
             return axiosClient(originalRequest);
           }
         }
-      } catch (refreshError) {
-        // Nếu refresh token cũng fail, logout user
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("userInfo");
-        localStorage.removeItem("isLoggedIn");
+      } catch (refreshError: unknown) {
+        // Nếu refresh token cũng fail, sử dụng AuthUtils để logout
+        console.warn("Refresh token failed, performing safe logout", refreshError);
+        AuthUtils.clearAllAuthData();
         
         if (typeof window !== "undefined") {
-          window.location.href = "/auth/login";
+          window.location.href = "/auth/Login";
         }
       }
     }
