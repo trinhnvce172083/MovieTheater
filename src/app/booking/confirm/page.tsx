@@ -1,21 +1,59 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, Card, message, Space, Tag, Typography } from "antd";
+import { Button, Card, message, Space, Tag, Typography, Input, Alert } from "antd";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { useBooking } from "@/hooks/booking/useBooking";
+import { usePromotion } from "@/hooks/booking/usePromotion";
 import ROUTES from "@/constants/routes";
 
 const { Title, Text } = Typography;
+const { Search } = Input;
 
 export default function BookingConfirmPage() {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [promotionInput, setPromotionInput] = useState("");
   
   const bookingData = useSelector((state: RootState) => state.booking);
   const { createBooking, getSeatStatus } = useBooking();
+  const { 
+    appliedPromotion, 
+    promotionCode, 
+    discountAmount, 
+    loading: promotionLoading, 
+    error: promotionError,
+    applyPromotionCode, 
+    removePromotionCode 
+  } = usePromotion();
+
+  // Xử lý áp dụng promotion code
+  const handleApplyPromotion = async (code: string) => {
+    if (!code.trim()) {
+      message.warning("Vui lòng nhập mã khuyến mãi");
+      return;
+    }
+
+    try {
+      const result = await applyPromotionCode(code);
+      if (result.isValid) {
+        message.success(`Áp dụng mã khuyến mãi thành công! Giảm ${result.discountAmount?.toLocaleString()}đ`);
+        setPromotionInput("");
+      } else {
+        message.error(result.message || "Mã khuyến mãi không hợp lệ");
+      }
+    } catch (error: any) {
+      message.error(error.message || "Có lỗi xảy ra khi áp dụng mã khuyến mãi");
+    }
+  };
+
+  // Xử lý xóa promotion
+  const handleRemovePromotion = () => {
+    removePromotionCode();
+    message.success("Đã xóa mã khuyến mãi");
+  };
 
   const handlePayment = async () => {
     if (isProcessing) return;
@@ -268,6 +306,51 @@ export default function BookingConfirmPage() {
               </div>
             </Card>
           )}
+
+          {/* Promotion Code Section */}
+          <Card title="Mã khuyến mãi" className="mb-6">
+            <div className="space-y-4">
+              {appliedPromotion ? (
+                <Alert
+                  message="Mã khuyến mãi đã được áp dụng"
+                  description={
+                    <div>
+                      <p><strong>Mã:</strong> {appliedPromotion.code}</p>
+                      <p><strong>Mô tả:</strong> {appliedPromotion.description}</p>
+                      <p><strong>Giảm giá:</strong> {discountAmount?.toLocaleString()}đ</p>
+                    </div>
+                  }
+                  type="success"
+                  showIcon
+                  action={
+                    <Button size="small" onClick={handleRemovePromotion}>
+                      Xóa
+                    </Button>
+                  }
+                />
+              ) : (
+                <div className="space-y-3">
+                  <Search
+                    placeholder="Nhập mã khuyến mãi"
+                    enterButton="Áp dụng"
+                    size="large"
+                    value={promotionInput}
+                    onChange={(e) => setPromotionInput(e.target.value)}
+                    onSearch={handleApplyPromotion}
+                    loading={promotionLoading}
+                  />
+                  {promotionError && (
+                    <Alert
+                      message="Lỗi"
+                      description={promotionError}
+                      type="error"
+                      showIcon
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          </Card>
         </div>
 
         {/* Right Column - Payment Summary */}
@@ -284,10 +367,10 @@ export default function BookingConfirmPage() {
                 <Text strong className="text-lg">{bookingData.concessionsTotal?.toLocaleString()} VND</Text>
               </div>
               
-              {bookingData.discountAmount > 0 && (
+              {discountAmount > 0 && (
                 <div className="flex justify-between items-center py-2 text-red-600">
                   <Text>Giảm giá:</Text>
-                  <Text strong className="text-lg">-{bookingData.discountAmount?.toLocaleString()} VND</Text>
+                  <Text strong className="text-lg">-{discountAmount?.toLocaleString()} VND</Text>
                 </div>
               )}
               
