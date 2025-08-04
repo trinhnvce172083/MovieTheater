@@ -1,0 +1,310 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /cinema
+  error:
+    include-message: always
+    include-binding-errors: always
+
+spring:
+  application:
+    name: movie-theater-service
+
+  datasource:
+    url: "jdbc:mysql://localhost:3306/cinema_db?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true"
+    username: cinema_user
+    password: cinema_password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        use_sql_comments: true
+
+  # Jackson Configuration
+  jackson:
+    default-property-inclusion: NON_NULL
+    time-zone: Asia/Ho_Chi_Minh
+    date-format: yyyy-MM-dd HH:mm:ss
+    deserialization:
+      FAIL_ON_UNKNOWN_PROPERTIES: false
+      ACCEPT_EMPTY_STRING_AS_NULL_OBJECT: true
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+      WRITE_EMPTY_JSON_ARRAYS: true
+    mapper:
+      ACCEPT_CASE_INSENSITIVE_PROPERTIES: true
+  
+  # Spring Data Web Configuration
+  data:
+    web:
+      pageable:
+        default-page-size: 20
+        max-page-size: 100
+        one-indexed-parameters: false
+      sort:
+        sort-parameter: sort
+
+  # File upload configuration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  # Web configuration
+  web:
+    resources:
+      add-mappings: true
+  mvc:
+
+    static-path-pattern: /static/**
+
+  # Email configuration
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:lumierecinema25@gmail.com}
+    password: ${MAIL_PASSWORD:juvcrzwuvuwknpqj}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
+
+  # Thymeleaf configuration for email templates
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false
+
+  # Security configuration
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:your-google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:your-google-client-secret}
+            scope:
+              - email
+              - profile
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:bW92aWVUaGVhdGVyU2VjcmV0S2V5MjAyNUZvckpXVFRva2VuR2VuZXJhdGlvbg==}
+  expiration: 900000 # 15 minutes in milliseconds
+  refresh-expiration: 604800000 # 7 days in milliseconds
+
+# Email Configuration
+email:
+  from: ${EMAIL_FROM:lumierecinema25@gmail.com}
+  from-name: ${EMAIL_FROM_NAME:Lumiere Cinema}
+  verification:
+    expiration-hours: 24
+    base-url: ${EMAIL_VERIFICATION_BASE_URL:http://localhost:8080/cinema}
+  templates:
+    verification: email/verification
+    welcome: email/welcome
+    password-reset: email/password-reset
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    try-it-out-enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    doc-expansion: none
+    display-request-duration: true
+  show-actuator: false
+  group-configs:
+    - group: customer-public
+      display-name: "🔵 Customer APIs (Public)"
+      paths-to-match:
+        - /api/auth/login
+        - /api/auth/register
+        - /api/movies/public/**
+        - /api/schedules/public/**
+        - /api/cinema-rooms/public/**
+        - /api/promotions/public/**
+    - group: member-apis
+      display-name: "🟢 Member APIs"
+      paths-to-match:
+        - /api/bookings/**
+        - /api/members/**
+        - /api/user/profile/**
+    - group: employee-apis
+      display-name: "🟡 Employee APIs"
+      paths-to-match:
+        - /api/staff/**
+        - /api/employees/**
+        - /api/checkin/**
+    - group: admin-apis
+      display-name: "🔴 Admin APIs"
+      paths-to-match:
+        - /api/admin/**
+        - /api/movies/admin/**
+        - /api/schedules/admin/**
+        - /api/cinema-rooms/admin/**
+        - /api/promotions/admin/**
+        - /api/reports/**
+        - /api/analytics/**
+
+# Actuator Configuration for Docker health checks
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,scheduledtasks
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+    mail:
+      enabled: false
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    com.swp.MovieTheaterService: INFO
+    com.swp.MovieTheaterService.scheduler: INFO
+    com.swp.MovieTheaterService.service.impl.AutoScheduleServiceImpl: DEBUG
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%logger{36}] - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%logger{36}] - %msg%n"
+  file:
+    name: logs/movie-theater.log
+    max-size: 10MB
+    max-history: 30
+
+# Application specific configuration
+app:
+  name: Movie Theater Management System
+  version: 1.0.0
+  description: A comprehensive movie theater management system
+  
+  # Email configuration for EmailService
+  email:
+    company-name: Lumiere Cinema
+    support-email: lumierecinema25@gmail.com
+    website-url: http://localhost:8080
+    frontend-url: http://localhost:3000
+
+  # File storage configuration
+  file:
+    upload-dir: uploads/
+    max-size: 10MB
+    allowed-types: jpg,jpeg,png,gif,pdf
+
+  # Business rules
+  booking:
+    max-seats-per-booking: 8
+    booking-deadline-hours: 2 # Hours before showtime
+
+  # Pagination defaults
+  pagination:
+    default-page-size: 20
+    max-page-size: 100
+
+  # Application Configuration
+  cors:
+    allowed-origins:
+      - "http://localhost:3000"
+      - "http://127.0.0.1:3000"
+      - "http://localhost:5173"
+      - "http://127.0.0.1:5173"
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - OPTIONS
+    allowed-headers:
+      - "*"
+    allow-credentials: true
+  
+  # JWT Configuration
+  jwt:
+    secret: "dGhpc2lzYXZlcnlzZWN1cmVqd3RzZWNyZXRrZXlmb3JtdW5nZHVuZw=="
+    expiration: 86400000 # 24 hours in milliseconds
+    refresh-expiration: 604800000 # 7 days in milliseconds
+  
+  # File upload configuration
+  upload:
+    directory: "uploads"
+    max-file-size: 10MB
+    max-request-size: 10MB
+  
+  # Auto Schedule Configuration
+  scheduler:
+    auto-schedule:
+      enabled: true
+      daily-time: "01:00"  # Thời gian chạy hàng ngày (1:00 AM)
+      room-check-time: "02:00"  # Thời gian kiểm tra phòng (2:00 AM)
+      weekly-backup-time: "03:00"  # Thời gian backup hàng tuần (3:00 AM Sunday)
+      min-schedules-per-movie: 2  # Tối thiểu số suất chiếu mỗi phim
+      max-schedules-per-movie: 4  # Tối đa số suất chiếu mỗi phim
+      advance-days: 3  # Số ngày tạo lịch trước
+      timezone: "Asia/Ho_Chi_Minh"
+  
+  # Cinema Settings
+  cinema:
+    default-room-capacity: 120
+    max-rooms: 20
+    standard-showtime-duration: 150  # 150 minutes (2.5 hours including ads)
+    cleanup-time: 30  # 30 minutes between shows 
+
+# Supabase Configuration
+supabase:
+  url: https://cuzwjjseeohnyrbfcngs.supabase.co
+  key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1endqanNlZW9obnlyYmZjbmdzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0OTQ1OTkwOCwiZXhwIjoyMDY1MDM1OTA4fQ.jxXiZFdGRR5lvFoXyb6a4E0Mwa-pYp_Sc73zYvl-FdA
+  bucket: image
+
+# VNPay Payment Configuration
+vnpay:
+  tmnCode: G6UJ6GM0
+  hashSecret: KNWNX1BX0Z31T3MIX7E3KROK063KWANW
+  payUrl: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  returnUrl: http://localhost:8080/cinema/api/payment/vnpay/return
+  ipnUrl: http://localhost:8080/cinema/api/payment/vnpay/ipn
+  apiUrl: https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
+
+# Frontend Configuration
+frontend:
+  paymentResultUrl: http://localhost:3000/booking/payment 
