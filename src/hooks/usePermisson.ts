@@ -1,6 +1,5 @@
 import { Role } from "@/constants/roles";
 import ROUTES from "@/constants/routes";
-import { decodeJwt } from "@/hooks/decodeJwt";
 import type { RootState } from "@/store";
 import { message } from "antd";
 import { usePathname, useRouter } from "next/navigation";
@@ -12,7 +11,8 @@ export default function usePermission() {
   const router = useRouter();
   const pathname = usePathname();
   const accessToken = useSelector((state: RootState) => state.auth.token);
-  const userInfo = decodeJwt(accessToken);
+  const authState = useSelector((state: RootState) => state.auth);
+  const userInfo = authState.userInfo;
 
   useEffect(() => {
     if (!accessToken) {
@@ -21,13 +21,13 @@ export default function usePermission() {
     }
 
     // ADMIN can access all routes
-    if (userInfo?.role === Role.ADMIN) {
+    if (userInfo?.Role === Role.ADMIN) {
       setLoading(false);
       return;
     }
 
     // MEMBER can access /member
-    if (userInfo?.role === Role.MEMBER && pathname.startsWith("/member")) {
+    if (userInfo?.Role === Role.MEMBER && pathname.startsWith("/member")) {
       setLoading(false);
       return;
     }

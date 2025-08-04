@@ -15,10 +15,24 @@ import { ArrowLeft, CreditCard, CheckCircle, XCircle, Clock } from "lucide-react
 import ROUTES from "@/constants/routes";
 import { useSearchParams } from 'next/navigation';
 import { Modal } from 'antd';
+import CustomerInfoForm from "@/components/employee/CustomerInfoForm";
+import { Role } from "@/constants/roles";
+import axiosClient from "@/api/axiosClient";
+
+interface CustomerInfo {
+  fullName: string;
+  phoneNumber: string;
+  email: string;
+  dateOfBirth?: string;
+  address?: string;
+  membershipType: 'guest' | 'existing_member' | 'new_member';
+  memberId?: string;
+}
 
 export default function PaymentPage() {
   const router = useRouter();
   const bookingData = useSelector((state: RootState) => state.booking);
+  const authState = useSelector((state: RootState) => state.auth);
   const { paymentInfo, paymentMethods, createPayment, checkPaymentStatus, loading } = usePayment();
   const { getBookingDetails } = useBooking();
   
@@ -30,6 +44,20 @@ export default function PaymentPage() {
     status: '',
     message: ''
   });
+
+  // Employee-specific states
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
+
+  // Check if current user is employee
+  const isEmployee = authState.userInfo?.Role === Role.EMPLOYEE;
+
+  useEffect(() => {
+    // Show customer form for employees on first load
+    if (isEmployee && !customerInfo) {
+      setShowCustomerForm(true);
+    }
+  }, [isEmployee, customerInfo]);
 
   // Lấy booking ID từ localStorage
   const bookingId = typeof window !== 'undefined' ? localStorage.getItem('currentBookingId') : null;
@@ -52,10 +80,29 @@ export default function PaymentPage() {
     }
   };
 
+  // Handler for customer info form submission (employee only)
+  const handleCustomerInfoSubmit = (info: CustomerInfo) => {
+    setCustomerInfo(info);
+    setShowCustomerForm(false);
+    message.success("Thông tin khách hàng đã được lưu");
+  };
+
+  // Handler for going back to customer form (employee only)
+  const handleBackToCustomerForm = () => {
+    setShowCustomerForm(true);
+  };
+
   // Xử lý thanh toán
   const handlePayment = async () => {
     if (!bookingId || !bookingDetails) {
       message.error("Missing booking information");
+      return;
+    }
+
+    // For employees, ensure customer info is provided
+    if (isEmployee && !customerInfo) {
+      message.error("Vui lòng nhập thông tin khách hàng trước khi thanh toán");
+      setShowCustomerForm(true);
       return;
     }
 
@@ -64,7 +111,11 @@ export default function PaymentPage() {
         bookingId: Number(bookingId),
         amount: bookingDetails.finalAmount,
         paymentMethod: selectedPaymentMethod,
-        customerInfo: {
+        customerInfo: isEmployee && customerInfo ? {
+          name: customerInfo.fullName,
+          email: customerInfo.email || '',
+          phone: customerInfo.phoneNumber
+        } : {
           name: bookingDetails.customerName,
           email: bookingDetails.customerEmail,
           phone: bookingDetails.customerPhone
@@ -112,6 +163,43 @@ export default function PaymentPage() {
     } catch (error) {
       console.error('Error checking payment status:', error);
       return null; // Return null for the modal
+    }
+  };
+
+  // Xác nhận đã nhận tiền (dành cho nhân viên)
+  const handleConfirmPayment = async () => {
+    if (!bookingDetails?.bookingId) return;
+
+    try {
+      const response = await axiosClient.post(`/bookings/${bookingDetails.bookingId}/payment/status`, {
+        paymentStatus: 'SUCCESS',
+        paymentReference: `CASH-${Date.now()}`,
+        paymentMethod: 'CASH',
+        notes: 'Nhân viên xác nhận đã nhận tiền mặt từ khách hàng'
+      });
+
+      if (response.data?.success) {
+        const updatedPayment = {
+          ...paymentResponse,
+          status: 'COMPLETED' as const,
+          transactionId: response.data.data?.paymentReference || `CASH-${Date.now()}`,
+          message: 'Thanh toán bằng tiền mặt đã được xác nhận'
+        };
+        
+        setPaymentResponse(updatedPayment);
+        message.success("Đã xác nhận thanh toán thành công!");
+        
+        // Redirect sau 2 giây
+        setTimeout(() => {
+          router.push(ROUTES.EMPLOYEE_DASHBOARD);
+        }, 2000);
+      } else {
+        throw new Error(response.data?.message || 'Không thể xác nhận thanh toán');
+      }
+    } catch (error: any) {
+      console.error('Error confirming payment:', error);
+      const errorMessage = error.response?.data?.message || error.message || "Không thể xác nhận thanh toán";
+      message.error(errorMessage);
     }
   };
 
@@ -186,13 +274,25 @@ export default function PaymentPage() {
                   </Button>
                 )} */}
 
-                {/* <Button 
-                  onClick={handleCheckPaymentStatus}
-                  variant="outline"
-                  className="w-full"
-                >
-                  Check Payment Status
-                </Button> */}
+                <div className="space-y-2">
+                  <Button 
+                    onClick={handleCheckPaymentStatus}
+                    variant="outline"
+                    className="w-full"
+                    disabled={loading}
+                  >
+                    {loading ? "Checking..." : "Check Payment Status"}
+                  </Button>
+                  {isEmployee && (
+                    <Button 
+                      onClick={handleConfirmPayment}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white"
+                      disabled={loading}
+                    >
+                      {loading ? "Confirming..." : "✓ Confirm Cash Payment Received"}
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -249,6 +349,19 @@ export default function PaymentPage() {
     );
   }
 
+  // Show customer info form for employees
+  if (isEmployee && showCustomerForm) {
+    return (
+      <div className="px-8 pt-2">
+        <CustomerInfoForm
+          onSubmit={handleCustomerInfoSubmit}
+          onBack={handleBack}
+          loading={loading}
+        />
+      </div>
+    );
+  }
+
   return (
     <>
       <Modal
@@ -278,8 +391,69 @@ export default function PaymentPage() {
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back
             </Button>
-            <h1 className="text-2xl font-bold">Payment</h1>
+            {paymentResponse?.status === 'PENDING' && (
+              <div className="flex gap-2 ml-auto">
+                <Button 
+                  onClick={handleCheckPaymentStatus}
+                  variant="outline"
+                  className="text-white border-gray-600"
+                >
+                  Check Payment Status
+                </Button>
+                {isEmployee && (
+                  <Button 
+                    onClick={handleConfirmPayment}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    disabled={loading}
+                  >
+                    {loading ? "Confirming..." : "Confirm Payment Received"}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Customer Info Summary for Employee */}
+          {isEmployee && customerInfo && (
+            <Card className="bg-[#1a2332] border-[#2d3748] mb-8">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between text-white">
+                  <span>Thông tin khách hàng</span>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleBackToCustomerForm}
+                  >
+                    Chỉnh sửa
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Họ tên:</span>
+                  <span className="text-white">{customerInfo.fullName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Số điện thoại:</span>
+                  <span className="text-white">{customerInfo.phoneNumber}</span>
+                </div>
+                {customerInfo.email && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Email:</span>
+                    <span className="text-white">{customerInfo.email}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Loại khách:</span>
+                  <span className="text-white">
+                    {customerInfo.membershipType === 'guest' && 'Khách vãng lai'}
+                    {customerInfo.membershipType === 'existing_member' && 'Thành viên hiện có'}
+                    {customerInfo.membershipType === 'new_member' && 'Thành viên mới'}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Column - Payment Methods */}
