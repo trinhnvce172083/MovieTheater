@@ -55,13 +55,45 @@ class MemberPromotionApi {
       throw error;
     }
   }
-  // Lấy danh sách promotion đang hoạt động
+  // Lấy danh sách promotions active có thể redeem bằng points
   async getActivePromotions(): Promise<MemberPromotion[]> {
     try {
-      const response = await axiosClient.get<ApiResponse<MemberPromotion[]>>('/promotions/active');
-      return response.data.data;
+      const response = await axiosClient.get('/promotions/active');
+      console.log('🎁 Promotions API response:', response.data);
+      
+      if (response.data.success && response.data.data) {
+        // Filter chỉ lấy promotions có pointsRequired > 0 (đổi bằng điểm)
+        const pointsPromotions = response.data.data
+          .filter((promo: any) => promo.pointsRequired && promo.pointsRequired > 0)
+          .map((item: any) => ({
+            promotionId: item.promotionId,
+            promotionCode: item.promotionCode || item.code,
+            promotionName: item.promotionName || item.title || item.name,
+            description: item.description,
+            discountType: item.discountType || 'POINTS',
+            discountValue: item.discountValue || item.value || 0,
+            pointsRequired: item.pointsRequired || 0,
+            startDate: item.startDate,
+            endDate: item.endDate,
+            maxUsageCount: item.maxUsageCount || item.maxUsage || 999,
+            currentUsageCount: item.currentUsageCount || item.usageCount || 0,
+            maxUsagePerUser: item.maxUsagePerUser || 1,
+            isFeatured: item.isFeatured || false,
+            bannerImageUrl: item.bannerImageUrl,
+            codeValidityHours: item.codeValidityHours || 24,
+            isActive: item.isActive !== false,
+            minPurchaseAmount: item.minPurchaseAmount || item.minOrderAmount || 0,
+            maxDiscountAmount: item.maxDiscountAmount || 999999,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
+          }));
+          
+        console.log('🎯 Filtered points promotions:', pointsPromotions);
+        return pointsPromotions;
+      }
+      return [];
     } catch (error) {
-      console.error('Error fetching active promotions:', error);
+      console.error('❌ Error fetching active promotions:', error);
       throw error;
     }
   }

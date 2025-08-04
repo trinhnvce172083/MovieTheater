@@ -20,6 +20,39 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import axiosClient from "@/api/axiosClient";
 
+// Mock data for fallback display
+const mockUserDetail: UserDetail = {
+  accountId: 1,
+  username: "demo_user",
+  fullName: "Demo User",
+  email: "demo@example.com",
+  phoneNumber: "+1 (555) 123-4567",
+  address: "123 Demo Street, Demo City, DC 12345",
+  dateOfBirth: "1990-01-01",
+  role: "USER",
+  isActive: true,
+  createdAt: "2023-01-01T00:00:00Z",
+  updatedAt: "2024-01-01T00:00:00Z",
+  avatar: undefined
+};
+
+// Transform API response to match UserDetail interface
+const transformUserData = (userData: any): UserDetail => {
+  return {
+    accountId: userData.accountId || userData.id || 1,
+    username: userData.username || "unknown",
+    fullName: userData.fullName || userData.name || "Unknown User",
+    email: userData.email || "unknown@example.com",
+    phoneNumber: userData.phoneNumber || userData.phone,
+    address: userData.address,
+    dateOfBirth: userData.dateOfBirth || userData.birthDate,
+    role: userData.role || "USER",
+    isActive: userData.isActive !== undefined ? userData.isActive : true,
+    createdAt: userData.createdAt || userData.created || new Date().toISOString(),
+    updatedAt: userData.updatedAt || userData.updated,
+    avatar: userData.avatar || userData.profilePicture
+  };
+};
 
 const { Title, Text } = Typography;
 
@@ -92,7 +125,7 @@ const MemberDetailPage: React.FC = () => {
   };
 
   // Fetch user details
-  const fetchUserDetail = async (id: string) => {
+  const fetchUserDetail = async (id: string): Promise<UserDetail | null> => {
     try {
       setLoading(true);
       
@@ -101,11 +134,10 @@ const MemberDetailPage: React.FC = () => {
                    localStorage.getItem('authToken');
 
       if (!token) {
-        setUserDetail(mockUserDetail);
-        return;
+        return mockUserDetail;
       }
 
-      const response = await axiosClient.get(`/cinema/api/admin/users/${id}`, {
+      const response = await axiosClient.get(`/admin/users/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -114,18 +146,18 @@ const MemberDetailPage: React.FC = () => {
       if (response.data && response.data.success) {
         const userData = response.data.data || response.data;
         const transformedUser = transformUserData(userData);
-        setUserDetail(transformedUser);
+        return transformedUser;
       } else {
-        setUserDetail(mockUserDetail);
+        return mockUserDetail;
       }
     } catch (error) {
-      setUserDetail(mockUserDetail);
+      return mockUserDetail;
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchCurrentUserAndDetail = async () => {
+  const fetchCurrentUserAndDetail = async (targetUserId: string) => {
     try {
       setLoading(true);
       
@@ -139,10 +171,10 @@ const MemberDetailPage: React.FC = () => {
       }
 
       const [currentUserResponse, userDetailResponse] = await Promise.all([
-        axiosClient.get('/cinema/api/admin/users/current', {
+        axiosClient.get('/admin/users/current', {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        axiosClient.get(`/cinema/api/admin/users/${currentUserId}`, {
+        axiosClient.get(`/admin/users/${targetUserId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);

@@ -46,32 +46,23 @@ export default function MemberAccountPage() {
     updateProfile,
     updatingProfile,
     updateError,
-    // changePassword,
-    // changingPassword,
-    // passwordError,
     refetch,
   } = useMemberProfile();
 
-  // Debug logs
-  console.log("🔍 MemberAccountPage state:", { profile, loading, error });
-
   // Initialize form when profile is loaded
   useEffect(() => {
-    console.log("📝 Form initialization effect triggered, profile:", profile);
     if (profile) {
-      form.setFieldsValue({
+      const formValues = {
         username: profile.username || "",
-        // password: profile.password ? profile.password : "********",
         email: profile.email || "",
         fullName: profile.fullName || "",
         phoneNumber: profile.phoneNumber || "",
-        dateOfBirth: profile.dateOfBirth
-          ? profile.dateOfBirth.slice(0, 10)
-          : "",
+        dateOfBirth: profile.dateOfBirth ? profile.dateOfBirth.slice(0, 10) : "",
         address: profile.address || "",
-      });
+      };
+      
+      form.setFieldsValue(formValues);
       setAvatarPreview(profile.avatarUrl || "");
-      console.log("✅ Form fields set successfully");
     }
   }, [profile, form]);
 
