@@ -5,6 +5,7 @@ import com.swp.MovieTheaterService.dto.booking.BookingResponse;
 import com.swp.MovieTheaterService.dto.booking.BookingConcessionResponse;
 import com.swp.MovieTheaterService.dto.booking.ConcessionOrderRequest;
 import com.swp.MovieTheaterService.dto.booking.BookingSummaryResponse;
+import com.swp.MovieTheaterService.dto.booking.PaymentStatusUpdateRequest;
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.service.BookingService;
 import com.swp.MovieTheaterService.service.SeatReservationService;
@@ -311,6 +312,30 @@ public class BookingController {
         ApiResponse<BookingResponse> apiResponse = ApiResponse.<BookingResponse>builder()
                 .success(true)
                 .message("Check-in thành công")
+                .data(response)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    @PostMapping("/{bookingId}/payment/status")
+    @Operation(summary = "Update payment status", 
+               description = "Update payment status of booking (Employee/Admin only)")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponse<BookingResponse>> updatePaymentStatus(
+            @PathVariable Long bookingId,
+            @Valid @RequestBody PaymentStatusUpdateRequest request,
+            Authentication authentication) {
+
+        Long userId = authentication != null ? extractUserId(authentication) : null;
+        log.info("Updating payment status - booking: {}, status: {}, user: {}", 
+                bookingId, request.getPaymentStatus(), userId);
+
+        BookingResponse response = bookingService.updatePaymentStatus(bookingId, request);
+
+        ApiResponse<BookingResponse> apiResponse = ApiResponse.<BookingResponse>builder()
+                .success(true)
+                .message("Cập nhật trạng thái thanh toán thành công")
                 .data(response)
                 .build();
 

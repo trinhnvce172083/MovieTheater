@@ -123,6 +123,11 @@ public interface BookingService {
     BookingResponse confirmBooking(Long bookingId);
 
     /**
+     * Update payment status of booking
+     */
+    BookingResponse updatePaymentStatus(Long bookingId, PaymentStatusUpdateRequest request);
+
+    /**
      * Process payment for booking
      */
     BookingResponse processPayment(PaymentRequest paymentRequest);

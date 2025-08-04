@@ -705,37 +705,7 @@ VALUES
  500, 24, TRUE,
  NOW(), NOW(), 'SYSTEM'),
 
--- Points-based promotion 5: 750 points for 225,000 VND discount
-('POINTS750', 'Đổi điểm ưu đãi 750', 'Đổi 750 điểm để giảm 225,000 VNĐ', 'POINTS', 225000,
- 225000, 350000, '2025-06-01', '2025-12-31',
- 60, 0, 5, TRUE,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/09d5aa8a-73e9-4c96-9654-fcf1315e9fbc.png',
- 750, 24, TRUE,
- NOW(), NOW(), 'SYSTEM'),
 
--- Points-based promotion 6: 1000 points for 300,000 VND discount
-('POINTS1000', 'Đổi điểm ưu đãi 1000', 'Đổi 1000 điểm để giảm 300,000 VNĐ', 'POINTS', 300000,
- 300000, 500000, '2025-06-01', '2025-12-31',
- 50, 0, 5, TRUE,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/09d5aa8a-73e9-4c96-9654-fcf1315e9fbc.png',
- 1000, 24, TRUE,
- NOW(), NOW(), 'SYSTEM'),
-
--- Points-based promotion 7: 1500 points for 450,000 VND discount
-('POINTS1500', 'Đổi điểm ưu đãi 1500', 'Đổi 1500 điểm để giảm 450,000 VNĐ', 'POINTS', 450000,
- 450000, 750000, '2025-06-01', '2025-12-31',
- 30, 0, 5, TRUE,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/09d5aa8a-73e9-4c96-9654-fcf1315e9fbc.png',
- 1500, 24, TRUE,
- NOW(), NOW(), 'SYSTEM'),
-
--- Points-based promotion 8: 2000 points for 600,000 VND discount
-('POINTS2000', 'Đổi điểm ưu đãi 2000', 'Đổi 2000 điểm để giảm 600,000 VNĐ', 'POINTS', 600000,
- 600000, 1000000, '2025-06-01', '2025-12-31',
- 20, 0, 5, TRUE,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/09d5aa8a-73e9-4c96-9654-fcf1315e9fbc.png',
- 2000, 24, TRUE,
- NOW(), NOW(), 'SYSTEM');
 
 
 -- User Promotion Code table (for tracking individual user codes)

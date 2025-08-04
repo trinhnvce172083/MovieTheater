@@ -97,6 +97,18 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/schedules/**",
                         "/api/cinema-rooms/**", "/api/concessions/**").hasRole("ADMIN")
 
+                // Booking endpoints - Specific rules FIRST to override general authenticated rules
+                .requestMatchers(HttpMethod.POST, "/api/bookings").hasAnyRole("MEMBER", "EMPLOYEE", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/bookings/guest").hasAnyRole("EMPLOYEE", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/bookings/search").hasAnyRole("EMPLOYEE", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/bookings/{bookingId}").hasAnyRole("MEMBER", "EMPLOYEE", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/bookings/schedules/*/seats").hasAnyRole("MEMBER", "EMPLOYEE", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/bookings/schedules/*/seats/reserve").hasAnyRole("MEMBER", "EMPLOYEE", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/bookings/{bookingId}/confirm").hasAnyRole("EMPLOYEE", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/bookings/{bookingId}/checkin").hasAnyRole("EMPLOYEE", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/bookings/{bookingId}/cancel").hasAnyRole("EMPLOYEE", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/bookings/{bookingId}/payment/status").hasAnyRole("EMPLOYEE", "ADMIN")
+
                 // Employee operations
                 .requestMatchers(Endpoints.EMPLOYEE_OPERATIONS).hasAnyRole("EMPLOYEE", "ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/concessions/*/stock").hasAnyRole("EMPLOYEE", "ADMIN")
@@ -104,16 +116,8 @@ public class SecurityConfig {
                 // Member operations
                 .requestMatchers(Endpoints.MEMBER_OPERATIONS).hasAnyRole("MEMBER", "ADMIN")
 
-                // General authenticated endpoints
+                // General authenticated endpoints (AFTER specific rules)
                 .requestMatchers(Endpoints.AUTHENTICATED_OPERATIONS).authenticated()
-                
-                // Booking endpoints - Allow Employee to use existing booking APIs
-                .requestMatchers(HttpMethod.POST, "/api/bookings").hasAnyRole("MEMBER", "EMPLOYEE", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/bookings/guest").hasAnyRole("EMPLOYEE", "ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/bookings/search").hasAnyRole("EMPLOYEE", "ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/bookings/{bookingId}").hasAnyRole("MEMBER", "EMPLOYEE", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/bookings/{bookingId}/confirm").hasAnyRole("EMPLOYEE", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/bookings/{bookingId}/checkin").hasAnyRole("EMPLOYEE", "ADMIN")
 
                 // File and Image endpoints - Admin and authenticated users
                 .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll() // Public read access for images

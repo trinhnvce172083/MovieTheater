@@ -108,6 +108,7 @@ public enum ErrorCode {
     PAYMENT_ALREADY_PROCESSED(1704, "Thanh toán đã được xử lý", HttpStatus.CONFLICT),
     PAYMENT_REFUND_FAILED(1705, "Hoàn tiền thất bại", HttpStatus.BAD_REQUEST),
     PAYMENT_INSUFFICIENT_BALANCE(1706, "Số dư không đủ", HttpStatus.BAD_REQUEST),
+    PAYMENT_INVALID_STATUS_TRANSITION(1707, "Chuyển đổi trạng thái thanh toán không hợp lệ", HttpStatus.BAD_REQUEST),
 
     // ==================== PROMOTION MANAGEMENT (1800-1899) ====================
     PROMOTION_NOT_FOUND(1800, "Khuyến mãi không tồn tại", HttpStatus.NOT_FOUND),

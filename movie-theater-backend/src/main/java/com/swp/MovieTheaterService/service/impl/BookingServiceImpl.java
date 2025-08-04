@@ -116,10 +116,7 @@ public class BookingServiceImpl implements BookingService {
         // 1. Validate request completely
         request.validateForBooking();
 
-        // 1.1. Additional validation for member booking
-        if (account != null && Boolean.TRUE.equals(request.getIsGuestBooking())) {
-            throw new IllegalArgumentException("Không thể tạo guest booking cho user đã đăng nhập");
-        }
+
 
         // 2. Auto-generate sessionId if not provided
         request.ensureSessionId();
@@ -663,6 +660,91 @@ public class BookingServiceImpl implements BookingService {
         }
 
         log.info("✅ Booking confirmed successfully with ID: {}", bookingId);
+        return bookingMapper.toResponse(updatedBooking);
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse updatePaymentStatus(Long bookingId, PaymentStatusUpdateRequest request) {
+        log.info("Updating payment status for booking ID: {} to {}", bookingId, request.getPaymentStatus());
+        
+        Booking booking = findBookingById(bookingId);
+        
+        // Validate business rules for payment status transition
+        validatePaymentStatusTransition(booking, request.getPaymentStatus());
+        
+        // Store old payment status for logging
+        com.swp.MovieTheaterService.enums.PaymentStatus oldPaymentStatus = booking.getPaymentStatus();
+        
+        // Update payment status
+        booking.setPaymentStatus(request.getPaymentStatus());
+        
+        // Update payment details if provided
+        if (request.getPaymentReference() != null) {
+            booking.setPaymentReference(request.getPaymentReference());
+        }
+        
+        if (request.getPaymentMethod() != null) {
+            booking.setPaymentMethod(request.getPaymentMethod());
+        }
+        
+        // Handle specific payment status changes
+        switch (request.getPaymentStatus()) {
+            case SUCCESS:
+                booking.setPaymentDate(LocalDateTime.now());
+                booking.setBookingStatus(BookingStatus.PAID);
+                log.info("💰 Payment completed for booking {}", bookingId);
+                break;
+                
+            case FAILED:
+            case CANCELLED:
+            case EXPIRED:
+                // Keep booking status as is, just update payment status
+                log.info("❌ Payment failed/cancelled/expired for booking {}", bookingId);
+                break;
+                
+            case REFUNDED:
+            case PARTIAL_REFUNDED:
+                if (request.getRefundAmount() != null) {
+                    booking.setRefundAmount(request.getRefundAmount());
+                }
+                log.info("💸 Refund processed for booking {}", bookingId);
+                break;
+                
+            case PROCESSING:
+                log.info("⏳ Payment processing for booking {}", bookingId);
+                break;
+                
+            default:
+                break;
+        }
+        
+        // Update notes if provided
+        if (request.getNotes() != null && !request.getNotes().trim().isEmpty()) {
+            String currentNotes = booking.getNotes() != null ? booking.getNotes() : "";
+            String timestamp = LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+            String newNote = String.format("[%s] Payment Status Update: %s", timestamp, request.getNotes());
+            booking.setNotes(currentNotes + "\n" + newNote);
+        }
+        
+        // Update timestamp
+        booking.setUpdatedAt(LocalDateTime.now());
+        
+        // Save booking
+        Booking updatedBooking = bookingRepository.save(booking);
+        
+        // Enhanced logging
+        log.info("💳 Payment status changed: {} → {} for booking ID: {}", 
+                oldPaymentStatus != null ? oldPaymentStatus.getDisplayName() : "N/A",
+                request.getPaymentStatus().getDisplayName(), 
+                bookingId);
+        
+        // Send notification if payment is successful
+        if (request.getPaymentStatus() == com.swp.MovieTheaterService.enums.PaymentStatus.SUCCESS && booking.getAccount() != null) {
+            sendPaymentSuccessNotification(booking);
+        }
+        
+        log.info("✅ Payment status updated successfully for booking ID: {}", bookingId);
         return bookingMapper.toResponse(updatedBooking);
     }
 
@@ -1791,5 +1873,79 @@ public class BookingServiceImpl implements BookingService {
                 completedCount, cancelledCount, totalSeatsBooked, totalRevenue,
                 averageBookingAmount, guestBookings, memberBookings, cashPayments,
                 cardPayments, onlinePayments, walletPayments, refundAmount, checkedInBookings);
+    }
+
+    /**
+     * Validate payment status transition rules
+     */
+    private void validatePaymentStatusTransition(Booking booking, com.swp.MovieTheaterService.enums.PaymentStatus newStatus) {
+        com.swp.MovieTheaterService.enums.PaymentStatus currentStatus = booking.getPaymentStatus();
+        
+        // Allow any transition if current status is null (new booking)
+        if (currentStatus == null) {
+            return;
+        }
+        
+        // Define valid transitions
+        switch (currentStatus) {
+            case PENDING:
+                // From PENDING: can go to any status
+                break;
+                
+            case PROCESSING:
+                // From PROCESSING: can go to SUCCESS, FAILED, CANCELLED, EXPIRED
+                if (newStatus == com.swp.MovieTheaterService.enums.PaymentStatus.PENDING) {
+                    throw new AppException(ErrorCode.PAYMENT_INVALID_STATUS_TRANSITION, 
+                        "Không thể chuyển từ PROCESSING về PENDING");
+                }
+                break;
+                
+            case SUCCESS:
+                // From SUCCESS: only allow REFUNDED or PARTIAL_REFUNDED
+                if (newStatus != com.swp.MovieTheaterService.enums.PaymentStatus.REFUNDED && 
+                    newStatus != com.swp.MovieTheaterService.enums.PaymentStatus.PARTIAL_REFUNDED) {
+                    throw new AppException(ErrorCode.PAYMENT_INVALID_STATUS_TRANSITION, 
+                        "Từ trạng thái SUCCESS chỉ có thể chuyển sang REFUNDED hoặc PARTIAL_REFUNDED");
+                }
+                break;
+                
+            case FAILED:
+            case CANCELLED:
+            case EXPIRED:
+                // From terminal failure states: only allow back to PENDING for retry
+                if (newStatus != com.swp.MovieTheaterService.enums.PaymentStatus.PENDING &&
+                    newStatus != com.swp.MovieTheaterService.enums.PaymentStatus.PROCESSING) {
+                    throw new AppException(ErrorCode.PAYMENT_INVALID_STATUS_TRANSITION, 
+                        "Từ trạng thái thất bại chỉ có thể chuyển sang PENDING hoặc PROCESSING để thử lại");
+                }
+                break;
+                
+            case REFUNDED:
+            case PARTIAL_REFUNDED:
+                // From refund states: no transitions allowed (final states)
+                throw new AppException(ErrorCode.PAYMENT_INVALID_STATUS_TRANSITION, 
+                    "Không thể thay đổi trạng thái thanh toán từ " + currentStatus.getDisplayName());
+                
+            default:
+                break;
+        }
+        
+        log.info("✅ Payment status transition validated: {} → {}", currentStatus, newStatus);
+    }
+
+    /**
+     * Send payment success notification
+     */
+    private void sendPaymentSuccessNotification(Booking booking) {
+        try {
+            if (booking.getAccount() != null && booking.getAccount().getEmail() != null) {
+                // TODO: Implement email notification for payment success
+                log.info("📧 Would send payment success notification to: {}", booking.getAccount().getEmail());
+                // emailService.sendPaymentSuccessNotification(booking);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to send payment success notification for booking {}: {}", 
+                    booking.getBookingId(), e.getMessage());
+        }
     }
 }
