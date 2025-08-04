@@ -4,6 +4,7 @@ import NavButton from "./NavButton";
 import { Movie } from "@/types/NowShowing/movie";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import ROUTES from "@/constants/routes";
 
 export default function MovieSection({
   title,
@@ -108,7 +109,7 @@ export default function MovieSection({
     };
   }, [scrollRef, movies]);
 
-  const navLinkPath = isUpcoming ? "/movies-api" : "/NowShowing";
+  const navLinkPath = isUpcoming ? ROUTES.COMING_SOON : ROUTES.NOW_SHOWING;
 
   return (
     <section className="mb-8 sm:mb-12 md:mb-16 relative">

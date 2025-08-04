@@ -7,7 +7,7 @@ import { decodeJwt } from "@/hooks/decodeJwt";
 
 /**
  * Component to restore authentication state from localStorage
- * This should be placed high in the component tree
+ * This handles auth state restoration on app startup
  */
 export default function AuthInitializer() {
   const dispatch = useDispatch();
@@ -16,10 +16,27 @@ export default function AuthInitializer() {
     const initializeAuth = () => {
       try {
         const token = localStorage.getItem('accessToken');
-        if (!token) return;
+        const userInfoStr = localStorage.getItem('userInfo');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (!token || !isLoggedIn) {
+          // Clear any invalid data
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('userInfo');
+          localStorage.removeItem('isLoggedIn');
+          return;
+        }
 
         const payload = decodeJwt(token);
-        if (!payload) return;
+        if (!payload) {
+          // Invalid token, clear storage
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('userInfo');
+          localStorage.removeItem('isLoggedIn');
+          return;
+        }
 
         const currentTime = Math.floor(Date.now() / 1000);
         if (payload.exp && payload.exp < currentTime) {
@@ -32,8 +49,18 @@ export default function AuthInitializer() {
         }
 
         // Token is valid, restore auth state
-        dispatch(login({ token }));
+        let userInfo = null;
+        if (userInfoStr) {
+          try {
+            userInfo = JSON.parse(userInfoStr);
+          } catch {
+            // Invalid userInfo, ignore it
+          }
+        }
+
+        dispatch(login({ token, userInfo }));
       } catch (error) {
+        console.error('Error initializing auth:', error);
         // Error decoding token, clear storage
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
