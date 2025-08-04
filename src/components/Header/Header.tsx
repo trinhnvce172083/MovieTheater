@@ -12,7 +12,9 @@ import LanguageDropdown from "./LanguageDropdown";
 
 // Dynamic import để tránh hydration mismatch
 const HeaderComponent = () => {
-  const { isLoggedIn, userInfo } = useAuth();
+  const { isLoggedIn} = useAuth();
+  const userInfo = localStorage.getItem("userInfo") ? JSON.parse(localStorage.getItem("userInfo") || "{}") : null;
+  const userName = userInfo?.userName || null;
 
 
   return (
@@ -58,7 +60,7 @@ const HeaderComponent = () => {
               <NotificationDropdown />
             </div>
             <div>
-              <UserDropdown userName={userInfo?.userName || null} />
+              <UserDropdown userName={userName} />
             </div>
           </>
         )}
