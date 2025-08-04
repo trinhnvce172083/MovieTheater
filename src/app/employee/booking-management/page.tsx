@@ -13,7 +13,6 @@ import {
   Typography,
   Row,
   Col,
-  Statistic,
   Modal,
   message,
   Tooltip,
@@ -31,7 +30,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useEmployeeBooking } from "@/hooks/employee/useEmployeeBooking";
-import { useEmployeeStatistics } from "@/hooks/employee/useEmployeeStatistics";
+
 import type { EmployeeBookingRecord, EmployeeBookingFilters } from "@/api/employee-api";
 
 const { Title, Text } = Typography;
@@ -48,7 +47,7 @@ export default function BookingManagementPage() {
     checkInBooking 
   } = useEmployeeBooking();
   
-  const { statistics } = useEmployeeStatistics();
+
   
   const [filteredBookings, setFilteredBookings] = useState<EmployeeBookingRecord[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<EmployeeBookingRecord | null>(null);
@@ -246,10 +245,7 @@ export default function BookingManagementPage() {
     },
   ];
 
-  // Use statistics from API
-  const todayBookings = statistics?.todayBookings || 0;
-  const todayRevenue = statistics?.todayRevenue || 0;
-  const checkedInToday = statistics?.todayCheckIns || 0;
+
 
   return (
     <div className="max-w-7xl mx-auto p-4 lg:p-6">
@@ -257,50 +253,7 @@ export default function BookingManagementPage() {
         📋 Quản lý đặt vé
       </Title>
 
-      {/* Statistics */}
-      <Row gutter={[16, 16]} className="mb-6">
-        <Col xs={24} sm={8} lg={6}>
-          <Card>
-            <Statistic
-              title="Booking hôm nay"
-              value={todayBookings}
-              prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: '#3f8600' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8} lg={6}>
-          <Card>
-            <Statistic
-              title="Doanh thu hôm nay"
-              value={todayRevenue}
-              formatter={(value) => `${value?.toLocaleString()}₫`}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8} lg={6}>
-          <Card>
-            <Statistic
-              title="Check-in hôm nay"
-              value={checkedInToday}
-              prefix={<ScanOutlined />}
-              valueStyle={{ color: '#722ed1' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8} lg={6}>
-          <Card>
-            <Statistic
-              title="Tổng booking"
-              value={pagination.total}
-              prefix={<FilterOutlined />}
-              valueStyle={{ color: '#cf1322' }}
-            />
-          </Card>
-        </Col>
-      </Row>
+
 
       {/* Filters */}
       <Card className="mb-6">

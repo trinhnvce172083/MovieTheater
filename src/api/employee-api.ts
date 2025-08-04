@@ -100,60 +100,51 @@ export interface EmployeeGuestBookingRequest {
   };
 }
 
-export interface EmployeeStatistics {
-  todayBookings: number;
-  todayRevenue: number;
-  todayCheckIns: number;
-  todayNewMembers: number;
-  monthlyBookings: number;
-  monthlyRevenue: number;
-}
+
 
 // Employee API Service
 export const EmployeeApiService = {
-  // Booking Management
+  // Booking Management - sử dụng endpoint search thực tế
   getBookings: (filters?: EmployeeBookingFilters) =>
-    axiosClient.get<ApiResponse<PaginatedResponse<EmployeeBookingRecord>>>("/employees/booking-management", {
-      params: filters
+    axiosClient.get<ApiResponse<PaginatedResponse<EmployeeBookingRecord>>>("/bookings/search", {
+      params: {
+        bookingCode: filters?.search,
+        customerEmail: filters?.search,
+        customerPhone: filters?.search,
+        status: filters?.status,
+        page: filters?.page || 0,
+        size: filters?.size || 10,
+      }
     }),
 
   getBookingById: (bookingId: number) =>
-    axiosClient.get<ApiResponse<EmployeeBookingRecord>>(`/employees/booking-management/${bookingId}`),
+    axiosClient.get<ApiResponse<EmployeeBookingRecord>>(`/bookings/${bookingId}`),
 
-  // Check-in functionality
+  // Check-in functionality - sử dụng booking API
   checkInBooking: (data: CheckInRequest) =>
-    axiosClient.post<ApiResponse<CheckInResponse>>("/checkin", data),
+    axiosClient.post<ApiResponse<CheckInResponse>>(`/bookings/${data.bookingId}/checkin`),
 
   checkInByQrCode: (qrCode: string) =>
-    axiosClient.post<ApiResponse<CheckInResponse>>("/checkin/qr", { qrCode }),
+    axiosClient.post<ApiResponse<CheckInResponse>>("/bookings/checkin-qr", { qrCode }),
 
   checkInByBookingCode: (bookingCode: string) =>
-    axiosClient.post<ApiResponse<CheckInResponse>>("/checkin/booking-code", { bookingCode }),
+    axiosClient.post<ApiResponse<CheckInResponse>>("/bookings/checkin-code", { bookingCode }),
 
-  // Member search and management
+  // Member search and management - tạm thời disable vì chưa có API
   searchMembers: (data: MemberSearchRequest) =>
-    axiosClient.get<ApiResponse<PaginatedResponse<MemberInfo>>>("/employees/members", {
-      params: data
-    }),
+    Promise.resolve({ data: { success: true, data: { content: [], totalElements: 0, totalPages: 0, size: 10, number: 0, first: true, last: true } } }),
 
   getMemberById: (memberId: number) =>
-    axiosClient.get<ApiResponse<MemberInfo>>(`/employees/members/${memberId}`),
+    Promise.resolve({ data: { success: false, message: "Member API chưa có" } }),
 
   getMemberByPhone: (phoneNumber: string) =>
-    axiosClient.get<ApiResponse<MemberInfo>>(`/employees/members/phone/${phoneNumber}`),
+    Promise.resolve({ data: { success: false, message: "Member search chưa có" } }),
 
-  // Guest booking for employees (staff can create booking for customers)
+  // Guest booking for employees - sử dụng endpoint booking/guest
   createGuestBooking: (data: EmployeeGuestBookingRequest) =>
-    axiosClient.post<ApiResponse<any>>("/employees/ticket-selling/guest-booking", data),
+    axiosClient.post<ApiResponse<any>>("/bookings/guest", data),
 
-  // Employee statistics
-  getEmployeeStatistics: () =>
-    axiosClient.get<ApiResponse<EmployeeStatistics>>("/employees/statistics"),
 
-  getDailyStatistics: (date?: string) =>
-    axiosClient.get<ApiResponse<any>>("/employees/statistics/daily", {
-      params: { date }
-    }),
 
   // Staff payment processing
   processStaffPayment: (data: {

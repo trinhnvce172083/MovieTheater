@@ -7,9 +7,7 @@ import {
   UserOutlined,
   ShoppingCartOutlined,
   ScanOutlined,
-  TeamOutlined,
   HistoryOutlined,
-  SettingOutlined,
 } from "@ant-design/icons";
 import { useMemberProfile } from "@/hooks/member";
 
@@ -19,8 +17,8 @@ interface EmployeeHeaderProps {
 
 const EMPLOYEE_TABS = [
   {
-    key: "account",
-    label: "Thông tin tài khoản",
+    key: "home",
+    label: "Trang chủ",
     icon: <UserOutlined />,
     path: "/employee",
   },
@@ -42,18 +40,7 @@ const EMPLOYEE_TABS = [
     icon: <ScanOutlined />,
     path: "/employee/checkin",
   },
-  {
-    key: "member-search",
-    label: "Tìm kiếm thành viên",
-    icon: <TeamOutlined />,
-    path: "/employee/members",
-  },
-  {
-    key: "settings",
-    label: "Cài đặt",
-    icon: <SettingOutlined />,
-    path: "/employee/settings",
-  },
+
 ];
 
 const EmployeeHeader: React.FC<EmployeeHeaderProps> = ({ onClose }) => {

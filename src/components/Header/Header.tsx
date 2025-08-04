@@ -42,6 +42,15 @@ const HeaderComponent = () => {
           >
             Coming Soon
           </Link>
+          {/* Employee Sell button - chỉ hiện với role EMPLOYEE */}
+          {isLoggedIn && userInfo?.Role === "EMPLOYEE" && (
+            <Link
+              href={ROUTES.EMPLOYEE_DASHBOARD}
+              className="hover:text-red-500 transition-colors whitespace-nowrap"
+            >
+              Sell
+            </Link>
+          )}
         </nav>
       </div>
       <div className="flex items-center gap-2 md:gap-6">
