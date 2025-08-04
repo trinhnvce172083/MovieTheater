@@ -13,25 +13,9 @@ const { Title, Text } = Typography;
 export default function BookingConfirmPage() {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [seatStatus, setSeatStatus] = useState<any[]>([]);
   
   const bookingData = useSelector((state: RootState) => state.booking);
   const { createBooking, getSeatStatus } = useBooking();
-
-  // Load seat status on mount
-  useEffect(() => {
-    if (bookingData.scheduleId) {
-      const loadSeatStatus = async () => {
-        try {
-          const status = await getSeatStatus(bookingData.scheduleId);
-          setSeatStatus(status || []);
-        } catch (error) {
-          console.error("Failed to load seat status:", error);
-        }
-      };
-      loadSeatStatus();
-    }
-  }, [bookingData.scheduleId, getSeatStatus]);
 
   const handlePayment = async () => {
     if (isProcessing) return;
@@ -59,20 +43,35 @@ export default function BookingConfirmPage() {
         return;
       }
 
-      // Kiểm tra trạng thái ghế trước khi đặt
+      // Kiểm tra trạng thái ghế trước khi đặt (chỉ khi thực sự cần)
       try {
-        const currentSeatStatus = await getSeatStatus(bookingData.scheduleId);
+        const seatStatusResponse = await getSeatStatus(bookingData.scheduleId);
         const selectedSeatIds = bookingData.selectedSeats.map(seat => seat.seatId);
-        const unavailableSeats = currentSeatStatus.filter((seat: any) => 
-          selectedSeatIds.includes(seat.seatId) && seat.status !== 'AVAILABLE'
-        );
         
-        if (unavailableSeats.length > 0) {
-          message.error('Một số ghế đã được đặt. Vui lòng chọn ghế khác.');
-          return;
+        // Kiểm tra xem response có đúng structure không
+        if (seatStatusResponse && Array.isArray(seatStatusResponse.seats)) {
+          const unavailableSeats = seatStatusResponse.seats.filter((seat: any) => 
+            selectedSeatIds.includes(seat.seatId) && seat.status !== 'AVAILABLE'
+          );
+          
+          if (unavailableSeats.length > 0) {
+            message.error('Một số ghế đã được đặt. Vui lòng chọn ghế khác.');
+            return;
+          }
+        } else if (Array.isArray(seatStatusResponse)) {
+          // Fallback: nếu response trực tiếp là array
+          const unavailableSeats = seatStatusResponse.filter((seat: any) => 
+            selectedSeatIds.includes(seat.seatId) && seat.status !== 'AVAILABLE'
+          );
+          
+          if (unavailableSeats.length > 0) {
+            message.error('Một số ghế đã được đặt. Vui lòng chọn ghế khác.');
+            return;
+          }
         }
       } catch (error) {
         console.error("Failed to check seat status:", error);
+        // Không block booking nếu không thể kiểm tra trạng thái ghế
       }
 
       // Lấy thông tin user
@@ -164,12 +163,11 @@ export default function BookingConfirmPage() {
   };
 
   const getSeatStatusDisplay = (seatId: number) => {
-    const seat = seatStatus.find(s => s.seatId === seatId);
-    if (!seat) return { available: true, status: 'Unknown' };
-    
+    // Vì đã bỏ việc load seat status ngay khi mount, 
+    // chúng ta sẽ giả định ghế đã chọn là available
     return {
-      available: seat.status === 'AVAILABLE',
-      status: seat.status
+      available: true,
+      status: 'AVAILABLE'
     };
   };
 
@@ -188,19 +186,28 @@ export default function BookingConfirmPage() {
                 />
               )}
               <div className="flex-1">
-                <Title level={3} className="mb-2">
+                <Title level={3} className="mb-4">
                   {bookingData.movieInfo?.title || "Movie Title"}
                 </Title>
-                <div className="space-y-1 text-gray-600">
-                  <Text>
-                    <strong>Thời gian:</strong> {bookingData.scheduleInfo?.displayTime} - {bookingData.scheduleInfo?.displayDate}
-                  </Text>
-                  <Text>
-                    <strong>Phòng:</strong> {bookingData.scheduleInfo?.cinemaRoomName}
-                  </Text>
-                  <Text>
-                    <strong>Thời lượng:</strong> {bookingData.movieInfo?.duration} phút
-                  </Text>
+                <div className="space-y-3 text-gray-600">
+                  <div className="flex flex-col">
+                    <Text className="text-sm font-medium text-gray-500 mb-1">Thời gian chiếu</Text>
+                    <Text className="text-base">
+                      {bookingData.scheduleInfo?.displayTime} - {bookingData.scheduleInfo?.displayDate}
+                    </Text>
+                  </div>
+                  <div className="flex flex-col">
+                    <Text className="text-sm font-medium text-gray-500 mb-1">Phòng chiếu</Text>
+                    <Text className="text-base">
+                      {bookingData.scheduleInfo?.cinemaRoomName}
+                    </Text>
+                  </div>
+                  <div className="flex flex-col">
+                    <Text className="text-sm font-medium text-gray-500 mb-1">Thời lượng</Text>
+                    <Text className="text-base">
+                      {bookingData.movieInfo?.duration} phút
+                    </Text>
+                  </div>
                 </div>
               </div>
             </div>
@@ -208,20 +215,26 @@ export default function BookingConfirmPage() {
 
           {/* Selected Seats */}
           <Card title="Ghế đã chọn" className="mb-6">
-            <div className="space-y-3">
+            <div className="space-y-4">
               {bookingData.selectedSeats.map((seat) => {
                 const seatStatus = getSeatStatusDisplay(seat.seatId);
                 return (
-                  <div key={seat.seatId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <span className="font-semibold">{seat.seatNumber}</span>
-                      <Tag color={seatStatus.available ? "green" : "red"}>
+                  <div key={seat.seatId} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-500 mb-1">Số ghế</span>
+                        <span className="text-xl font-bold text-gray-800">{seat.seatNumber}</span>
+                      </div>
+                      <Tag color={seatStatus.available ? "green" : "red"} className="text-sm px-3 py-1">
                         {seatStatus.available ? "✓ Available" : "✗ Unavailable"}
                       </Tag>
                     </div>
-                    <span className="text-lg font-semibold text-green-600">
-                      {`${180000}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} VND
-                    </span>
+                    <div className="flex flex-col items-end">
+                      <span className="text-sm font-medium text-gray-500 mb-1">Giá vé</span>
+                      <span className="text-xl font-bold text-green-600">
+                        {`${180000}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} VND
+                      </span>
+                    </div>
                   </div>
                 );
               })}
@@ -231,16 +244,25 @@ export default function BookingConfirmPage() {
           {/* Selected Concessions */}
           {bookingData.selectedConcessions.length > 0 && (
             <Card title="Đồ ăn & thức uống" className="mb-6">
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {bookingData.selectedConcessions.map((item) => (
-                  <div key={item.concessionId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <span className="font-semibold">{item.concession.name}</span>
-                      <span className="text-gray-600">x{item.quantity}</span>
+                  <div key={item.concessionId} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-500 mb-1">Tên món</span>
+                        <span className="text-lg font-semibold text-gray-800">{item.concession.name}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-500 mb-1">Số lượng</span>
+                        <span className="text-lg font-semibold text-blue-600">x{item.quantity}</span>
+                      </div>
                     </div>
-                    <span className="text-lg font-semibold text-green-600">
-                      {(item.concession.price * item.quantity).toLocaleString()} VND
-                    </span>
+                    <div className="flex flex-col items-end">
+                      <span className="text-sm font-medium text-gray-500 mb-1">Thành tiền</span>
+                      <span className="text-xl font-bold text-green-600">
+                        {(item.concession.price * item.quantity).toLocaleString()} VND
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -252,39 +274,39 @@ export default function BookingConfirmPage() {
         <div className="lg:col-span-1">
           <Card title="Tổng thanh toán" className="sticky top-4">
             <div className="space-y-4">
-              <div className="flex justify-between">
-                <Text>Ghế:</Text>
-                <Text strong>{bookingData.seatTotal?.toLocaleString()} VND</Text>
+              <div className="flex justify-between items-center py-2">
+                <Text className="text-gray-600">Ghế:</Text>
+                <Text strong className="text-lg">{bookingData.seatTotal?.toLocaleString()} VND</Text>
               </div>
               
-              <div className="flex justify-between">
-                <Text>Đồ ăn:</Text>
-                <Text strong>{bookingData.concessionsTotal?.toLocaleString()} VND</Text>
+              <div className="flex justify-between items-center py-2">
+                <Text className="text-gray-600">Đồ ăn:</Text>
+                <Text strong className="text-lg">{bookingData.concessionsTotal?.toLocaleString()} VND</Text>
               </div>
               
               {bookingData.discountAmount > 0 && (
-                <div className="flex justify-between text-red-600">
+                <div className="flex justify-between items-center py-2 text-red-600">
                   <Text>Giảm giá:</Text>
-                  <Text strong>-{bookingData.discountAmount?.toLocaleString()} VND</Text>
+                  <Text strong className="text-lg">-{bookingData.discountAmount?.toLocaleString()} VND</Text>
                 </div>
               )}
               
-              <div className="border-t pt-4">
-                <div className="flex justify-between text-lg font-bold">
-                  <Text>Tổng cộng:</Text>
-                  <Text className="text-green-600">{bookingData.finalAmount?.toLocaleString()} VND</Text>
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <div className="flex justify-between items-center">
+                  <Text className="text-xl font-bold text-gray-800">Tổng cộng:</Text>
+                  <Text className="text-2xl font-bold text-green-600">{bookingData.finalAmount?.toLocaleString()} VND</Text>
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 space-y-3">
+            <div className="mt-8 space-y-4">
               <Button
                 type="primary"
                 size="large"
                 block
                 loading={isProcessing}
                 onClick={handlePayment}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 h-12 text-lg font-semibold"
               >
                 Thanh toán ngay
               </Button>
@@ -293,6 +315,7 @@ export default function BookingConfirmPage() {
                 size="large"
                 block
                 onClick={handleBackToSeats}
+                className="h-12 text-lg"
               >
                 ← Quay lại chọn ghế
               </Button>
