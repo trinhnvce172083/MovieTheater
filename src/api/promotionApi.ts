@@ -39,16 +39,18 @@ export interface PromotionValidationResponse {
 }
 
 export interface PromotionApplyRequest {
-  promotionCode: string;
-  bookingId: number;
+  code: string;
+  orderAmount?: number;
+  movieId?: number;
 }
 
 export interface PromotionApplyResponse {
   success: boolean;
   message: string;
+  data?: any;
   appliedPromotion?: Promotion;
-  discountAmount: number;
-  finalAmount: number;
+  discountAmount?: number;
+  finalAmount?: number;
 }
 
 export interface ApiResponse<T> {
@@ -94,10 +96,16 @@ const promotionApi = {
     return axiosClient.get<ApiResponse<Promotion[]>>(url);
   },
 
-  // Validate promotion code (public)
+  // Validate promotion code (public) - Sử dụng API validate
   validateCode: (request: PromotionValidationRequest) => {
     const url = "promotions/validate";
     return axiosClient.post<ApiResponse<PromotionValidationResponse>>(url, request);
+  },
+
+  // Apply promotion code - Sử dụng API mới /api/promotions/{code}/apply
+  applyCode: (code: string, request?: PromotionApplyRequest) => {
+    const url = `promotions/${code}/apply`;
+    return axiosClient.post<ApiResponse<PromotionApplyResponse>>(url, request || {});
   },
 
   // Validate promotion code uniqueness (admin)
@@ -107,10 +115,10 @@ const promotionApi = {
   },
 
   // Apply promotion to booking
-  applyToBooking: (request: PromotionApplyRequest) => {
-    const url = `bookings/${request.bookingId}/promotion`;
+  applyToBooking: (bookingId: number, promotionCode: string) => {
+    const url = `bookings/${bookingId}/promotion`;
     return axiosClient.post<ApiResponse<PromotionApplyResponse>>(url, {
-      promotionCode: request.promotionCode
+      promotionCode: promotionCode
     });
   },
 
