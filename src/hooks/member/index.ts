@@ -100,7 +100,7 @@ function useAsyncData<T>(
     } finally {
       isLoadingRef.current = false;
     }
-  }, [fetchFn]);
+  }, []); // Remove fetchFn dependency to avoid infinite loop
 
   useEffect(() => {
     if (immediate) {
@@ -112,12 +112,12 @@ function useAsyncData<T>(
       console.log("🧹 Cleanup - setting mounted to false");
       mountedRef.current = false;
     };
-  }, [immediate]); // Only run on mount and when immediate changes
+  }, [immediate, ...dependencies]); // Include dependencies to refetch when they change
 
   const refetch = useCallback(async () => {
     console.log("🔄 Manual refetch triggered");
     await fetchData();
-  }, [fetchData]);
+  }, []); // Remove fetchData dependency
 
   return {
     ...state,
@@ -238,7 +238,7 @@ export function useMemberProfile() {
 
   useEffect(() => {
     loadProfile();
-  }, [loadProfile]);
+  }, []); // Remove loadProfile dependency to avoid infinite loop
 
   return {
     profile,
@@ -295,7 +295,7 @@ export function useMemberBookings(params: BookingListParams = {}) {
 
   useEffect(() => {
     loadBookings();
-  }, [loadBookings]);
+  }, []); // Remove loadBookings dependency to avoid infinite loop
 
   return {
     bookings,

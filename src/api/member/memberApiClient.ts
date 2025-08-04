@@ -326,9 +326,10 @@ export class MemberApiClient {
           size: responseData.size || 10,
           totalElements: responseData.totalElements || 0,
           totalPages: responseData.totalPages || 0,
-          first: responseData.first !== false,
-          last: responseData.last !== false,
-          empty: responseData.empty !== false,
+          first: Boolean(responseData.first),
+          last: Boolean(responseData.last),
+          empty: Boolean(responseData.empty),
+          numberOfElements: responseData.numberOfElements || 0,
         },
       };
 
@@ -744,7 +745,7 @@ export const memberApi = new MemberApiClient();
 
 export const MemberApiService = {
   // Profile
-  getProfile: () => memberApi.getProfile(),
+  getProfile: (useCache: boolean = true) => memberApi.getProfile(useCache),
   updateProfile: (request: ProfileUpdateRequest) =>
     memberApi.updateProfile(request),
   changePassword: (request: PasswordChangeRequest) =>
