@@ -4,17 +4,6 @@ import { MovieData, ApiMovie, CurrentUser } from '../types';
  * Transform API Movie response to MovieData for display
  */
 export const transformApiMovieToMovieData = (apiMovie: ApiMovie): MovieData => {
-  // Debug featured status conversion
-  console.log(`🌟 Transform API movie ${apiMovie.movieId}:`, {
-    title: apiMovie.title,
-    rawIsFeatured: apiMovie.isFeatured,
-    type: typeof apiMovie.isFeatured,
-    stringCheck: apiMovie.isFeatured === 'true',
-    numberCheck: apiMovie.isFeatured === 1,
-    booleanCheck: apiMovie.isFeatured === true,
-    finalValue: apiMovie.isFeatured === true || apiMovie.isFeatured === 1 || apiMovie.isFeatured === 'true'
-  });
-  
   return {
     key: apiMovie.movieId.toString(),
     id: apiMovie.movieId,
@@ -25,7 +14,7 @@ export const transformApiMovieToMovieData = (apiMovie: ApiMovie): MovieData => {
     releaseDate: apiMovie.releaseDate || '',
     status: (apiMovie.status as 'NOW_SHOWING' | 'COMING_SOON' | 'ENDED') || 'COMING_SOON',
     posterUrl: apiMovie.posterUrl,
-    isFeatured: apiMovie.isFeatured === true || apiMovie.isFeatured === 1 || apiMovie.isFeatured === 'true', // Handle multiple types
+    isFeatured: Boolean(apiMovie.isFeatured), // Convert to boolean safely
     price: apiMovie.price || 0,
     rating: apiMovie.rating,
     imdbRating: apiMovie.imdbRating,

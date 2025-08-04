@@ -1,4 +1,5 @@
 import axios from "axios";
+import { AuthUtils } from "@/utils/authUtils";
 
 const axiosClient = axios.create({
   baseURL: "http://localhost:8080/cinema/api",
@@ -30,6 +31,27 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Log error for debugging
+    console.error("API Error:", {
+      url: originalRequest?.url,
+      method: originalRequest?.method,
+      status: error.response?.status,
+      message: error.message,
+      data: error.response?.data
+    });
+
+    // Handle server errors (5xx)
+    if (error.response?.status >= 500) {
+      console.error("Server error detected:", error.response.status);
+      // You can add custom server error handling here
+    }
+
+    // Handle network errors
+    if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+      console.error("Network/Connection error:", error.message);
+      // You can add custom network error handling here
+    }
+
     // Nếu lỗi 401 và chưa retry
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -50,15 +72,13 @@ axiosClient.interceptors.response.use(
             return axiosClient(originalRequest);
           }
         }
-      } catch (refreshError) {
-        // Nếu refresh token cũng fail, logout user
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("userInfo");
-        localStorage.removeItem("isLoggedIn");
+      } catch (refreshError: unknown) {
+        // Nếu refresh token cũng fail, sử dụng AuthUtils để logout
+        console.warn("Refresh token failed, performing safe logout", refreshError);
+        AuthUtils.clearAllAuthData();
         
         if (typeof window !== "undefined") {
-          window.location.href = "/auth/login";
+          window.location.href = "/auth/Login";
         }
       }
     }

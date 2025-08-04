@@ -68,7 +68,9 @@ const LoginContainer = memo(function LoginContainer() {
           // Navigate based on role
           if (userInfoObj?.Role === "ADMIN") {
             router.push(ROUTES.ADMIN_DASHBOARD);
-          } else if (userInfo?.role === "MEMBER") {
+          } else if (userInfoObj?.Role === "EMPLOYEE") {
+            router.push(ROUTES.EMPLOYEE_DASHBOARD);
+          } else if (userInfoObj?.Role === "MEMBER") {
             router.push(ROUTES.HOME);
           } else {
             setError(
