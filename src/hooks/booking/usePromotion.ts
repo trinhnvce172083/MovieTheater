@@ -41,7 +41,70 @@ export function usePromotion() {
     }
   }, []);
 
-  // Validate promotion code
+  // Apply promotion code - Sử dụng API mới
+  const applyPromotionCode = useCallback(async (code: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const request = {
+        code,
+        orderAmount: totalAmount,
+        movieId: movieInfo?.movieId,
+      };
+
+      const response = await promotionApi.applyCode(code, request);
+      
+      if (response.data.success) {
+        // Lấy thông tin promotion từ API getByCode
+        try {
+          const promotionResponse = await promotionApi.getByCode(code);
+          if (promotionResponse.data.success && promotionResponse.data.data) {
+            const promotion = promotionResponse.data.data;
+            
+            // Áp dụng promotion vào Redux (sẽ tự động tính discountAmount)
+            dispatch(applyPromotion(promotion));
+            
+            return {
+              isValid: true,
+              promotion: promotion,
+              message: "Promotion applied successfully",
+              discountAmount: 0, // Sẽ được tính tự động trong Redux
+              finalAmount: 0, // Sẽ được tính tự động trong Redux
+            };
+          }
+        } catch (promotionError) {
+          console.error("Error fetching promotion details:", promotionError);
+        }
+        
+        // Fallback nếu không lấy được promotion details
+        return {
+          isValid: true,
+          message: "Promotion applied successfully",
+          discountAmount: 0,
+          finalAmount: totalAmount,
+        };
+      } else {
+        // Xóa promotion nếu không hợp lệ
+        dispatch(removePromotion());
+        return {
+          isValid: false,
+          message: response.data.message || "Invalid promotion code",
+          discountAmount: 0,
+          finalAmount: totalAmount,
+        };
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || "Failed to apply promotion";
+      setError(errorMessage);
+      // Xóa promotion nếu có lỗi
+      dispatch(removePromotion());
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [dispatch, totalAmount, movieInfo?.movieId]);
+
+  // Validate promotion code (legacy - giữ lại để tương thích)
   const validatePromotionCode = useCallback(async (code: string) => {
     setLoading(true);
     setError(null);
@@ -92,7 +155,7 @@ export function usePromotion() {
   }, [dispatch, totalAmount, movieInfo?.movieId]);
 
   // Áp dụng promotion code
-  const applyPromotionCode = useCallback(
+  const applyPromotionCodeLegacy = useCallback(
     (code: string) => {
       dispatch(setPromotionCode(code));
       return validatePromotionCode(code);
@@ -156,7 +219,8 @@ export function usePromotion() {
     // Actions
     fetchPromotions,
     validatePromotionCode,
-    applyPromotionCode,
+    applyPromotionCode, // API mới
+    applyPromotionCodeLegacy, // API cũ
     removePromotionCode,
     getPromotionByCode,
     getPromotionsByMovie,

@@ -1,5 +1,6 @@
 import { authApi } from '@/api/auth/Register_API';
-import { InputData, SuccessResponse, WrongInputResponse, ExistingUserResponse } from './Register_API.mock';
+import { InputData, SuccessResponse, WrongInputResponse, ExistingUserResponse, WeakPasswordResponse } from './Register_API.mock';
+import { AxiosError } from 'axios';
 
 jest.mock('@/api/axiosClient', () => ({
   __esModule: true,
@@ -27,10 +28,13 @@ describe('Register API', () => {
   });
 
   test('should handle invalid input data error', async () => {
-    const error = {
-      response: {
-        data: WrongInputResponse
-      }
+    const error = new AxiosError();
+    error.response = {
+      data: WrongInputResponse,
+      status: 400,
+      statusText: 'Bad Request',
+      headers: {},
+      config: {} as any
     };
     mockAxiosClient.post.mockRejectedValue(error);
 
@@ -39,15 +43,33 @@ describe('Register API', () => {
   });
 
   test('should handle existing username error', async () => {
-    const error = {
-      response: {
-        data: ExistingUserResponse
-      }
+    const error = new AxiosError();
+    error.response = {
+      data: ExistingUserResponse,
+      status: 409,
+      statusText: 'Conflict',
+      headers: {},
+      config: {} as any
     };
     mockAxiosClient.post.mockRejectedValue(error);
 
     await expect(authApi.register(InputData.existingUserData)).rejects.toThrow(ExistingUserResponse.message);
     expect(mockAxiosClient.post).toHaveBeenCalledWith('/auth/register', InputData.existingUserData);
+  });
+
+  test('should handle weak password error', async () => {
+    const error = new AxiosError();
+    error.response = {
+      data: WeakPasswordResponse,
+      status: 400,
+      statusText: 'Bad Request',
+      headers: {},
+      config: {} as any
+    };
+    mockAxiosClient.post.mockRejectedValue(error);
+
+    await expect(authApi.register(InputData.weakPasswordData)).rejects.toThrow(WeakPasswordResponse.message);
+    expect(mockAxiosClient.post).toHaveBeenCalledWith('/auth/register', InputData.weakPasswordData);
   });
 
   test('should handle network error', async () => {
@@ -59,7 +81,7 @@ describe('Register API', () => {
   });
 
   test('should handle axios error without response data', async () => {
-    const axiosError = new Error('Axios Error');
+    const axiosError = new AxiosError('Axios Error');
     mockAxiosClient.post.mockRejectedValue(axiosError);
 
     await expect(authApi.register(InputData.validRegisterData)).rejects.toThrow('Axios Error');

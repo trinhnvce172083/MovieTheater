@@ -272,7 +272,7 @@ export const createRoom = async (roomData: CinemaRoomCreateRequest): Promise<Cin
       description: roomData.description ?? '',
     };
     
-    // Add to mock data for persistence during session
+    // Add to mock data for session storage
     mockRooms.push(newRoom);
     return newRoom;
   }
@@ -334,7 +334,7 @@ export const updateRoom = async (
       updatedAt: new Date().toISOString(),
     };
     
-    // Update mock data for persistence during session
+    // Update mock data for session storage
     mockRooms[roomIndex] = updatedRoom;
     return updatedRoom;
   }

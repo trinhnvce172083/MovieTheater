@@ -12,8 +12,9 @@ import LanguageDropdown from "./LanguageDropdown";
 
 // Dynamic import để tránh hydration mismatch
 const HeaderComponent = () => {
-  const { isLoggedIn, userInfo } = useAuth();
-
+  const { isLoggedIn} = useAuth();
+  const userInfo = localStorage.getItem("userInfo") ? JSON.parse(localStorage.getItem("userInfo") || "{}") : null;
+  const userName = userInfo?.userName || null;
 
   return (
     <header className="flex items-center justify-between px-2 sm:px-4 md:px-6 bg-black py-2 md:py-0 text-white relative z-10 border-b border-black/30 shadow-sm">
@@ -67,7 +68,7 @@ const HeaderComponent = () => {
               <NotificationDropdown />
             </div>
             <div>
-              <UserDropdown userName={userInfo?.userName || null} />
+              <UserDropdown userName={userName} />
             </div>
           </>
         )}

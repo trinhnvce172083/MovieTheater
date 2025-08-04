@@ -120,16 +120,35 @@ export class MemberApiClient {
     const cacheKey = "member:profile";
 
     try {
-      // Check cache first
+      // Check cache first if enabled
       if (useCache) {
         const cached = this.cache.get<MemberProfile>(cacheKey);
         if (cached) {
-          return { success: true, data: cached };
+          const cacheAge = Date.now() - (cached.lastUpdated || 0);
+          if (cacheAge < 5 * 60 * 1000) {
+            return { success: true, data: cached };
+          } else {
+            this.cache.delete(cacheKey);
+          }
         }
       }
 
       const response = await axiosClient.get("/auth/profile");
-      const data = response.data.data;
+      console.log("🌐 Raw API response:", response);
+      console.log("📄 Response data:", response.data);
+      
+      // API trả về format: { success: true, message: "...", data: {...} }
+      const apiData = response.data;
+      console.log("🔍 API data:", apiData);
+      
+      if (!apiData.success || !apiData.data) {
+        console.error("❌ Invalid API response format:", apiData);
+        throw new Error("Invalid API response format");
+      }
+      
+      const data = apiData.data;
+      console.log("📊 User data from API:", data);
+      
       const profile: MemberProfile = {
         accountId: data.accountId,
         username: data.username,
@@ -150,14 +169,18 @@ export class MemberApiClient {
         updatedAt: data.updatedAt,
         totalBookings: data.totalBookings || 0,
         totalSpent: data.totalSpent || 0,
+        lastUpdated: Date.now(),
       };
+
+      console.log("👤 Mapped profile:", profile);
 
       // Cache the result
       this.cache.set(cacheKey, profile);
 
+      console.log("💾 Profile cached successfully");
       return { success: true, data: profile };
     } catch (error) {
-      console.error("Error fetching member profile:", error);
+      console.error("❌ Error fetching member profile:", error);
       throw new MemberApiError(
         "Failed to fetch profile",
         "PROFILE_FETCH_ERROR",
@@ -276,9 +299,18 @@ export class MemberApiClient {
 
       console.log("API response:", response.data);
 
+      // API trả về format: { success: true, message: "...", data: {...} }
+      const apiData = response.data;
+      if (!apiData.success || !apiData.data) {
+        throw new Error("Invalid API response format");
+      }
+
+      const responseData = apiData.data;
+      console.log("Response data:", responseData);
+
       // Transform response to match our interface
       const bookings: PaginatedResponse<MemberBooking> = {
-        content: (response.data.content || [])
+        content: (responseData.content || [])
           .filter((item: any) => !!item)
           .map((item: any) => {
             try {
@@ -289,7 +321,16 @@ export class MemberApiClient {
             }
           })
           .filter((item: any) => !!item),
-        page: response.data.page,
+        page: {
+          number: responseData.number || 0,
+          size: responseData.size || 10,
+          totalElements: responseData.totalElements || 0,
+          totalPages: responseData.totalPages || 0,
+          first: Boolean(responseData.first),
+          last: Boolean(responseData.last),
+          empty: Boolean(responseData.empty),
+          numberOfElements: responseData.numberOfElements || 0,
+        },
       };
 
       console.log("Transformed bookings:", bookings);
@@ -559,27 +600,36 @@ export class MemberApiClient {
     }
     const booking = item as Record<string, any>;
     
-    // Xử lý thông tin schedule - workaround cho backend hiện tại
+    // Backend mới có cấu trúc: bookingStatus, movie.title, cinema.cinemaRoomName, schedule.showDateTime
     let showDate = '';
     let startTime = '';
     let endTime = '';
     
-    // Thử nhiều cách để lấy thông tin thời gian
-    if (booking.schedule?.showDateTime) {
+    // Priority: schedule.formattedShowDateTime từ backend mới
+    if (booking.schedule?.formattedShowDateTime) {
+      // Nếu backend đã format sẵn, parse lại
+      const formatted = booking.schedule.formattedShowDateTime;
+      // Format có thể là: "31/12/2024 19:30"
+      const [datePart, timePart] = formatted.split(' ');
+      if (datePart && timePart) {
+        const [day, month, year] = datePart.split('/');
+        showDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        startTime = timePart;
+      }
+    } else if (booking.schedule?.showDateTime) {
+      // Backend mới: schedule.showDateTime
       const showDateTime = new Date(booking.schedule.showDateTime);
       showDate = showDateTime.toISOString().split('T')[0];
       startTime = showDateTime.toTimeString().split(' ')[0];
     } else if (booking.showDate && booking.startTime) {
+      // Fallback: direct fields
       showDate = booking.showDate;
       startTime = booking.startTime;
-    } else if (booking.schedule?.showDate && booking.schedule?.startTime) {
-      showDate = booking.schedule.showDate;
-      startTime = booking.schedule.startTime;
     }
     
-    // Tính endTime nếu có duration
-    if (startTime && (booking.movie?.duration || booking.schedule?.movie?.duration)) {
-      const duration = booking.movie?.duration || booking.schedule?.movie?.duration;
+    // Tính endTime từ duration
+    if (startTime && booking.movie?.duration) {
+      const duration = booking.movie.duration;
       const showDateTime = new Date(`${showDate}T${startTime}`);
       const endDateTime = new Date(showDateTime.getTime() + duration * 60 * 1000);
       endTime = endDateTime.toTimeString().split(' ')[0];
@@ -587,30 +637,30 @@ export class MemberApiClient {
     
     return {
       bookingId: booking.bookingId || booking.id,
-      movieTitle: booking.movieTitle || booking.movie?.title || booking.schedule?.movie?.title,
-      moviePoster: booking.moviePoster || booking.movie?.posterUrl || booking.schedule?.movie?.posterUrl,
-      movieId: booking.movieId || booking.movie?.movieId || booking.schedule?.movie?.movieId,
-      scheduleId: booking.scheduleId || booking.schedule?.scheduleId,
-      cinemaRoom: booking.cinemaRoom || booking.schedule?.cinemaRoom?.name || booking.cinema?.cinemaRoomName,
+      movieTitle: booking.movie?.title || booking.movieTitle || "Unknown Movie",
+      moviePoster: booking.movie?.posterUrl || booking.moviePoster || "",
+      movieId: booking.movie?.movieId || booking.movieId || 0,
+      scheduleId: booking.schedule?.scheduleId || booking.scheduleId || 0,
+      cinemaRoom: booking.cinema?.cinemaRoomName || booking.cinemaRoom || "",
       showDate: showDate,
       startTime: startTime,
       endTime: endTime,
-      seats: booking.seats || booking.bookingSeats || [],
-      concessions: booking.concessions || booking.bookingConcessions || [],
+      seats: booking.seats || [],
+      concessions: booking.concessions || [],
       totalAmount: booking.totalAmount || 0,
-      finalAmount: booking.finalAmount || booking.totalAmount || 0,
+      finalAmount: booking.finalAmount || 0,
       discountAmount: booking.discountAmount || 0,
-      status: booking.status || booking.bookingStatus || "PENDING",
-      paymentMethod: booking.paymentMethod,
-      paymentStatus: booking.paymentStatus,
-      bookingDate: booking.bookingDate || booking.createdAt,
-      bookingCode: booking.bookingCode || booking.code,
-      qrCode: booking.qrCode,
+      status: booking.bookingStatus || booking.status || "PENDING",
+      paymentMethod: booking.paymentMethod || "",
+      paymentStatus: booking.paymentStatus || "",
+      bookingDate: booking.bookingDate || booking.createdAt || "",
+      bookingCode: booking.bookingCode || "",
+      qrCode: booking.qrCode || "",
       isCheckedIn: booking.isCheckedIn || false,
-      checkInTime: booking.checkInTime,
-      canCancel: booking.canBeCancelled || this.canCancelBooking(booking),
-      canCheckIn: booking.canBeCheckedIn || this.canCheckInBooking(booking),
-      expiresAt: booking.expiresAt,
+      checkInTime: booking.checkInTime || "",
+      canCancel: booking.canBeCancelled !== undefined ? booking.canBeCancelled : this.canCancelBooking(booking),
+      canCheckIn: booking.canBeCheckedIn !== undefined ? booking.canBeCheckedIn : this.canCheckInBooking(booking),
+      expiresAt: booking.expiresAt || "",
       schedule: booking.schedule || null,
     };
   }
@@ -619,7 +669,7 @@ export class MemberApiClient {
    * Check if booking can be cancelled
    */
   private canCancelBooking(booking: any): boolean {
-    const status = booking.status || booking.bookingStatus;
+    const status = booking.bookingStatus || booking.status;
     
     // Always allow cancellation if status is not CANCELLED or COMPLETED
     return status !== "CANCELLED" && status !== "COMPLETED";
@@ -629,7 +679,7 @@ export class MemberApiClient {
    * Check if booking can be checked in
    */
   private canCheckInBooking(booking: any): boolean {
-    const status = booking.status || booking.bookingStatus;
+    const status = booking.bookingStatus || booking.status;
     
     // Workaround cho backend hiện tại - thử nhiều cách để lấy thời gian chiếu
     let showDateTime: Date | null = null;
@@ -695,7 +745,7 @@ export const memberApi = new MemberApiClient();
 
 export const MemberApiService = {
   // Profile
-  getProfile: () => memberApi.getProfile(),
+  getProfile: (useCache: boolean = true) => memberApi.getProfile(useCache),
   updateProfile: (request: ProfileUpdateRequest) =>
     memberApi.updateProfile(request),
   changePassword: (request: PasswordChangeRequest) =>

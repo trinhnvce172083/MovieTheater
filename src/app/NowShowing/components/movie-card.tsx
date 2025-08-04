@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { Star, Clock, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -133,7 +132,7 @@ function MovieCardComponent({ movie, onBookNow }: MovieCardProps) {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-4 pt-4 border-t border-orange-500/20 gap-3 sm:gap-0">
             <div className="text-orange-400 font-bold text-base sm:text-lg">
               {typeof movie.price === "number"
-                ? `$${movie.price.toFixed(2)}`
+                ? `${movie.price.toLocaleString('vi-VN') + ' VND'}`
                 : "Đang cập nhật"}
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -144,15 +143,6 @@ function MovieCardComponent({ movie, onBookNow }: MovieCardProps) {
               >
                 Book Now
               </Button>
-              <Link href={`/movies/${movie.movieId}`}>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full sm:w-auto border-orange-500/50 text-orange-400 hover:bg-orange-500/10 hover:border-orange-500 transition-colors duration-200 text-xs sm:text-sm"
-                >
-                  View Details
-                </Button>
-              </Link>
             </div>
           </div>
         </div>

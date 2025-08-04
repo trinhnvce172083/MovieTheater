@@ -62,10 +62,25 @@ export default function PaymentPage() {
   // Lấy booking ID từ localStorage
   const bookingId = typeof window !== 'undefined' ? localStorage.getItem('currentBookingId') : null;
 
+  // Chỉ load booking details khi cần thiết (không load ngay khi mount)
+  const loadBookingDetails = async () => {
+    if (!bookingId) {
+      message.error("Booking information not found");
+      router.push(ROUTES.HOME);
+      return;
+    }
+
+    try {
+      const details = await getBookingDetails(bookingId);
+      setBookingDetails(details);
+    } catch (error) {
+      console.error('Error loading booking details:', error);
+      message.error("Failed to load booking details");
+    }
+  };
+
   useEffect(() => {
-    if (bookingId) {
-      loadBookingDetails();
-    } else {
+    if (!bookingId) {
       message.error("Booking information not found");
       router.push(ROUTES.HOME);
     }
@@ -94,7 +109,7 @@ export default function PaymentPage() {
 
   // Xử lý thanh toán
   const handlePayment = async () => {
-    if (!bookingId || !bookingDetails) {
+    if (!bookingId) {
       message.error("Missing booking information");
       return;
     }
@@ -109,7 +124,7 @@ export default function PaymentPage() {
     try {
       const paymentRequest = {
         bookingId: Number(bookingId),
-        amount: bookingDetails.finalAmount,
+        amount: bookingDetails?.finalAmount || bookingData.seatTotal || 0,
         paymentMethod: selectedPaymentMethod,
         customerInfo: isEmployee && customerInfo ? {
           name: customerInfo.fullName,
@@ -330,7 +345,7 @@ export default function PaymentPage() {
     }
   }, [searchParams, bookingId]);
 
-  if (!bookingDetails) {
+  if (!bookingId) {
     return (
       <div className="px-8 pt-2">
         <div className="max-w-4xl mx-auto">
@@ -342,7 +357,7 @@ export default function PaymentPage() {
             <h1 className="text-2xl font-bold">Payment</h1>
           </div>
           <div className="text-center py-12">
-            <p>Loading booking information...</p>
+            <p>Booking information not found. Redirecting to home...</p>
           </div>
         </div>
       </div>
@@ -505,23 +520,23 @@ export default function PaymentPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Booking Code:</span>
-                      <span className="font-mono">{bookingDetails.bookingCode}</span>
+                      <span className="text-gray-400">Booking ID:</span>
+                      <span className="font-mono">{bookingId || 'Loading...'}</span>
                     </div>
                     
                     <div className="flex justify-between">
                       <span className="text-gray-400">Movie:</span>
-                      <span>{bookingDetails.movie?.title}</span>
+                      <span>{bookingData.movieInfo?.title || 'Loading...'}</span>
                     </div>
                     
                     <div className="flex justify-between">
                       <span className="text-gray-400">Show Time:</span>
-                      <span>{bookingDetails.schedule?.formattedShowDateTime}</span>
+                      <span>{bookingData.scheduleInfo?.displayTime || 'Loading...'}</span>
                     </div>
                     
                     <div className="flex justify-between">
                       <span className="text-gray-400">Seats:</span>
-                      <span>{bookingDetails.seats?.length || 0} seats</span>
+                      <span>{bookingData.selectedSeats?.length || 0} seats</span>
                     </div>
                     
                     <Separator className="bg-gray-600" />
@@ -529,7 +544,7 @@ export default function PaymentPage() {
                     <div className="flex justify-between">
                       <span className="text-gray-400">Total Amount:</span>
                       <span className="text-lg font-bold text-green-400">
-                        {bookingDetails.finalAmount?.toLocaleString()}đ
+                        {bookingDetails?.finalAmount?.toLocaleString() || bookingData.seatTotal?.toLocaleString() || '0'}đ
                       </span>
                     </div>
                   </div>

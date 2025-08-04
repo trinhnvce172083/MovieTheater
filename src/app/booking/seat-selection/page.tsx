@@ -25,7 +25,6 @@ import ROUTES from "@/constants/routes";
 import { useSeatSelection } from "@/hooks/booking/useSeatSelection";
 
 export default function SeatSelectionPage() {
-  const MAX_SEATS = 10;
   const router = useRouter();
   const searchParams = useSearchParams();
   const [messageApi, contextHolder] = message.useMessage();
@@ -36,8 +35,6 @@ export default function SeatSelectionPage() {
     roomId,
     movieInfo,
     scheduleInfo,
-    selectedSeats: persistedSelectedSeats,
-    selectedConcessions,
   } = useSelector((state: RootState) => state.booking);
 
   const {
@@ -65,26 +62,7 @@ export default function SeatSelectionPage() {
       roomIdParam &&
       (scheduleIdParam !== scheduleId || roomIdParam !== roomId)
     ) {
-      // Nếu có booking data khác, hỏi user có muốn reset không
-      if (persistedSelectedSeats.length > 0 || selectedConcessions.length > 0) {
-        const shouldReset = window.confirm(
-          "Bạn có booking đang thực hiện. Bạn có muốn bắt đầu booking mới không?"
-        );
-        if (shouldReset) {
-          dispatch(resetBooking());
-        } else {
-          // Redirect về booking hiện tại
-          if (scheduleId && roomId) {
-            const currentParams = new URLSearchParams({
-              scheduleId: scheduleId,
-              roomId: roomId,
-            });
-            router.replace(`${ROUTES.BOOKING_SEAT_SELECTION}?${currentParams.toString()}`);
-            return;
-          }
-        }
-      }
-      
+      dispatch(resetBooking());
       dispatch(
         initializeBooking({
           scheduleId: scheduleIdParam,
@@ -92,7 +70,7 @@ export default function SeatSelectionPage() {
         })
       );
     }
-  }, [searchParams, dispatch, scheduleId, roomId, persistedSelectedSeats, selectedConcessions, router]);
+  }, [searchParams, dispatch, scheduleId, roomId]);
 
   useEffect(() => {
     if (scheduleId) {
@@ -102,7 +80,6 @@ export default function SeatSelectionPage() {
           
           if (scheduleResponse.success && scheduleResponse.data) {
             const scheduleData = scheduleResponse.data;
-            
             dispatch(setScheduleInfo({
               scheduleId: scheduleData.scheduleId,
               displayTime: scheduleData.displayTime,
@@ -117,7 +94,6 @@ export default function SeatSelectionPage() {
               
               if (movieResponse.success && movieResponse.data) {
                 const movieData = movieResponse.data;
-                
                 dispatch(setMovieInfo({
                   movieId: Number(movieData.movieId),
                   title: movieData.title,

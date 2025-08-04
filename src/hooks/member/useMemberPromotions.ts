@@ -15,21 +15,32 @@ export function useMemberPromotions(): UseMemberPromotionsReturn {
   const [promotions, setPromotions] = useState<MemberPromotion[]>([]);
   const [memberPoints, setMemberPoints] = useState<number>(0);
   const [memberInfo, setMemberInfo] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   // Load promotions từ API mới
   const loadPromotions = useCallback(async () => {
+    console.log('🚀 Loading promotions...');
     setLoading(true);
     setError(null);
+    
     try {
-      const activePromotions = await memberPromotionApi.getActivePromotions();
+      // Load promotions và profile parallel
+      const [activePromotions, profileRes] = await Promise.all([
+        memberPromotionApi.getActivePromotions(),
+        MemberApiService.getProfile(false)
+      ]);
+      
+      console.log('📦 Promotions loaded:', activePromotions);
+      console.log('👤 Profile loaded:', profileRes.data);
+      
       setPromotions(activePromotions);
-      const profileRes = await MemberApiService.getProfile();
-      const profile = profileRes.data;
-      setMemberInfo(profile);
-      setMemberPoints(profile.membershipPoints || 0);
+      setMemberInfo(profileRes.data);
+      setMemberPoints(profileRes.data.membershipPoints || 0);
+      
+      console.log('✅ Promotions and profile loaded successfully');
     } catch (error: any) {
+      console.error('❌ Failed to load promotions:', error);
       setError(error.message || 'Failed to load promotions');
     } finally {
       setLoading(false);

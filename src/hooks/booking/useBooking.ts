@@ -17,10 +17,17 @@ export const useBooking = () => {
   const dispatch = useDispatch();
 
   const handleApiResponse = useCallback((response: any, operation: string) => {
+    // Kiểm tra response structure
     if (response?.data?.success) {
       return response.data.data || response.data;
     } else if (response?.success) {
       return response.data || response;
+    } else if (response?.data) {
+      // Trường hợp response chỉ có data mà không có success flag
+      return response.data;
+    } else if (response) {
+      // Trường hợp response trực tiếp
+      return response;
     } else {
       throw new Error(`Invalid response structure for ${operation}`);
     }
@@ -126,10 +133,19 @@ export const useBooking = () => {
     
     try {
       const response = await BookingApiService.getSeatStatus(scheduleId);
-      return handleApiResponse(response, 'getSeatStatus');
+      const result = handleApiResponse(response, 'getSeatStatus');
+      
+      // Đảm bảo trả về đúng structure
+      if (result && result.seats) {
+        return result; // Trả về { seats: Seat[], lastUpdated: string }
+      } else if (Array.isArray(result)) {
+        return { seats: result, lastUpdated: new Date().toISOString() }; // Fallback
+      } else {
+        return { seats: [], lastUpdated: new Date().toISOString() }; // Empty result
+      }
     } catch (err: any) {
       handleError(err, 'getSeatStatus', "Không thể lấy trạng thái ghế", false);
-      return [];
+      return { seats: [], lastUpdated: new Date().toISOString() };
     } finally {
       setLoading(false);
     }
@@ -152,51 +168,6 @@ export const useBooking = () => {
     }
   }, [handleApiResponse, handleError]);
 
-  // Helper functions for Redux Persist management
-  const clearSelectedSeatsData = useCallback(() => {
-    dispatch(clearSelectedSeats());
-  }, [dispatch]);
-
-  const clearConcessionsData = useCallback(() => {
-    dispatch(clearConcessions());
-  }, [dispatch]);
-
-  const clearPromotionData = useCallback(() => {
-    dispatch(clearPromotion());
-  }, [dispatch]);
-
-  const updateSeatTotalData = useCallback((total: number) => {
-    dispatch(updateSeatTotal(total));
-  }, [dispatch]);
-
-  const recalculateTotalsData = useCallback(() => {
-    dispatch(recalculateTotals());
-  }, [dispatch]);
-
-  // Auto-cleanup logic for booking data
-  const clearBookingDataAfterTimeout = useCallback(() => {
-    const lastActivity = localStorage.getItem('booking_last_activity');
-    if (lastActivity) {
-      const lastActivityTime = new Date(lastActivity).getTime();
-      const currentTime = new Date().getTime();
-      const timeDiff = currentTime - lastActivityTime;
-      const hoursDiff = timeDiff / (1000 * 60 * 60);
-      
-      if (hoursDiff >= 24) {
-        clearSelectedSeatsData();
-        clearConcessionsData();
-        clearPromotionData();
-        localStorage.removeItem('booking_last_activity');
-        localStorage.removeItem('currentBookingId');
-      }
-    }
-  }, [clearSelectedSeatsData, clearConcessionsData, clearPromotionData]);
-
-  // Update last activity timestamp
-  const updateLastActivity = useCallback(() => {
-    localStorage.setItem('booking_last_activity', new Date().toISOString());
-  }, []);
-
   return {
     loading,
     error,
@@ -207,12 +178,5 @@ export const useBooking = () => {
     getMyBookings,
     getSeatStatus,
     reserveSeats,
-    clearSelectedSeatsData,
-    clearConcessionsData,
-    clearPromotionData,
-    updateSeatTotalData,
-    recalculateTotalsData,
-    clearBookingDataAfterTimeout,
-    updateLastActivity,
   };
 }; 
