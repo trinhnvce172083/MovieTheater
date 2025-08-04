@@ -40,6 +40,13 @@ const ROUTES = {
   ADMIN_PROMOTIONS: "/admin/promotions",
   ADMIN_CONCESSIONS: "/admin/concessions",
 
+  // Employee Routes
+  EMPLOYEE_DASHBOARD: "/employee",
+  EMPLOYEE_TICKET_SELLING: "/employee/ticket-selling",
+  EMPLOYEE_BOOKING_MANAGEMENT: "/employee/booking-management",
+  EMPLOYEE_CHECKIN: "/employee/checkin",
+  EMPLOYEE_MEMBERS: "/employee/members",
+
   // Email Verification Routes
   VERIFY_EMAIL: (token: string) => `/auth/verify-email/${token}`,
   VERIFY_EMAIL_ERROR: "/auth/verify-email/invalid",
