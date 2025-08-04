@@ -3,17 +3,30 @@
 import React from "react";
 import { Card, Button, Tag, Space, Typography, message } from "antd";
 import { useRouter } from "next/navigation";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store";
-import { useBooking } from "@/hooks/booking/useBooking";
+import { resetBooking } from "@/store/slices/bookingSlice";
 import ROUTES from "@/constants/routes";
 
 const { Text, Title } = Typography;
 
 export default function BookingStatusIndicator() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const bookingData = useSelector((state: RootState) => state.booking);
-  const { isBookingValid, hasSelectedSeats, hasSelectedConcessions, resetBookingData } = useBooking();
+
+  // Helper functions
+  const isBookingValid = () => {
+    return !!(bookingData.scheduleId && bookingData.roomId);
+  };
+
+  const hasSelectedSeats = () => {
+    return bookingData.selectedSeats.length > 0;
+  };
+
+  const hasSelectedConcessions = () => {
+    return bookingData.selectedConcessions.length > 0;
+  };
 
   // Chỉ hiển thị nếu có booking data
   if (!isBookingValid()) {
@@ -54,7 +67,7 @@ export default function BookingStatusIndicator() {
   };
 
   const handleReset = () => {
-    resetBookingData();
+    dispatch(resetBooking());
     message.success("Đã xóa thông tin đặt vé");
   };
 

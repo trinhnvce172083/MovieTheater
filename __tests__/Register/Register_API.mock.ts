@@ -37,6 +37,20 @@ export const InputData = {
     agreeToTerms: true,
     acceptMarketing: false,
     role: "MEMBER"
+  },
+  // Thêm test case mới
+  weakPasswordData: {
+    username: "weakuser",
+    fullName: "Weak User",
+    email: "weak@example.com",
+    password: "123", // Password quá ngắn
+    confirmPassword: "123",
+    phoneNumber: "0123456789",
+    dateOfBirth: "1990-01-01",
+    address: "123 Test Street",
+    agreeToTerms: true,
+    acceptMarketing: false,
+    role: "MEMBER"
   }
 };
 
@@ -73,6 +87,14 @@ export const EmailExistsResponse = {
   message: "Email already exists",
   code: 409,
   errorCode: "EMAIL_EXISTS",
+  timestamp: "2024-01-01T00:00:00Z"
+};
+
+export const WeakPasswordResponse = {
+  success: false,
+  message: "Password must be at least 6 characters",
+  code: 400,
+  errorCode: "WEAK_PASSWORD",
   timestamp: "2024-01-01T00:00:00Z"
 };
 

@@ -20,7 +20,7 @@ import { mockMovies } from '../mock/movies';
 export const useMovieManagement = () => {
   const { token } = useAuth();
   
-  // Additional token check from localStorage for cases where Redux state is not persisted
+  // Additional token check from localStorage for cases where Redux state is not available
   const [actualToken, setActualToken] = useState<string | null>(null);
   
   // Check for token in localStorage if Redux token is null/empty
