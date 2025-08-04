@@ -65,11 +65,74 @@ const columns = [
     dataIndex: "status",
     key: "status",
     render: (v: string) => {
+      console.log("📊 Booking status from API:", v); // Debug log
       if (!v) return "—";
-      if (v === "COMPLETED" || v === "PAID") return <span style={{color: "green"}}>DONE</span>;
-      if (v === "CANCELLED" || v === "EXPIRED") return <span style={{color: "red"}}>FAILED</span>;
-      if (v === "PENDING" || v === "CONFIRMED") return <span style={{color: "#007bff"}}>WAITING FOR TICKET</span>;
-      return v;
+      
+      // Hiển thị status gốc với màu sắc phù hợp
+      if (v === "COMPLETED") {
+        return <span style={{
+          color: "#d97706", 
+          backgroundColor: "#fef3c7", 
+          padding: "2px 8px", 
+          borderRadius: "4px",
+          fontSize: "12px",
+          fontWeight: "600"
+        }}>COMPLETED</span>;
+      }
+      
+      if (v === "CANCELLED") {
+        return <span style={{
+          color: "#6b7280", 
+          backgroundColor: "#f3f4f6", 
+          padding: "2px 8px", 
+          borderRadius: "4px",
+          fontSize: "12px",
+          fontWeight: "600"
+        }}>CANCELLED</span>;
+      }
+      
+      if (v === "PENDING") {
+        return <span style={{
+          color: "#2563eb", 
+          backgroundColor: "#dbeafe", 
+          padding: "2px 8px", 
+          borderRadius: "4px",
+          fontSize: "12px",
+          fontWeight: "600"
+        }}>PENDING</span>;
+      }
+      
+      if (v === "CONFIRMED" || v === "PAID") {
+        return <span style={{
+          color: "#059669", 
+          backgroundColor: "#d1fae5", 
+          padding: "2px 8px", 
+          borderRadius: "4px",
+          fontSize: "12px",
+          fontWeight: "600"
+        }}>{v}</span>;
+      }
+      
+      if (v === "EXPIRED") {
+        return <span style={{
+          color: "#dc2626", 
+          backgroundColor: "#fee2e2", 
+          padding: "2px 8px", 
+          borderRadius: "4px",
+          fontSize: "12px",
+          fontWeight: "600"
+        }}>EXPIRED</span>;
+      }
+      
+      // Default: hiển thị status gốc
+      return <span style={{
+        color: "#374151", 
+        backgroundColor: "#f9fafb", 
+        padding: "2px 8px", 
+        borderRadius: "4px",
+        fontSize: "12px",
+        fontWeight: "600"
+      }}>{v}</span>;
     },
   },
 ];
@@ -80,7 +143,16 @@ export default function BookedTicketsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
+  console.log("🔄 BookedTicketsPage render");
+
   const { bookings, loading, error, refresh, totalElements } = useMemberBookings();
+
+  console.log("📊 BookedTicketsPage received:", { 
+    bookingsLength: bookings.length, 
+    loading, 
+    error, 
+    totalElements 
+  });
 
   // Reset lại trang khi bookings thay đổi
   useEffect(() => {
@@ -124,12 +196,13 @@ export default function BookedTicketsPage() {
   };
 
   // Hiển thị loading chỉ khi lần đầu load
-  if (loading && bookings.length === 0) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
         <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm p-4 lg:p-6">
           <div className="flex justify-center items-center py-12">
             <Spin size="large" />
+            <span className="ml-3">Đang tải bookings...</span>
           </div>
         </div>
       </div>
@@ -223,15 +296,19 @@ export default function BookedTicketsPage() {
                   <div className="flex justify-between items-start mb-2">
                     <span className="font-medium text-sm text-gray-600">#{((currentPage - 1) * pageSize) + index + 1}</span>
                     <span className={`text-xs px-2 py-1 rounded-full ${
-                      item.status === "COMPLETED" || item.status === "PAID"
+                      item.status === "COMPLETED"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : item.status === "CANCELLED"
+                        ? "bg-gray-100 text-gray-800"
+                        : item.status === "PENDING"
+                        ? "bg-blue-100 text-blue-800"
+                        : item.status === "CONFIRMED" || item.status === "PAID"
                         ? "bg-green-100 text-green-800"
-                        : item.status === "CANCELLED" || item.status === "EXPIRED"
+                        : item.status === "EXPIRED"
                         ? "bg-red-100 text-red-800"
-                        : "bg-blue-100 text-blue-800"
+                        : "bg-gray-100 text-gray-800"
                     }`}>
-                      {item.status === "COMPLETED" || item.status === "PAID" ? "DONE" :
-                       item.status === "CANCELLED" || item.status === "EXPIRED" ? "FAILED" :
-                       item.status === "PENDING" || item.status === "CONFIRMED" ? "WAITING FOR TICKET" : item.status}
+                      {item.status || "—"}
                     </span>
                   </div>
                   <div className="space-y-2">

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, Spin, Alert, Row, Col, Tag, Button, Modal, message, Input } from 'antd';
+import { Card, Spin, Alert, Row, Col, Tag, Button, Modal, message, Input, Typography, Empty } from 'antd';
+import { GiftOutlined, ReloadOutlined } from '@ant-design/icons';
 import { memberPromotionApi } from '../../../api/member/promotionApi';
 import { useMemberPromotions } from '../../../hooks/member/useMemberPromotions';
 import { MemberPromotion } from '../../../api/member/promotionApi';
@@ -31,10 +32,10 @@ export default function MemberPromotionsPage() {
 
   const handleRedeem = (promotion: MemberPromotion) => {
     Modal.confirm({
-      title: 'Are you sure you want to redeem this promotion?',
-      content: `This will cost ${promotion.pointsRequired} points. Continue?`,
+      title: 'Confirm Redeem',
+      content: `Are you sure you want to redeem ${promotion.pointsRequired} points for this promotion?`,
       okText: 'Yes',
-      cancelText: 'No',
+      cancelText: 'Cancel',
       onOk: async () => {
         setRedeemLoading(true);
         try {
@@ -59,104 +60,188 @@ export default function MemberPromotionsPage() {
   const renderPromotionCard = (promotion: MemberPromotion) => (
     <Card
       key={promotion.promotionId}
-      style={{ marginBottom: 24, borderRadius: 12, boxShadow: '0 2px 8px #f0f1f2' }}
+      className="mb-4 hover:shadow-md transition-shadow"
+      bordered
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <span style={{ fontWeight: 600, fontSize: 18 }}>Đổi điểm ưu đãi</span>
-        <Tag color="purple" style={{ fontWeight: 600, fontSize: 14 }}>{promotion.pointsRequired} Points</Tag>
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center gap-2">
+          <GiftOutlined className="text-purple-600 text-lg" />
+          <span className="font-semibold text-lg">Point Redeem Offer</span>
+        </div>
+        <Tag color="purple" className="font-semibold text-sm px-3 py-1">
+          {promotion.pointsRequired} Points
+        </Tag>
       </div>
-      <div style={{ marginBottom: 8 }}>{promotion.description}</div>
-      <div style={{ marginBottom: 8 }}>
-        <b>Discount:</b> {promotion.discountValue.toLocaleString()}₫ OFF
+      
+      <div className="space-y-2 mb-4">
+        {/* Giữ description từ API (tiếng Việt) */}
+        <p className="text-gray-700">{promotion.description}</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+          <div>
+            <span className="font-medium text-gray-600">Discount:</span>
+            <span className="ml-2 text-green-600 font-semibold">
+              {promotion.discountValue.toLocaleString()}₫ OFF
+            </span>
+          </div>
+          
+          <div>
+            <span className="font-medium text-gray-600">Validity:</span>
+            <span className="ml-2">{promotion.startDate} to {promotion.endDate}</span>
+          </div>
+          
+          <div>
+            <span className="font-medium text-gray-600">Usage:</span>
+            <span className="ml-2">{promotion.currentUsageCount}/{promotion.maxUsageCount}</span>
+          </div>
+          
+          <div>
+            <span className="font-medium text-gray-600">Status:</span>
+            <span className={`ml-2 font-medium ${promotion.isActive ? 'text-green-600' : 'text-red-600'}`}>
+              {promotion.isActive ? 'Active' : 'Inactive'}
+            </span>
+          </div>
+        </div>
       </div>
-      <div style={{ marginBottom: 8 }}>
-        <b>Validity:</b> {promotion.startDate} to {promotion.endDate}
-      </div>
-      <div style={{ marginBottom: 8 }}>
-        <b>Usage:</b> {promotion.currentUsageCount}/{promotion.maxUsageCount}
-      </div>
-      <div style={{ fontSize: 13, color: '#666', marginBottom: 8 }}>
-        Active: <b>{promotion.isActive ? 'Yes' : 'No'}</b><br />
-        Start: {promotion.startDate}<br />
-        End: {promotion.endDate}<br />
-        Can Redeem: <b>{promotion.isActive ? 'Yes' : 'No'}</b>
-      </div>
+
       <Button
         type="primary"
-        style={{ background: '#1677ff', fontWeight: 600 }}
+        size="middle"
         disabled={!promotion.isActive || redeemLoading || (currentPoints !== null && currentPoints < promotion.pointsRequired)}
         loading={redeemLoading}
         onClick={() => handleRedeem(promotion)}
+        className="w-full md:w-auto"
       >
         Redeem
       </Button>
     </Card>
   );
 
+  // Loading state
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
-        <Spin size="large" />
-        <p>Loading promotions...</p>
+      <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
+        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-4 lg:p-6">
+          <div className="flex justify-center items-center py-12">
+            <Spin size="large" />
+            <span className="ml-3">Loading promotions...</span>
+          </div>
+        </div>
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <Alert
-        message="Error"
-        description={error}
-        type="error"
-        showIcon
-        style={{ margin: '20px' }}
-      />
+      <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
+        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-4 lg:p-6">
+          <Alert
+            message="Error Loading Promotions"
+            description={error}
+            type="error"
+            showIcon
+            action={
+              <Button size="small" type="primary" onClick={refetchPromotions}>
+                Try Again
+              </Button>
+            }
+          />
+        </div>
+      </div>
     );
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: 700, margin: '0 auto' }}>
-      <h1 style={{ textAlign: 'center', fontWeight: 700, marginBottom: 24 }}>Redeem Promotions with Points</h1>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 24 }}>
-        <Tag color="gold" style={{ fontSize: 16, fontWeight: 600 }}>
-          Your Points: {currentPoints !== null ? currentPoints : memberPoints}
-        </Tag>
-        <Tag color="blue" style={{ fontSize: 15, fontWeight: 600 }}>Level: {memberInfo?.membershipLevel || 'N/A'}</Tag>
-        <Tag color="green" style={{ fontSize: 15, fontWeight: 600 }}>Total Bookings: {memberInfo?.totalBookings ?? 0}</Tag>
-      </div>
-      <Modal
-        open={showCodeModal}
-        onCancel={() => {
-          setShowCodeModal(false);
-          // Không reset currentPoints hoặc redeemCode ở đây để giữ lại mã code cho user copy
-        }}
-        footer={null}
-        title="Your Promotion Code"
-      >
-        <div style={{ textAlign: 'center', margin: 16 }}>
-          <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 8 }}>Redeem Successful!</div>
-          <div style={{ marginBottom: 8 }}>Use this code when booking to get your discount:</div>
-          <Input value={redeemCode || ''} readOnly style={{ textAlign: 'center', fontWeight: 700, fontSize: 20, marginBottom: 12 }} />
-          <Button
-            type="primary"
-            onClick={() => {
-              if (redeemCode) {
-                navigator.clipboard.writeText(redeemCode);
-                message.success('Copied!');
-              }
-            }}
-          >Copy Code</Button>
+    <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-4 lg:p-6">
+        <Typography.Title level={2} className="text-center mb-6 lg:mb-8 mt-8">
+          Redeem Promotions with Points
+        </Typography.Title>
+
+        {/* Points & Stats Section */}
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 mb-6">
+          <div className="flex flex-wrap justify-center gap-4">
+            <Tag color="gold" className="text-base font-semibold px-4 py-2">
+              Your Points: {currentPoints !== null ? currentPoints : memberPoints}
+            </Tag>
+            <Tag color="blue" className="text-base font-semibold px-4 py-2">
+              Level: {memberInfo?.membershipLevel || 'N/A'}
+            </Tag>
+            <Tag color="green" className="text-base font-semibold px-4 py-2">
+              Total Bookings: {memberInfo?.totalBookings ?? 0}
+            </Tag>
+          </div>
         </div>
-      </Modal>
-      <Row gutter={[16, 16]} justify="center">
-        {promotions.length > 0 ? promotions.map(promotion => (
-          <Col xs={24} md={18} lg={16} key={promotion.promotionId}>
-            {renderPromotionCard(promotion)}
-          </Col>
-        )) : (
-          <Col span={24}><Alert message="No promotions available" type="info" showIcon /></Col>
-        )}
-      </Row>
+
+        {/* Header Controls */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-2">
+            <GiftOutlined className="text-purple-600 text-xl" />
+            <span className="text-lg font-medium text-gray-700">Available Promotions</span>
+          </div>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={refetchPromotions}
+            loading={loading}
+            size="middle"
+          >
+            Refresh
+          </Button>
+        </div>
+
+        {/* Success Modal */}
+        <Modal
+          open={showCodeModal}
+          onCancel={() => setShowCodeModal(false)}
+          footer={null}
+          title="Your Promotion Code"
+          centered
+        >
+          <div className="text-center p-4">
+            <div className="text-green-600 text-lg font-semibold mb-3">Redeem Successful!</div>
+            <div className="mb-4 text-gray-600">Use this code when booking to get your discount:</div>
+            <Input 
+              value={redeemCode || ''} 
+              readOnly 
+              className="text-center font-bold text-xl mb-4" 
+              size="large"
+            />
+            <Button
+              type="primary"
+              size="large"
+              onClick={() => {
+                if (redeemCode) {
+                  navigator.clipboard.writeText(redeemCode);
+                  message.success('Code copied!');
+                }
+              }}
+              className="w-full"
+            >
+              Copy Code
+            </Button>
+          </div>
+        </Modal>
+
+        {/* Promotions List */}
+        <div>
+          {/* Filter chỉ hiển thị promotions có pointsRequired > 0 */}
+          {promotions.filter(promotion => promotion.pointsRequired > 0).length > 0 ? (
+            <div className="space-y-4">
+              {promotions
+                .filter(promotion => promotion.pointsRequired > 0)
+                .map(promotion => renderPromotionCard(promotion))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Empty
+                description="No point-redeemable promotions available"
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+              />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 } 
