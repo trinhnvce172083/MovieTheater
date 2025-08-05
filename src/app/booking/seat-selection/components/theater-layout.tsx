@@ -1,11 +1,15 @@
 import { Seat } from "@/app/booking/seat-selection/seatType";
 import React from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 
 interface TheaterLayoutProps {
   seats: Seat[];
   selectedSeats: Seat[];
   onSelectSeat: (seat: Seat) => void;
 }
+
+
 
 const getSeatColor = (seat: Seat) => {
   const type = seat.seatType?.toUpperCase() || "";
@@ -35,19 +39,26 @@ const SeatComponent: React.FC<{
   seat: Seat;
   isSelected: boolean;
   onSelect: (seat: Seat) => void;
-}> = ({ seat, isSelected, onSelect }) => {
+  basePrice?: number;
+}> = ({ seat, isSelected, onSelect, basePrice = 150000 }) => {
   const handleClick = () => {
     if (seat.status === "AVAILABLE") {
       onSelect(seat);
     }
   };
+  
+  // Tính giá thật của ghế
+  const seatPrice = basePrice * (seat.priceMultiplier || 1);
+  const formattedPrice = seatPrice.toLocaleString() + "đ";
+  
   let tooltip = "";
   if (seat.status === "TEMPORARILY_RESERVED")
     tooltip = "Seat temporarily reserved";
   else if (seat.status === "OCCUPIED") tooltip = "Seat occupied";
-  else if (seat.seatType?.toUpperCase() === "COUPLE") tooltip = "Couple seat";
-  else if (seat.seatType?.toUpperCase() === "VIP") tooltip = "VIP seat";
-  else tooltip = "Standard seat";
+  else if (seat.seatType?.toUpperCase() === "COUPLE") tooltip = `Couple seat - ${formattedPrice}`;
+  else if (seat.seatType?.toUpperCase() === "VIP") tooltip = `VIP seat - ${formattedPrice}`;
+  else tooltip = `Standard seat - ${formattedPrice}`;
+  
   return (
     <button
       className={getSeatStyle(seat, isSelected)}
@@ -65,6 +76,9 @@ const TheaterLayout: React.FC<TheaterLayoutProps> = ({
   selectedSeats,
   onSelectSeat,
 }) => {
+  // Lấy basePrice từ Redux scheduleInfo
+  const scheduleInfo = useSelector((state: RootState) => state.booking.scheduleInfo);
+  const basePrice = scheduleInfo?.basePrice || 150000;
   // Fix lỗi: Nếu seats undefined/null thì trả về thông báo
   if (!seats || !Array.isArray(seats) || seats.length === 0) {
     return <div className="text-center text-red-500 py-8">Không có dữ liệu ghế để hiển thị.</div>;
@@ -123,6 +137,7 @@ const TheaterLayout: React.FC<TheaterLayoutProps> = ({
                       seat={seat}
                       isSelected={selectedSeats.some((s) => s.seatId === seat.seatId)}
                       onSelect={onSelectSeat}
+                      basePrice={basePrice}
                     />
                   ))}
                 </div>
@@ -134,6 +149,7 @@ const TheaterLayout: React.FC<TheaterLayoutProps> = ({
                       seat={seat}
                       isSelected={selectedSeats.some((s) => s.seatId === seat.seatId)}
                       onSelect={onSelectSeat}
+                      basePrice={basePrice}
                     />
                   ))}
                 </div>
