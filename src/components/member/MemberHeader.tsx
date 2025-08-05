@@ -43,8 +43,8 @@ const MEMBER_TABS = [
     path: "/member/promotions",
   },
   {
-    key: "cancel",
-    label: "Cancel Ticket",
+    key: "cancelled",
+    label: "Cancelled Tickets",
     icon: <CloseCircleOutlined />,
     path: "/member/tickets",
   },
