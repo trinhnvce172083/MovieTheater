@@ -261,7 +261,7 @@ public class EmailServiceImpl implements EmailService {
 
             Map<String, Object> variables = new HashMap<>();
             variables.put("fullName", customerName);
-            variables.put("verificationLink", websiteUrl + "/api/auth/verify-email?token=" + verificationToken);
+            variables.put("verificationLink", frontendUrl + "/auth/verify-email/" + verificationToken);
             variables.put("expirationHours", 24);
             variables.put("supportEmail", supportEmail);
             variables.put("appName", companyName);
