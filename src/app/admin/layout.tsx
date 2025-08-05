@@ -19,6 +19,7 @@ import ROUTES from "@/constants/routes";
 import Image from "next/image";
 import AdminHeader from "./AdminHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
+import AdminAuthGuard from "@/components/guards/AdminAuthGuard";
 
 const { Sider, Content } = Layout;
 
@@ -169,7 +170,8 @@ export default function AdminLayout({
   };
 
   return (
-    <Layout>
+    <AdminAuthGuard>
+      <Layout>
       {/* Desktop Sidebar */}
       {!isMobile && (
         <Sider
@@ -566,5 +568,6 @@ export default function AdminLayout({
         }
       `}</style>
     </Layout>
+    </AdminAuthGuard>
   );
 }
