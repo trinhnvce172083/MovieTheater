@@ -1,5 +1,6 @@
 package com.swp.MovieTheaterService.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.swp.MovieTheaterService.enums.ConcessionCategory;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -81,6 +82,7 @@ public class Concession {
 
     // Relationships
     @OneToMany(mappedBy = "concession", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Prevent circular reference: Concession -> BookingConcession -> Concession
     private List<BookingConcession> bookingConcessions;
 
     // Business methods

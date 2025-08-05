@@ -1,5 +1,6 @@
 package com.swp.MovieTheaterService.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.swp.MovieTheaterService.enums.SeatStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -69,6 +70,7 @@ public class Seat extends BaseEntity {
     private CinemaRoom cinemaRoom;
 
     @OneToMany(mappedBy = "seat", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Prevent circular reference: Seat -> BookingSeat -> Seat
     private List<BookingSeat> bookingSeats;
 
     @CreationTimestamp

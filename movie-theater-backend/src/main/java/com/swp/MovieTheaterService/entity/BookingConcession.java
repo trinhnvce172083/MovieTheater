@@ -1,5 +1,6 @@
 package com.swp.MovieTheaterService.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,6 +34,7 @@ public class BookingConcession {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id", nullable = false)
+    @JsonIgnore  // Prevent circular reference: Booking -> BookingConcession -> Booking
     private Booking booking;
 
     @ManyToOne(fetch = FetchType.LAZY)

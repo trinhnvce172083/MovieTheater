@@ -1,5 +1,6 @@
 package com.swp.MovieTheaterService.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.swp.MovieTheaterService.enums.SeatStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -66,6 +67,7 @@ public class BookingSeat extends BaseEntity {
     // Relationships
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id", nullable = false)
+    @JsonIgnore  // Prevent circular reference: Booking -> BookingSeat -> Booking
     private Booking booking;
 
     @ManyToOne(fetch = FetchType.LAZY)
