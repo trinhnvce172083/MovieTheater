@@ -203,6 +203,8 @@ logging:
     com.swp.MovieTheaterService: INFO
     com.swp.MovieTheaterService.scheduler: INFO
     com.swp.MovieTheaterService.service.impl.AutoScheduleServiceImpl: DEBUG
+    com.swp.MovieTheaterService.service.impl.BookingServiceImpl: DEBUG
+    com.swp.MovieTheaterService.service.impl.ConcessionServiceImpl: DEBUG
     org.springframework.security: WARN
     org.hibernate.SQL: WARN
   pattern:

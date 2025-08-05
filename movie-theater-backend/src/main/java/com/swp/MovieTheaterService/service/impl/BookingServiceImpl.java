@@ -164,6 +164,7 @@ public class BookingServiceImpl implements BookingService {
             Double concessionAmount = 0.0;
             if (request.hasConcessionOrders()) {
                 log.info("Processing {} concession orders", request.getConcessionOrders().size());
+                log.debug("Concession orders details: {}", request.getConcessionOrders());
 
                 // Validate each concession order
                 for (ConcessionOrderRequest concessionOrder : request.getConcessionOrders()) {
@@ -204,9 +205,13 @@ public class BookingServiceImpl implements BookingService {
 
             // 15. Create booking concessions relationships if any
             if (request.hasConcessionOrders()) {
-                createBookingConcessions(savedBooking, request.getConcessionOrders());
-                log.info("Created {} concession orders for booking {}",
+                log.info("Starting to create {} concession orders for booking {}", 
                         request.getConcessionOrders().size(), savedBooking.getBookingId());
+                createBookingConcessions(savedBooking, request.getConcessionOrders());
+                log.info("Successfully created {} concession orders for booking {}",
+                        request.getConcessionOrders().size(), savedBooking.getBookingId());
+            } else {
+                log.warn("No concession orders found in request for booking {}", savedBooking.getBookingId());
             }
 
             // 16. Update schedule seat counts
@@ -230,8 +235,9 @@ public class BookingServiceImpl implements BookingService {
             log.info("Booking created successfully with ID: {} and final amount: {}", 
                     savedBooking.getBookingId(), finalAmount);
 
-            // 19. Return booking response
-            return bookingMapper.toResponse(savedBooking);
+            // 19. Reload booking with concessions for response mapping
+            Booking bookingWithConcessions = findBookingByIdWithConcessions(savedBooking.getBookingId());
+            return bookingMapper.toResponse(bookingWithConcessions);
 
         } catch (Exception e) {
             // Release seats if something goes wrong
@@ -1461,6 +1467,20 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
     }
 
+    /**
+     * Find booking by ID with concessions loaded (force fetch)
+     */
+    private Booking findBookingByIdWithConcessions(Long bookingId) {
+        Booking booking = findBookingById(bookingId);
+        
+        // Force load concessions to avoid lazy loading issues
+        if (booking.getBookingConcessions() != null) {
+            booking.getBookingConcessions().size(); // Trigger lazy loading
+        }
+        
+        return booking;
+    }
+
     private Schedule findScheduleById(Long scheduleId) {
         return scheduleRepository.findById(scheduleId)
                 .filter(Schedule::getIsActive)
@@ -1540,14 +1560,28 @@ public class BookingServiceImpl implements BookingService {
      * Create booking concessions relationships
      */
     private void createBookingConcessions(Booking booking, List<ConcessionOrderRequest> concessionOrders) {
+        log.debug("Creating booking concessions for booking ID: {} with {} orders", 
+                booking.getBookingId(), concessionOrders.size());
         List<BookingConcession> bookingConcessions = new ArrayList<>();
 
         for (ConcessionOrderRequest order : concessionOrders) {
+            log.debug("Processing concession order - ID: {}, Quantity: {}", 
+                    order.getConcessionId(), order.getQuantity());
+            
             // Get concession details
             Concession concession = concessionService.getConcessionById(order.getConcessionId());
+            log.debug("Found concession: {} - Stock: {}, IsActive: {}, IsAvailable: {}", 
+                    concession.getFullName(), concession.getStockQuantity(), 
+                    concession.getIsActive(), concession.getIsAvailable());
 
             // Validate availability again (double check)
-            if (!concessionService.isAvailableForOrder(order.getConcessionId(), order.getQuantity())) {
+            boolean isAvailable = concessionService.isAvailableForOrder(order.getConcessionId(), order.getQuantity());
+            log.debug("Availability check for {} x {}: {}", concession.getFullName(), order.getQuantity(), isAvailable);
+            
+            if (!isAvailable) {
+                log.error("Concession {} not available - Stock: {}, Required: {}, IsActive: {}, IsAvailable: {}", 
+                        concession.getFullName(), concession.getStockQuantity(), order.getQuantity(),
+                        concession.getIsActive(), concession.getIsAvailable());
                 throw new AppException(ErrorCode.CONCESSION_OUT_OF_STOCK,
                         String.format("Không đủ số lượng cho %s", concession.getFullName()));
             }

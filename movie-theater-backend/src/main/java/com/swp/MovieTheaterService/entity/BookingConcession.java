@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
  * @version 1.0.0
  */
 @Entity
-@Table(name = "booking_concessions")
+@Table(name = "movietheater_booking_concession")
 @Data
 @Builder
 @NoArgsConstructor
