@@ -192,4 +192,50 @@ export class MovieApiService {
       };
     }
   }
+
+  static async getAllMovies(): Promise<ApiResponse<Movie[]>> {
+    try {
+      const response = await axiosClient.get('/movies');
+      const data = response.data;
+      
+      // Handle ApiResponse format from backend: { success: true, data: { content: [...] } }
+      if (data && data.success && data.data && Array.isArray(data.data.content)) {
+        return {
+          data: data.data.content,
+          success: true,
+          message: data.message,
+        };
+      } 
+      // Handle direct array response
+      else if (Array.isArray(data)) {
+        return {
+          data: data,
+          success: true,
+          message: "Movies fetched successfully"
+        };
+      }
+      // Handle wrapped data structure
+      else if (data && data.success && Array.isArray(data.data)) {
+        return {
+          data: data.data,
+          success: true,
+          message: data.message,
+        };
+      } else {
+        console.error("Unexpected API response structure for all movies:", data);
+        return {
+          data: [],
+          success: false,
+          message: data?.message || "Failed to fetch all movies",
+        };
+      }
+    } catch (error: unknown) {
+      console.error("❌ Error fetching all movies:", error);
+      return {
+        data: [],
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to fetch all movies",
+      };
+    }
+  }
 }

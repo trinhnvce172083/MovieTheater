@@ -46,16 +46,48 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
   onCancel,
   loading
 }) => {
+  // Only render the modal when open to prevent useForm warning
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <MovieFormContent
+      open={open}
+      editingMovie={editingMovie}
+      onSubmit={onSubmit}
+      onCancel={onCancel}
+      loading={loading}
+    />
+  );
+};
+
+// Separate form component to properly handle useForm
+const MovieFormContent: React.FC<MovieFormModalProps> = ({
+  open,
+  editingMovie,
+  onSubmit,
+  onCancel,
+  loading
+}) => {
   const [form] = Form.useForm();
   const [posterFileList, setPosterFileList] = useState<UploadFile[]>([]);
   const [backdropFileList, setBackdropFileList] = useState<UploadFile[]>([]);
   const [posterPreview, setPosterPreview] = useState<string>('');
   const [backdropPreview, setBackdropPreview] = useState<string>('');
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isFeaturedState, setIsFeaturedState] = useState(false); // Add controlled state
 
   // Cleanup function
   const resetFormState = useCallback(() => {
     form.resetFields();
+    // Explicitly set default values for boolean fields
+    form.setFieldsValue({
+      isFeatured: false,
+      isAdultContent: false,
+      status: 'COMING_SOON'
+    });
+    setIsFeaturedState(false); // Reset controlled state
     setPosterPreview('');
     setBackdropPreview('');
     setPosterFileList([]);
@@ -72,7 +104,6 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
     }
 
     if (editingMovie && !isInitialized) {
-      console.log('🎬 [MovieFormModal] Initializing form with editing data:', editingMovie);
       
       // Transform data for form fields
       const formData = {
@@ -100,17 +131,15 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
         isFeatured: Boolean(editingMovie.isFeatured),
       };
       
-      console.log('🔧 [MovieFormModal] Transformed form data:', formData);
       form.setFieldsValue(formData);
+      setIsFeaturedState(Boolean(editingMovie.isFeatured)); // Sync controlled state
       
       // Set image previews for editing
       if (editingMovie.posterUrl) {
         setPosterPreview(editingMovie.posterUrl);
-        console.log('🖼️ [MovieFormModal] Set poster preview:', editingMovie.posterUrl);
       }
       if (editingMovie.backdropUrl) {
         setBackdropPreview(editingMovie.backdropUrl);
-        console.log('🖼️ [MovieFormModal] Set backdrop preview:', editingMovie.backdropUrl);
       }
       
       // Clear file lists since we're showing existing images
@@ -118,7 +147,6 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
       setBackdropFileList([]);
       setIsInitialized(true);
     } else if (open && !editingMovie && !isInitialized) {
-      console.log('🎬 [MovieFormModal] Resetting form for new movie');
       resetFormState();
       setIsInitialized(true);
     }
@@ -487,14 +515,21 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
               <Form.Item name="isFeatured" label="Featured Movie" valuePropName="checked" initialValue={false}>
                 <Space>
                   <Switch 
+                    checked={isFeaturedState}
                     checkedChildren="Featured" 
-                    unCheckedChildren="Normal" 
+                    unCheckedChildren="Normal"
+                    onChange={(checked) => {
+                      setIsFeaturedState(checked);
+                      form.setFieldsValue({ isFeatured: checked });
+                    }}
                   />
-                  <span className="text-sm text-gray-500 ml-2">
-                    {form.getFieldValue('isFeatured') ? 'This movie will be featured on homepage' : 'Regular movie display'}
-                  </span>
                 </Space>
               </Form.Item>
+            </Col>
+            <Col span={12}>
+              <div className="text-sm text-gray-500 mt-8">
+                {isFeaturedState ? 'This movie will be featured on homepage' : 'Regular movie display'}
+              </div>
             </Col>
           </Row>
         </>

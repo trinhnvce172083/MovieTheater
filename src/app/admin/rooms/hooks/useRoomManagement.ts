@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { message } from 'antd';
-import { getAllRooms, createRoom, updateRoom, deleteRoom, CinemaRoom, CinemaRoomCreateRequest } from '@/api/admin/getAllRooms';
+import { getAllRooms, createRoom, updateRoom, deleteRoom, CinemaRoom, CinemaRoomCreateRequest, CinemaRoomUpdateRequest } from '@/api/admin/getAllRooms';
 
 interface UseRoomManagementProps {
   initialPageSize?: number;
@@ -24,6 +24,14 @@ export const useRoomManagement = ({ initialPageSize = 10 }: UseRoomManagementPro
   const [isUsingApiData, setIsUsingApiData] = useState(true);
   const [totalElements, setTotalElements] = useState(0);
 
+  // Debug: Log when allRoomData changes
+  useEffect(() => {
+    console.log('🔄 allRoomData updated:', allRoomData.length, 'rooms');
+    if (allRoomData.length > 0) {
+      console.log('📝 First room data:', allRoomData[0]);
+    }
+  }, [allRoomData]);
+
   // Filter state
   const [filters, setFilters] = useState<Filters>({
     searchTerm: '',
@@ -39,23 +47,29 @@ export const useRoomManagement = ({ initialPageSize = 10 }: UseRoomManagementPro
 
   // Fetch rooms function
   const fetchRooms = useCallback(async () => {
+    console.log('🔄 Fetching rooms - Page:', pagination.currentPage, 'Size:', pagination.pageSize);
     setLoading(true);
     try {
       const response = await getAllRooms(pagination.currentPage - 1, pagination.pageSize);
       
       if (response && response.content && Array.isArray(response.content)) {
-        setAllRoomData(response.content);
+        console.log('✅ Rooms fetched successfully:', response.content.length, 'rooms');
+        console.log('📊 Room data:', response.content.map(r => ({id: r.cinemaRoomId, name: r.cinemaRoomName, updatedAt: r.updatedAt})));
+        
+        // Force state update by creating new array reference
+        const newRoomData = [...response.content];
+        setAllRoomData(newRoomData);
         setTotalElements(response.page.totalElements);
-        console.log('Rooms fetched successfully:', response.content.length, 'rooms');
+        console.log('🔄 State updated with new room data:', newRoomData.length, 'rooms');
         setIsUsingApiData(true);
       } else {
-        console.warn('Unexpected API response structure:', response);
+        console.warn('⚠️ Unexpected API response structure:', response);
         setAllRoomData([]);
         setTotalElements(0);
         setIsUsingApiData(false);
       }
     } catch (error) {
-      console.error("Failed to fetch rooms:", error);
+      console.error("❌ Failed to fetch rooms:", error);
       message.error("Failed to connect to backend server");
       setAllRoomData([]);
       setTotalElements(0);
@@ -128,15 +142,26 @@ export const useRoomManagement = ({ initialPageSize = 10 }: UseRoomManagementPro
     }
   }, [fetchRooms]);
 
-  const updateRoomAction = useCallback(async (id: number, roomData: Partial<CinemaRoomCreateRequest>): Promise<boolean> => {
+  const updateRoomAction = useCallback(async (id: number, roomData: CinemaRoomUpdateRequest): Promise<boolean> => {
     setLoading(true);
     try {
-      await updateRoom(id, roomData);
+      console.log('🔄 Starting update for room ID:', id, 'with data:', roomData);
+      const updatedRoom = await updateRoom(id, roomData);
+      console.log('✅ Update API returned:', updatedRoom);
+      
       message.success('Room updated successfully!');
+      
+      // Add small delay to ensure backend has processed the update
+      console.log('⏳ Waiting 500ms before refresh...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log('🔄 Refreshing room list...');
       await fetchRooms();
+      console.log('✅ Room list refreshed');
+      
       return true;
     } catch (error) {
-      console.error('Failed to update room:', error);
+      console.error('❌ Failed to update room:', error);
       message.error('Failed to update room');
       return false;
     } finally {

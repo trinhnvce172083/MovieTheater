@@ -20,6 +20,7 @@ const { Text } = Typography;
 export default function AdminRoomManagement() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingRoom, setEditingRoom] = useState<CinemaRoom | null>(null);
+  const [tableKey, setTableKey] = useState(0); // Force table re-render
   const router = useRouter();
 
   // Use custom hook for all room management logic
@@ -57,16 +58,22 @@ export default function AdminRoomManagement() {
     try {
       let success = false;
       if (editingRoom) {
+        console.log('Updating room:', editingRoom.cinemaRoomId, roomData);
         success = await updateRoom(editingRoom.cinemaRoomId, roomData);
       } else {
+        console.log('Creating new room:', roomData);
         success = await createRoom(roomData);
       }
 
       if (success) {
+        console.log('Operation successful, closing modal');
         setIsModalVisible(false);
         setEditingRoom(null);
+        setTableKey(prev => prev + 1); // Force table re-render
+        // The useRoomManagement hook already calls fetchRooms() after update/create
       }
-    } catch {
+    } catch (error) {
+      console.error('Modal submit error:', error);
       message.error('Please check required fields and try again.');
     }
   };
@@ -165,7 +172,7 @@ export default function AdminRoomManagement() {
           <div className="bg-white">
             <Spin spinning={loading}>
               <Table
-                dataSource={paginatedData}
+                dataSource={[...paginatedData]} // Force new array reference
                 columns={columns}
                 pagination={false}
                 scroll={{ x: 1200 }}
@@ -173,6 +180,7 @@ export default function AdminRoomManagement() {
                 className="professional-table"
                 size="small"
                 rowKey="cinemaRoomId"
+                key={`table-${tableKey}-${paginatedData.length}`} // More specific key
                 sortDirections={['ascend', 'descend']}
               />
             </Spin>
