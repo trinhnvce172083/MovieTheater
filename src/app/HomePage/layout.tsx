@@ -12,7 +12,7 @@ export default function HomePageLayout({children}: {children: React.ReactNode}) 
         <Header />
       </header>
       {/* Main content area */}
-      <main className=" p-5 pt-25 sm:px-6 lg:px-8 bg-gradient-to-b from-black via-orange-900 to-black flex-1">
+      <main className=" p-5 pt-30 sm:px-6 lg:px-8 bg-gradient-to-b from-black via-orange-900 to-black flex-1">
         {children}
       </main>
       {/* Footer section */}
