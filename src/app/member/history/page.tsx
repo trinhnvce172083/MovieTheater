@@ -1,19 +1,67 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Input, Typography, Button, DatePicker, Radio, Pagination, Row, Col, Card } from "antd";
+import { Table, Input, Typography, Button, DatePicker, Pagination, Row, Col, Card } from "antd";
 import dayjs from "dayjs";
 
-// Mock data
+// Mock data với phim hiện tại và thời gian thực tế
 const mockData = [
   {
     key: 1,
-    dateCreated: "18/11/2018 13:10",
-    movieName: "Doctor Strange: Phù Thủy Tối Thượng",
-    addedScore: "13.500",
+    dateCreated: "15/01/2025 14:30",
+    movieName: "DORAEMON: NOBITA'S ART WORLD TALES",
+    addedScore: "15",
     usedScore: "",
   },
-  // Thêm dữ liệu nếu muốn test phân trang
+  {
+    key: 2,
+    dateCreated: "12/01/2025 16:45",
+    movieName: "LILO & STITCH",
+    addedScore: "12",
+    usedScore: "",
+  },
+  {
+    key: 3,
+    dateCreated: "10/01/2025 19:20",
+    movieName: "MISSION IMPOSSIBLE: DEADLY RECKONING",
+    addedScore: "18",
+    usedScore: "",
+  },
+  {
+    key: 4,
+    dateCreated: "08/01/2025 13:15",
+    movieName: "THE STONE",
+    addedScore: "10",
+    usedScore: "5",
+  },
+  {
+    key: 5,
+    dateCreated: "05/01/2025 20:30",
+    movieName: "DORAEMON: NOBITA'S ART WORLD TALES",
+    addedScore: "15",
+    usedScore: "",
+  },
+  {
+    key: 6,
+    dateCreated: "03/01/2025 11:20",
+    movieName: "LILO & STITCH",
+    addedScore: "",
+    usedScore: "8",
+  },
+  {
+    key: 7,
+    dateCreated: "01/01/2025 16:45",
+    movieName: "THE STONE",
+    addedScore: "",
+    usedScore: "12",
+  },
+  {
+    key: 8,
+    dateCreated: "30/12/2024 19:30",
+    movieName: "DORAEMON: NOBITA'S ART WORLD TALES",
+    addedScore: "20",
+    usedScore: "",
+  },
 ];
 
 const columns = [
@@ -21,45 +69,61 @@ const columns = [
     title: "#",
     dataIndex: "key",
     key: "key",
-    width: 50,
+    width: 60,
     render: (text: any, record: any, index: number) => index + 1,
   },
   {
     title: "DATE CREATED",
     dataIndex: "dateCreated",
     key: "dateCreated",
+    width: 150,
   },
   {
     title: "MOVIE NAME",
     dataIndex: "movieName",
     key: "movieName",
+    width: 300,
+    ellipsis: true,
+    render: (text: string) => (
+      <div title={text} className="truncate">
+        {text}
+      </div>
+    ),
   },
   {
     title: "ADDED SCORE",
     dataIndex: "addedScore",
     key: "addedScore",
+    width: 120,
+    align: 'center' as const,
   },
   {
     title: "USED SCORE",
     dataIndex: "usedScore",
     key: "usedScore",
+    width: 120,
+    align: 'center' as const,
   },
 ];
 
 export default function ScoreHistoryPage() {
-  const [fromDate, setFromDate] = useState(dayjs("2018-11-12"));
-  const [toDate, setToDate] = useState(dayjs("2018-12-30"));
-  const [type, setType] = useState("add");
+  const [fromDate, setFromDate] = useState(dayjs("2025-01-01"));
+  const [toDate, setToDate] = useState(dayjs("2025-01-31"));
   const [pageSize, setPageSize] = useState(10);
   const [current, setCurrent] = useState(1);
 
-  // Lọc dữ liệu (mock, luôn trả về mockData)
-  const filteredData = mockData;
+  // Lọc dữ liệu theo ngày
+  const filteredData = mockData.filter(item => {
+    const itemDate = dayjs(item.dateCreated, "DD/MM/YYYY HH:mm");
+    return itemDate.isAfter(fromDate.subtract(1, 'day')) && 
+           itemDate.isBefore(toDate.add(1, 'day'));
+  });
+
   const pagedData = filteredData.slice((current - 1) * pageSize, current * pageSize);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
-      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm p-4 lg:p-6">
+      <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-sm p-4 lg:p-6">
         <Typography.Title level={4} className="text-center mb-6 lg:mb-8 mt-8">
           History of score Adding / Using
         </Typography.Title>
@@ -68,7 +132,7 @@ export default function ScoreHistoryPage() {
         <Row gutter={[16, 16]} className="mb-6">
           <Col xs={24} md={6}>
             <div className="mb-2 font-medium">
-              From date:<span className="text-red-500">*</span>
+              From date:
             </div>
             <DatePicker
               value={fromDate}
@@ -80,7 +144,7 @@ export default function ScoreHistoryPage() {
           </Col>
           <Col xs={24} md={6}>
             <div className="mb-2 font-medium">
-              To date:<span className="text-red-500">*</span>
+              To date:
             </div>
             <DatePicker
               value={toDate}
@@ -89,21 +153,6 @@ export default function ScoreHistoryPage() {
               onChange={setToDate}
               size="middle"
             />
-          </Col>
-          <Col xs={24} md={6} className="flex items-center">
-            <Radio.Group
-              value={type}
-              onChange={e => setType(e.target.value)}
-              className="flex flex-col gap-2"
-            >
-              <Radio value="add">History of score adding</Radio>
-              <Radio value="use">History of score using</Radio>
-            </Radio.Group>
-          </Col>
-          <Col xs={24} md={6} className="flex items-center">
-            <Button type="primary" className="w-full md:w-auto md:mt-6" size="middle">
-              ✔ View score
-            </Button>
           </Col>
         </Row>
 
@@ -143,7 +192,8 @@ export default function ScoreHistoryPage() {
           pagination={false}
           bordered
           size="middle"
-            scroll={{ x: 800 }}
+          scroll={{ x: 750 }}
+          className="custom-table"
         />
         </div>
 
