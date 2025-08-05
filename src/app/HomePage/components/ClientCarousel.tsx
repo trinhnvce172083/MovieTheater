@@ -153,20 +153,20 @@ function ClientCarousel({
         <>
           <button
             onClick={handlePrev}
-            className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white backdrop-blur-sm rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center z-20 shadow-xl transition-all opacity-70 group-hover:opacity-100 hover:scale-110 active:scale-95 border border-white/20"
+            className="absolute left-1 sm:left-2 md:left-4 lg:left-6 top-1/2 -translate-y-1/2 bg-transparent text-white/0 hover:bg-black/70 hover:text-white backdrop-blur-sm rounded-full w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 flex items-center justify-center z-20 shadow-xl transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95 border border-transparent group-hover:border-white/20"
             aria-label="Previous slide"
             type="button"
           >
-            <LeftOutlined className="text-base md:text-xl" />
+            <LeftOutlined className="text-sm sm:text-base md:text-xl lg:text-2xl transition-colors duration-300" />
           </button>
 
           <button
             onClick={handleNext}
-            className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white backdrop-blur-sm rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center z-20 shadow-xl transition-all opacity-70 group-hover:opacity-100 hover:scale-110 active:scale-95 border border-white/20"
+            className="absolute right-1 sm:right-2 md:right-4 lg:right-6 top-1/2 -translate-y-1/2 bg-transparent text-white/0 hover:bg-black/70 hover:text-white backdrop-blur-sm rounded-full w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 flex items-center justify-center z-20 shadow-xl transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95 border border-transparent group-hover:border-white/20"
             aria-label="Next slide"
             type="button"
           >
-            <RightOutlined className="text-base md:text-xl" />
+            <RightOutlined className="text-sm sm:text-base md:text-xl lg:text-2xl transition-colors duration-300" />
           </button>
         </>
       )}
