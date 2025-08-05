@@ -1500,9 +1500,9 @@ public class BookingServiceImpl implements BookingService {
     private void createBookingSeats(Booking booking, List<Long> seatIds) {
         List<BookingSeat> bookingSeats = new ArrayList<>();
 
-        // Get schedule to calculate correct seat prices
+        // Get schedule to calculate correct seat prices using movie base price
         Schedule schedule = booking.getSchedule();
-        Double basePrice = schedule.getPrice();
+        Double basePrice = schedule.getMovie().getPrice();
 
         for (Long seatId : seatIds) {
             Seat seat = seatRepository.findById(seatId)
@@ -1511,7 +1511,7 @@ public class BookingServiceImpl implements BookingService {
             // Note: Seats are already TEMPORARILY_RESERVED by SeatReservationService
             // They will be converted to OCCUPIED only when payment is confirmed
 
-            // Calculate correct seat price: schedule base price * seat price multiplier
+            // Calculate correct seat price: movie base price * seat price multiplier
             Double correctSeatPrice = basePrice * seat.getPriceMultiplier();
 
             BookingSeat bookingSeat = new BookingSeat();
@@ -1667,16 +1667,16 @@ public class BookingServiceImpl implements BookingService {
         try {
             Double totalAmount = 0.0;
 
-            // Get schedule to get base price
+            // Get schedule to get movie base price
             Schedule schedule = findScheduleById(scheduleId);
-            Double basePrice = schedule.getPrice();
+            Double basePrice = schedule.getMovie().getPrice();
 
-            // Calculate total seat prices based on schedule price and seat multiplier
+            // Calculate total seat prices based on movie price and seat multiplier
             for (Long seatId : seatIds) {
                 Seat seat = seatRepository.findById(seatId)
                         .orElseThrow(() -> new AppException(ErrorCode.SEAT_NOT_FOUND));
 
-                // Calculate seat price: schedule base price * seat price multiplier
+                // Calculate seat price: movie base price * seat price multiplier
                 Double seatPrice = basePrice * seat.getPriceMultiplier();
                 totalAmount += seatPrice;
 

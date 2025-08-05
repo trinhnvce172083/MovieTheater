@@ -111,7 +111,7 @@ public class ScheduleMapper {
         response.setShowDate(schedule.getShowDate());
         response.setStartTime(schedule.getStartTime());
         response.setEndTime(schedule.getEndTime());
-        response.setPrice(schedule.getPrice());
+        response.setPrice(schedule.getMovie().getPrice());
         response.setTimeSlotType(schedule.getTimeSlotType());
         response.setIsActive(schedule.getIsActive());
         response.setStatus(schedule.getStatus());
@@ -166,7 +166,7 @@ public class ScheduleMapper {
         response.setShowDate(schedule.getShowDate());
         response.setStartTime(schedule.getStartTime());
         response.setEndTime(schedule.getEndTime());
-        response.setPrice(schedule.getPrice());
+        response.setPrice(schedule.getMovie().getPrice());
         response.setStatus(schedule.getStatus());
         response.setIs3D(schedule.getIs3D());
         response.setIsIMAX(schedule.getIsIMAX());
@@ -196,7 +196,7 @@ public class ScheduleMapper {
         response.setIsBookable(schedule.isBookable());
         response.setOccupancyRate(schedule.getOccupancyRate());
         response.setSpecialFeatures(schedule.getSpecialFeaturesText());
-        response.setPriceDisplay(CURRENCY_FORMATTER.format(schedule.getPrice()));
+        response.setPriceDisplay(CURRENCY_FORMATTER.format(schedule.getMovie().getPrice()));
 
         return response;
     }
@@ -222,7 +222,7 @@ public class ScheduleMapper {
         response.setCanCancel(canCancel(schedule));
         response.setCanUpdate(canUpdate(schedule));
         response.setCanDelete(canDelete(schedule));
-        response.setPriceDisplay(CURRENCY_FORMATTER.format(schedule.getPrice()));
+        response.setPriceDisplay(CURRENCY_FORMATTER.format(schedule.getMovie().getPrice()));
 
         if (schedule.getMovie() != null && schedule.getMovie().getDuration() != null) {
             response.setDurationDisplay(formatDuration(schedule.getMovie().getDuration()));

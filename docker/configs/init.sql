@@ -508,31 +508,30 @@ INSERT INTO movietheater_movie (
     auto_schedule_enabled, priority_score, min_daily_shows, max_daily_shows, preferred_room_types
 ) VALUES
 -- NOW_SHOWING (đang chiếu từ 6/2025)
-('From the World of John Wick: Ballerina', 'Ballerina', 'Ana de Armas trong vai nữ sát thủ báo thù trong vũ trụ John Wick.', 109, 'Action, Thriller', 'Len Wiseman', 'Ana de Armas, Keanu Reeves, Norman Reedus', 'English', 'USA', '2025-06-06', '2025-09-06', 'R', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/a1e85f97-7146-42de-b2af-cb66f5e50beb.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/b8d6b892-f315-4ee4-97ad-6a55cf8493f3.jpg', 'https://www.youtube.com/watch?v=ballerina_trailer', TRUE, TRUE, 150000, 'NOW_SHOWING', 7.8, 'Lionsgate Films', TRUE, 9, 3, 5, 'STANDARD,IMAX,VIP'),
+('From the World of John Wick: Ballerina', 'Ballerina', 'Ana de Armas trong vai nữ sát thủ báo thù trong vũ trụ John Wick.', 109, 'Action, Thriller', 'Len Wiseman', 'Ana de Armas, Keanu Reeves, Norman Reedus', 'English', 'USA', '2025-06-06', '2025-09-06', 'R', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/a1e85f97-7146-42de-b2af-cb66f5e50beb.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/ballerina-movie-3840x2160-22626.jpg', 'https://www.youtube.com/watch?v=ballerina_trailer', TRUE, TRUE, 150000, 'NOW_SHOWING', 7.8, 'Lionsgate Films', TRUE, 9, 3, 5, 'STANDARD,IMAX,VIP'),
 
-('How to Train Your Dragon', 'How to Train Your Dragon (Live-Action)', 'Phiên bản live-action về chàng trai Viking kết bạn với rồng.', 104, 'Adventure, Family, Fantasy', 'Dean DeBlois', 'Mason Thames, Nico Parker, Gerard Butler', 'English', 'USA', '2025-06-13', '2025-09-13', 'PG', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/b3a7dcad-a4d1-4747-ae48-354e6c5a1eea.jpg', 'https://image.tmdb.org/t/p/w1920/httyd_backdrop.jpg', 'https://www.youtube.com/watch?v=httyd_trailer', TRUE, TRUE, 140000, 'NOW_SHOWING', 7.2, 'Universal Pictures', TRUE, 8, 3, 5, 'STANDARD,IMAX,4DX'),
+('How to Train Your Dragon', 'How to Train Your Dragon (Live-Action)', 'Phiên bản live-action về chàng trai Viking kết bạn với rồng.', 104, 'Adventure, Family, Fantasy', 'Dean DeBlois', 'Mason Thames, Nico Parker, Gerard Butler', 'English', 'USA', '2025-06-13', '2025-09-13', 'PG', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/b3a7dcad-a4d1-4747-ae48-354e6c5a1eea.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/how-to-train-your-dragon-teaser-poster.avif', 'https://www.youtube.com/watch?v=httyd_trailer', TRUE, TRUE, 140000, 'NOW_SHOWING', 7.2, 'Universal Pictures', TRUE, 8, 3, 5, 'STANDARD,IMAX,4DX'),
 
-('Materialists', 'Materialists', 'Cô gái mai mối ở New York bị kẹt giữa tình yêu hoàn hảo và người yêu cũ.', 115, 'Comedy, Romance', 'Celine Song', 'Dakota Johnson, Chris Evans, Pedro Pascal', 'English', 'USA', '2025-06-13', '2025-09-13', 'R', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/d3ec6cb4-6911-42c1-96e5-6ad7b3961a0c.jpg', 'https://image.tmdb.org/t/p/w1920/materialists_backdrop.jpg', 'https://www.youtube.com/watch?v=materialists_trailer', TRUE, TRUE, 130000, 'NOW_SHOWING', 6.9, 'A24', TRUE, 7, 2, 4, 'STANDARD,VIP'),
+('Materialists', 'Materialists', 'Cô gái mai mối ở New York bị kẹt giữa tình yêu hoàn hảo và người yêu cũ.', 115, 'Comedy, Romance', 'Celine Song', 'Dakota Johnson, Chris Evans, Pedro Pascal', 'English', 'USA', '2025-06-13', '2025-09-13', 'R', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/d3ec6cb4-6911-42c1-96e5-6ad7b3961a0c.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/2025-06-12T203A34.webp', 'https://www.youtube.com/watch?v=materialists_trailer', TRUE, TRUE, 130000, 'NOW_SHOWING', 6.9, 'A24', TRUE, 7, 2, 4, 'STANDARD,VIP'),
 
-('28 Years Later', '28 Years Later', 'Virus rage trở lại tàn phá nhân loại trong phần tiếp theo 28 Weeks Later.', 118, 'Horror, Thriller', 'Danny Boyle', 'Jodie Comer, Aaron Taylor-Johnson, Cillian Murphy', 'English', 'UK', '2025-06-20', '2025-09-20', 'R', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/75ad0f6a-d67b-46b3-806d-9fd89e44b7b7.jpg', 'https://image.tmdb.org/t/p/w1920/28years_backdrop.jpg', 'https://www.youtube.com/watch?v=28years_trailer', TRUE, TRUE, 160000, 'NOW_SHOWING', 8.1, 'Sony Pictures', TRUE, 9, 3, 5, 'STANDARD,IMAX'),
+('28 Years Later', '28 Years Later', 'Virus rage trở lại tàn phá nhân loại trong phần tiếp theo 28 Weeks Later.', 118, 'Horror, Thriller', 'Danny Boyle', 'Jodie Comer, Aaron Taylor-Johnson, Cillian Murphy', 'English', 'UK', '2025-06-20', '2025-09-20', 'R', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/75ad0f6a-d67b-46b3-806d-9fd89e44b7b7.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/28-years-later-2025-3840x2160-20235.jpg', 'https://www.youtube.com/watch?v=28years_trailer', TRUE, TRUE, 160000, 'NOW_SHOWING', 8.1, 'Sony Pictures', TRUE, 9, 3, 5, 'STANDARD,IMAX'),
 
-('Elio', 'Elio', 'Cậu bé được đưa qua thiên hà và nhầm làm đại sứ cho hành tinh Trái Đất.', 101, 'Animation, Adventure, Family', 'Adrian Molina', 'Yonas Kibreab, America Ferrera, Zoe Saldana', 'English', 'USA', '2025-06-20', '2025-09-20', 'PG', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/bf2ec2d6-26f5-40e5-99a1-c8d15b480f77.jpg', 'https://image.tmdb.org/t/p/w1920/elio_backdrop.jpg', 'https://www.youtube.com/watch?v=elio_trailer', TRUE, TRUE, 120000, 'NOW_SHOWING', 7.5, 'Pixar Animation Studios', TRUE, 8, 3, 4, 'STANDARD,4DX'),
+('Elio', 'Elio', 'Cậu bé được đưa qua thiên hà và nhầm làm đại sứ cho hành tinh Trái Đất.', 101, 'Animation, Adventure, Family', 'Adrian Molina', 'Yonas Kibreab, America Ferrera, Zoe Saldana', 'English', 'USA', '2025-06-20', '2025-09-20', 'PG', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/bf2ec2d6-26f5-40e5-99a1-c8d15b480f77.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/1397053.jpg', 'https://www.youtube.com/watch?v=elio_trailer', TRUE, TRUE, 120000, 'NOW_SHOWING', 7.5, 'Pixar Animation Studios', TRUE, 8, 3, 4, 'STANDARD,4DX'),
 
-('Mission: Impossible - The Final Reckoning', 'Mission: Impossible - The Final Reckoning', 'Ethan Hunt đối mặt nhiệm vụ nguy hiểm nhất trong phần kết của series.', 163, 'Action, Adventure, Thriller', 'Christopher McQuarrie', 'Tom Cruise, Hayley Atwell, Ving Rhames', 'English', 'USA', '2025-05-23', '2025-09-23', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/25146c4e-d95e-4b39-8f34-375976bfe6dd.jpg', 'https://image.tmdb.org/t/p/w1920/mi_backdrop.jpg', 'https://www.youtube.com/watch?v=mi_trailer', TRUE, TRUE, 180000, 'NOW_SHOWING', 8.7, 'Paramount Pictures', TRUE, 10, 3, 5, 'STANDARD,IMAX'),
+('Mission: Impossible - The Final Reckoning', 'Mission: Impossible - The Final Reckoning', 'Ethan Hunt đối mặt nhiệm vụ nguy hiểm nhất trong phần kết của series.', 163, 'Action, Adventure, Thriller', 'Christopher McQuarrie', 'Tom Cruise, Hayley Atwell, Ving Rhames', 'English', 'USA', '2025-05-23', '2025-09-23', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/25146c4e-d95e-4b39-8f34-375976bfe6dd.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/tom-cruise-mission-3840x2160-22283.jpg', 'https://www.youtube.com/watch?v=mi_trailer', TRUE, TRUE, 180000, 'NOW_SHOWING', 8.7, 'Paramount Pictures', TRUE, 10, 3, 5, 'STANDARD,IMAX'),
 
 -- COMING_SOON (sắp chiếu)
-('F1: The Movie', 'F1', 'Tay đua F1 nghỉ hưu trở lại hướng dẫn tay đua trẻ.', 155, 'Action, Drama, Sport', 'Joseph Kosinski', 'Brad Pitt, Damson Idris, Javier Bardem', 'English', 'USA', '2025-06-27', '2025-10-27', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/5dfaa3d7-c7b4-4f2b-9259-14e1c1c3017c.jpg', 'https://image.tmdb.org/t/p/w1920/f1_backdrop.jpg', 'https://www.youtube.com/watch?v=f1_trailer', TRUE, TRUE, 180000, 'COMING_SOON', 8.3, 'Warner Bros. Pictures', TRUE, 9, 3, 5, 'STANDARD,IMAX'),
+('F1: The Movie', 'F1', 'Tay đua F1 nghỉ hưu trở lại hướng dẫn tay đua trẻ.', 155, 'Action, Drama, Sport', 'Joseph Kosinski', 'Brad Pitt, Damson Idris, Javier Bardem', 'English', 'USA', '2025-06-27', '2025-10-27', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/5dfaa3d7-c7b4-4f2b-9259-14e1c1c3017c.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/f1-the-movie-8k-3840x2160-22458.jpg', 'https://www.youtube.com/watch?v=f1_trailer', TRUE, TRUE, 180000, 'COMING_SOON', 8.3, 'Warner Bros. Pictures', TRUE, 9, 3, 5, 'STANDARD,IMAX'),
 
-('M3GAN 2.0', 'M3GAN 2.0', 'M3GAN trở lại với nâng cấp chết người.', 119, 'Horror, Science Fiction', 'Gerard Johnstone', 'Allison Williams, Violet McGraw, Jemaine Clement', 'English', 'USA', '2025-06-27', '2025-10-27', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/a03dbeb5-859c-4314-962c-b5fb8cc077b3.jpg', 'https://image.tmdb.org/t/p/w1920/megan2_backdrop.jpg', 'https://www.youtube.com/watch?v=megan2_trailer', TRUE, TRUE, 150000, 'COMING_SOON', 7.4, 'Universal Pictures', TRUE, 8, 3, 5, 'STANDARD,IMAX'),
+('M3GAN 2.0', 'M3GAN 2.0', 'M3GAN trở lại với nâng cấp chết người.', 119, 'Horror, Science Fiction', 'Gerard Johnstone', 'Allison Williams, Violet McGraw, Jemaine Clement', 'English', 'USA', '2025-06-27', '2025-10-27', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/a03dbeb5-859c-4314-962c-b5fb8cc077b3.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/hq720.webp', 'https://www.youtube.com/watch?v=megan2_trailer', TRUE, TRUE, 150000, 'COMING_SOON', 7.4, 'Universal Pictures', TRUE, 8, 3, 5, 'STANDARD,IMAX'),
 
-('Jurassic World: Rebirth', 'Jurassic World: Rebirth', 'Nhiệm vụ khai thác DNA khủng long cho nghiên cứu y học.', 134, 'Action, Adventure, Science Fiction', 'Gareth Edwards', 'Scarlett Johansson, Jonathan Bailey, Mahershala Ali', 'English', 'USA', '2025-07-02', '2025-11-02', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/550dee9e-b1a3-4ac3-970c-d9683929017a.jpg', 'https://image.tmdb.org/t/p/w1920/jw_backdrop.jpg', 'https://www.youtube.com/watch?v=jw_trailer', TRUE, TRUE, 170000, 'COMING_SOON', 8.0, 'Universal Pictures', TRUE, 9, 3, 5, 'STANDARD,IMAX,4DX'),
+('Jurassic World: Rebirth', 'Jurassic World: Rebirth', 'Nhiệm vụ khai thác DNA khủng long cho nghiên cứu y học.', 134, 'Action, Adventure, Science Fiction', 'Gareth Edwards', 'Scarlett Johansson, Jonathan Bailey, Mahershala Ali', 'English', 'USA', '2025-07-02', '2025-11-02', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/550dee9e-b1a3-4ac3-970c-d9683929017a.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/jurassic_world_rebirth_ver9.jpg', 'https://www.youtube.com/watch?v=jw_trailer', TRUE, TRUE, 170000, 'COMING_SOON', 8.0, 'Universal Pictures', TRUE, 9, 3, 5, 'STANDARD,IMAX,4DX'),
 
-('Superman', 'Superman', 'Man of Steel trở lại trong bản khởi động lại epic.', 129, 'Action, Adventure, Science Fiction', 'James Gunn', 'David Corenswet, Rachel Brosnahan, Nicholas Hoult', 'English', 'USA', '2025-07-11', '2025-11-11', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/51ad98ed-cb24-443c-b329-ed11db19216c.jpg', 'https://image.tmdb.org/t/p/w1920/superman_backdrop.jpg', 'https://www.youtube.com/watch?v=superman_trailer', TRUE, TRUE, 180000, 'COMING_SOON', 8.5, 'DC Studios', TRUE, 10, 4, 6, 'STANDARD,IMAX'),
+('Superman', 'Superman', 'Man of Steel trở lại trong bản khởi động lại epic.', 129, 'Action, Adventure, Science Fiction', 'James Gunn', 'David Corenswet, Rachel Brosnahan, Nicholas Hoult', 'English', 'USA', '2025-07-11', '2025-11-11', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/51ad98ed-cb24-443c-b329-ed11db19216c.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/superman-character-3840x2160-22993.jpg', 'https://www.youtube.com/watch?v=superman_trailer', TRUE, TRUE, 180000, 'COMING_SOON', 8.5, 'DC Studios', TRUE, 10, 4, 6, 'STANDARD,IMAX'),
 
-('I Know What You Did Last Summer', 'I Know What You Did Last Summer', 'Thế hệ mới đối mặt hậu quả của bí mật đen tối.', 108, 'Horror, Thriller', 'Jennifer Kaytin Robinson', 'Madelyn Cline, Chase Sui Wonders, Jonah Hauer-King', 'English', 'USA', '2025-07-18', '2025-10-18', 'R', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/57123d13-3983-4e6d-8cb2-3652ab9aec67.jpg', 'https://image.tmdb.org/t/p/w1920/ikwydls_backdrop.jpg', 'https://www.youtube.com/watch?v=ikwydls_trailer', TRUE, TRUE, 140000, 'COMING_SOON', 6.8, 'Sony Pictures', TRUE, 7, 2, 4, 'STANDARD,IMAX'),
+('I Know What You Did Last Summer', 'I Know What You Did Last Summer', 'Thế hệ mới đối mặt hậu quả của bí mật đen tối.', 108, 'Horror, Thriller', 'Jennifer Kaytin Robinson', 'Madelyn Cline, Chase Sui Wonders, Jonah Hauer-King', 'English', 'USA', '2025-07-18', '2025-10-18', 'R', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/57123d13-3983-4e6d-8cb2-3652ab9aec67.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/images.jpg', 'https://www.youtube.com/watch?v=ikwydls_trailer', TRUE, TRUE, 140000, 'COMING_SOON', 6.8, 'Sony Pictures', TRUE, 7, 2, 4, 'STANDARD,IMAX'),
 
-('The Fantastic Four: First Steps', 'The Fantastic Four: First Steps', 'Gia đình đầu tiên của Marvel trở lại chống Galactus.', 130, 'Action, Adventure, Science Fiction', 'Matt Shakman', 'Pedro Pascal, Vanessa Kirby, Joseph Quinn', 'English', 'USA', '2025-07-25', '2025-11-25', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/3aa59057-6000-43b1-9d0e-90a06404fcde.jpg', 'https://image.tmdb.org/t/p/w1920/ff_backdrop.jpg', 'https://www.youtube.com/watch?v=ff_trailer', TRUE, TRUE, 170000, 'COMING_SOON', 8.2, 'Marvel Studios', TRUE, 9, 3, 5, 'STANDARD,IMAX');
-
+('The Fantastic Four: First Steps', 'The Fantastic Four: First Steps', 'Gia đình đầu tiên của Marvel trở lại chống Galactus.', 130, 'Action, Adventure, Science Fiction', 'Matt Shakman', 'Pedro Pascal, Vanessa Kirby, Joseph Quinn', 'English', 'USA', '2025-07-25', '2025-11-25', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/3aa59057-6000-43b1-9d0e-90a06404fcde.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/the-fantastic-four-3840x2160-23280.jpg', 'https://www.youtube.com/watch?v=ff_trailer', TRUE, TRUE, 170000, 'COMING_SOON', 8.2, 'Marvel Studios', TRUE, 9, 3, 5, 'STANDARD,IMAX');
 -- MINIMAL SCHEDULES - CHỈ MẪU CHO HÔM NAY
 SET @std_room1 = (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1' LIMIT 1);
 SET @std_room2 = (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2' LIMIT 1);
@@ -851,53 +850,59 @@ INSERT INTO movietheater_concession (
 )
 VALUES
 -- Popcorn
+('Bắp rang bơ (Lớn)', 'Bắp rang bơ thơm ngon, giòn tan', 'POPCORN', 45000,
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/f60b35a0-43e7-4090-9b83-19a79b0d867c.png', 'Original', 'L',
+ 100, TRUE, TRUE, 1, NOW(), NOW()),
+
 ('Bắp rang bơ', 'Bắp rang bơ vị truyền thống, thơm ngon, giòn rụm', 'POPCORN', 35000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/bap.webp', 'Truyền thống', 'Lớn',
- 100, TRUE, TRUE, 1,
- NOW(), NOW()),
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/43c58afa-7f93-4ac2-a53e-88e002cd8baa.jpg', 'Truyền thống', 'Lớn',
+ 100, TRUE, TRUE, 1, NOW(), NOW()),
 
 ('Bắp rang phô mai', 'Bắp rang phô mai đậm đà, béo ngậy', 'POPCORN', 40000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/bap3.jpg', 'Phô mai', 'Lớn',
- 80, TRUE, TRUE, 2,
- NOW(), NOW()),
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/2e79516c-a07a-41be-8a52-18a73189f1e2.webp', 'Phô mai', 'Lớn',
+ 80, TRUE, TRUE, 2, NOW(), NOW()),
 
 ('Bắp rang caramel', 'Bắp rang caramel ngọt ngào, giòn tan', 'POPCORN', 45000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/bapcaramel.png', 'Caramel', 'Lớn',
- 60, TRUE, TRUE, 3,
- NOW(), NOW()),
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/80b00715-40ff-45de-9925-df2a51616ec8.png', 'Caramel', 'Lớn',
+ 60, TRUE, TRUE, 3, NOW(), NOW()),
+
+('Bắp rang phô mai (Vừa)', 'Bắp rang phủ phô mai thơm béo hấp dẫn', 'POPCORN', 40000,
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/a8b6e38d-76ee-4dee-aba9-7198c5465111.png', 'Cheese', 'M',
+ 80, TRUE, TRUE, 4, NOW(), NOW()),
+
+('Bắp rang Caramel (Nhỏ)', 'Bắp rang Caramel ngọt ngào, giòn rụm', 'POPCORN', 30000,
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/b9e9c31a-7cea-4c5c-a808-964daa71e964.png', 'Caramel', 'S',
+ 70, TRUE, TRUE, 5, NOW(), NOW()),
 
 -- Drinks
 ('Coca Cola', 'Nước ngọt Coca Cola mát lạnh', 'DRINKS', 25000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/coca.webp', 'Cola', 'Lớn',
- 150, TRUE, TRUE, 4,
- NOW(), NOW()),
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/cad4cd23-2adc-405d-8a9c-cb3d64dffdd3.webp', 'Cola', 'Lớn',
+ 150, TRUE, TRUE, 4, NOW(), NOW()),
 
 ('Pepsi', 'Nước ngọt Pepsi sảng khoái', 'DRINKS', 25000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/pepsi.webp', 'Cola', 'Lớn',
- 120, TRUE, TRUE, 5,
- NOW(), NOW()),
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/352cfd71-e3da-4771-8fef-87729575859a.png', 'Cola', 'Lớn',
+ 120, TRUE, TRUE, 5, NOW(), NOW()),
 
 ('Sprite', 'Nước ngọt Sprite thanh mát', 'DRINKS', 25000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/7up.webp', 'Chanh', 'Lớn',
- 100, TRUE, TRUE, 6,
- NOW(), NOW()),
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/fb983a64-bf12-474c-b711-e81930254333.jpg', 'Chanh', 'Lớn',
+ 100, TRUE, TRUE, 6, NOW(), NOW()),
 
 ('Nước suối', 'Nước suối tinh khiết', 'DRINKS', 15000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/nuocsuoi.webp', 'Không vị', '500ml',
- 200, TRUE, TRUE, 7,
- NOW(), NOW()),
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/4ca0c3bb-29b0-4a4f-8632-7dab9dc91e44.webp', 'Không vị', '500ml',
+ 200, TRUE, TRUE, 7, NOW(), NOW()),
 
 -- Combos
-('Combo Bắp + Nước', 'Bắp rang bơ lớn + Coca Cola lớn', 'COMBO', 55000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/combobapnuoc.png', 'Truyền thống', 'Lớn',
- 60, TRUE, TRUE, 11,
- NOW(), NOW()),
+('Combo Snack Ngọt', 'Bắp rang bơ (L) + Coca Cola (500ml)', 'COMBO', 65000,
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/afd43137-f04d-4a4d-93cb-2dfe03b876ab.png', 'Mix', 'L',
+ 100, TRUE, TRUE, 1, NOW(), NOW()),
 
-('Combo VIP', 'Bắp rang phô mai + Coca Cola + Khoai tây chiên', 'COMBO', 95000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/848ffea4-8796-45e8-9af3-4d406d217de3.png', 'Phô mai', 'Lớn',
- 30, TRUE, TRUE, 12,
- NOW(), NOW());
+('Combo Đôi Ngọt Ngào', '2 Bắp rang Caramel (M) + 2 Coca Cola (500ml)', 'COMBO', 150000,
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/2582c7b1-a421-4ff5-9a83-89b2db86bd2c.jpg', 'Caramel', 'Combo',
+ 40, TRUE, TRUE, 9, NOW(), NOW()),
 
+('Combo Gia Đình', '1 Bắp rang phô mai (L) + 1 Bắp rang Caramel (L) + 3 Pepsi (500ml)', 'COMBO', 210000,
+ 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/155eeee8-1a7d-44da-b04a-6d251d520ba8.png', 'Mix', 'Combo',
+ 30, TRUE, TRUE, 10, NOW(), NOW());
 -- Booking table
 CREATE TABLE IF NOT EXISTS movietheater_booking
 (

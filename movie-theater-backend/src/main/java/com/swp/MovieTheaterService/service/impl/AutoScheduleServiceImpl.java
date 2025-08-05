@@ -576,14 +576,12 @@ public class AutoScheduleServiceImpl implements AutoScheduleService {
         request.setStartTime(startTime);
         request.setEndTime(endTime);
 
-        // Tính giá vé dựa trên giá gốc của phim và hệ số phòng
+        // Sử dụng giá gốc của phim (đã đơn giản hóa, không tính theo giờ)
         double basePrice = movie.getPrice();
-        double roomMultiplier = room.getPriceMultiplier();
         String timeSlotType = getTimeSlotType(startTime);
-        double timeMultiplier = getTimeMultiplier(startTime);
 
-        double finalPrice = basePrice * roomMultiplier * timeMultiplier;
-        request.setPrice(Math.round(finalPrice / 1000.0) * 1000.0); // Làm tròn đến nghìn
+        // Chỉ sử dụng giá gốc của phim, không nhân thêm hệ số
+        request.setPrice(basePrice);
         request.setTimeSlotType(timeSlotType); // Set time slot type
 
         // Cài đặt tính năng đặc biệt (chỉ VIP và STANDARD)

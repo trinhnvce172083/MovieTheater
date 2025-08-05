@@ -868,7 +868,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         response.setShowDate(schedule.getShowDate());
         response.setStartTime(schedule.getStartTime());
         response.setEndTime(schedule.getEndTime());
-        response.setPrice(schedule.getPrice());
+        response.setPrice(schedule.getMovie().getPrice());
         response.setStatus(schedule.getStatus());
         response.setIs3D(schedule.getIs3D());
         response.setIsIMAX(schedule.getIsIMAX());
@@ -898,7 +898,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         response.setIsBookable(schedule.isBookable());
         response.setOccupancyRate(schedule.getOccupancyRate());
         response.setSpecialFeatures(schedule.getSpecialFeaturesText());
-        response.setPriceDisplay(String.format("%.0f.000₫", schedule.getPrice()));
+        response.setPriceDisplay(String.format("%.0f.000₫", schedule.getMovie().getPrice()));
         
         return response;
     }
