@@ -147,26 +147,31 @@ export function usePayment() {
     setLoading(true);
     setError(null);
     try {
-      // TODO: Gọi API kiểm tra trạng thái thanh toán
-      // const response = await PaymentApiService.checkStatus(paymentId);
+      // Gọi API thật
+      const response = await axiosClient.get(`/payment/status/${paymentId}`);
       
-      // Mock response cho demo
-      const mockResponse: PaymentResponse = {
-        paymentId,
-        status: 'COMPLETED',
-        transactionId: `TXN-${Date.now()}`,
-        message: 'Thanh toán thành công'
-      };
+      if (response.data?.success) {
+        const paymentData = response.data.data;
+        const result: PaymentResponse = {
+          paymentId,
+          status: paymentData.status,
+          transactionId: paymentData.transactionId,
+          message: paymentData.message || 'Payment status updated'
+        };
 
-      // Cập nhật trạng thái payment vào Redux
-      dispatch(setPaymentInfo({
-        method: paymentInfo?.method || 'ONLINE',
-        status: mockResponse.status,
-        transactionId: mockResponse.transactionId,
-        amount: finalAmount
-      }));
+        // Cập nhật trạng thái payment vào Redux
+        dispatch(setPaymentInfo({
+          method: paymentInfo?.method || 'ONLINE',
+          status: result.status,
+          transactionId: result.transactionId,
+          amount: finalAmount
+        }));
 
-      return mockResponse;
+        return result;
+      } else {
+        // Nếu API response không success, throw error với message từ API
+        throw new Error(response.data?.message || 'Failed to check payment status');
+      }
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || "Không thể kiểm tra trạng thái thanh toán";
       setError(errorMessage);
