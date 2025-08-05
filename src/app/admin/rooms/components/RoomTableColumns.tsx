@@ -2,13 +2,12 @@ import React from 'react';
 import { Space, Button, Tag, Popconfirm, Tooltip, Avatar } from 'antd';
 import { EditOutlined, DeleteOutlined, EyeOutlined, HomeOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { CinemaRoomResponse } from '../types';
+import { CinemaRoom } from '@/api/admin/getAllRooms';
 
 interface RoomTableColumnsProps {
-  onEdit: (room: CinemaRoomResponse) => void;
-  onDelete: (roomId: number) => void;
-  onView: (room: CinemaRoomResponse) => void;
-  loading?: boolean;
+  onEdit: (room: CinemaRoom) => void;
+  onDelete: (room: CinemaRoom) => void;
+  onView: (room: CinemaRoom) => void;
   isUsingApiData?: boolean;
 }
 
@@ -16,9 +15,8 @@ export const createRoomTableColumns = ({
   onEdit,
   onDelete,
   onView,
-  loading = false,
   isUsingApiData = true
-}: RoomTableColumnsProps): ColumnsType<CinemaRoomResponse> => {
+}: RoomTableColumnsProps): ColumnsType<CinemaRoom> => {
 
   return [
     {
@@ -26,7 +24,7 @@ export const createRoomTableColumns = ({
       dataIndex: "cinemaRoomId",
       key: "cinemaRoomId",
       width: 60,
-      render: (_: unknown, record: CinemaRoomResponse, index: number) => (
+      render: (_: unknown, record: CinemaRoom, index: number) => (
         <div className="text-center">
           <span className="font-mono text-sm text-gray-500">
             {index + 1}
@@ -38,7 +36,7 @@ export const createRoomTableColumns = ({
       title: "Room Information",
       key: "room_info",
       width: 280,
-      render: (_: unknown, record: CinemaRoomResponse) => (
+      render: (_: unknown, record: CinemaRoom) => (
         <div className="flex items-center gap-3">
           <Avatar
             icon={<HomeOutlined />}
@@ -60,7 +58,7 @@ export const createRoomTableColumns = ({
       title: "Type & Status",
       key: "type_status",
       width: 120,
-      render: (_: unknown, record: CinemaRoomResponse) => (
+      render: (_: unknown, record: CinemaRoom) => (
         <div className="text-sm">
           <div className="font-medium text-gray-900 truncate mb-1">
             {record.roomType}
@@ -79,7 +77,7 @@ export const createRoomTableColumns = ({
       key: "capacity",
       width: 80,
       align: "center" as const,
-      render: (_: unknown, record: CinemaRoomResponse) => (
+      render: (_: unknown, record: CinemaRoom) => (
         <div className="text-center">
           <div className="text-sm font-medium">{record.seatQuantity}</div>
           <div className="text-xs text-gray-500">seats</div>
@@ -103,7 +101,7 @@ export const createRoomTableColumns = ({
       key: "description",
       align: "center" as const,
       width: 200,
-      render: (_: unknown, record: CinemaRoomResponse) => (
+      render: (_: unknown, record: CinemaRoom) => (
         <div className="text-sm">
           <div className="text-gray-900 line-clamp-2">
             {record.description || "No description available"}
@@ -117,7 +115,7 @@ export const createRoomTableColumns = ({
       width: 100,
       fixed: "right" as const,
       align: "center" as const,
-      render: (_: unknown, record: CinemaRoomResponse) => (
+      render: (_: unknown, record: CinemaRoom) => (
         <Space size="small">
           <Tooltip title="View">
             <Button
@@ -146,7 +144,7 @@ export const createRoomTableColumns = ({
             <Popconfirm
               title="Delete Room"
               description={`Are you sure you want to delete "${record.cinemaRoomName}"? This action cannot be undone.`}
-              onConfirm={() => onDelete(record.cinemaRoomId)}
+              onConfirm={() => onDelete(record)}
               okText="Yes, Delete"
               cancelText="Cancel"
               okButtonProps={{ danger: true }}

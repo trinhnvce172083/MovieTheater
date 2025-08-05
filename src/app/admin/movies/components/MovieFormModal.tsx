@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { 
   Modal, Form, Input, Select, DatePicker, InputNumber, Switch, Button, message,
   Row, Col, Tabs, Space, Upload, Image
 } from 'antd';
-import { UploadOutlined, PlusOutlined } from '@ant-design/icons';
-import type { UploadFile, UploadProps } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import type { UploadFile } from 'antd';
 import { MovieData, MovieCreateRequest, MovieUpdateRequest } from '../types';
 import dayjs, { Dayjs } from 'dayjs';
 
@@ -51,34 +51,53 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
   const [backdropFileList, setBackdropFileList] = useState<UploadFile[]>([]);
   const [posterPreview, setPosterPreview] = useState<string>('');
   const [backdropPreview, setBackdropPreview] = useState<string>('');
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Cleanup function
+  const resetFormState = useCallback(() => {
+    form.resetFields();
+    setPosterPreview('');
+    setBackdropPreview('');
+    setPosterFileList([]);
+    setBackdropFileList([]);
+    setIsInitialized(false);
+  }, [form]);
 
   // Initialize form with editing data
   useEffect(() => {
-    if (editingMovie && open) {
+    if (!open) {
+      // Reset when modal closes
+      resetFormState();
+      return;
+    }
+
+    if (editingMovie && !isInitialized) {
       console.log('🎬 [MovieFormModal] Initializing form with editing data:', editingMovie);
       
       // Transform data for form fields
       const formData = {
-        ...editingMovie,
-        releaseDate: editingMovie.releaseDate ? dayjs(editingMovie.releaseDate) : null,
-        endDate: editingMovie.endDate ? dayjs(editingMovie.endDate) : null,
-        // Convert genre string to array for tags mode
-        genre: editingMovie.genre ? 
-          (typeof editingMovie.genre === 'string' ? 
-            editingMovie.genre.split(', ').filter(g => g.trim()) : 
-            editingMovie.genre) : 
-          [],
-        // Ensure other fields have proper defaults
+        title: editingMovie.title || '',
+        originalTitle: editingMovie.originalTitle || '',
+        description: editingMovie.description || '',
         director: editingMovie.director || '',
         cast: editingMovie.cast || '',
         language: editingMovie.language || '',
         country: editingMovie.country || '',
         rating: editingMovie.rating || '',
-        description: editingMovie.description || '',
-        originalTitle: editingMovie.originalTitle || '',
+        duration: editingMovie.duration || undefined,
+        price: editingMovie.price || undefined,
+        releaseDate: editingMovie.releaseDate ? dayjs(editingMovie.releaseDate) : null,
+        endDate: editingMovie.endDate ? dayjs(editingMovie.endDate) : null,
+        status: editingMovie.status || 'COMING_SOON',
+        genre: editingMovie.genre ? 
+          (typeof editingMovie.genre === 'string' ? 
+            editingMovie.genre.split(', ').filter(g => g.trim()) : 
+            editingMovie.genre) : 
+          [],
         trailerUrl: editingMovie.trailerUrl || '',
         productionCompany: editingMovie.productionCompany || '',
         imdbRating: editingMovie.imdbRating || undefined,
+        isFeatured: Boolean(editingMovie.isFeatured),
       };
       
       console.log('🔧 [MovieFormModal] Transformed form data:', formData);
@@ -97,26 +116,16 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
       // Clear file lists since we're showing existing images
       setPosterFileList([]);
       setBackdropFileList([]);
-    } else if (open) {
+      setIsInitialized(true);
+    } else if (open && !editingMovie && !isInitialized) {
       console.log('🎬 [MovieFormModal] Resetting form for new movie');
-      form.resetFields();
-      setPosterPreview('');
-      setBackdropPreview('');
-      setPosterFileList([]);
-      setBackdropFileList([]);
+      resetFormState();
+      setIsInitialized(true);
     }
-  }, [editingMovie, form, open]);
+  }, [editingMovie, form, open, isInitialized, resetFormState]);
 
-  // Reset form when modal closes
-  useEffect(() => {
-    if (!open) {
-      // form.resetFields();
-      setPosterPreview('');
-      setBackdropPreview('');
-      setPosterFileList([]);
-      setBackdropFileList([]);
-    }
-  }, [open, form]);
+  // Reset form when modal closes - Remove duplicate useEffect
+  // This is now handled in the main useEffect above
 
   // Upload handlers
   const handlePosterUpload = (file: File) => {
@@ -218,8 +227,15 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
         });
       }
     } catch (error) {
+      console.error('Form validation error:', error);
       message.error('Please fill all required fields correctly!');
     }
+  };
+
+  // Handle cancel with proper cleanup
+  const handleCancel = () => {
+    resetFormState();
+    onCancel();
   };
 
   const items = [
@@ -244,6 +260,19 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
             rules={[{ max: 200 }]}
           >
             <Input placeholder="Enter original title (if different)..." />
+          </Form.Item>
+
+          {/* Description */}
+          <Form.Item 
+            name="description" 
+            label="Description"
+            rules={[
+              { required: true, message: 'Please enter movie description!' },
+              { max: 2000, message: 'Description cannot exceed 2000 characters!' },
+              { min: 10, message: 'Description must be at least 10 characters!' }
+            ]}
+          >
+            <TextArea rows={4} placeholder="Enter movie description..." maxLength={2000} showCount />
           </Form.Item>
 
           {/* Genre */}
@@ -273,6 +302,40 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
                 <InputNumber min={1} max={600} style={{ width: '100%' }} addonAfter="min" />
               </Form.Item>
             </Col>
+            <Col span={8}>
+              <Form.Item 
+                name="price" 
+                label="Ticket Price"
+                rules={[{ required: true, message: 'Please enter ticket price!' }, { type: 'number', min: 1000, max: 500000 }]}
+              >
+                <InputNumber 
+                  min={1000} 
+                  max={500000}
+                  step={1000}
+                  style={{ width: '100%' }} 
+                  addonAfter="VND"
+                  formatter={(value) => value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item 
+                name="rating" 
+                label="Rating"
+                rules={[{ required: true, message: 'Please select rating!' }]}
+              >
+                <Select placeholder="Select rating">
+                  <Select.Option value="G">G - General Audiences</Select.Option>
+                  <Select.Option value="PG">PG - Parental Guidance Suggested</Select.Option>
+                  <Select.Option value="PG-13">PG-13 - Parents Strongly Cautioned</Select.Option>
+                  <Select.Option value="R">R - Restricted</Select.Option>
+                  <Select.Option value="NC-17">NC-17 - Adults Only</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
             <Col span={8}>
               <Form.Item 
                 name="releaseDate" 
@@ -310,45 +373,25 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item 
-                name="price" 
-                label="Ticket Price"
-                rules={[{ required: true, message: 'Please enter ticket price!' }, { type: 'number', min: 1000, max: 500000 }]}
-              >
-                <InputNumber 
-                  min={1000} 
-                  max={500000}
-                  step={1000}
-                  style={{ width: '100%' }} 
-                  addonAfter="VND"
-                  formatter={(value) => value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-                />
+              <Form.Item name="status" label="Status">
+                <Select placeholder="Auto-calculated from release date">
+                  <Select.Option value="NOW_SHOWING">Now Showing</Select.Option>
+                  <Select.Option value="COMING_SOON">Coming Soon</Select.Option>
+                  <Select.Option value="ENDED">Ended</Select.Option>
+                </Select>
               </Form.Item>
             </Col>
           </Row>
-
-          {/* Description */}
-          <Form.Item 
-            name="description" 
-            label="Description"
-            rules={[
-              { required: true, message: 'Please enter movie description!' },
-              { max: 2000, message: 'Description cannot exceed 2000 characters!' },
-              { min: 10, message: 'Description must be at least 10 characters!' }
-            ]}
-          >
-            <TextArea rows={4} placeholder="Enter movie description..." maxLength={2000} showCount />
-          </Form.Item>
         </>
       ),
     },
     {
-      key: 'advanced',
-      label: 'Advanced Information',
+      key: 'people',
+      label: 'People & Production',
       children: (
         <>
           <Row gutter={16}>
-            <Col span={8}>
+            <Col span={12}>
               <Form.Item 
                 name="director" 
                 label="Director" 
@@ -360,17 +403,33 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
                 <Input placeholder="Enter director name..." />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col span={12}>
+              <Form.Item name="productionCompany" label="Production Company" rules={[{ max: 100 }]}>
+                <Input placeholder="Enter production company..." />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item 
+            name="cast" 
+            label="Cast" 
+            rules={[
+              { required: true, message: 'Please enter cast information!' },
+              { max: 1000, message: 'Cast information cannot exceed 1000 characters!' }
+            ]}
+          >
+            <TextArea rows={3} placeholder="Enter main cast members..." maxLength={1000} showCount />
+          </Form.Item>
+
+          <Row gutter={16}>
+            <Col span={12}>
               <Form.Item 
                 name="language" 
                 label="Language" 
-                rules={[
-                  { required: true, message: 'Please select language!' }
-                ]}
+                rules={[{ required: true, message: 'Please select language!' }]}
               >
                 <Select
                   placeholder="Select language"
-                  allowClear
                   showSearch
                   options={LANGUAGE_OPTIONS.map(lang => ({ value: lang, label: lang }))}
                   filterOption={(input, option) =>
@@ -379,17 +438,14 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
                 />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col span={12}>
               <Form.Item 
                 name="country" 
                 label="Country" 
-                rules={[
-                  { required: true, message: 'Please select country!' }
-                ]}
+                rules={[{ required: true, message: 'Please select country!' }]}
               >
                 <Select
                   placeholder="Select country"
-                  allowClear
                   showSearch
                   options={COUNTRY_OPTIONS.map(country => ({ value: country, label: country }))}
                   filterOption={(input, option) =>
@@ -401,54 +457,54 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
           </Row>
 
           <Row gutter={16}>
-            <Col span={8}>
+            <Col span={12}>
+              <Form.Item name="trailerUrl" label="Trailer URL">
+                <Input placeholder="Enter trailer URL..." />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
               <Form.Item 
-                name="rating" 
-                label="Rating"
+                name="imdbRating" 
+                label="IMDB Rating"
                 rules={[
-                  { required: true, message: 'Please select rating!' }
+                  { type: 'number', min: 0, max: 10, message: 'Rating must be between 0 and 10!' }
                 ]}
               >
-                <Select placeholder="Select rating" allowClear>
-                  <Select.Option value="G">G - General Audiences</Select.Option>
-                  <Select.Option value="PG">PG - Parental Guidance Suggested</Select.Option>
-                  <Select.Option value="PG-13">PG-13 - Parents Strongly Cautioned</Select.Option>
-                  <Select.Option value="R">R - Restricted</Select.Option>
-                  <Select.Option value="NC-17">NC-17 - Adults Only</Select.Option>
-                </Select>
+                <InputNumber 
+                  min={0} 
+                  max={10} 
+                  step={0.1} 
+                  style={{ width: '100%' }} 
+                  placeholder="Enter IMDB rating..."
+                  precision={1}
+                />
               </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="status" label="Status">
-                <Select placeholder="Automatically calculated from release date">
-                  <Select.Option value="NOW_SHOWING">Now Showing</Select.Option>
-                  <Select.Option value="COMING_SOON">Coming Soon</Select.Option>
-                  <Select.Option value="ENDED">Ended</Select.Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-          <Form.Item 
-            name="cast" 
-            label="Cast" 
-            rules={[
-              { required: true, message: 'Please enter cast information!' },
-              { max: 1000, message: 'Cast information cannot exceed 1000 characters!' }
-            ]}
-          >
-            <TextArea rows={2} placeholder="Enter main cast members..." maxLength={1000} showCount />
-          </Form.Item>
             </Col>
           </Row>
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="productionCompany" label="Production Company" rules={[{ max: 100 }]}>
-                <Input placeholder="Enter production company..." />
+              <Form.Item name="isFeatured" label="Featured Movie" valuePropName="checked" initialValue={false}>
+                <Space>
+                  <Switch 
+                    checkedChildren="Featured" 
+                    unCheckedChildren="Normal" 
+                  />
+                  <span className="text-sm text-gray-500 ml-2">
+                    {form.getFieldValue('isFeatured') ? 'This movie will be featured on homepage' : 'Regular movie display'}
+                  </span>
+                </Space>
               </Form.Item>
             </Col>
           </Row>
-
+        </>
+      ),
+    },
+    {
+      key: 'images',
+      label: 'Images & Media',
+      children: (
+        <>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item label="Poster Image">
@@ -505,45 +561,6 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
               </Form.Item>
             </Col>
           </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="trailerUrl" label="Trailer URL">
-                <Input placeholder="Enter trailer URL..." />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item 
-                name="imdbRating" 
-                label="IMDB Rating"
-                rules={[
-                  { type: 'number', min: 0, max: 10, message: 'Rating must be between 0 and 10!' }
-                ]}
-              >
-                <InputNumber 
-                  min={0} 
-                  max={10} 
-                  step={0.1} 
-                  style={{ width: '100%' }} 
-                  placeholder="Enter IMDB rating..."
-                  precision={1}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="isFeatured" label="Featured Movie" valuePropName="checked" initialValue={false}>
-                <Space>
-                  <Switch 
-                    checkedChildren="Featured" 
-                    unCheckedChildren="Normal" 
-                  />
-                </Space>
-              </Form.Item>
-            </Col>
-          </Row>
         </>
       ),
     },
@@ -553,23 +570,26 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({
     <Modal
       title={editingMovie ? 'Edit Movie' : 'Add New Movie'}
       open={open}
-      onCancel={onCancel}
+      onCancel={handleCancel}
       width={800}
       footer={[
-        <Button key="cancel" onClick={onCancel}>
+        <Button key="cancel" onClick={handleCancel}>
           Cancel
         </Button>,
         <Button key="submit" type="primary" onClick={handleSubmit} loading={loading}>
           {editingMovie ? 'Update' : 'Create'}
         </Button>
       ]}
+      destroyOnHidden={true}
+      maskClosable={false}
     >
       <Form
         form={form}
         layout="vertical"
         scrollToFirstError
-        name="movieForm"
+        name={`movieForm-${editingMovie?.id || 'new'}`}
         preserve={false}
+        validateTrigger={['onChange', 'onBlur']}
       >
         <Tabs items={items} />
       </Form>

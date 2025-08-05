@@ -31,7 +31,7 @@ export default function AdminHeader() {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("isLoggedIn");
-      router.push(ROUTES.LOGIN);
+      router.push(ROUTES.HOME);
 
       dispatch({ type: "auth/logout" });
     }
@@ -96,9 +96,19 @@ export default function AdminHeader() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-[160px]">
             <DropdownMenuItem
-              onClick={() => router.push(ROUTES.MEMBER_DASHBOARD)}
+              onClick={() => router.push(ROUTES.ADMIN_DASHBOARD)}
             >
-              My Profile
+              Admin Dashboard
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => router.push('/admin/profile')}
+            >
+              Admin Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => router.push('/admin/settings')}
+            >
+              Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

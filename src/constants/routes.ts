@@ -31,10 +31,10 @@ const ROUTES = {
 
   // Admin Routes
   ADMIN_DASHBOARD: "/admin",
+  ADMIN_ANALYTICS: "/admin/analytics",
   ADMIN_MOVIES: "/admin/movies",
   ADMIN_MEMBERS: "/admin/members",
   ADMIN_BOOKINGS: "/admin/bookings",
-  ADMIN_SCHEDULES: "/admin/schedules",
   ADMIN_ROOMS: "/admin/rooms",
   ADMIN_PROMOTIONS: "/admin/promotions",
   ADMIN_CONCESSIONS: "/admin/concessions",

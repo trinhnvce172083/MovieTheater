@@ -14,10 +14,12 @@ import {
   RoomFormModal,
 } from './components';
 import { CinemaRoom, CinemaRoomCreateRequest } from '@/api/admin/getAllRooms';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const { Text } = Typography;
 
 export default function AdminRoomManagement() {
+  const isMobile = useIsMobile();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingRoom, setEditingRoom] = useState<CinemaRoom | null>(null);
   const router = useRouter();
@@ -85,6 +87,7 @@ export default function AdminRoomManagement() {
     onEdit: handleEdit,
     onDelete: handleDelete,
     onView: handleViewDetail,
+    loading,
     isUsingApiData,
   });
 

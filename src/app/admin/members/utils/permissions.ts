@@ -14,10 +14,23 @@ export const canViewDetails = (currentUser: CurrentUser | null, targetUser: Memb
 
 export const canEdit = (currentUser: CurrentUser | null, targetUser: MemberData): boolean => {
   if (!currentUser) return false;
-  // Users can only edit their own information
+  
+  // Admin can edit all users except other admins
+  if (currentUser.role === 'ADMIN') {
+    // Admin cannot edit other admins (for safety)
+    if (targetUser.type === 'ADMIN') {
+      // Only allow editing self if both are admins
+      const currentUserId = String(currentUser.id);
+      const targetUserId = String(targetUser.id);
+      return currentUserId === targetUserId;
+    }
+    // Admin can edit all non-admin users
+    return true;
+  }
+  
+  // Non-admin users can only edit their own information
   const currentUserId = String(currentUser.id);
   const targetUserId = String(targetUser.id);
-  
   return currentUserId === targetUserId;
 };
 
