@@ -15,13 +15,7 @@ export interface PaymentMethod {
 
 export interface PaymentRequest {
   bookingId: number;
-  amount: number;
-  paymentMethod: string;
-  customerInfo?: {
-    name: string;
-    email: string;
-    phone: string;
-  };
+  language: string;
 }
 
 export interface PaymentResponse {
@@ -35,14 +29,8 @@ export interface PaymentResponse {
 
 // Thêm hàm gọi API VNPAY
 export const PaymentApiService = {
-  createVNPayPayment: (data: {
-    bookingId: number;
-    language?: string;
-    bankCode?: string;
-    orderInfo?: string;
-    returnUrl?: string;
-    cancelUrl?: string;
-  }) => axiosClient.post("/payment/vnpay/create", data),
+  createVNPayPayment: (data: PaymentRequest) => 
+    axiosClient.post("/payment/vnpay/create", data),
 };
 
 export function usePayment() {
@@ -54,13 +42,6 @@ export function usePayment() {
 
   // Danh sách phương thức thanh toán
   const paymentMethods: PaymentMethod[] = [
-    {
-      id: 'ONLINE',
-      name: 'Thanh toán trực tuyến',
-      icon: '💳',
-      description: 'Thanh toán bằng thẻ tín dụng/ghi nợ',
-      isAvailable: true
-    },
     {
       id: 'WALLET',
       name: 'Ví điện tử',
@@ -74,13 +55,6 @@ export function usePayment() {
       icon: '💰',
       description: 'Thanh toán tại quầy',
       isAvailable: true
-    },
-    {
-      id: 'CARD',
-      name: 'Thẻ ATM',
-      icon: '🏦',
-      description: 'Thanh toán bằng thẻ ATM nội địa',
-      isAvailable: true
     }
   ];
 
@@ -89,49 +63,28 @@ export function usePayment() {
     setLoading(true);
     setError(null);
     try {
-      if (paymentRequest.paymentMethod === 'WALLET') {
-        // Gọi API VNPAY
-        const vnpayReq = {
-          bookingId: paymentRequest.bookingId,
-          language: 'vn',
-          // Có thể truyền thêm bankCode, orderInfo, returnUrl, cancelUrl nếu muốn
-        };
-        const response = await PaymentApiService.createVNPayPayment(vnpayReq);
-        const paymentUrl = response?.data?.data?.paymentUrl;
-        if (paymentUrl) {
-          return {
-            paymentId: String(paymentRequest.bookingId),
-            status: 'PENDING',
-            paymentUrl,
-            message: 'Chuyển hướng đến VNPay để thanh toán',
-          };
-        } else {
-          throw new Error('Không lấy được paymentUrl từ backend');
-        }
-      }
-      // TODO: Gọi API thanh toán thực tế
-      // const response = await PaymentApiService.createPayment(paymentRequest);
+      // Sử dụng API VNPay mới
+      const response = await PaymentApiService.createVNPayPayment(paymentRequest);
       
-      // Mock response cho demo
-      const mockResponse: PaymentResponse = {
-        paymentId: `PAY-${Date.now()}`,
-        status: 'PENDING',
-        transactionId: `TXN-${Date.now()}`,
-        paymentUrl: 'https://payment-gateway.com/pay',
-        qrCode: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-        message: 'Vui lòng quét mã QR để thanh toán'
-      };
 
-      // Cập nhật thông tin payment vào Redux
-      dispatch(setPaymentInfo({
-        method: paymentRequest.paymentMethod,
-        status: mockResponse.status,
-        transactionId: mockResponse.transactionId,
-        amount: paymentRequest.amount
-      }));
-
-      message.success('Đã tạo thanh toán thành công');
-      return mockResponse;
+      
+      // Try different possible response structures
+      const paymentUrl = response?.data?.paymentUrl || 
+                        response?.data?.url || 
+                        response?.data?.data?.paymentUrl ||
+                        response?.data?.data?.url;
+      
+      if (paymentUrl) {
+        const paymentResponse = {
+          paymentId: String(paymentRequest.bookingId),
+          status: 'PENDING' as const,
+          paymentUrl: paymentUrl,
+          message: 'Chuyển hướng đến VNPay để thanh toán',
+        };
+        return paymentResponse;
+      } else {
+        throw new Error('Không lấy được paymentUrl từ backend');
+      }
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || "Không thể tạo thanh toán";
       setError(errorMessage);
