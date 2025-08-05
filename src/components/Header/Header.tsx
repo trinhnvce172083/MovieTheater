@@ -16,7 +16,6 @@ const HeaderComponent = () => {
   const userInfo = localStorage.getItem("userInfo") ? JSON.parse(localStorage.getItem("userInfo") || "{}") : null;
   const userName = userInfo?.userName || null;
 
-
   return (
     <header className="flex items-center justify-between px-2 sm:px-4 md:px-6 bg-black py-2 md:py-0 text-white relative z-10 border-b border-black/30 shadow-sm">
       <div className="flex items-center gap-2 md:gap-8">
@@ -51,6 +50,15 @@ const HeaderComponent = () => {
               className="hover:text-red-500 transition-colors whitespace-nowrap"
             >
               Sell
+            </Link>
+          )}
+
+          {isLoggedIn && userInfo?.Role === "ADMIN" && (
+            <Link
+              href={ROUTES.ADMIN_DASHBOARD}
+              className="hover:text-red-500 transition-colors whitespace-nowrap"
+            >
+              Return to Admin Dashboard
             </Link>
           )}
         </nav>
