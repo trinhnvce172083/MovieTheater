@@ -118,7 +118,7 @@ email:
   from-name: ${EMAIL_FROM_NAME:Lumiere Cinema}
   verification:
     expiration-hours: 24
-    base-url: ${EMAIL_VERIFICATION_BASE_URL:http://localhost:8080/cinema}
+    base-url: ${EMAIL_VERIFICATION_BASE_URL:http://localhost:8080}
   templates:
     verification: email/verification
     welcome: email/welcome
