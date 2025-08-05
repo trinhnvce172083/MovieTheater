@@ -29,33 +29,35 @@ interface Ticket {
   };
 }
 
-const ManagedTickets: React.FC = () => {
+const CancelledTickets: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [cancelModalVisible, setCancelModalVisible] = useState(false);
-  const [ticketToCancel, setTicketToCancel] = useState<Ticket | null>(null);
-  const [cancelling, setCancelling] = useState(false);
 
-  // Load tickets
+  // Load cancelled tickets only
   const loadTickets = useCallback(async () => {
-    console.log("🎫 Loading tickets...");
+    console.log("🎫 Loading cancelled tickets...");
     setLoading(true);
     setError(null);
 
     try {
       const response = await MemberApiService.getBookings({
         page: 0,
-        size: 50,
+        size: 100,
         sortBy: "bookingDate",
         sortDirection: "DESC",
       });
 
-      console.log("📦 Tickets response:", response);
+      console.log("📦 Cancelled tickets response:", response);
       const ticketsData = response.data.content || [];
       
-      // Transform data to match our interface - backend mới đã có cấu trúc chuẩn
-      const transformedTickets: Ticket[] = ticketsData.map((item: any) => ({
+      // Filter chỉ lấy tickets có status CANCELLED
+      const cancelledTicketsData = ticketsData.filter((item: any) => 
+        item.status === "CANCELLED" || item.bookingStatus === "CANCELLED"
+      );
+      
+      // Transform data to match our interface - chỉ cancelled tickets
+      const transformedTickets: Ticket[] = cancelledTicketsData.map((item: any) => ({
         bookingId: item.bookingId || item.id,
         movieTitle: item.movieTitle || "Unknown Movie",
         showDate: item.showDate || "",
@@ -64,18 +66,18 @@ const ManagedTickets: React.FC = () => {
         cinemaRoom: item.cinemaRoom || "",
         seats: item.seats || [],
         finalAmount: item.finalAmount || 0,
-        status: item.status || "PENDING",
+        status: item.status || "CANCELLED",
         bookingCode: item.bookingCode || "",
         qrCode: item.qrCode,
-        canCancel: item.canCancel !== undefined ? item.canCancel : (item.status !== "CANCELLED" && item.status !== "COMPLETED"),
+        canCancel: false, // Không cho phép cancel nữa
         schedule: item.schedule,
       }));
 
       setTickets(transformedTickets);
-      console.log("✅ Tickets loaded successfully:", transformedTickets);
+      console.log("✅ Cancelled tickets loaded successfully:", transformedTickets);
     } catch (err: any) {
-      console.error("❌ Failed to load tickets:", err);
-      setError("Failed to load tickets");
+      console.error("❌ Failed to load cancelled tickets:", err);
+      setError("Failed to load cancelled tickets");
     } finally {
       setLoading(false);
     }
@@ -83,55 +85,7 @@ const ManagedTickets: React.FC = () => {
 
   useEffect(() => {
     loadTickets();
-  }, [loadTickets]);
-
-  const handleCancelClick = (ticket: Ticket) => {
-    setTicketToCancel(ticket);
-    setCancelModalVisible(true);
-  };
-
-  const handleCancelConfirm = async () => {
-    if (!ticketToCancel) return;
-
-    setCancelling(true);
-    try {
-      await MemberApiService.cancelBooking({
-        bookingId: ticketToCancel.bookingId.toString(),
-        reason: "User requested cancellation"
-      });
-
-      message.success("Ticket cancelled successfully!");
-
-      // Update local state immediately
-      setTickets(prev => prev.map(t => 
-        t.bookingId === ticketToCancel.bookingId 
-          ? { ...t, status: "CANCELLED", canCancel: false }
-          : t
-      ));
-
-      setCancelModalVisible(false);
-      setTicketToCancel(null);
-
-      // Refresh from server after a delay
-      setTimeout(() => {
-        loadTickets();
-      }, 1000);
-
-    } catch (err: any) {
-      console.error("Error cancelling ticket:", err);
-      
-      let errorMessage = "Failed to cancel ticket";
-      if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      message.error(errorMessage);
-    } finally {
-      setCancelling(false);
-    }
-  };
+  }, []);
 
   const formatShowTime = (ticket: Ticket) => {
     // Priority: formattedShowDateTime from schedule
@@ -162,32 +116,32 @@ const ManagedTickets: React.FC = () => {
     return "—";
   };
 
-  const getStatusColor = (status: string) => {
-    const statusColors = {
-      "PENDING": "orange",
-      "CONFIRMED": "blue", 
-      "PAID": "green",
-      "COMPLETED": "green",
-      "CANCELLED": "red",
-      "EXPIRED": "red"
-    };
-    return statusColors[status as keyof typeof statusColors] || "default";
+  const formatCancellationDate = (dateString?: string) => {
+    if (!dateString) return "—";
+    
+    try {
+      const date = new Date(dateString);
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      const hour = date.getHours().toString().padStart(2, '0');
+      const minute = date.getMinutes().toString().padStart(2, '0');
+      return `${day}/${month}/${year} ${hour}:${minute}`;
+    } catch {
+      return dateString;
+    }
   };
 
-  const canCancelTicket = (ticket: Ticket) => {
-    return ticket.status !== "CANCELLED" && ticket.status !== "COMPLETED" && ticket.canCancel;
-  };
-
-  const renderTicketCard = (ticket: Ticket, index: number) => (
-    <Card key={ticket.bookingId} className="mb-4 hover:shadow-md transition-shadow" bordered>
+    const renderTicketCard = (ticket: Ticket, index: number) => (
+    <Card key={ticket.bookingId} className="mb-4 border-red-200 bg-red-50 hover:shadow-md transition-shadow" bordered>
       <div className="space-y-3">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-2">
-                       <FileTextOutlined className="text-blue-600 text-lg" />
-           <span className="font-semibold text-lg">{ticket.movieTitle}</span>
+            <FileTextOutlined className="text-red-600 text-lg" />
+            <span className="font-semibold text-lg">{ticket.movieTitle}</span>
           </div>
-          <Tag color={getStatusColor(ticket.status)} className="font-medium">
-            {ticket.status}
+          <Tag color="red" className="font-medium">
+            CANCELLED
           </Tag>
         </div>
 
@@ -214,8 +168,8 @@ const ManagedTickets: React.FC = () => {
           </div>
           
           <div>
-            <span className="font-medium text-gray-600">Total Price:</span>
-            <p className="mt-1 text-green-600 font-semibold">
+            <span className="font-medium text-gray-600">Original Price:</span>
+            <p className="mt-1 text-gray-600 line-through">
               {new Intl.NumberFormat('vi-VN').format(ticket.finalAmount)}₫
             </p>
           </div>
@@ -231,41 +185,24 @@ const ManagedTickets: React.FC = () => {
         )}
 
         <div className="pt-2 border-t">
-          {canCancelTicket(ticket) ? (
-            <Button 
-              danger 
-              size="middle" 
-              onClick={() => handleCancelClick(ticket)}
-              className="w-full md:w-auto"
-            >
-              Cancel Ticket
-            </Button>
-          ) : (
-            <span className={`text-sm font-medium ${
-              ticket.status === "CANCELLED" ? "text-red-500" : 
-              ticket.status === "COMPLETED" ? "text-green-500" : 
-              "text-gray-400"
-            }`}>
-              {ticket.status === "CANCELLED" ? "Cancelled" : 
-               ticket.status === "COMPLETED" ? "Completed" : 
-               "Cannot Cancel"}
-            </span>
-          )}
+          <span className="text-sm font-medium text-red-600">
+            Ticket Cancelled
+          </span>
         </div>
       </div>
     </Card>
   );
 
-  const columns = [
+    const columns = [
     { 
       title: "Movie", 
       dataIndex: "movieTitle", 
       key: "movieTitle",
       render: (text: string) => (
-                 <div className="flex items-center gap-2">
-           <FileTextOutlined className="text-blue-600" />
-           <span className="font-medium">{text}</span>
-         </div>
+        <div className="flex items-center gap-2">
+          <FileTextOutlined className="text-red-600" />
+          <span className="font-medium">{text}</span>
+        </div>
       )
     },
     { 
@@ -288,11 +225,11 @@ const ManagedTickets: React.FC = () => {
       }
     },
     { 
-      title: "Total Price", 
+      title: "Original Price", 
       dataIndex: "finalAmount", 
       key: "finalAmount", 
       render: (value: number) => (
-        <span className="text-green-600 font-semibold">
+        <span className="text-gray-600 line-through">
           {new Intl.NumberFormat('vi-VN').format(value)}₫
         </span>
       )
@@ -301,32 +238,11 @@ const ManagedTickets: React.FC = () => {
       title: "Status", 
       dataIndex: "status", 
       key: "status", 
-      render: (status: string) => (
-        <Tag color={getStatusColor(status)} className="font-medium">
-          {status}
+      render: () => (
+        <Tag color="red" className="font-medium">
+          CANCELLED
         </Tag>
       )
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_: any, record: Ticket) => {
-        return canCancelTicket(record) ? (
-          <Button danger size="small" onClick={() => handleCancelClick(record)}>
-            Cancel
-          </Button>
-        ) : (
-          <span className={`text-sm font-medium ${
-            record.status === "CANCELLED" ? "text-red-500" : 
-            record.status === "COMPLETED" ? "text-green-500" : 
-            "text-gray-400"
-          }`}>
-            {record.status === "CANCELLED" ? "Cancelled" : 
-             record.status === "COMPLETED" ? "Completed" : 
-             "Cannot Cancel"}
-          </span>
-        );
-      },
     },
   ];
 
@@ -337,7 +253,7 @@ const ManagedTickets: React.FC = () => {
         <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm p-4 lg:p-6">
           <div className="flex justify-center items-center py-12">
             <Spin size="large" />
-            <span className="ml-3">Loading tickets...</span>
+            <span className="ml-3">Loading cancelled tickets...</span>
           </div>
         </div>
       </div>
@@ -350,7 +266,7 @@ const ManagedTickets: React.FC = () => {
       <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
         <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm p-4 lg:p-6">
           <Alert
-            message="Error Loading Tickets"
+            message="Error Loading Cancelled Tickets"
             description={error}
             type="error"
             showIcon
@@ -367,22 +283,23 @@ const ManagedTickets: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
-      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm p-4 lg:p-6">
-        <Typography.Title level={2} className="text-center mb-6 lg:mb-8 mt-8">
-          My Tickets
+            <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm p-4 lg:p-6">
+        <Typography.Title level={2} className="text-center mb-6 lg:mb-8 mt-8 text-red-600">
+          Cancelled Tickets
         </Typography.Title>
 
         {/* Header Controls */}
         <div className="flex justify-between items-center mb-6">
-                     <div className="flex items-center gap-2">
-             <FileTextOutlined className="text-blue-600 text-xl" />
-             <span className="text-lg font-medium text-gray-700">Booked Tickets</span>
-           </div>
+          <div className="flex items-center gap-2">
+            <FileTextOutlined className="text-red-600 text-xl" />
+            <span className="text-lg font-medium text-gray-700">Cancelled Bookings</span>
+          </div>
           <Button
             icon={<ReloadOutlined />}
             onClick={loadTickets}
             loading={loading}
             size="middle"
+            danger
           >
             Refresh
           </Button>
@@ -410,56 +327,23 @@ const ManagedTickets: React.FC = () => {
                   showSizeChanger: true,
                   showQuickJumper: true,
                   showTotal: (total, range) => 
-                    `${range[0]}-${range[1]} of ${total} tickets`,
+                    `${range[0]}-${range[1]} of ${total} cancelled tickets`,
                 }}
+                rowClassName="bg-red-50"
               />
             </div>
           </>
         ) : (
           <div className="text-center py-12">
             <Empty
-              description="No tickets found"
+              description="No cancelled tickets found"
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           </div>
         )}
-
-        {/* Cancel Ticket Modal */}
-        <Modal
-          title="Cancel Ticket"
-          open={cancelModalVisible}
-          onCancel={() => {
-            setCancelModalVisible(false);
-            setTicketToCancel(null);
-          }}
-          onOk={handleCancelConfirm}
-          okText="Yes, Cancel"
-          cancelText="No"
-          okButtonProps={{ danger: true, loading: cancelling }}
-          cancelButtonProps={{ disabled: cancelling }}
-          width={400}
-          centered
-        >
-          {ticketToCancel && (
-            <div className="text-center py-4">
-              <p className="text-base mb-4">Are you sure you want to cancel this ticket?</p>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600 mb-2">
-                  <span className="font-medium">Movie:</span> {ticketToCancel.movieTitle}
-                </p>
-                <p className="text-sm text-gray-600 mb-2">
-                  <span className="font-medium">Show Time:</span> {formatShowTime(ticketToCancel)}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Seats:</span> {ticketToCancel.seats?.map(s => s.seatNumber).join(", ")}
-                </p>
-              </div>
-            </div>
-          )}
-        </Modal>
       </div>
     </div>
   );
 };
 
-export default ManagedTickets;
+export default CancelledTickets;
