@@ -46,22 +46,73 @@ export default function BookingConfirmPage() {
     removePromotionCode 
   } = usePromotion();
 
-  // Check if current user is employee
+  // Check if current user is employee vs member
   const isEmployee = authState.userInfo?.Role === Role.EMPLOYEE;
+  const isMember = authState.userInfo && !isEmployee;
+  
 
-  // Show customer form for employees on first load
-  // useEffect(() => {
-  //   if (isEmployee && !customerInfo) {
-  //     setShowCustomerForm(true);
-  //   }
-  // }, [isEmployee, customerInfo]);
+  
+  // Chỉ có 2 flow: MEMBER hoặc EMPLOYEE
+  const bookingFlowType = isEmployee ? 'EMPLOYEE' : 'MEMBER';
 
-  // Force show customer form for employees immediately
-  // useEffect(() => {
-  //   if (isEmployee) {
-  //     setShowCustomerForm(true);
-  //   }
-  // }, [isEmployee]);
+  // State để lưu user info từ API
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  // Load user info từ API cho MEMBER flow
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      if (bookingFlowType === 'MEMBER' && !userProfile) {
+        try {
+          // Sử dụng axiosClient để gọi API user profile
+          const response = await import('@/api/axiosClient').then(m => m.default.get('/users/profile'));
+          
+          if (response.data) {
+            setUserProfile(response.data);
+          }
+        } catch (error) {
+          // MEMBER flow: Nếu không load được API, báo lỗi nhưng không hiển thị form
+          // User cần đăng nhập lại hoặc update profile từ trang profile
+        }
+      }
+    };
+    
+    loadUserInfo();
+  }, [bookingFlowType, userProfile]);
+
+  // Validate schedule time when component mounts
+  useEffect(() => {
+    const validateScheduleTime = async () => {
+      if (bookingData.scheduleId) {
+        try {
+          const scheduleResponse = await import("@/api/schedule-api").then(m => m.ScheduleApiService.getScheduleById(Number(bookingData.scheduleId)));
+          if (scheduleResponse.success && scheduleResponse.data) {
+            const schedule = scheduleResponse.data;
+            const showDateTime = new Date(`${schedule.showDate}T${schedule.startTime}`);
+            const currentTime = new Date();
+            
+            if (showDateTime <= currentTime) {
+              message.error('Lịch chiếu này đã kết thúc. Đang chuyển về trang chủ...');
+              setTimeout(() => {
+                router.push('/');
+              }, 2000);
+              return;
+            }
+          }
+        } catch (error) {
+          // Ignore validation errors
+        }
+      }
+    };
+    
+    validateScheduleTime();
+  }, [bookingData.scheduleId, router]);
+
+  // Show customer form ONLY for EMPLOYEE flow
+  useEffect(() => {
+    if (bookingFlowType === 'EMPLOYEE' && !customerInfo) {
+      setShowCustomerForm(true);
+    }
+  }, [bookingFlowType, customerInfo]);
 
   // Load seat status on mount
   useEffect(() => {
@@ -99,6 +150,90 @@ export default function BookingConfirmPage() {
     message.success("Đã xóa mã khuyến mãi");
   };
 
+  // Build booking request based on flow type
+  const buildBookingRequest = () => {
+    const userInfo = authState.userInfo;
+    
+    const seatIds = bookingData.selectedSeats.map((seat: any) => {
+      const numericId = Number(seat.seatId);
+      if (isNaN(numericId)) {
+        throw new Error(`Invalid seat ID: ${seat.seatId}`);
+      }
+      return numericId;
+    });
+
+    const concessionOrders = bookingData.selectedConcessions.length > 0 ? bookingData.selectedConcessions.map((item: any) => ({
+      concessionId: item.concessionId,
+      quantity: item.quantity,
+      notes: item.concession?.name ? `${item.concession.name}` : undefined // Lấy name từ concession object
+    })) : undefined;
+
+
+
+    const baseRequest = {
+      scheduleId: Number(bookingData.scheduleId),
+      seatIds: seatIds,
+      concessionOrders: concessionOrders,
+      promotionCode: bookingData.promotionCode || undefined,
+    };
+
+    if (bookingFlowType === 'EMPLOYEE') {
+      // Employee flow - use customer info from form
+      return {
+        ...baseRequest,
+        customerName: customerInfo?.fullName || '',
+        customerEmail: customerInfo?.email || '',
+        customerPhone: customerInfo?.phoneNumber || '',
+        isGuestBooking: true,
+        employeeBooking: true
+      };
+    } else {
+      // Member flow - backend sẽ tự động lấy thông tin từ account
+      const memberRequest = {
+        ...baseRequest,
+        // Optional: có thể gửi hoặc không, backend sẽ lấy từ account
+        customerName: userProfile?.fullName || userProfile?.userName || userProfile?.name,
+        customerEmail: userProfile?.email,
+        customerPhone: userProfile?.phoneNumber || userProfile?.phone,
+        isGuestBooking: false
+      };
+      
+      // Member booking không cần validation - backend sẽ handle
+      return memberRequest;
+    }
+  };
+
+  // Validate booking request based on flow type
+  const validateBookingRequest = (bookingRequest: any) => {
+    // Common validations
+    if (!bookingRequest.scheduleId || isNaN(bookingRequest.scheduleId)) {
+      throw new Error('Invalid schedule ID');
+    }
+    
+    if (!bookingRequest.seatIds || bookingRequest.seatIds.length === 0) {
+      throw new Error('No seats selected');
+    }
+    
+    if (bookingRequest.seatIds.some((id: number) => !id || isNaN(id))) {
+      throw new Error('Invalid seat IDs');
+    }
+
+    // Flow-specific validations
+    if (bookingFlowType === 'EMPLOYEE') {
+      // Employee validation - requires customer info (guest booking)
+      if (!customerInfo || !customerInfo.fullName || !customerInfo.email || !customerInfo.phoneNumber) {
+        throw new Error('Vui lòng nhập đầy đủ thông tin khách hàng (Họ tên, Email, SĐT)');
+      }
+    } else {
+      // Member validation - chỉ cần đăng nhập, backend sẽ tự lấy thông tin từ account
+      if (!authState.userInfo) {
+        throw new Error('Vui lòng đăng nhập để đặt vé');
+      }
+      // Không cần validate customerName, customerEmail, customerPhone cho member
+      // Backend sẽ tự động lấy từ account database
+    }
+  };
+
   // Handler for customer info form submission (employee only)
   // const handleCustomerInfoSubmit = async (info: CustomerInfo) => {
   //   setCustomerInfo(info);
@@ -127,16 +262,18 @@ export default function BookingConfirmPage() {
   const handlePayment = async () => {
     if (isProcessing) return;
     
-    // Check customer info for employees
-    // if (isEmployee && !customerInfo) {
-    //   message.error("Vui lòng nhập thông tin khách hàng trước khi thanh toán");
-    //   setShowCustomerForm(true);
-    //   return;
-    // }
-    
     setIsProcessing(true);
     try {
-      // Kiểm tra authentication
+      // Build booking request based on flow type
+      const bookingRequest = buildBookingRequest();
+      
+      // Validate booking request
+      validateBookingRequest(bookingRequest);
+      
+
+      
+      // Check authentication for member flow
+      if (bookingFlowType === 'MEMBER') {
       const accessToken = localStorage.getItem("accessToken");
       const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
       
@@ -145,20 +282,44 @@ export default function BookingConfirmPage() {
         router.push(ROUTES.LOGIN);
         return;
       }
-      
-      // Validation
-      if (!bookingData.selectedSeats || bookingData.selectedSeats.length === 0) {
-        message.error('Please select at least one seat');
+      }
+
+      // Kiểm tra trạng thái schedule và ghế trước khi đặt
+      try {
+        // Kiểm tra thông tin schedule từ API
+        try {
+          const scheduleResponse = await import("@/api/schedule-api").then(m => m.ScheduleApiService.getScheduleById(Number(bookingData.scheduleId)));
+          if (scheduleResponse.success && scheduleResponse.data) {
+            const schedule = scheduleResponse.data;
+            
+            // Kiểm tra thời gian chiếu đã qua chưa
+            const showDateTime = new Date(`${schedule.showDate}T${schedule.startTime}`);
+            const currentTime = new Date();
+            
+            if (showDateTime <= currentTime) {
+              message.error('Lịch chiếu này đã kết thúc. Vui lòng chọn lịch chiếu khác.');
+              setIsProcessing(false);
         return;
       }
       
-      if (!bookingData.scheduleId) {
-        message.error('Invalid schedule ID');
+            // Kiểm tra schedule status
+            if (schedule.status !== 'SCHEDULED') {
+              message.error('Lịch chiếu này không khả dụng để đặt vé.');
+              setIsProcessing(false);
         return;
       }
 
-      // Kiểm tra trạng thái ghế trước khi đặt (chỉ khi thực sự cần)
-      try {
+            // Kiểm tra số ghế còn lại
+            if (schedule.availableSeats <= 0) {
+              message.error('Lịch chiếu này đã hết ghế.');
+              setIsProcessing(false);
+              return;
+            }
+          }
+        } catch (scheduleError) {
+          message.warning('Không thể kiểm tra thông tin lịch chiếu. Vẫn tiếp tục đặt vé...');
+        }
+
         const seatStatusResponse = await getSeatStatus(bookingData.scheduleId);
         const selectedSeatIds = bookingData.selectedSeats.map(seat => seat.seatId);
         
@@ -188,80 +349,6 @@ export default function BookingConfirmPage() {
         // Không block booking nếu không thể kiểm tra trạng thái ghế
       }
 
-      // Lấy thông tin user
-      const userInfoStr = localStorage.getItem("userInfo");
-      const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
-
-      // Chuẩn bị dữ liệu booking
-      const seatIds = bookingData.selectedSeats.map(seat => seat.seatId);
-      
-      const bookingRequest = {
-        scheduleId: Number(bookingData.scheduleId),
-        seatIds: seatIds,
-        concessions: bookingData.selectedConcessions.length > 0 ? bookingData.selectedConcessions.map((item: any) => ({
-          concessionId: item.concessionId,
-          quantity: item.quantity
-        })) : undefined,
-        promotionCode: bookingData.promotionCode || undefined,
-        // Use customer info for employees, user info for regular members
-        // ...(isEmployee ? {
-        //   // For employees, MUST have customer info
-        //   customerName: customerInfo?.fullName || '',
-        //   customerEmail: customerInfo?.email || '',
-        //   customerPhone: customerInfo?.phoneNumber || '',
-        //   isGuestBooking: true  // Employee always creates guest bookings for customers
-        // } : userInfo ? {
-        //   customerName: userInfo.userName || userInfo.fullName,
-        //   customerEmail: userInfo.email,
-        //   customerPhone: userInfo.phone,
-        //   isGuestBooking: false
-        // } : {
-        //   isGuestBooking: true
-        // })
-        ...(userInfo ? {
-          customerName: userInfo.userName || userInfo.fullName,
-          customerEmail: userInfo.email,
-          customerPhone: userInfo.phone,
-          isGuestBooking: false
-        } : {
-          isGuestBooking: true
-        })
-      };
-
-      // Validation chi tiết
-      if (!bookingRequest.scheduleId || isNaN(bookingRequest.scheduleId)) {
-        message.error('Invalid schedule ID');
-        return;
-      }
-      
-      if (!bookingRequest.seatIds || bookingRequest.seatIds.length === 0) {
-        message.error('No seats selected');
-        return;
-      }
-      
-      if (bookingRequest.seatIds.some(id => !id || isNaN(id))) {
-        message.error('Invalid seat IDs');
-        return;
-      }
-      
-             // Kiểm tra customer info cho employee và guest booking
-       // if (isEmployee) {
-       //   if (!bookingRequest.customerName || !bookingRequest.customerEmail || !bookingRequest.customerPhone) {
-       //     message.error('Vui lòng nhập đầy đủ thông tin khách hàng (Họ tên, Email, SĐT)');
-       //     setShowCustomerForm(true);
-       //     return;
-       //   }
-       // } else if (bookingRequest.isGuestBooking) {
-       //   if (!bookingRequest.customerName || !bookingRequest.customerEmail || !bookingRequest.customerPhone) {
-       //     message.error('Guest booking requires customer information');
-       //     return;
-       //   }
-       // }
-      if (bookingRequest.isGuestBooking ) {
-        message.error('Vui lòng nhập đầy đủ thông tin khách hàng (Họ tên, Email, SĐT)');
-        return;
-       }
-
       // Tạo booking
       const bookingResponse = await createBooking(bookingRequest);
       
@@ -275,6 +362,19 @@ export default function BookingConfirmPage() {
         message.error("Failed to get bookingId from backend!");
       }
     } catch (error: any) {
+      
+      // Handle validation errors specifically
+      if (error.message && error.message.includes('thông tin khách hàng')) {
+        // Chỉ employee mới hiển thị customer form
+        setShowCustomerForm(true);
+        message.error(error.message);
+        return;
+      } else if (error.message && error.message.includes('thông tin thành viên')) {
+        // Member cần update profile, không hiển thị form
+        message.error(error.message);
+        return;
+      }
+      
       if (error.response?.status === 409) {
         message.error(
           <div>
@@ -289,7 +389,7 @@ export default function BookingConfirmPage() {
           </div>
         );
       } else {
-        message.error("Có lỗi xảy ra khi tạo booking. Vui lòng thử lại.");
+        message.error(error.message || "Có lỗi xảy ra khi tạo booking. Vui lòng thử lại.");
       }
     } finally {
       setIsProcessing(false);
@@ -309,47 +409,65 @@ export default function BookingConfirmPage() {
     };
   };
 
-  // Show customer info form for employees
-  // if (isEmployee && showCustomerForm) {
-  //   return (
-  //     <div className="container mx-auto px-4 py-8 max-w-4xl">
-  //       <CustomerInfoForm
-  //         onSubmit={handleCustomerInfoSubmit}
-  //         onBack={handleBack}
-  //         loading={isProcessing}
-  //       />
-  //     </div>
-  //   );
-  // }
+  // Show customer info form ONLY for EMPLOYEE flow
+  if (showCustomerForm && bookingFlowType === 'EMPLOYEE') {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <CustomerInfoForm
+          onSubmit={(info) => {
+            setCustomerInfo(info);
+            setShowCustomerForm(false);
+          }}
+          onBack={handleBack}
+          loading={isProcessing}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Customer Info Summary for Employee */}
-      {/* {isEmployee && customerInfo && (
+      {/* Booking Flow Type Indicator */}
         <Card className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <Title level={4} className="mb-2">Thông tin khách hàng</Title>
+                         <Title level={4} className="mb-2">
+               Thông tin đặt vé - {
+                 bookingFlowType === 'MEMBER' ? 'Thành viên' : 'Nhân viên bán vé'
+               }
+             </Title>
+            {bookingFlowType === 'MEMBER' && (
               <div className="space-y-1 text-gray-600">
-                <Text><strong>Họ tên:</strong> {customerInfo.fullName}</Text>
+                <Text><strong>Họ tên:</strong> {userProfile?.fullName || userProfile?.userName || authState.userInfo?.userName || 'Sẽ lấy từ tài khoản'}</Text>
                 <br />
-                <Text><strong>Số điện thoại:</strong> {customerInfo.phoneNumber}</Text>
+                <Text><strong>Email:</strong> {userProfile?.email || 'Sẽ lấy từ tài khoản'}</Text>
                 <br />
-                <Text><strong>Email:</strong> {customerInfo.email}</Text>
-                {customerInfo.memberId && (
+                <Text><strong>Số điện thoại:</strong> {userProfile?.phoneNumber || userProfile?.phone || 'Sẽ lấy từ tài khoản'}</Text>
+              </div>
+            )}
+                         {bookingFlowType === 'EMPLOYEE' && customerInfo && (
+              <div className="space-y-1 text-gray-600">
+                 <Text><strong>Họ tên:</strong> {customerInfo?.fullName}</Text>
+                <br />
+                 <Text><strong>Số điện thoại:</strong> {customerInfo?.phoneNumber}</Text>
+                <br />
+                 <Text><strong>Email:</strong> {customerInfo?.email}</Text>
+                 {customerInfo?.memberId && (
                   <>
                     <br />
                     <Text><strong>Mã thành viên:</strong> {customerInfo.memberId}</Text>
                   </>
                 )}
               </div>
+             )}
             </div>
+           {bookingFlowType === 'EMPLOYEE' && customerInfo && (
             <Button onClick={handleBackToCustomerForm}>
               Chỉnh sửa
             </Button>
+          )}
           </div>
         </Card>
-      )} */}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column - Movie Info */}
@@ -396,6 +514,10 @@ export default function BookingConfirmPage() {
             <div className="space-y-4">
               {bookingData.selectedSeats.map((seat) => {
                 const seatStatus = getSeatStatusDisplay(seat.seatId);
+                // Tính giá thật: basePrice * priceMultiplier
+                const basePrice = bookingData.scheduleInfo?.basePrice || 150000;
+                const seatPrice = basePrice * (seat.priceMultiplier || 1);
+                
                 return (
                   <div key={seat.seatId} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
                     <div className="flex items-center space-x-4">
@@ -410,7 +532,7 @@ export default function BookingConfirmPage() {
                     <div className="flex flex-col items-end">
                       <span className="text-sm font-medium text-gray-500 mb-1">Giá vé</span>
                       <span className="text-xl font-bold text-green-600">
-                        {`${180000}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} VND
+                        {seatPrice.toLocaleString()} VND
                       </span>
                     </div>
                   </div>

@@ -41,6 +41,7 @@ interface ScheduleInfo {
   cinemaRoomName: string;
   movieTitle: string;
   movieId: number;
+  basePrice?: number; // Thêm base price cho tính toán ghế
 }
 
 // Thêm interfaces cho concession và promotion
