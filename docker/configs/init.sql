@@ -703,7 +703,7 @@ VALUES
  80, 0, 5, TRUE,
  'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/09d5aa8a-73e9-4c96-9654-fcf1315e9fbc.png',
  500, 24, TRUE,
- NOW(), NOW(), 'SYSTEM'),
+ NOW(), NOW(), 'SYSTEM');
 
 
 
