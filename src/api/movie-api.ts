@@ -161,4 +161,35 @@ export class MovieApiService {
       };
     }
   }
+  static async getCarouselMovies(): Promise<ApiResponse<Movie[]>> {
+    try {
+      const response = await axiosClient.get(
+        "/movies/now-showing/filter?isActive=true&isFeatured=true&availableToday=true&page=0&size=5&sortBy=releaseDate&sortDirection=desc"
+      );
+      const data = response.data;
+      
+      // Handle the structure: { success: true, data: { movies: [...] } }
+      if (data && data.success && data.data && Array.isArray(data.data.movies)) {
+        return {
+          data: data.data.movies,
+          success: true,
+          message: data.message,
+        };
+      } else {
+        console.error("Unexpected API response structure for featured movies:", data);
+        return {
+          data: [],
+          success: false,
+          message: data?.message || "Failed to fetch featured movies",
+        };
+      }
+    } catch (error: unknown) {
+      console.error("Error fetching featured movies:", error);
+      return {
+        data: [],
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to fetch featured movies",
+      };
+    }
+  }
 }
