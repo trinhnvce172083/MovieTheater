@@ -27,6 +27,7 @@ export default function BookingConfirmPage() {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [promotionInput, setPromotionInput] = useState("");
+  const [seatStatus, setSeatStatus] = useState<any[]>([]);
   
   // Employee-specific states
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
@@ -75,7 +76,10 @@ export default function BookingConfirmPage() {
       };
       loadSeatStatus();
     }
+  }, [bookingData.scheduleId, getSeatStatus]);
 
+  // Xử lý áp dụng promotion
+  const handleApplyPromotion = async (code: string) => {
     try {
       const result = await applyPromotionCode(code);
       if (result.isValid) {
@@ -253,11 +257,9 @@ export default function BookingConfirmPage() {
        //     return;
        //   }
        // }
-       if (bookingRequest.isGuestBooking) {
-         if (!bookingRequest.customerName || !bookingRequest.customerEmail || !bookingRequest.customerPhone) {
-           message.error('Guest booking requires customer information');
-           return;
-         }
+      if (bookingRequest.isGuestBooking ) {
+        message.error('Vui lòng nhập đầy đủ thông tin khách hàng (Họ tên, Email, SĐT)');
+        return;
        }
 
       // Tạo booking

@@ -18,49 +18,32 @@ export function useSeatSelection(scheduleId?: string | number, roomId?: string |
 
   // Hàm fetch trạng thái ghế và layout ghế
   const fetchSeatStatus = useCallback(async () => {
-    if (!scheduleId) return;
+    if (!scheduleId || !roomId) return;
     setLoading(true);
     setError(null);
     try {
-      // Try primary API first
-      let statusResponse;
-      let seatData: Seat[] = [];
+      // Lấy layout ghế từ API mới với đầy đủ thông tin seatType
+      const layoutResponse = await axiosClient.get(`/cinema-rooms/${roomId}/seats`);
+      const seatLayout: Seat[] = Array.isArray(layoutResponse.data) ? layoutResponse.data : [];
       
-      try {
-        console.log("Trying primary seat API:", `/bookings/schedules/${scheduleId}/seats`);
-        statusResponse = await BookingApiService.getSeatStatus(scheduleId);
-        seatData = Array.isArray(statusResponse.data?.seats) ? statusResponse.data.seats : [];
-        console.log("Primary API success:", seatData.length, "seats");
-      } catch (primaryErr: any) {
-        console.log("Primary API failed:", primaryErr.response?.status, primaryErr.message);
-        
-        // If 403 and we have roomId, try cinema room API fallback
-        if (primaryErr.response?.status === 403 && roomId) {
-          console.log("Trying fallback cinema room API:", `/cinema-rooms/${roomId}/seats`);
-          try {
-            const roomResponse = await BookingApiService.getSeatLayout(roomId);
-            // Room API returns seat layout, we need to mark all as AVAILABLE for now
-            seatData = Array.isArray(roomResponse.data) ? 
-              roomResponse.data.map(seat => ({ ...seat, status: "AVAILABLE" })) : [];
-            console.log("Fallback API success:", seatData.length, "seats");
-          } catch (fallbackErr: any) {
-            console.log("Fallback API also failed:", fallbackErr.response?.status, fallbackErr.message);
-            throw primaryErr; // Throw original error
-          }
-        } else {
-          throw primaryErr;
-        }
-      }
+      // Lấy trạng thái ghế
+      const statusResponse = await BookingApiService.getSeatStatus(scheduleId);
+      const seatStatus: Seat[] = Array.isArray(statusResponse.data?.seats) ? statusResponse.data.seats : [];
       
-      // Map dữ liệu ghế với đầy đủ thông tin
-      const processedSeats = seatData.map(seat => ({
-        ...seat,
-        isAvailable: seat.status === "AVAILABLE",
-        isOccupied: seat.status === "OCCUPIED", 
-        isTemporarilyReserved: seat.status === "TEMPORARILY_RESERVED",
-      }));
-      
-      setSeats(processedSeats);
+      // Kết hợp layout và status
+      const combinedSeats = seatLayout.map(layoutSeat => {
+        const statusSeat = seatStatus.find(s => s.seatId === layoutSeat.seatId);
+        return {
+          ...layoutSeat,
+          status: statusSeat?.status || layoutSeat.status || "AVAILABLE",
+          reservedBySession: statusSeat?.reservedBySession,
+          reservationExpiry: statusSeat?.reservationExpiry,
+          isAvailable: (statusSeat?.status || layoutSeat.status) === "AVAILABLE",
+          isOccupied: (statusSeat?.status || layoutSeat.status) === "OCCUPIED",
+          isTemporarilyReserved: (statusSeat?.status || layoutSeat.status) === "TEMPORARILY_RESERVED",
+        };
+      });
+      setSeats(combinedSeats);
 
       // Lấy lại schedule info từ API nếu cần cập nhật roomId
       if (scheduleId && (!roomId || seats.length === 0)) {
@@ -87,7 +70,7 @@ export function useSeatSelection(scheduleId?: string | number, roomId?: string |
           console.warn("Không thể lấy thông tin schedule để cập nhật roomId", e);
         }
       }
-      return { seats: processedSeats, lastUpdated: statusResponse.data?.lastUpdated };
+      return { seats: combinedSeats, lastUpdated: statusResponse.data?.lastUpdated };
     } catch (err: any) {
       setError(err?.response?.data?.message || err.message || "Không thể lấy trạng thái ghế");
     } finally {
