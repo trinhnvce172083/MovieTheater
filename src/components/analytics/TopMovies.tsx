@@ -1,24 +1,16 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, TrendingUp } from 'lucide-react';
-import { AnalyticsApiService } from '@/api/admin/analytics-api';
-import { getMovies } from "@/api/admin/getAllMovies";
-import Image from 'next/image';
+import PosterImage from '@/components/ui/poster-image';
 
-interface Movie {
-  movieId?: number;
-  id?: number;
-  title?: string;
-  genre?: string;
-  status?: string;
-  rating?: number;
-}
+// Import admin movie API to get featured movies
+import { getMovies } from '@/api/admin/getAllMovies';
+import type { Movie } from '@/api/admin/getAllMovies';
 
 interface TopMoviesProps {
-  token?: string;
   limit?: number;
 }
 
@@ -29,9 +21,11 @@ interface MoviePerformance {
   bookings: number;
   occupancyRate: number;
   posterUrl?: string;
+  averageRating?: number;
+  genre?: string;
 }
 
-const TopMovies: React.FC<TopMoviesProps> = ({ token, limit = 5 }) => {
+const TopMovies: React.FC<TopMoviesProps> = ({ limit = 5 }) => {
   const [movies, setMovies] = useState<MoviePerformance[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,97 +38,72 @@ const TopMovies: React.FC<TopMoviesProps> = ({ token, limit = 5 }) => {
     if (titleLower.includes('top gun') || titleLower.includes('topgun')) return '/posters/Topgun.jpeg';
     if (titleLower.includes('everything') || titleLower.includes('everywhere')) return '/posters/EEAAO.jpg';
     
-    // Random poster for other movies
-    const posters = ['/posters/Avatar.jpg', '/posters/Avenger.jpg', '/posters/Spider-man.jpg', '/posters/Topgun.jpeg', '/posters/EEAAO.jpg'];
-    return posters[Math.floor(Math.random() * posters.length)];
+    // Use Avatar.jpg as default fallback (exists in public/posters)
+    return '/posters/Avatar.jpg';
   };
+
+  // Transform Movie data to MoviePerformance format  
+  const transformMovieToPerformance = useCallback((movie: Movie): MoviePerformance => {
+    return {
+      movieId: movie.movieId, // Already a number
+      title: movie.title,
+      revenue: Math.floor(Math.random() * 2000000) + 500000, // Mock revenue data
+      bookings: Math.floor(Math.random() * 50000) + 10000, // Mock bookings data
+      occupancyRate: Math.floor(Math.random() * 30) + 70, // Mock occupancy rate 70-100%
+      posterUrl: movie.posterUrl || getPosterForMovie(movie.title),
+      averageRating: movie.imdbRating || 4.5,
+      genre: movie.genre || 'Action' // Already a string
+    };
+  }, []);
 
   useEffect(() => {
     const fetchTopMovies = async () => {
       try {
-        const authToken = token || localStorage.getItem('token') || localStorage.getItem('authToken');
+        console.log('🔄 Fetching featured movies from admin API...');
         
-        console.log('🔄 Fetching real movies data...');
+        // Use admin API to get all movies with large page size
+        const result = await getMovies({
+          page: 0,
+          size: 100, // Get enough movies to find featured ones
+          sortBy: 'movieId',
+          sortDirection: 'desc'
+        });
         
-        // Try to get data from both analytics and movies API
-        const results = await Promise.allSettled([
-          AnalyticsApiService.getDashboardSummary(authToken || ''),
-          getMovies({ page: 0, size: limit * 2, sortBy: "title", sortDirection: "asc" })
-        ]);
-
-        let topMoviesData: MoviePerformance[] = [];
-
-        // Try analytics API first
-        if (results[0].status === 'fulfilled') {
-          const analyticsData = results[0].value;
-          if (analyticsData.success && analyticsData.data?.topMovies) {
-            topMoviesData = analyticsData.data.topMovies.slice(0, limit);
-          }
-        }
-
-        // If no analytics data, create from movies API
-        if (topMoviesData.length === 0 && results[1].status === 'fulfilled') {
-          const movieData = results[1].value;
-          let movieList: Movie[] = [];
+        if (result && result.content && Array.isArray(result.content)) {
+          // Filter for featured movies only
+          const featuredMovies = result.content.filter((movie: Movie) => movie.isFeatured === true);
           
-          if (movieData?.content && Array.isArray(movieData.content)) {
-            movieList = movieData.content;
-          } else if (Array.isArray(movieData)) {
-            movieList = movieData;
+          console.log(`📽️ Found ${featuredMovies.length} featured movies from ${result.content.length} total movies`);
+          
+          if (featuredMovies.length > 0) {
+            // Transform featured movies to MoviePerformance format
+            const moviesPerformance = featuredMovies
+              .slice(0, limit) // Take only the limit number
+              .map(transformMovieToPerformance);
+            
+            setMovies(moviesPerformance);
+            console.log('✅ Featured movies data loaded:', moviesPerformance.length, 'movies');
+          } else {
+            console.warn('⚠️ No featured movies found');
+            // Set empty array when no featured movies
+            setMovies([]);
           }
-
-          // Transform movie data to MoviePerformance format
-          topMoviesData = movieList.slice(0, limit).map((movie: Movie, index: number) => ({
-            movieId: movie.movieId || movie.id || index,
-            title: movie.title || `Movie ${index + 1}`,
-            revenue: Math.floor(Math.random() * 5000000000) + 1000000000, // Mock revenue
-            bookings: Math.floor(Math.random() * 1000) + 100, // Mock bookings
-            occupancyRate: Math.floor(Math.random() * 40) + 60, // Mock 60-100% occupancy
-            genre: movie.genre || 'Action',
-            rating: movie.rating || (Math.random() * 2 + 3), // 3-5 stars
-            posterUrl: getPosterForMovie(movie.title || `Movie ${index + 1}`)
-          }));
+        } else {
+          console.warn('⚠️ No movies data from admin API');
+          // Set empty array when no data
+          setMovies([]);
         }
-
-        // If still no data, create mock data
-        if (topMoviesData.length === 0) {
-          const movieTitles = ['Avatar: The Way of Water', 'Avengers: Endgame', 'Spider-Man: No Way Home', 'Top Gun: Maverick', 'Everything Everywhere All at Once'];
-          topMoviesData = Array.from({ length: Math.min(limit, 5) }, (_, index) => ({
-            movieId: index + 1,
-            title: movieTitles[index] || `Top Movie ${index + 1}`,
-            revenue: Math.floor(Math.random() * 3000000000) + 2000000000,
-            bookings: Math.floor(Math.random() * 800) + 200,
-            occupancyRate: Math.floor(Math.random() * 25) + 75,
-            genre: ['Action', 'Drama', 'Comedy', 'Horror', 'Romance'][index % 5],
-            rating: 4.0 + Math.random(),
-            posterUrl: getPosterForMovie(movieTitles[index] || `Movie ${index + 1}`)
-          }));
-        }
-
-        setMovies(topMoviesData);
-        console.log('✅ Top movies data loaded:', topMoviesData.length, 'movies');
       } catch (error) {
-        console.error('Failed to fetch top movies:', error);
-        // Fallback to mock data on error
-        const movieTitles = ['Avatar: The Way of Water', 'Avengers: Endgame', 'Spider-Man: No Way Home'];
-        const fallbackData = Array.from({ length: Math.min(limit, 3) }, (_, index) => ({
-          movieId: index + 1,
-          title: movieTitles[index] || `Movie ${index + 1}`,
-          revenue: 1000000000 + index * 500000000,
-          bookings: 500 + index * 100,
-          occupancyRate: 80 + index * 5,
-          genre: 'Drama',
-          rating: 4.0,
-          posterUrl: getPosterForMovie(movieTitles[index] || `Movie ${index + 1}`)
-        }));
-        setMovies(fallbackData);
+        console.error('❌ Error fetching featured movies:', error);
+        // Set empty array on error
+        setMovies([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchTopMovies();
-  }, [token, limit]);
+  }, [limit, transformMovieToPerformance]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -153,15 +122,15 @@ const TopMovies: React.FC<TopMoviesProps> = ({ token, limit = 5 }) => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Top Movies</CardTitle>
+          <CardTitle className="text-lg font-semibold">Featured Movies</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="flex items-center space-x-4 animate-pulse">
                 <div className="w-12 h-16 bg-gray-200 rounded"></div>
-                <div className="flex-1">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                   <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                 </div>
               </div>
@@ -175,91 +144,68 @@ const TopMovies: React.FC<TopMoviesProps> = ({ token, limit = 5 }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold flex items-center">
-          <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
-          Top Movies
+        <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          <TrendingUp className="h-5 w-5" />
+          Featured Movies
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {movies.length > 0 ? (
+        {movies.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Star className="h-12 w-12 text-gray-300 mb-3" />
+            <p className="text-gray-500 font-medium mb-1">No Featured Movies This Week</p>
+            <p className="text-sm text-gray-400">Check back later for featured content</p>
+          </div>
+        ) : (
           <div className="space-y-4">
             {movies.map((movie, index) => (
               <div key={movie.movieId} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                {/* Rank */}
-                <div className="flex-shrink-0">
-                  <Badge 
-                    variant={index === 0 ? "default" : "secondary"}
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                      index === 0 ? 'bg-yellow-500 text-white' : 
-                      index === 1 ? 'bg-gray-400 text-white' : 
-                      index === 2 ? 'bg-orange-600 text-white' : 
-                      'bg-gray-200 text-gray-700'
-                    }`}
-                  >
-                    {index + 1}
-                  </Badge>
-                </div>
-
-                {/* Movie Poster */}
-                <div className="flex-shrink-0">
-                  {movie.posterUrl ? (
-                    <Image
-                      src={movie.posterUrl}
-                      alt={movie.title}
-                      width={48}
-                      height={64}
-                      className="rounded object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/posters/Avatar.jpg'; // Use an existing poster as fallback
-                      }}
-                    />
-                  ) : (
-                    <div className="w-12 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded flex items-center justify-center">
-                      <span className="text-white text-xs font-bold">🎬</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Movie Info */}
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-gray-900 truncate">{movie.title}</h4>
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Revenue:</span>
-                      <span className="font-semibold text-green-600">
-                        {formatCurrency(movie.revenue)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Bookings:</span>
-                      <span className="font-semibold text-blue-600">
-                        {formatNumber(movie.bookings)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Occupancy:</span>
-                      <div className="flex items-center">
-                        <div className="w-16 h-2 bg-gray-200 rounded-full mr-2">
-                          <div 
-                            className="h-full bg-green-500 rounded-full"
-                            style={{ width: `${Math.min(movie.occupancyRate, 100)}%` }}
-                          ></div>
-                        </div>
-                        <span className="font-semibold text-gray-700 text-xs">
-                          {movie.occupancyRate.toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
+                <div className="flex-shrink-0 relative">
+                  <div className="absolute -top-2 -left-2 z-10">
+                    <Badge variant={index === 0 ? "default" : "secondary"} className="text-xs">
+                      #{index + 1}
+                    </Badge>
                   </div>
+                  <PosterImage
+                    src={movie.posterUrl || '/posters/Avatar.jpg'}
+                    alt={movie.title}
+                    className="w-12 h-16 rounded-md"
+                  />
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-sm truncate">{movie.title}</h4>
+                  <p className="text-xs text-gray-500 mb-2">{movie.genre}</p>
+                  
+                  <div className="flex items-center space-x-4 text-xs">
+                    <div className="flex items-center">
+                      <Star className="h-3 w-3 text-yellow-400 mr-1" />
+                      <span>{movie.averageRating?.toFixed(1)}</span>
+                    </div>
+                    <span className="text-gray-500">
+                      {formatNumber(movie.bookings)} bookings
+                    </span>
+                    <span className="text-green-600 font-medium">
+                      {movie.occupancyRate}% occupancy
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-green-600">
+                    {formatCurrency(movie.revenue)}
+                  </p>
+                  <p className="text-xs text-gray-500">Revenue</p>
                 </div>
               </div>
             ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            <Star className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>No movie data available</p>
+            
+            {/* Show view all link for featured movies */}
+            <div className="mt-4 text-center">
+              <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                View All Featured Movies →
+              </button>
+            </div>
           </div>
         )}
       </CardContent>

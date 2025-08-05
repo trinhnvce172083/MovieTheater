@@ -7,7 +7,7 @@ import { Film, Users, Calendar, Star } from 'lucide-react';
 import { getDashboardSummary } from '@/api/admin/analytics';
 
 interface QuickStatsProps {
-  token?: string;
+  // Removed token prop as it's handled by axios interceptor
 }
 
 interface QuickStat {
@@ -19,7 +19,7 @@ interface QuickStat {
   bgColor: string;
 }
 
-const QuickStats: React.FC<QuickStatsProps> = ({ token }) => {
+const QuickStats: React.FC<QuickStatsProps> = () => {
   const [stats, setStats] = useState<QuickStat[]>([
     {
       title: 'Active Movies',
@@ -62,26 +62,11 @@ const QuickStats: React.FC<QuickStatsProps> = ({ token }) => {
       try {
         console.log('🔄 Fetching dashboard analytics...');
         
-        // Get token from localStorage if not provided
-        const authToken = token || localStorage.getItem('accessToken');
+        // Get token from localStorage
+        const authToken = localStorage.getItem('accessToken');
+        console.log('Token check:', authToken ? 'Token found' : 'No token');
         
-        if (authToken) {
-          const result = await getDashboardSummary(authToken);
-          
-          if (result && result.overview) {
-            setStats(prevStats => {
-              const newStats = [...prevStats];
-              
-              // Update with real analytics data
-              newStats[0].value = result.overview.activeMovies || 0; // Active Movies
-              newStats[1].value = result.overview.totalCustomers || 0; // Total Customers  
-              newStats[2].value = result.overview.totalShows || 0; // Total Shows (as rooms proxy)
-              newStats[3].value = parseFloat((result.overview.averageRating || 0).toFixed(1)); // Average Rating
-              
-              return newStats;
-            });
-          }
-        } else {
+        if (!authToken) {
           console.warn('No auth token available, using fallback data');
           // Fallback values when no token
           setStats(prevStats => {
@@ -92,11 +77,39 @@ const QuickStats: React.FC<QuickStatsProps> = ({ token }) => {
             newStats[3].value = 4.5;
             return newStats;
           });
+          return;
+        }
+
+        console.log('Calling getDashboardSummary...');
+        const result = await getDashboardSummary();
+        console.log('API Response:', result);
+        
+        if (result && result.overview) {
+          console.log('Updating stats with real data:', result.overview);
+          setStats(prevStats => {
+            const newStats = [...prevStats];
+            
+            // Update with real analytics data
+            newStats[0].value = result.overview.activeMovies || 0; // Active Movies
+            newStats[1].value = result.overview.totalCustomers || 0; // Total Customers  
+            newStats[2].value = result.overview.totalShows || 0; // Total Shows (as rooms proxy)
+            newStats[3].value = parseFloat((result.overview.averageRating || 0).toFixed(1)); // Average Rating
+            
+            return newStats;
+          });
+        } else {
+          console.warn('API returned but no overview data:', result);
+          // Keep default fallback values
         }
 
         console.log('✅ Dashboard analytics loaded');
       } catch (error) {
-        console.error('Failed to fetch dashboard analytics:', error);
+        console.error('❌ Failed to fetch dashboard analytics:');
+        console.error('Error details:', error);
+        console.error('Error message:', error.message);
+        console.error('Error status:', error.response?.status);
+        console.error('Error data:', error.response?.data);
+        
         // Use fallback data on error
         setStats(prevStats => {
           const newStats = [...prevStats];
@@ -112,7 +125,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ token }) => {
     };
 
     fetchQuickStats();
-  }, [token]);
+  }, []);
 
   if (loading) {
     return (

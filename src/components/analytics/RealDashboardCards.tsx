@@ -2,14 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Users, Film, Calendar, DollarSign, Home, Gift } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Film, Home, Gift } from 'lucide-react';
 
-// Import real Analytics API
-import { getDashboardSummary } from '@/api/admin/analytics';
-
-interface RealDashboardCardsProps {
-  token?: string;
-}
+// Import real Analytics API and admin getMovies
+import { getDashboardSummary, getPromotionsCount, getCinemaRoomsCount } from '@/api/admin/analytics';
+import { getMovies } from '@/api/admin/getAllMovies';
 
 interface MetricCard {
   title: string;
@@ -20,24 +17,8 @@ interface MetricCard {
   bgColor: string;
 }
 
-const RealDashboardCards: React.FC<RealDashboardCardsProps> = ({ token }) => {
+const RealDashboardCards: React.FC = () => {
   const [metrics, setMetrics] = useState<MetricCard[]>([
-    {
-      title: 'Total Revenue',
-      value: '$0',
-      change: 0,
-      icon: <DollarSign className="w-6 h-6" />,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100'
-    },
-    {
-      title: 'Total Bookings', 
-      value: 0,
-      change: 0,
-      icon: <Calendar className="w-6 h-6" />,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100'
-    },
     {
       title: 'Total Customers',
       value: 0,
@@ -47,7 +28,7 @@ const RealDashboardCards: React.FC<RealDashboardCardsProps> = ({ token }) => {
       bgColor: 'bg-purple-100'
     },
     {
-      title: 'Active Movies',
+      title: 'Total Movies',
       value: 0,
       change: 0,
       icon: <Film className="w-6 h-6" />,
@@ -79,79 +60,80 @@ const RealDashboardCards: React.FC<RealDashboardCardsProps> = ({ token }) => {
       try {
         console.log('🔄 Fetching dashboard metrics...');
         
-        // Get token from localStorage if not provided
-        const authToken = token || localStorage.getItem('accessToken');
+        // Get main dashboard data
+        const result = await getDashboardSummary();
         
-        if (authToken) {
-          const result = await getDashboardSummary(authToken);
+        // Get additional counts in parallel
+        const [promotionsCount, cinemaRoomsCount, allMoviesResult] = await Promise.all([
+          getPromotionsCount(),
+          getCinemaRoomsCount(),
+          getMovies({ page: 0, size: 100, sortBy: 'movieId', sortDirection: 'desc' })
+        ]);
+        
+        if (result && result.overview) {
+          const overview = result.overview;
           
-          if (result && result.overview) {
-            const overview = result.overview;
-            
-            setMetrics(prevMetrics => {
-              const newMetrics = [...prevMetrics];
-              
-              // Update with real analytics data
-              newMetrics[0].value = `$${(overview.totalRevenue || 0).toLocaleString()}`;
-              newMetrics[0].change = overview.revenueGrowth || 0;
-              
-              newMetrics[1].value = (overview.totalBookings || 0).toLocaleString();
-              newMetrics[1].change = overview.bookingGrowth || 0;
-              
-              newMetrics[2].value = (overview.totalCustomers || 0).toLocaleString();
-              newMetrics[2].change = overview.customerGrowth || 0;
-              
-              newMetrics[3].value = overview.activeMovies || overview.totalMovies || 0;
-              newMetrics[3].change = 0; // No growth data for movies
-              
-              newMetrics[4].value = overview.totalShows || 8; // Fallback to 8 cinema halls
-              newMetrics[4].change = 0;
-              
-              newMetrics[5].value = 12; // Fallback promotions count
-              newMetrics[5].change = 0;
-              
-              return newMetrics;
-            });
-          }
-        } else {
-          console.warn('No auth token available, using fallback data');
-          // Fallback values when no token
+          // Get real movie count from admin getMovies API
+          const realMovieCount = allMoviesResult && allMoviesResult.content && Array.isArray(allMoviesResult.content) 
+            ? allMoviesResult.content.length 
+            : 12; // fallback
+          
           setMetrics(prevMetrics => {
             const newMetrics = [...prevMetrics];
-            newMetrics[0].value = '$125,430';
-            newMetrics[0].change = 12.5;
-            newMetrics[1].value = '1,284';
-            newMetrics[1].change = 8.3;
-            newMetrics[2].value = '3,567';
-            newMetrics[2].change = 15.2;
-            newMetrics[3].value = 24;
-            newMetrics[3].change = 4.1;
-            newMetrics[4].value = 8;
-            newMetrics[4].change = 0;
-            newMetrics[5].value = 12;
-            newMetrics[5].change = 16.7;
+            
+            // Update with real analytics data (reindexed after removing revenue and bookings)
+            newMetrics[0].value = (overview.totalCustomers || 0).toLocaleString();
+            newMetrics[0].change = overview.customerGrowth || 0;
+            
+            // Use REAL movie count from MovieApiService
+            newMetrics[1].value = realMovieCount;
+            newMetrics[1].change = 0; // No growth data for movies
+            
+            // Use REAL API data for cinema rooms and promotions
+            newMetrics[2].value = cinemaRoomsCount;
+            newMetrics[2].change = 0;
+            
+            newMetrics[3].value = promotionsCount;
+            newMetrics[3].change = 0;
+            
+            return newMetrics;
+          });
+        } else {
+          console.warn('No dashboard data available, using fallback');
+          
+          // Get real movie count even when dashboard data unavailable
+          const realMovieCount = allMoviesResult && allMoviesResult.content && Array.isArray(allMoviesResult.content) 
+            ? allMoviesResult.content.length 
+            : 12; // fallback
+            
+          // Use fallback data when no data
+          setMetrics(prevMetrics => {
+            const newMetrics = [...prevMetrics];
+            newMetrics[0].value = '9';
+            newMetrics[0].change = 0;
+            newMetrics[1].value = realMovieCount; // Use real movie count
+            newMetrics[1].change = 0;
+            newMetrics[2].value = cinemaRoomsCount;
+            newMetrics[2].change = 0;
+            newMetrics[3].value = promotionsCount;
+            newMetrics[3].change = 0;
             return newMetrics;
           });
         }
 
-        console.log('✅ Dashboard metrics loaded');
       } catch (error) {
         console.error('Failed to fetch dashboard metrics:', error);
         // Use fallback data on error
         setMetrics(prevMetrics => {
           const newMetrics = [...prevMetrics];
-          newMetrics[0].value = '$125,430';
-          newMetrics[0].change = 12.5;
-          newMetrics[1].value = '1,284';
-          newMetrics[1].change = 8.3;
-          newMetrics[2].value = '3,567';
-          newMetrics[2].change = 15.2;
-          newMetrics[3].value = 24;
-          newMetrics[3].change = 4.1;
-          newMetrics[4].value = 8;
-          newMetrics[4].change = 0;
-          newMetrics[5].value = 12;
-          newMetrics[5].change = 16.7;
+          newMetrics[0].value = '9';
+          newMetrics[0].change = 0;
+          newMetrics[1].value = 12; // fallback movie count
+          newMetrics[1].change = 0;
+          newMetrics[2].value = 4;
+          newMetrics[2].change = 0;
+          newMetrics[3].value = 11;
+          newMetrics[3].change = 0;
           return newMetrics;
         });
       } finally {
@@ -160,12 +142,12 @@ const RealDashboardCards: React.FC<RealDashboardCardsProps> = ({ token }) => {
     };
 
     fetchDashboardMetrics();
-  }, [token]);
+  }, []);
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
           <div key={i} className="animate-pulse">
             <div className="h-32 bg-gray-200 rounded-lg"></div>
           </div>
@@ -175,7 +157,7 @@ const RealDashboardCards: React.FC<RealDashboardCardsProps> = ({ token }) => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {metrics.map((metric, index) => (
         <Card key={index} className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

@@ -4,10 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, User, Film, Calendar, CreditCard, Settings } from 'lucide-react';
-import { AnalyticsApiService } from '@/api/admin/analytics-api';
+import { getDashboardSummary } from '@/api/admin/analytics';
 
 interface RecentActivitiesProps {
-  token?: string;
   limit?: number;
 }
 
@@ -18,25 +17,29 @@ interface RecentActivity {
   user: string;
 }
 
-const RecentActivities: React.FC<RecentActivitiesProps> = ({ token, limit = 10 }) => {
+const RecentActivities: React.FC<RecentActivitiesProps> = ({ limit = 10 }) => {
   const [activities, setActivities] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchRecentActivities = async () => {
       try {
-        const authToken = token || localStorage.getItem('token') || localStorage.getItem('authToken');
-        if (!authToken) {
-          console.warn('No auth token found');
-          setLoading(false);
-          return;
-        }
-
-        const response = await AnalyticsApiService.getDashboardSummary(authToken);
+        console.log('🔄 Fetching recent activities...');
         
-        if (response.success && response.data?.recentActivities) {
-          setActivities(response.data.recentActivities.slice(0, limit));
+        const response = await getDashboardSummary();
+        
+        if (response?.recentActivities) {
+          // Map API data to component structure
+          const mappedActivities = response.recentActivities.slice(0, limit).map(activity => ({
+            type: activity.type,
+            message: activity.title || activity.description,
+            timestamp: activity.activityDate,
+            user: activity.customerName || 'System'
+          }));
+          setActivities(mappedActivities);
+          console.log('✅ Recent activities loaded from API');
         } else {
+          console.warn('⚠️ No recent activities from API, using mock data');
           // Fallback mock activities nếu không có data
           const mockActivities: RecentActivity[] = [
             {
@@ -68,7 +71,7 @@ const RecentActivities: React.FC<RecentActivitiesProps> = ({ token, limit = 10 }
     };
 
     fetchRecentActivities();
-  }, [token, limit]);
+  }, [limit]);
 
   const getActivityIcon = (type: string) => {
     switch (type.toLowerCase()) {

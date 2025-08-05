@@ -11,7 +11,6 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   ShoppingOutlined,
-  ScheduleOutlined,
   BarChartOutlined,
 } from "@ant-design/icons";
 import { usePathname, useRouter } from "next/navigation";
@@ -70,11 +69,6 @@ export default function AdminLayout({
       key: ROUTES.ADMIN_MOVIES,
       icon: <VideoCameraOutlined />,
       label: "Movies",
-    },
-    {
-      key: ROUTES.ADMIN_SCHEDULES,
-      icon: <ScheduleOutlined />,
-      label: "Schedules",
     },
     {
       key: ROUTES.ADMIN_ROOMS,

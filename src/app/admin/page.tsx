@@ -3,16 +3,11 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { 
   BarChart3, 
   TrendingUp, 
   Calendar,
-  RefreshCw,
-  Download,
-  Filter,
-  Eye,
-  EyeOff
+  Filter
 } from 'lucide-react';
 
 // Real Analytics API
@@ -32,25 +27,16 @@ import AppPieChart from '@/components/AppPieChart';
 
 export default function AdminDashboard() {
   const [refreshKey, setRefreshKey] = useState(0);
-  const [isCompactView, setIsCompactView] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      setLoading(true);
-      // Get token from localStorage or context
-      const token = localStorage.getItem('accessToken') || '';
-      
-      if (token) {
-        const result = await getDashboardSummary(token);
-        if (result && result.overview) {
-          console.log('✅ Dashboard data refreshed');
-        }
+      // API function already handles token internally via axios interceptor
+      const result = await getDashboardSummary();
+      if (result && result.overview) {
+        console.log('✅ Dashboard data refreshed');
       }
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -63,12 +49,6 @@ export default function AdminDashboard() {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  const handleExportData = () => {
-    // TODO: Implement export functionality
-    console.log('Exporting dashboard data...');
-    // You can implement CSV export here
-  };
-
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
       {/* Header */}
@@ -76,39 +56,6 @@ export default function AdminDashboard() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-600 mt-1">Cinema Management System - Overview and Analytics</p>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsCompactView(!isCompactView)}
-            className="flex items-center space-x-2"
-          >
-            {isCompactView ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            <span>{isCompactView ? 'Expand' : 'Compact'}</span>
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportData}
-            className="flex items-center space-x-2"
-          >
-            <Download className="w-4 h-4" />
-            <span>Export Data</span>
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            className="flex items-center space-x-2"
-            disabled={loading}
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </Button>
         </div>
       </div>
 
@@ -138,9 +85,9 @@ export default function AdminDashboard() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          <div className={`grid gap-6 ${isCompactView ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 lg:grid-cols-2 xl:grid-cols-3'}`}>
+          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
             {/* Revenue Chart */}
-            <Card className={isCompactView ? 'col-span-1' : 'col-span-1 lg:col-span-2'}>
+            <Card className="col-span-1 lg:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
@@ -158,7 +105,7 @@ export default function AdminDashboard() {
             </Card>
           </div>
 
-          <div className={`grid gap-6 ${isCompactView ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
+          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
             {/* Booking Statistics */}
             <Card>
               <CardHeader>

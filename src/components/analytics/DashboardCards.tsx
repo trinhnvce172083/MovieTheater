@@ -2,24 +2,24 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Users, Film, Calendar, DollarSign, Home, Gift } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Film, Home, Gift } from 'lucide-react';
 
 // Import real Analytics API
-import { getDashboardSummary, type DashboardSummaryResponse } from '@/api/admin/analytics';
+import { getDashboardSummary } from '@/api/admin/analytics';
+import { getAllUsers } from '@/api/admin/getAllUsers';
+import { getMovies } from '@/api/admin/getAllMovies';
+import { getAllRooms } from '@/api/admin/getAllRooms';
+import { getAllPromotions } from '@/api/admin/getAllPromotions';
 
 interface DashboardCardsProps {
   token?: string;
 }
 
 interface OverviewMetrics {
-  totalRevenue: number;
-  totalBookings: number;
   totalCustomers: number;
   totalMovies: number;
   totalRooms: number;
   totalPromotions: number;
-  revenueGrowth: number;
-  bookingGrowth: number;
   customerGrowth: number;
   movieGrowth?: number;
   roomGrowth?: number;
@@ -49,14 +49,10 @@ interface Promotion {
 
 const DashboardCards: React.FC<DashboardCardsProps> = ({ token }) => {
   const [metrics, setMetrics] = useState<OverviewMetrics>({
-    totalRevenue: 0,
-    totalBookings: 0,
     totalCustomers: 0,
     totalMovies: 0,
     totalRooms: 0,
     totalPromotions: 0,
-    revenueGrowth: 0,
-    bookingGrowth: 0,
     customerGrowth: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -79,18 +75,14 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ token }) => {
           getMovies({ page: 0, size: 1000, sortBy: "title", sortDirection: "asc" }),
           getAllRooms(0, 1000),
           getAllPromotions({ page: 0, size: 1000, sortBy: "promotionName", sortDirection: "ASC" }),
-          AnalyticsApiService.getDashboardSummary(authToken)
+          getDashboardSummary()
         ]);
 
-        let newMetrics: OverviewMetrics = {
-          totalRevenue: 0,
-          totalBookings: 0,
+        const newMetrics: OverviewMetrics = {
           totalCustomers: 0,
           totalMovies: 0,
           totalRooms: 0,
           totalPromotions: 0,
-          revenueGrowth: 0,
-          bookingGrowth: 0,
           customerGrowth: 0,
         };
 
@@ -177,9 +169,9 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ token }) => {
         // Process Analytics data (if available)
         if (results[4].status === 'fulfilled') {
           const analyticsData = results[4].value;
-          if (analyticsData.success && analyticsData.data?.overview) {
-            const overviewData = analyticsData.data.overview;
-            newMetrics = { ...newMetrics, ...overviewData };
+          if (analyticsData && analyticsData.overview) {
+            // Only update relevant fields, skip revenue and bookings
+            newMetrics.totalCustomers = analyticsData.overview.totalCustomers || newMetrics.totalCustomers;
           }
         }
 
@@ -194,15 +186,6 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ token }) => {
 
     fetchDashboardData();
   }, [token]);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('vi-VN').format(num);
@@ -233,8 +216,8 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ token }) => {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader className="pb-2">
               <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -250,41 +233,9 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ token }) => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-      {/* Total Revenue */}
-      <Card className="hover:shadow-lg transition-shadow xl:col-span-1">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-gray-600">
-            Tổng Doanh Thu
-          </CardTitle>
-          <DollarSign className="h-4 w-4 text-green-600" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-green-600">
-            {formatCurrency(metrics.totalRevenue)}
-          </div>
-          <GrowthIndicator growth={metrics.revenueGrowth} />
-        </CardContent>
-      </Card>
-
-      {/* Total Bookings */}
-      <Card className="hover:shadow-lg transition-shadow xl:col-span-1">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-gray-600">
-            Tổng Đặt Vé
-          </CardTitle>
-          <Calendar className="h-4 w-4 text-blue-600" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-blue-600">
-            {formatNumber(metrics.totalBookings)}
-          </div>
-          <GrowthIndicator growth={metrics.bookingGrowth} />
-        </CardContent>
-      </Card>
-
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {/* Total Customers */}
-      <Card className="hover:shadow-lg transition-shadow xl:col-span-1">
+      <Card className="hover:shadow-lg transition-shadow">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-gray-600">
             Tổng Thành Viên
@@ -300,7 +251,7 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ token }) => {
       </Card>
 
       {/* Total Movies */}
-      <Card className="hover:shadow-lg transition-shadow xl:col-span-1">
+      <Card className="hover:shadow-lg transition-shadow">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-gray-600">
             Tổng Phim
@@ -318,7 +269,7 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ token }) => {
       </Card>
 
       {/* Total Cinema Halls */}
-      <Card className="hover:shadow-lg transition-shadow xl:col-span-1">
+      <Card className="hover:shadow-lg transition-shadow">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-gray-600">
             Phòng Chiếu
@@ -336,12 +287,12 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ token }) => {
       </Card>
 
       {/* Total Promotions */}
-      <Card className="hover:shadow-lg transition-shadow xl:col-span-1">
+      <Card className="hover:shadow-lg transition-shadow">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-gray-600">
             Khuyến Mãi
           </CardTitle>
-          <TrendingUp className="h-4 w-4 text-pink-600" />
+          <Gift className="h-4 w-4 text-pink-600" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-pink-600">
