@@ -101,6 +101,12 @@ export default function AdminHeader() {
               My Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => router.push(ROUTES.HOME)}
+            >
+              Go Homepage
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} variant="destructive">
               Logout
             </DropdownMenuItem>

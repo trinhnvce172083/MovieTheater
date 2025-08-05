@@ -11,7 +11,7 @@ export default function NavButton({
   disabled?: boolean;
 }): React.ReactElement {
   const isLeft = direction === "left";
-  
+
   return (
     <button
       type="button"
@@ -21,9 +21,11 @@ export default function NavButton({
         absolute top-1/2 -translate-y-1/2 z-20
         ${isLeft ? "left-2 sm:left-0" : "right-2 sm:right-0"}
         w-10 h-10 sm:w-12 sm:h-12 rounded-full
-        ${disabled 
-          ? 'opacity-0 pointer-events-none' 
-          : 'opacity-100 bg-black/80 backdrop-blur-sm text-white border border-white/10 hover:bg-neutral-800 hover:scale-105'}
+        ${
+          disabled
+            ? "opacity-0 pointer-events-none"
+            : "opacity-100 bg-black/80 backdrop-blur-sm text-white border border-white/10 hover:bg-neutral-800 hover:scale-105"
+        }
         flex items-center justify-center
         transition-all duration-200
         active:scale-95

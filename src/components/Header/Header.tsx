@@ -52,6 +52,15 @@ const HeaderComponent = () => {
               Sell
             </Link>
           )}
+
+          {isLoggedIn && userInfo?.Role === "ADMIN" && (
+            <Link
+              href={ROUTES.ADMIN_DASHBOARD}
+              className="hover:text-red-500 transition-colors whitespace-nowrap"
+            >
+              Return to Admin Dashboard
+            </Link>
+          )}
         </nav>
       </div>
       <div className="flex items-center gap-2 md:gap-6">

@@ -42,7 +42,7 @@ const HomeContainer = memo(function HomeContainer() {
         {/* Now Showing Section */}
         <section className="mt-8 sm:mt-12">
           <MovieSection
-            title="PHIM ĐANG CHIẾU"
+            title="NOW SHOWING"
             movies={nowShowingMovies}
             scrollRef={nowShowingRef}
             loading={loading}
@@ -55,7 +55,7 @@ const HomeContainer = memo(function HomeContainer() {
         {/* Upcoming Section */}
         <section className="mt-8 sm:mt-12 pb-8">
           <MovieSection
-            title="PHIM SẮP CHIẾU"
+            title="COMING SOON"
             movies={upcomingMovies}
             scrollRef={upcomingRef}
             loading={loading}

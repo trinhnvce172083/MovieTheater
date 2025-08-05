@@ -7,10 +7,7 @@ import ClientCarousel from "./ClientCarousel";
 import Image from "next/image";
 import Link from "next/link";
 import ROUTES from "@/constants/routes";
-import {
-  CalendarOutlined,
-  ClockCircleOutlined,
-} from "@ant-design/icons";
+import { CalendarOutlined, ClockCircleOutlined } from "@ant-design/icons";
 
 interface CarouselSlideProps {
   movie: Movie;
@@ -27,7 +24,7 @@ const CarouselSlide: React.FC<CarouselSlideProps> = React.memo(({ movie }) => {
   );
 
   return (
-    <div className="relative h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden">
+    <div className="relative h-[300px] sm:h-[300px] md:h-[600px] lg:h-[775px] overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
@@ -82,29 +79,24 @@ const CarouselSlide: React.FC<CarouselSlideProps> = React.memo(({ movie }) => {
               </span>
             </div>
 
-            {/* Description */}
-            <p className="text-white/90 text-sm md:text-base lg:text-lg mb-4 md:mb-6 line-clamp-2 md:line-clamp-3 leading-relaxed">
-              {movie.description}
-            </p>
-
             {/* Action Buttons */}
-              <Link
-                href={`${ROUTES.MOVIES}/${movie.movieId}`}
-                className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold border border-white/30 transition-all duration-200 hover:scale-105"
-              >
-                Đặt Vé Ngay
-              </Link>
-            </div>
+            <Link
+              href={`${ROUTES.MOVIES}/${movie.movieId}`}
+              className="bg-white/20 backdrop-blur-sm hover:bg-orange-500! hover:text-white! px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold border border-white/30 transition-all duration-200 hover:scale-105"
+            >
+              Book Now
+            </Link>
+          </div>
 
-            {/* Price */}
-            <div className="mt-2">
-              <span className="text-orange-400 font-bold text-lg md:text-xl">
-                Từ {formattedPrice} VND
-              </span>
-            </div>
+          {/* Price */}
+          <div className="mt-2">
+            <span className="text-orange-400 font-bold text-lg md:text-xl">
+              From {formattedPrice} VND
+            </span>
           </div>
         </div>
       </div>
+    </div>
   );
 });
 
@@ -143,7 +135,7 @@ const HomepageCarousel: React.FC = () => {
       <div className="h-[400px] md:h-[500px] lg:h-[600px] bg-gray-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
-          <div className="text-white text-lg">Đang tải...</div>
+          <div className="text-white text-lg">Loading...</div>
         </div>
       </div>
     ),
@@ -154,12 +146,12 @@ const HomepageCarousel: React.FC = () => {
     () => (
       <div className="h-[400px] md:h-[500px] lg:h-[600px] bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-400 text-lg mb-4">Lỗi: {error}</div>
+          <div className="text-red-400 text-lg mb-4">Error: {error}</div>
           <button
             onClick={fetchFeaturedMovies}
             className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
           >
-            Thử lại
+            Try Again
           </button>
         </div>
       </div>
@@ -170,7 +162,7 @@ const HomepageCarousel: React.FC = () => {
   const emptyComponent = useMemo(
     () => (
       <div className="h-[400px] md:h-[500px] lg:h-[600px] bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-lg">Không có phim nào để hiển thị</div>
+        <div className="text-white text-lg">There is no movie to display</div>
       </div>
     ),
     []

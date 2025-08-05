@@ -14,22 +14,30 @@ interface MovieCardProps {
   onViewDetails?: (movieId: string) => void;
 }
 
-export const MovieCard = memo(function MovieCard({ movie, onViewDetails }: MovieCardProps) {
-  const cardStyle = useMemo(() => ({ width: '100%' }), []);
-  
+export const MovieCard = memo(function MovieCard({
+  movie,
+  onViewDetails,
+}: MovieCardProps) {
+  const cardStyle = useMemo(() => ({ width: "100%" }), []);
+
   const ratingColor = useMemo(() => {
     switch (movie.rating) {
-      case "G": return "bg-green-500";
-      case "PG": return "bg-blue-500";
-      case "PG-13": return "bg-yellow-500";
-      case "R": return "bg-red-500";
-      default: return "bg-gray-500";
+      case "G":
+        return "bg-green-500";
+      case "PG":
+        return "bg-blue-500";
+      case "PG-13":
+        return "bg-yellow-500";
+      case "R":
+        return "bg-red-500";
+      default:
+        return "bg-gray-500";
     }
   }, [movie.rating]);
 
   const formattedPrice = useMemo(() => {
     const numPrice = Number(movie.price || 0);
-    return numPrice.toLocaleString('vi-VN') + ' VND';
+    return numPrice.toLocaleString("vi-VN") + " VND";
   }, [movie.price]);
 
   const genreArr = useMemo(() => {
@@ -46,21 +54,23 @@ export const MovieCard = memo(function MovieCard({ movie, onViewDetails }: Movie
   }, [movie.genres]);
 
   const releaseYear = useMemo(() => {
-    return movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : '2025';
+    return movie.releaseDate
+      ? new Date(movie.releaseDate).getFullYear()
+      : "2025";
   }, [movie.releaseDate]);
 
   const handleViewDetails = useCallback(() => {
     if (onViewDetails) {
-      onViewDetails(movie.movieId?.toString() || '');
+      onViewDetails(movie.movieId?.toString() || "");
     }
   }, [onViewDetails, movie.movieId]);
 
-  const movieDetailsUrl = `/movies/${movie.movieId || ''}`;
+  const movieDetailsUrl = `/movies/${movie.movieId || ""}`;
   const imageUrl = movie.posterUrl || "/default-movie-poster.jpg";
 
   return (
-    <Card 
-      className="w-full min-h-[420px] sm:min-h-[480px] flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-b from-gray-900 to-black border border-orange-500/20 shadow-xl hover:shadow-orange-900/30 hover:border-orange-500/50 transition-all duration-300 transform hover:-translate-y-2 hover:scale-[1.02] group" 
+    <Card
+      className="w-full min-h-[420px] sm:min-h-[480px] flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-b from-gray-900 to-black border border-orange-500/20 shadow-xl hover:shadow-orange-900/30 hover:border-orange-500/50 transition-all duration-300 transform hover:-translate-y-2 hover:scale-[1.02] group"
       style={cardStyle}
     >
       <Link href={movieDetailsUrl} className="block">
@@ -84,10 +94,12 @@ export const MovieCard = memo(function MovieCard({ movie, onViewDetails }: Movie
           <div className="absolute top-2 left-2 right-2 flex justify-between items-start">
             {movie.isFeatured && (
               <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold z-10 text-xs shadow-lg">
-                ⭐ Nổi Bật
+                ⭐ Featured
               </Badge>
             )}
-            <Badge className={`${ratingColor} text-white font-bold z-10 text-xs shadow-lg ml-auto`}>
+            <Badge
+              className={`${ratingColor} text-white font-bold z-10 text-xs shadow-lg ml-auto`}
+            >
               {movie.rating}
             </Badge>
           </div>
@@ -103,7 +115,7 @@ export const MovieCard = memo(function MovieCard({ movie, onViewDetails }: Movie
           {/* Quick action overlay */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
             <div className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full font-bold text-sm shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-              Xem Chi Tiết
+              Details
             </div>
           </div>
         </div>
@@ -143,7 +155,7 @@ export const MovieCard = memo(function MovieCard({ movie, onViewDetails }: Movie
           <div className="flex justify-between text-[10px] sm:text-xs text-gray-400 mb-3">
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3 text-orange-400" />
-              <span>{movie.formattedDuration || '1h 41m'}</span>
+              <span>{movie.formattedDuration || "1h 41m"}</span>
             </div>
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3 text-orange-400" />
@@ -163,7 +175,7 @@ export const MovieCard = memo(function MovieCard({ movie, onViewDetails }: Movie
               className="h-7 sm:h-8 px-3 sm:px-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-[10px] sm:text-xs font-bold transition-all duration-200 hover:scale-105 shadow-lg"
               onClick={handleViewDetails}
             >
-              Đặt Vé
+              Book Now
             </Button>
           </Link>
         </div>

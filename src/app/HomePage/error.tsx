@@ -21,15 +21,15 @@ export default function HomeError({
         <div className="flex justify-center mb-6">
           <AlertCircle className="h-16 w-16 text-red-500" />
         </div>
-        
+
         <h1 className="text-white text-2xl md:text-3xl font-bold mb-4">
           Something went wrong!
         </h1>
-        
+
         <p className="text-gray-300 mb-8">
           We encountered an error while loading the homepage. Please try again.
         </p>
-        
+
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button
             onClick={reset}
@@ -39,9 +39,9 @@ export default function HomeError({
             <RefreshCw size={16} />
             Try Again
           </Button>
-          
+
           <Button
-            onClick={() => window.location.href = "/"}
+            onClick={() => (window.location.href = "/")}
             className="flex items-center gap-2"
             variant="outline"
           >
