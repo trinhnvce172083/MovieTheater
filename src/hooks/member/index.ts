@@ -207,7 +207,8 @@ export function useMemberProfile() {
   const updateProfile = useCallback(async (request: ProfileUpdateRequest) => {
     try {
       const response = await MemberApiService.updateProfile(request);
-      setProfile(response.data);
+      // Refresh profile data from server after successful update
+      await loadProfile();
       // Show success message
       const { message } = await import('antd');
       message.success("Profile updated successfully!");
@@ -217,7 +218,7 @@ export function useMemberProfile() {
       message.error("Failed to update profile");
       throw err;
     }
-  }, []);
+  }, [loadProfile]);
 
   const changePassword = useCallback(async (request: PasswordChangeRequest) => {
     try {

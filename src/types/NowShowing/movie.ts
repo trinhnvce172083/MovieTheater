@@ -1,17 +1,27 @@
 export interface Movie {
-  movieId: string // Keep as string for frontend compatibility, will be converted from number
-  title: string
-  genre: string[] // Frontend expects array, will be converted from backend string
-  duration: number
-  formattedDuration: string
-  releaseDate: string
-  rating: string
-  posterUrl: string
-  price: number
-  status: string
-  imdbRating: number
-  isFeatured: boolean
-  isAdultContent: boolean
+  movieId: number;
+  title: string;
+  originalTitle: string;
+  description: string;
+  duration: number;
+  genres: string;
+  director: string;
+  language: string;
+  country: string;
+  releaseDate: string;
+  endDate: string;
+  rating: string;
+  posterUrl: string;
+  backdropUrl: string;
+  trailerUrl: string;
+  isActive: boolean;
+  isFeatured: boolean;
+  price: number;
+  status: string;
+  imdbRating: number;
+  formattedDuration: string;
+  availableToday: boolean;
+  adultContent: boolean;
 }
 
 export interface MovieFilters {
