@@ -1,100 +1,304 @@
 "use client";
 
-import React, { useState } from "react";
-import { Card, Table, Button, Typography, Alert, Pagination, message, Spin } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import {
+  Table,
+  Card,
+  Button,
+  Form,
+  message,
+  Spin,
+  Typography,
+  Pagination,
+  Alert,
+} from "antd";
+import {
+  PlusOutlined,
+} from "@ant-design/icons";
+import { getAllRooms, createRoom, updateRoom, deleteRoom } from "@/api/admin/getAllRooms";
 import { useRouter } from 'next/navigation';
 
-// Local imports
-import { useRoomManagement } from './hooks/useRoomManagement';
-import { 
+// Import organized components
+import {
   RoomStatisticsCard,
-  RoomFilters,
+  RoomFiltersComponent,
   createRoomTableColumns,
   RoomFormModal,
 } from './components';
-import { CinemaRoom, CinemaRoomCreateRequest } from '@/api/admin/getAllRooms';
+import { CinemaRoomResponse, RoomCreateRequest, RoomFilters } from './types';
+import { filterRooms, calculateRoomStatistics } from './utils';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const { Text } = Typography;
 
-export default function AdminRoomManagement() {
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingRoom, setEditingRoom] = useState<CinemaRoom | null>(null);
+// Custom hook for debounced value
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+export default function CinemaRoomManagement() {
+  const isMobile = useIsMobile();
+  const [form] = Form.useForm();
   const router = useRouter();
+  
+  // State
+  const [allRoomData, setAllRoomData] = useState<CinemaRoomResponse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<CinemaRoomResponse | null>(null);
+  const [isUsingApiData, setIsUsingApiData] = useState(true);
 
-  // Use custom hook for all room management logic
-  const {
-    // Data
-    paginatedData,
-    filteredData,
-    statistics,
+  // Filters with debounced search
+  const [filters, setFilters] = useState<RoomFilters>({
+    searchTerm: '',
+    filterType: undefined,
+    filterStatus: undefined,
+  });
 
-    // State
-    loading,
-    isUsingApiData,
-    filters,
-    pagination,
+  // Debounce search term to improve performance
+  const debouncedSearchTerm = useDebounce(filters.searchTerm, 300);
 
-    // Actions
-    setFilters,
-    setPagination,
-    createRoom,
-    updateRoom,
-    deleteRoom,
-  } = useRoomManagement();
+  // Create debounced filters object
+  const debouncedFilters = useMemo(() => ({
+    ...filters,
+    searchTerm: debouncedSearchTerm
+  }), [filters, debouncedSearchTerm]);
+
+  // Fetch rooms function with filters
+  const fetchRooms = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Fetch all rooms data (we'll handle pagination on frontend due to no filter API)
+      const response = await getAllRooms(0, 1000); // Get all rooms
+      
+      // Check if response has the expected structure
+      if (response && response.content && Array.isArray(response.content)) {
+        setAllRoomData(response.content);
+      } else {
+        console.warn('Unexpected API response structure:', response);
+        setAllRoomData([]);
+      }
+      setIsUsingApiData(true);
+    } catch (error) {
+      console.error("Failed to fetch rooms:", error);
+      message.error("Failed to connect to backend server");
+      setAllRoomData([]);
+      setIsUsingApiData(false);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Computed values for filtering and pagination
+  const filteredData = useMemo(() => {
+    // Ensure allRoomData is an array before filtering
+    if (!allRoomData || !Array.isArray(allRoomData)) {
+      return [];
+    }
+    return filterRooms(allRoomData, debouncedFilters);
+  }, [allRoomData, debouncedFilters]);
+
+  const paginatedData = useMemo(() => {
+    // Ensure filteredData is an array before slicing
+    if (!filteredData || !Array.isArray(filteredData)) {
+      return [];
+    }
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return filteredData.slice(startIndex, endIndex);
+  }, [filteredData, currentPage, pageSize]);
+
+  const statistics = useMemo(() => {
+    // Ensure allRoomData is an array before calculating statistics
+    if (!allRoomData || !Array.isArray(allRoomData)) {
+      return { totalRooms: 0, activeRooms: 0, totalSeats: 0, avgSeats: 0 };
+    }
+    return calculateRoomStatistics(allRoomData);
+  }, [allRoomData]);
+  const createRoomFunction = async (roomData: RoomCreateRequest) => {
+    try {
+      setLoading(true);
+      const response = await createRoom(roomData);
+      console.log('Create room response:', response);
+      message.success("Room created successfully!");
+      await fetchRooms(); // Wait for refresh to complete
+      return true;
+    } catch (error: unknown) {
+      console.error('Create room error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to create room";
+      message.error(errorMessage);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateRoomFunction = async (id: number, roomData: RoomCreateRequest) => {
+    try {
+      setLoading(true);
+      console.log('Updating room with ID:', id, 'Data:', roomData);
+      
+      // Show warning for features that will be lost due to backend limitations
+      if (roomData.has3D || roomData.hasDolbyAtmos || roomData.hasReclinerSeats || 
+          (roomData.priceMultiplier && roomData.priceMultiplier !== 1.0) ||
+          roomData.roomType === 'IMAX' || roomData.roomType === '4DX') {
+        message.warning(
+          'Note: Some advanced features (3D, Dolby Atmos, Recliner Seats, Custom Price Multiplier, IMAX/4DX types) ' +
+          'may not be fully preserved due to backend limitations. Only basic room information will be updated.',
+          5
+        );
+      }
+      
+      const response = await updateRoom(id, roomData);
+      console.log('Update room response:', response);
+      message.success("Room updated successfully!");
+      console.log('Refreshing room list after small delay...');
+      
+      // Small delay to ensure backend consistency
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await fetchRooms(); // Wait for refresh to complete
+      console.log('Room list refreshed');
+      return true;
+    } catch (error: unknown) {
+      console.error('Update room error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to update room";
+      message.error(errorMessage);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteRoomFunction = async (id: number) => {
+    try {
+      setLoading(true);
+      await deleteRoom(id);
+      message.success("Room deleted successfully!");
+      await fetchRooms(); // Wait for refresh to complete
+    } catch (error: unknown) {
+      console.error('Delete room error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete room";
+      message.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Event handlers
-  const handleEdit = (record: CinemaRoom) => {
+  const handleEdit = (record: CinemaRoomResponse) => {
     setEditingRoom(record);
     setIsModalVisible(true);
   };
 
-  const handleViewDetail = (record: CinemaRoom) => {
+  const handleDelete = (roomId: number) => {
+    deleteRoomFunction(roomId);
+  };
+
+  const handleView = (record: CinemaRoomResponse) => {
+    console.log('Navigating to room detail with ID:', record.cinemaRoomId);
     router.push(`/admin/rooms/${record.cinemaRoomId}`);
   };
 
-  const handleModalSubmit = async (roomData: CinemaRoomCreateRequest) => {
+  const handleModalOk = async () => {
     try {
-      let success = false;
-      if (editingRoom) {
-        success = await updateRoom(editingRoom.cinemaRoomId, roomData);
-      } else {
-        success = await createRoom(roomData);
+      const values = await form.validateFields();
+      
+      // Additional validation
+      if (values.rows * values.columns !== values.seatQuantity) {
+        message.error('Seat quantity must equal rows × columns');
+        return;
       }
 
-      if (success) {
-        setIsModalVisible(false);
-        setEditingRoom(null);
+      if (editingRoom) {
+        const success = await updateRoomFunction(editingRoom.cinemaRoomId, values);
+        if (success) {
+          setIsModalVisible(false);
+          setEditingRoom(null);
+          form.resetFields();
+        }
+      } else {
+        const success = await createRoomFunction(values);
+        if (success) {
+          setIsModalVisible(false);
+          form.resetFields();
+        }
       }
-    } catch {
-      message.error('Please check required fields and try again.');
+    } catch (error) {
+      console.error('Form validation failed:', error);
+      // Form validation errors are automatically displayed by Ant Design
     }
   };
 
   const handleModalCancel = () => {
     setIsModalVisible(false);
     setEditingRoom(null);
+    form.resetFields();
   };
 
-  const handleDelete = async (record: CinemaRoom) => {
-    await deleteRoom(record.cinemaRoomId);
+  const handleAddNewRoom = () => {
+    form.resetFields();
+    setIsModalVisible(true);
   };
 
-  // Create table columns with handlers
+  // Filter handlers
+  const updateFilters = useCallback((newFilters: Partial<RoomFilters>) => {
+    const updatedFilters = { ...filters, ...newFilters };
+    setFilters(updatedFilters);
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
+  }, [filters]);
+
+  const clearFilters = useCallback(() => {
+    const clearedFilters = {
+      searchTerm: '',
+      filterType: undefined,
+      filterStatus: undefined,
+    };
+    setFilters(clearedFilters);
+    // Reset to page 1 when clearing filters
+    setCurrentPage(1);
+  }, []);
+
+  // Computed values
+  // (statistics already computed above)
+
+  // Table columns
   const columns = createRoomTableColumns({
     onEdit: handleEdit,
     onDelete: handleDelete,
-    onView: handleViewDetail,
+    onView: handleView,
+    loading,
     isUsingApiData,
   });
+
+  // Effects
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
+        
+        {/* Demo Data Warning */}
         {!isUsingApiData && (
           <Alert
             message="Demo Mode - Using Sample Data"
-            description="You are viewing sample data. Connect to backend server to use full CRUD functionality."
+            description="You are viewing sample data. Connect to the backend server to enable full CRUD operations."
             type="warning"
             showIcon
             className="mb-6"
@@ -111,15 +315,18 @@ export default function AdminRoomManagement() {
           styles={{ body: { padding: 0 } }}
           style={{ borderRadius: 16 }}
         >
-          {/* Header */}
+          {/* Header Section */}
           <div className="px-6 py-5 border-b border-gray-100 bg-white flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
             <div>
               <h1 className="m-0 text-gray-900 text-xl xl:text-2xl font-semibold">
-                Cinema Room Management
+                Room Management
               </h1>
               <Text type="secondary" className="text-sm xl:text-base">
-                Manage and organize your cinema rooms
+                Manage and organize your cinema room facilities
               </Text>
+              {!isUsingApiData && (
+                <Text className="text-orange-600 text-sm">⚠️ Currently using offline data</Text>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <Button
@@ -127,106 +334,99 @@ export default function AdminRoomManagement() {
                 icon={<PlusOutlined />}
                 size="middle"
                 className="bg-blue-600 hover:bg-blue-700 border-0 shadow-sm text-xs xl:text-sm h-10 px-4"
-                onClick={() => {
-                  setEditingRoom(null);
-                  setIsModalVisible(true);
-                }}
+                onClick={handleAddNewRoom}
                 disabled={!isUsingApiData}
-                title={!isUsingApiData ? "Create/Edit feature requires backend connection" : "Add new room"}
+                title={!isUsingApiData ? "Create/Edit functions require backend connection" : "Add new room"}
               >
                 Add New Room
               </Button>
             </div>
           </div>
 
-          {/* Filters */}
-          <RoomFilters
-            filters={{
-              keyword: filters.searchTerm,
-              type: filters.filterType,
-              status: filters.filterStatus
-            }}
-            onFiltersChange={(newFilters) => {
-              setFilters(prev => ({
-                ...prev,
-                searchTerm: newFilters.keyword !== undefined ? newFilters.keyword : prev.searchTerm,
-                filterType: newFilters.type !== undefined ? newFilters.type : prev.filterType,
-                filterStatus: newFilters.status !== undefined ? newFilters.status : prev.filterStatus
-              }));
-              // Reset pagination to page 1 when filters change
-              setPagination(prev => ({
-                ...prev,
-                currentPage: 1
-              }));
-            }}
+          {/* Filters Section */}
+          <RoomFiltersComponent
+            filters={filters}
+            onFiltersChange={updateFilters}
+            onClearFilters={clearFilters}
           />
 
-          {/* Table */}
+          {/* Table Section */}
           <div className="bg-white">
             <Spin spinning={loading}>
-              <Table
-                dataSource={paginatedData}
-                columns={columns}
-                pagination={false}
-                scroll={{ x: 1200 }}
-                rowClassName="hover:bg-gray-50 transition-colors"
-                className="professional-table"
-                size="small"
-                rowKey="cinemaRoomId"
-                sortDirections={['ascend', 'descend']}
-              />
+              {filteredData.length === 0 && !loading ? (
+                <div className="flex flex-col items-center justify-center py-16 px-4">
+                  <div className="text-gray-400 text-6xl mb-4">🏠</div>
+                  <h3 className="text-lg font-medium text-gray-600 mb-2">
+                    {allRoomData.length === 0 ? 'No rooms found' : 'No rooms match your filters'}
+                  </h3>
+                  <p className="text-gray-500 text-center mb-4">
+                    {allRoomData.length === 0 
+                      ? 'Create your first cinema room to get started'
+                      : 'Try adjusting your search terms or filters'
+                    }
+                  </p>
+                  {allRoomData.length === 0 && isUsingApiData && (
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={handleAddNewRoom}
+                    >
+                      Add Your First Room
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <Table
+                  dataSource={paginatedData}
+                  columns={columns}
+                  pagination={false}
+                  scroll={{ x: 950 }}
+                  rowClassName="hover:bg-gray-50 transition-colors"
+                  className="professional-table"
+                  size="small"
+                  loading={loading}
+                  rowKey="cinemaRoomId"
+                />
+              )}
             </Spin>
             
             {/* Pagination */}
-            <div className="px-6 py-5 border-t border-gray-100 bg-gray-50">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <Text type="secondary" className="text-sm">
-                    Showing{" "}
-                    <span className="font-medium text-gray-900">
-                      {Math.max(1, (pagination.currentPage - 1) * pagination.pageSize + 1)}
-                    </span>
-                    {" "}to{" "}
-                    <span className="font-medium text-gray-900">
-                      {Math.min(pagination.currentPage * pagination.pageSize, filteredData.length)}
-                    </span>
-                    {" "}of{" "}
-                    <span className="font-medium text-gray-900">
-                      {filteredData.length}
-                    </span>
-                    {" "}rooms
-                  </Text>
-                </div>
-                <Pagination
-                  current={pagination.currentPage}
-                  pageSize={pagination.pageSize}
-                  total={filteredData.length}
-                  onChange={(page, size) => {
-                    setPagination({ 
-                      currentPage: page, 
-                      pageSize: size || pagination.pageSize
-                    });
-                  }}
-                  showSizeChanger
-                  showQuickJumper={false}
-                  pageSizeOptions={["5", "10", "20", "50"]}
-                  size="default"
-                  className="flex-shrink-0"
-                />
-              </div>
+            <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <Text type="secondary" className="text-sm">
+                Showing {Math.max(1, (currentPage - 1) * pageSize + 1)} to{" "}
+                {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+                {filteredData.length} rooms
+              </Text>
+              <Pagination
+                current={currentPage}
+                pageSize={pageSize}
+                total={filteredData.length}
+                onChange={(page, size) => {
+                  setCurrentPage(page);
+                  if (size !== pageSize) {
+                    setPageSize(size);
+                    setCurrentPage(1); // Reset to page 1 when page size changes
+                  }
+                }}
+                showSizeChanger
+                showQuickJumper={false}
+                pageSizeOptions={["5", "10", "20", "50"]}
+                size="default"
+              />
             </div>
           </div>
         </Card>
-      </div>
 
-      {/* Modal */}
-      <RoomFormModal
-        visible={isModalVisible}
-        onOk={handleModalSubmit}
-        onCancel={handleModalCancel}
-        editingRoom={editingRoom}
-        loading={loading}
-      />
+        {/* Modal */}
+        <RoomFormModal
+          visible={isModalVisible}
+          onOk={handleModalOk}
+          onCancel={handleModalCancel}
+          editingRoom={editingRoom}
+          loading={loading}
+          form={form}
+        />
+      </div>
     </div>
   );
-}
+};
