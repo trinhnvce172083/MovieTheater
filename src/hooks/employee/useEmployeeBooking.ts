@@ -21,11 +21,30 @@ export const useEmployeeBooking = () => {
   });
 
   const handleApiResponse = useCallback((response: any, operation: string) => {
+    console.log(`API Response for ${operation}:`, response);
+    
+    // Handle different response structures
     if (response?.data?.success) {
       return response.data.data || response.data;
     } else if (response?.success) {
       return response.data || response;
+    } else if (response?.data) {
+      // Direct data response without success wrapper
+      return response.data;
     } else {
+      console.warn(`Unexpected response structure for ${operation}:`, response);
+      // Return empty paginated response for bookings
+      if (operation === 'fetchBookings') {
+        return {
+          content: [],
+          totalElements: 0,
+          totalPages: 0,
+          size: 10,
+          number: 0,
+          first: true,
+          last: true,
+        };
+      }
       throw new Error(`Invalid response structure for ${operation}`);
     }
   }, []);
@@ -53,13 +72,15 @@ export const useEmployeeBooking = () => {
     
     try {
       const response = await EmployeeApiService.getBookings(filters);
+      console.log('Booking API Response:', response);
       const result = handleApiResponse(response, 'fetchBookings');
+      console.log('Processed Result:', result);
       
-      setBookings(result.content);
+      setBookings(result.content || []);
       setPagination({
-        total: result.totalElements,
-        current: result.number + 1,
-        pageSize: result.size,
+        total: result.totalElements || 0,
+        current: (result.number || 0) + 1,
+        pageSize: result.size || 10,
       });
       
       return result;
@@ -160,6 +181,47 @@ export const useEmployeeBooking = () => {
     }
   }, [handleApiResponse, handleError]);
 
+  const updatePaymentStatus = useCallback(async (
+    bookingId: number, 
+    paymentStatus: 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED' | 'CANCELLED' | 'REFUNDED' | 'PARTIAL_REFUNDED' | 'EXPIRED',
+    options?: {
+      paymentReference?: string;
+      paymentMethod?: string;
+      notes?: string;
+      refundAmount?: number;
+    }
+  ): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await EmployeeApiService.updatePaymentStatus(bookingId, {
+        paymentStatus,
+        ...options
+      });
+      
+      const result = handleApiResponse(response, 'updatePaymentStatus');
+      
+      message.success(`Đã cập nhật trạng thái thanh toán thành ${paymentStatus}`);
+      
+      // Update local state
+      setBookings(prev => 
+        prev.map(booking => 
+          booking.id === bookingId 
+            ? { ...booking, paymentStatus } 
+            : booking
+        )
+      );
+      
+      return true;
+    } catch (err: any) {
+      handleError(err, 'updatePaymentStatus', "Không thể cập nhật trạng thái thanh toán", true);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [handleApiResponse, handleError]);
+
   return {
     loading,
     error,
@@ -170,5 +232,6 @@ export const useEmployeeBooking = () => {
     checkInBooking,
     checkInByQrCode,
     checkInByBookingCode,
+    updatePaymentStatus,
   };
 };

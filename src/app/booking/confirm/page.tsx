@@ -8,16 +8,32 @@ import { RootState } from "@/store";
 import { useBooking } from "@/hooks/booking/useBooking";
 import { usePromotion } from "@/hooks/booking/usePromotion";
 import ROUTES from "@/constants/routes";
+import CustomerInfoForm from "@/components/employee/CustomerInfoForm";
+import { Role } from "@/constants/roles";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
+
+interface CustomerInfo {
+  fullName: string;
+  phoneNumber: string;
+  email: string;
+  dateOfBirth?: string;
+  address?: string;
+  memberId?: string;
+}
 
 export default function BookingConfirmPage() {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [promotionInput, setPromotionInput] = useState("");
   
+  // Employee-specific states
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
+  
   const bookingData = useSelector((state: RootState) => state.booking);
+  const authState = useSelector((state: RootState) => state.auth);
   const { createBooking, getSeatStatus } = useBooking();
   const { 
     appliedPromotion, 
@@ -29,11 +45,35 @@ export default function BookingConfirmPage() {
     removePromotionCode 
   } = usePromotion();
 
-  // Xử lý áp dụng promotion code
-  const handleApplyPromotion = async (code: string) => {
-    if (!code.trim()) {
-      message.warning("Vui lòng nhập mã khuyến mãi");
-      return;
+  // Check if current user is employee
+  const isEmployee = authState.userInfo?.Role === Role.EMPLOYEE;
+
+  // Show customer form for employees on first load
+  // useEffect(() => {
+  //   if (isEmployee && !customerInfo) {
+  //     setShowCustomerForm(true);
+  //   }
+  // }, [isEmployee, customerInfo]);
+
+  // Force show customer form for employees immediately
+  // useEffect(() => {
+  //   if (isEmployee) {
+  //     setShowCustomerForm(true);
+  //   }
+  // }, [isEmployee]);
+
+  // Load seat status on mount
+  useEffect(() => {
+    if (bookingData.scheduleId) {
+      const loadSeatStatus = async () => {
+        try {
+          const status = await getSeatStatus(bookingData.scheduleId);
+          setSeatStatus(status || []);
+        } catch (error) {
+          console.error("Failed to load seat status:", error);
+        }
+      };
+      loadSeatStatus();
     }
 
     try {
@@ -55,8 +95,40 @@ export default function BookingConfirmPage() {
     message.success("Đã xóa mã khuyến mãi");
   };
 
+  // Handler for customer info form submission (employee only)
+  // const handleCustomerInfoSubmit = async (info: CustomerInfo) => {
+  //   setCustomerInfo(info);
+  //   setShowCustomerForm(false);
+  //   message.success("Thông tin khách hàng đã được lưu");
+    
+  //   // Auto proceed to payment for employees
+  //   if (isEmployee) {
+  //     // Small delay to show success message
+  //     setTimeout(() => {
+  //       if (!isProcessing) {
+  //         handlePayment();
+  //       }
+  //     }, 1500);
+  //   }
+  // };
+
+  const handleBackToCustomerForm = () => {
+    setShowCustomerForm(true);
+  };
+
+  const handleBack = () => {
+    router.back();
+  };
+
   const handlePayment = async () => {
     if (isProcessing) return;
+    
+    // Check customer info for employees
+    // if (isEmployee && !customerInfo) {
+    //   message.error("Vui lòng nhập thông tin khách hàng trước khi thanh toán");
+    //   setShowCustomerForm(true);
+    //   return;
+    // }
     
     setIsProcessing(true);
     try {
@@ -127,13 +199,27 @@ export default function BookingConfirmPage() {
           quantity: item.quantity
         })) : undefined,
         promotionCode: bookingData.promotionCode || undefined,
-        ...(userInfo && {
+        // Use customer info for employees, user info for regular members
+        // ...(isEmployee ? {
+        //   // For employees, MUST have customer info
+        //   customerName: customerInfo?.fullName || '',
+        //   customerEmail: customerInfo?.email || '',
+        //   customerPhone: customerInfo?.phoneNumber || '',
+        //   isGuestBooking: true  // Employee always creates guest bookings for customers
+        // } : userInfo ? {
+        //   customerName: userInfo.userName || userInfo.fullName,
+        //   customerEmail: userInfo.email,
+        //   customerPhone: userInfo.phone,
+        //   isGuestBooking: false
+        // } : {
+        //   isGuestBooking: true
+        // })
+        ...(userInfo ? {
           customerName: userInfo.userName || userInfo.fullName,
           customerEmail: userInfo.email,
           customerPhone: userInfo.phone,
           isGuestBooking: false
-        }),
-        ...(!userInfo && {
+        } : {
           isGuestBooking: true
         })
       };
@@ -154,13 +240,25 @@ export default function BookingConfirmPage() {
         return;
       }
       
-      // Kiểm tra user info cho guest booking
-      if (bookingRequest.isGuestBooking) {
-        if (!bookingRequest.customerName || !bookingRequest.customerEmail || !bookingRequest.customerPhone) {
-          message.error('Guest booking requires customer information');
-          return;
-        }
-      }
+             // Kiểm tra customer info cho employee và guest booking
+       // if (isEmployee) {
+       //   if (!bookingRequest.customerName || !bookingRequest.customerEmail || !bookingRequest.customerPhone) {
+       //     message.error('Vui lòng nhập đầy đủ thông tin khách hàng (Họ tên, Email, SĐT)');
+       //     setShowCustomerForm(true);
+       //     return;
+       //   }
+       // } else if (bookingRequest.isGuestBooking) {
+       //   if (!bookingRequest.customerName || !bookingRequest.customerEmail || !bookingRequest.customerPhone) {
+       //     message.error('Guest booking requires customer information');
+       //     return;
+       //   }
+       // }
+       if (bookingRequest.isGuestBooking) {
+         if (!bookingRequest.customerName || !bookingRequest.customerEmail || !bookingRequest.customerPhone) {
+           message.error('Guest booking requires customer information');
+           return;
+         }
+       }
 
       // Tạo booking
       const bookingResponse = await createBooking(bookingRequest);
@@ -209,8 +307,48 @@ export default function BookingConfirmPage() {
     };
   };
 
+  // Show customer info form for employees
+  // if (isEmployee && showCustomerForm) {
+  //   return (
+  //     <div className="container mx-auto px-4 py-8 max-w-4xl">
+  //       <CustomerInfoForm
+  //         onSubmit={handleCustomerInfoSubmit}
+  //         onBack={handleBack}
+  //         loading={isProcessing}
+  //       />
+  //     </div>
+  //   );
+  // }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
+      {/* Customer Info Summary for Employee */}
+      {/* {isEmployee && customerInfo && (
+        <Card className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <Title level={4} className="mb-2">Thông tin khách hàng</Title>
+              <div className="space-y-1 text-gray-600">
+                <Text><strong>Họ tên:</strong> {customerInfo.fullName}</Text>
+                <br />
+                <Text><strong>Số điện thoại:</strong> {customerInfo.phoneNumber}</Text>
+                <br />
+                <Text><strong>Email:</strong> {customerInfo.email}</Text>
+                {customerInfo.memberId && (
+                  <>
+                    <br />
+                    <Text><strong>Mã thành viên:</strong> {customerInfo.memberId}</Text>
+                  </>
+                )}
+              </div>
+            </div>
+            <Button onClick={handleBackToCustomerForm}>
+              Chỉnh sửa
+            </Button>
+          </div>
+        </Card>
+      )} */}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column - Movie Info */}
         <div className="lg:col-span-2">

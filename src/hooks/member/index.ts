@@ -16,6 +16,7 @@ import type {
   BookingCheckInRequest,
   PaginatedResponse,
   BookingStatus,
+  MemberProfile,
 } from "@/types/member";
 import { MemberApiError } from "@/types/member";
 
@@ -56,63 +57,71 @@ function useAsyncData<T>(
   });
 
   const mountedRef = useRef(true);
+  const isLoadingRef = useRef(false);
 
   const fetchData = useCallback(async () => {
-    if (!mountedRef.current) return;
+    if (!mountedRef.current || isLoadingRef.current) {
+      console.log("⏸️ Skipping fetchData - already loading or unmounted");
+      return;
+    }
 
-    setState((prev) => {
-      return { ...prev, loading: true, error: null };
-    });
+    isLoadingRef.current = true;
+    console.log("🚀 Starting fetchData...");
+    
+    setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
+      console.log("📞 Calling fetchFn...");
       const response = await fetchFn();
+      console.log("📦 fetchFn response:", response);
+      
+      if (!mountedRef.current) {
+        console.log("⚠️ Component unmounted, skipping state update");
+        return;
+      }
 
+      console.log("📝 Setting state with data:", response.data);
+      setState({
+        data: response.data,
+        loading: false,
+        error: null,
+        lastUpdated: Date.now(),
+      });
+      console.log("✅ State updated successfully");
+    } catch (error: any) {
+      console.error("❌ Error in fetchData:", error);
       if (!mountedRef.current) return;
 
-      setState((prev) => {
-        return {
-          ...prev,
-          data: response.data,
-          loading: false,
-          error: null,
-          lastUpdated: Date.now(),
-        };
-      });
-    } catch (error) {
-      if (!mountedRef.current) return;
-
-      const errorMessage =
-        error instanceof MemberApiError
-          ? error.message
-          : "An unexpected error occurred";
-
-      setState((prev) => {
-        return {
-          ...prev,
-          loading: false,
-          error: errorMessage,
-        };
-      });
-
-      console.error("useAsyncData error:", error);
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        error: error.message || "An error occurred",
+      }));
+    } finally {
+      isLoadingRef.current = false;
     }
-  }, [fetchFn, ...dependencies]);
+  }, []); // Remove fetchFn dependency to avoid infinite loop
 
   useEffect(() => {
     if (immediate) {
+      console.log("🎯 useEffect triggered for initial fetch");
       fetchData();
     }
-  }, [fetchData, immediate]);
-
-  useEffect(() => {
+    
     return () => {
+      console.log("🧹 Cleanup - setting mounted to false");
       mountedRef.current = false;
     };
-  }, []);
+  }, [immediate, ...dependencies]); // Include dependencies to refetch when they change
+
+  const refetch = useCallback(async () => {
+    console.log("🔄 Manual refetch triggered");
+    await fetchData();
+  }, []); // Remove fetchData dependency
 
   return {
     ...state,
-    refetch: fetchData,
+    refetch,
   };
 }
 
@@ -170,173 +179,136 @@ function useAsyncMutation<T, P = unknown>(
 // ==================== PROFILE HOOKS ====================
 
 /**
- * Hook for member profile management
+ * Simplified hook for member profile management
  */
 export function useMemberProfile() {
-  const fetchProfile = useCallback(() => MemberApiService.getProfile(), []);
-  const profileState = useAsyncData(fetchProfile, []);
+  const [profile, setProfile] = useState<MemberProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const updateMutation = useAsyncMutation(
-    (request: ProfileUpdateRequest) => MemberApiService.updateProfile(request),
-    () => {
+  const loadProfile = useCallback(async () => {
+    console.log("🚀 Loading profile...");
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await MemberApiService.getProfile(false); // No cache
+      console.log("📦 Profile response:", response);
+      setProfile(response.data);
+      console.log("✅ Profile loaded successfully");
+    } catch (err: any) {
+      console.error("❌ Failed to load profile:", err);
+      setError("Failed to load profile");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updateProfile = useCallback(async (request: ProfileUpdateRequest) => {
+    try {
+      const response = await MemberApiService.updateProfile(request);
+      setProfile(response.data);
+      // Show success message
+      const { message } = await import('antd');
       message.success("Profile updated successfully!");
+      return response;
+    } catch (err: any) {
+      const { message } = await import('antd');
+      message.error("Failed to update profile");
+      throw err;
     }
-  );
+  }, []);
 
-  const passwordMutation = useAsyncMutation(
-    (request: PasswordChangeRequest) =>
-      MemberApiService.changePassword(request),
-    () => {
+  const changePassword = useCallback(async (request: PasswordChangeRequest) => {
+    try {
+      const response = await MemberApiService.changePassword(request);
+      const { message } = await import('antd');
       message.success("Password changed successfully!");
+      return response;
+    } catch (err: any) {
+      const { message } = await import('antd');
+      message.error("Failed to change password");
+      throw err;
     }
-  );
+  }, []);
+
+  const refetch = useCallback(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  useEffect(() => {
+    loadProfile();
+  }, []); // Remove loadProfile dependency to avoid infinite loop
 
   return {
-    profile: profileState.data,
-    loading: profileState.loading,
-    error: profileState.error,
-    lastUpdated: profileState.lastUpdated,
-    refetch: profileState.refetch,
+    profile,
+    loading,
+    error,
+    lastUpdated: Date.now(),
+    refetch,
 
-    updateProfile: updateMutation.mutate,
-    updatingProfile: updateMutation.loading,
-    updateError: updateMutation.error,
+    updateProfile,
+    updatingProfile: false, // Simplified
+    updateError: null,
 
-    changePassword: passwordMutation.mutate,
-    changingPassword: passwordMutation.loading,
-    passwordError: passwordMutation.error,
+    changePassword,
+    changingPassword: false, // Simplified
+    passwordError: null,
   };
 }
 
-// ==================== BOOKING HOOKS ====================
-
 /**
- * Hook for member bookings with pagination
+ * Simplified hook for member bookings
  */
 export function useMemberBookings(params: BookingListParams = {}) {
-  const [state, setState] = useState<PaginatedState<MemberBooking>>({
-    data: null,
-    loading: true,
-    error: null,
-    lastUpdated: null,
-    hasMore: true,
-    loadingMore: false,
-  });
+  const [bookings, setBookings] = useState<MemberBooking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const mountedRef = useRef(true);
+  const loadBookings = useCallback(async () => {
+    console.log("🚀 Loading bookings...");
+    setLoading(true);
+    setError(null);
 
-  // Memoize params để tránh tạo object mới mỗi lần render
-  const memoizedParams = useMemo(() => params, [
-    params.page,
-    params.size,
-    params.status,
-    params.startDate,
-    params.endDate,
-    params.sortBy,
-    params.sortDirection
-  ]);
+    try {
+      const response = await MemberApiService.getBookings({
+        page: 0,
+        size: 10,
+        sortBy: "bookingDate", 
+        sortDirection: "DESC",
+      });
 
-  const loadBookings = useCallback(
-    async (reset: boolean = false) => {
-      console.log("useMemberBookings loadBookings called:", { reset, memoizedParams });
-      
-      if (!mountedRef.current) return;
-
-      const currentPage = reset ? 0 : state.data?.page.number || 0;
-      const loading = reset ? "loading" : "loadingMore";
-
-      setState((prev) => ({
-        ...prev,
-        [loading]: true,
-        error: null,
-      }));
-
-      try {
-        console.log("Calling MemberApiService.getBookings with params:", {
-          ...memoizedParams,
-          page: currentPage,
-        });
-        
-        const response = await MemberApiService.getBookings({
-          ...memoizedParams,
-          page: currentPage,
-        });
-
-        console.log("MemberApiService.getBookings response:", response);
-
-        if (!mountedRef.current) return;
-
-        const newData = response.data;
-        const hasMore = !newData.page.last;
-
-        setState((prev) => ({
-          data:
-            reset || !prev.data
-              ? newData
-              : {
-                  ...newData,
-                  content: [...prev.data.content, ...newData.content],
-                },
-          loading: false,
-          loadingMore: false,
-          error: null,
-          lastUpdated: Date.now(),
-          hasMore,
-        }));
-      } catch (error) {
-        console.error("useMemberBookings error:", error);
-        
-        if (!mountedRef.current) return;
-
-        const errorMessage =
-          error instanceof MemberApiError
-            ? error.message
-            : "Failed to load bookings";
-
-        setState((prev) => ({
-          ...prev,
-          loading: false,
-          loadingMore: false,
-          error: errorMessage,
-        }));
-      }
-    },
-    [memoizedParams] // Chỉ dependency vào memoizedParams
-  );
-
-  const loadMore = useCallback(() => {
-    if (state.hasMore && !state.loadingMore && !state.loading) {
-      loadBookings(false);
+      console.log("📦 Bookings response:", response);
+      setBookings(response.data.content || []);
+      console.log("✅ Bookings loaded successfully");
+    } catch (err: any) {
+      console.error("❌ Failed to load bookings:", err);
+      setError("Failed to load bookings");
+    } finally {
+      setLoading(false);
     }
-  }, [state.hasMore, state.loadingMore, state.loading, loadBookings]);
-
-  const refresh = useCallback(() => {
-    loadBookings(true);
-  }, [loadBookings]);
-
-  // Sử dụng memoizedParams thay vì JSON.stringify
-  useEffect(() => {
-    loadBookings(true);
-  }, [memoizedParams]); // Chỉ dependency vào memoizedParams, không cần loadBookings
-
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-    };
   }, []);
 
+  const refresh = useCallback(() => {
+    loadBookings();
+  }, [loadBookings]);
+
+  useEffect(() => {
+    loadBookings();
+  }, []); // Remove loadBookings dependency to avoid infinite loop
+
   return {
-    bookings: state.data?.content || [],
-    totalElements: state.data?.page.totalElements || 0,
-    totalPages: state.data?.page.totalPages || 0,
-    currentPage: state.data?.page.number || 0,
-    loading: state.loading,
-    loadingMore: state.loadingMore,
-    error: state.error,
-    hasMore: state.hasMore,
-    lastUpdated: state.lastUpdated,
-    loadMore,
+    bookings,
+    loading,
+    error,
     refresh,
+    totalElements: bookings.length,
+    totalPages: 1,
+    currentPage: 0,
+    loadingMore: false,
+    hasMore: false,
+    lastUpdated: Date.now(),
+    loadMore: () => {},
   };
 }
 

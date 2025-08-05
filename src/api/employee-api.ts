@@ -105,17 +105,39 @@ export interface EmployeeGuestBookingRequest {
 // Employee API Service
 export const EmployeeApiService = {
   // Booking Management - sử dụng endpoint search thực tế
-  getBookings: (filters?: EmployeeBookingFilters) =>
-    axiosClient.get<ApiResponse<PaginatedResponse<EmployeeBookingRecord>>>("/bookings/search", {
-      params: {
-        bookingCode: filters?.search,
-        customerEmail: filters?.search,
-        customerPhone: filters?.search,
-        status: filters?.status,
-        page: filters?.page || 0,
-        size: filters?.size || 10,
-      }
-    }),
+  getBookings: (filters?: EmployeeBookingFilters) => {
+    const params: any = {
+      page: filters?.page || 0,
+      size: filters?.size || 10,
+    };
+    
+    // Add search params if provided
+    if (filters?.search) {
+      params.search = filters.search; // Backend sẽ search across multiple fields
+    }
+    
+    if (filters?.status) {
+      params.status = filters.status;
+    }
+    
+    if (filters?.paymentStatus) {
+      params.paymentStatus = filters.paymentStatus;
+    }
+    
+    if (filters?.startDate) {
+      params.startDate = filters.startDate;
+    }
+    
+    if (filters?.endDate) {
+      params.endDate = filters.endDate;
+    }
+    
+    console.log('API Request params:', params);
+    
+    return axiosClient.get<ApiResponse<PaginatedResponse<EmployeeBookingRecord>>>("/bookings/search", {
+      params
+    });
+  },
 
   getBookingById: (bookingId: number) =>
     axiosClient.get<ApiResponse<EmployeeBookingRecord>>(`/bookings/${bookingId}`),
@@ -166,6 +188,16 @@ export const EmployeeApiService = {
     change?: number;
   }) =>
     axiosClient.post<ApiResponse<any>>("/payment/staff/cash", data),
+
+  // API mới: Cập nhật trạng thái thanh toán
+  updatePaymentStatus: (bookingId: number, data: {
+    paymentStatus: 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED' | 'CANCELLED' | 'REFUNDED' | 'PARTIAL_REFUNDED' | 'EXPIRED';
+    paymentReference?: string;
+    paymentMethod?: string;
+    notes?: string;
+    refundAmount?: number;
+  }) =>
+    axiosClient.post<ApiResponse<any>>(`/bookings/${bookingId}/payment/status`, data),
 
   // Employee profile
   getEmployeeProfile: () =>

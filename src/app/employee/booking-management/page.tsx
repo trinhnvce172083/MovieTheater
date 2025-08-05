@@ -26,10 +26,12 @@ import {
   FilterOutlined,
   ReloadOutlined,
   ScanOutlined,
+  CreditCardOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useEmployeeBooking } from "@/hooks/employee/useEmployeeBooking";
+import PaymentStatusModal from "@/components/employee/PaymentStatusModal";
 
 import type { EmployeeBookingRecord, EmployeeBookingFilters } from "@/api/employee-api";
 
@@ -44,7 +46,8 @@ export default function BookingManagementPage() {
     pagination, 
     fetchBookings, 
     getBookingById,
-    checkInBooking 
+    checkInBooking,
+    updatePaymentStatus 
   } = useEmployeeBooking();
   
 
@@ -52,6 +55,8 @@ export default function BookingManagementPage() {
   const [filteredBookings, setFilteredBookings] = useState<EmployeeBookingRecord[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<EmployeeBookingRecord | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedBookingForPayment, setSelectedBookingForPayment] = useState<EmployeeBookingRecord | null>(null);
   
   // Filter states
   const [searchText, setSearchText] = useState("");
@@ -106,6 +111,37 @@ export default function BookingManagementPage() {
       setSelectedBooking(detailBooking);
       setIsDetailModalOpen(true);
     }
+  };
+
+  const handleUpdatePaymentStatus = (booking: EmployeeBookingRecord) => {
+    setSelectedBookingForPayment(booking);
+    setIsPaymentModalOpen(true);
+  };
+
+  const handlePaymentStatusUpdate = async (
+    paymentStatus: 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED' | 'CANCELLED' | 'REFUNDED' | 'PARTIAL_REFUNDED' | 'EXPIRED',
+    options?: {
+      paymentReference?: string;
+      paymentMethod?: string;
+      notes?: string;
+      refundAmount?: number;
+    }
+  ) => {
+    if (!selectedBookingForPayment) return false;
+
+    const success = await updatePaymentStatus(selectedBookingForPayment.id, paymentStatus, options);
+    
+    if (success) {
+      // Reload bookings to get updated data
+      loadBookings();
+    }
+    
+    return success;
+  };
+
+  const handlePaymentModalClose = () => {
+    setIsPaymentModalOpen(false);
+    setSelectedBookingForPayment(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -227,6 +263,13 @@ export default function BookingManagementPage() {
               icon={<EyeOutlined />}
               size="small"
               onClick={() => handleViewDetail(record)}
+            />
+          </Tooltip>
+          <Tooltip title="Cập nhật thanh toán">
+            <Button
+              icon={<CreditCardOutlined />}
+              size="small"
+              onClick={() => handleUpdatePaymentStatus(record)}
             />
           </Tooltip>
           {record.bookingStatus === 'CONFIRMED' && record.paymentStatus === 'COMPLETED' && (
@@ -404,6 +447,16 @@ export default function BookingManagementPage() {
           </div>
         )}
       </Modal>
+
+      {/* Payment Status Update Modal */}
+      <PaymentStatusModal
+        visible={isPaymentModalOpen}
+        onClose={handlePaymentModalClose}
+        onUpdate={handlePaymentStatusUpdate}
+        currentStatus={selectedBookingForPayment?.paymentStatus}
+        bookingId={selectedBookingForPayment?.id}
+        loading={loading}
+      />
     </div>
   );
 }
