@@ -1,138 +1,93 @@
 import axiosClient from "./axiosClient";
+import type { Schedule } from "@/types/schedule";
 
-export interface Schedule {
-  id: number;
-  movieId: number;
-  cinemaRoomId: number;
-  startTime: string;
-  endTime: string;
-  price: number;
-  status: string;
-  availableSeats: number;
-  totalSeats: number;
+// Giả định một kiểu ApiResponse chung, nếu chưa có
+interface ApiResponse<T> {
+  data: T;
+  success: boolean;
+  message?: string;
 }
 
-export interface CreateScheduleRequest {
-  movieId: number;
-  cinemaRoomId: number;
-  startTime: string;
-  price: number;
-}
-
-export interface UpdateScheduleRequest {
-  movieId?: number;
-  cinemaRoomId?: number;
-  startTime?: string;
-  price?: number;
-  status?: string;
-}
-
-class ScheduleAPI {
-  // Get all schedules
-  async getAllSchedules(): Promise<Schedule[]> {
+export class ScheduleApiService {
+  static async getScheduleById(scheduleId: string | number): Promise<ApiResponse<Schedule>> {
     try {
-      const response = await axiosClient.get('/api/schedules');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching schedules:', error);
-      throw error;
+      const response = await axiosClient.get(`/schedules/${scheduleId}`);
+      
+      // Xử lý response data
+      let scheduleData: Schedule;
+      
+      if (response.data && response.data.data) {
+        // Nếu response có cấu trúc { data: {...}, success: true }
+        scheduleData = response.data.data;
+      } else {
+        // Nếu response trực tiếp là object
+        scheduleData = response.data;
+      }
+      
+      return {
+        data: scheduleData,
+        success: true,
+        message: response.data?.message || "Schedule fetched successfully"
+      };
+    } catch (error: unknown) {
+      return {
+        data: {} as Schedule,
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to fetch schedule",
+      };
     }
   }
 
-  // For compatibility with existing code
-  async getSchedulesForMovie(movieId: number, date?: string): Promise<Schedule[]> {
+  static async getSchedulesForMovie(
+    movieId: string | number,
+    date: string // Định dạng YYYY-MM-DD
+  ): Promise<ApiResponse<Schedule[]>> {
     try {
-      const response = await axiosClient.get(`/api/schedules/movie/${movieId}`, {
-        params: date ? { date } : {}
+      const response = await axiosClient.get(`/schedules/movie/${movieId}`, {
+        params: { 
+          fromDate: date, 
+          toDate: date 
+        },
       });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching schedules for movie:', error);
-      throw error;
+      
+      // Xử lý response data
+      let schedulesData: Schedule[] = [];
+      
+      if (response.data && response.data.data) {
+        // Nếu response có cấu trúc { data: [...], success: true }
+        schedulesData = Array.isArray(response.data.data) ? response.data.data : [];
+      } else if (Array.isArray(response.data)) {
+        // Nếu response trực tiếp là array
+        schedulesData = response.data;
+      }
+      
+      return {
+        data: schedulesData,
+        success: true,
+        message: response.data?.message || "Schedules fetched successfully"
+      };
+    } catch (error: unknown) {
+      return {
+        data: [],
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to fetch schedules",
+      };
     }
   }
 
-  // Get schedule by ID
-  async getScheduleById(id: number): Promise<Schedule> {
+  static async getSchedulesByMovie(movieId: string | number): Promise<ApiResponse<Schedule[]>> {
     try {
-      const response = await axiosClient.get(`/api/schedules/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching schedule:', error);
-      throw error;
+      const response = await axiosClient.get(`/movies/${movieId}/schedules`);
+      return {
+        data: response.data || [],
+        success: true,
+      };
+    } catch (error: unknown) {
+      return {
+        data: [],
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to fetch schedules",
+      };
     }
   }
-
-  // Get schedules by movie ID
-  async getSchedulesByMovieId(movieId: number): Promise<Schedule[]> {
-    try {
-      const response = await axiosClient.get(`/api/schedules/movie/${movieId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching schedules by movie:', error);
-      throw error;
-    }
-  }
-
-  // Get schedules by cinema room ID
-  async getSchedulesByRoomId(roomId: number): Promise<Schedule[]> {
-    try {
-      const response = await axiosClient.get(`/api/schedules/room/${roomId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching schedules by room:', error);
-      throw error;
-    }
-  }
-
-  // Create new schedule
-  async createSchedule(data: CreateScheduleRequest): Promise<Schedule> {
-    try {
-      const response = await axiosClient.post('/api/schedules', data);
-      return response.data;
-    } catch (error) {
-      console.error('Error creating schedule:', error);
-      throw error;
-    }
-  }
-
-  // Update schedule
-  async updateSchedule(id: number, data: UpdateScheduleRequest): Promise<Schedule> {
-    try {
-      const response = await axiosClient.put(`/api/schedules/${id}`, data);
-      return response.data;
-    } catch (error) {
-      console.error('Error updating schedule:', error);
-      throw error;
-    }
-  }
-
-  // Delete schedule
-  async deleteSchedule(id: number): Promise<void> {
-    try {
-      await axiosClient.delete(`/api/schedules/${id}`);
-    } catch (error) {
-      console.error('Error deleting schedule:', error);
-      throw error;
-    }
-  }
-
-  // Get available time slots for a room on a specific date
-  async getAvailableTimeSlots(roomId: number, date: string): Promise<string[]> {
-    try {
-      const response = await axiosClient.get(`/api/schedules/room/${roomId}/available-slots`, {
-        params: { date }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching available time slots:', error);
-      throw error;
-    }
-  }
-}
-
-const scheduleAPI = new ScheduleAPI();
-
-// Export both default and named for compatibility
-export default scheduleAPI;
-export const ScheduleApiService = scheduleAPI;
+} 

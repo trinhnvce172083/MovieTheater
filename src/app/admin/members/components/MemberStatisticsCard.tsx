@@ -39,8 +39,8 @@ const MemberStatisticsCard: React.FC<MemberStatisticsCardProps> = ({
       </Card>
       <Card className="shadow-sm hover:shadow-md transition-shadow">
         <Statistic
-          title="Employee"
-          value={statistics.types.EMPLOYEE || 0}
+          title="New This Month"
+          value={statistics.newMembers}
           prefix={<UserAddOutlined className="text-purple-600" />}
           loading={loading}
           valueStyle={{ color: '#7c3aed', fontSize: '24px', fontWeight: 'bold' }}

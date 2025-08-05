@@ -1,61 +1,42 @@
 import React from 'react';
-import { Input, Select, Row, Col, Button } from 'antd';
+import { Input, Select, Button, Row, Col } from 'antd';
 import { SearchOutlined, ClearOutlined } from '@ant-design/icons';
+import { RoomFilters } from '../types';
 
 const { Search } = Input;
 const { Option } = Select;
 
 interface RoomFiltersProps {
-  filters: {
-    keyword: string;
-    type: string | undefined;
-    status: string | undefined;
-  };
-  onFiltersChange: (filters: {
-    keyword?: string;
-    type?: string | undefined;
-    status?: string | undefined;
-  }) => void;
+  filters: RoomFilters;
+  onFiltersChange: (filters: Partial<RoomFilters>) => void;
+  onClearFilters: () => void;
 }
 
-const RoomFilters: React.FC<RoomFiltersProps> = ({ filters, onFiltersChange }) => {
-  const handleClearFilters = () => {
-    onFiltersChange({
-      keyword: '',
-      type: undefined,
-      status: undefined,
-    });
-  };
-
+export const RoomFiltersComponent: React.FC<RoomFiltersProps> = ({
+  filters,
+  onFiltersChange,
+  onClearFilters,
+}) => {
   return (
-    <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-      <Row gutter={[16, 16]} align="middle">
-        <Col xs={24} sm={8} md={6}>
-          <div className="mb-1">
-            <label className="text-sm font-medium text-gray-700">Search by Title</label>
-          </div>
+    <div className="px-6 py-4 bg-gray-50/50 border-b border-gray-100">
+      <Row gutter={16} align="middle">
+        <Col xs={24} sm={8} md={8}>
           <Search
-            placeholder="e.g., Standard Room 1"
-            value={filters.keyword}
-            onChange={(e) => onFiltersChange({ keyword: e.target.value })}
+            placeholder="Search by room name..."
+            value={filters.searchTerm}
+            onChange={(e) => onFiltersChange({ searchTerm: e.target.value })}
+            prefix={<SearchOutlined />}
             allowClear
-            prefix={<SearchOutlined className="text-gray-400" />}
             className="w-full"
-            size="middle"
           />
         </Col>
-
-        <Col xs={24} sm={8} md={4}>
-          <div className="mb-1">
-            <label className="text-sm font-medium text-gray-700">Filter by Type</label>
-          </div>
+        <Col xs={12} sm={6} md={6}>
           <Select
-            placeholder="All Types"
-            value={filters.type}
-            onChange={(value) => onFiltersChange({ type: value })}
+            placeholder="Filter by type"
+            value={filters.filterType}
+            onChange={(value) => onFiltersChange({ filterType: value })}
+            style={{ width: '100%' }}
             allowClear
-            className="w-full"
-            size="middle"
           >
             <Option value="STANDARD">Standard</Option>
             <Option value="VIP">VIP</Option>
@@ -63,33 +44,23 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({ filters, onFiltersChange }) =
             <Option value="4DX">4DX</Option>
           </Select>
         </Col>
-
-        <Col xs={24} sm={8} md={4}>
-          <div className="mb-1">
-            <label className="text-sm font-medium text-gray-700">Filter by Status</label>
-          </div>
+        <Col xs={12} sm={6} md={6}>
           <Select
-            placeholder="All Status"
-            value={filters.status}
-            onChange={(value) => onFiltersChange({ status: value })}
+            placeholder="Filter by status"
+            value={filters.filterStatus}
+            onChange={(value) => onFiltersChange({ filterStatus: value })}
+            style={{ width: '100%' }}
             allowClear
-            className="w-full"
-            size="middle"
           >
             <Option value="active">Active</Option>
             <Option value="inactive">Inactive</Option>
           </Select>
         </Col>
-
-        <Col xs={24} sm={24} md={4}>
-          <div className="mb-1">
-            <label className="text-sm font-medium text-gray-700 opacity-0">Clear</label>
-          </div>
-          <Button
-            icon={<ClearOutlined />}
-            onClick={handleClearFilters}
+        <Col xs={24} sm={4} md={4}>
+          <Button 
+            icon={<ClearOutlined />} 
+            onClick={onClearFilters}
             className="w-full"
-            size="middle"
           >
             Clear Filters
           </Button>
@@ -98,5 +69,3 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({ filters, onFiltersChange }) =
     </div>
   );
 };
-
-export default RoomFilters;

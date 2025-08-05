@@ -57,13 +57,6 @@ export default function AppPieChart() {
   useEffect(() => {
     const fetchMovieData = async () => {
       try {
-        // Check token first
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
-          console.warn('No access token found, using default data');
-          return;
-        }
-
         // Get movie performance data
         const endDate = new Date().toISOString().split('T')[0];
         const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];

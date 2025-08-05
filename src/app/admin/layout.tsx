@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Layout, Menu, Button, Tooltip, Drawer } from "antd";
 import {
+  DashboardOutlined,
   UserOutlined,
   VideoCameraOutlined,
   GiftOutlined,
@@ -11,7 +12,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   ShoppingOutlined,
-  BarChartOutlined,
+  ScheduleOutlined,
 } from "@ant-design/icons";
 import { usePathname, useRouter } from "next/navigation";
 import ROUTES from "@/constants/routes";
@@ -57,7 +58,7 @@ export default function AdminLayout({
   const menuItems = [
     {
       key: ROUTES.ADMIN_DASHBOARD,
-      icon: <BarChartOutlined />,
+      icon: <DashboardOutlined />,
       label: "Dashboard",
     },
     {
@@ -69,6 +70,11 @@ export default function AdminLayout({
       key: ROUTES.ADMIN_MOVIES,
       icon: <VideoCameraOutlined />,
       label: "Movies",
+    },
+    {
+      key: ROUTES.ADMIN_SCHEDULES,
+      icon: <ScheduleOutlined />,
+      label: "Schedules",
     },
     {
       key: ROUTES.ADMIN_ROOMS,

@@ -53,13 +53,6 @@ export default function AppLineChart() {
   useEffect(() => {
     const fetchBookingData = async () => {
       try {
-        // Check token first
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
-          console.warn('No access token found, using default data');
-          return;
-        }
-
         // Get booking data for last 7 days
         const endDate = new Date().toISOString().split('T')[0];
         const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];

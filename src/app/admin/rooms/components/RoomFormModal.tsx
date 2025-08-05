@@ -1,17 +1,19 @@
 import React, { useEffect } from 'react';
 import { Modal, Form, Input, Select, InputNumber, Checkbox, Row, Col, Tooltip, Tag } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { CinemaRoom, CinemaRoomCreateRequest } from '@/api/admin/getAllRooms';
+import { CinemaRoomResponse } from '../types';
+import type { FormInstance } from 'antd/es/form';
 
 const { Option } = Select;
 const { TextArea } = Input;
 
 interface RoomFormModalProps {
   visible: boolean;
-  onOk: (roomData: CinemaRoomCreateRequest) => Promise<void>;
+  onOk: () => void;
   onCancel: () => void;
-  editingRoom: CinemaRoom | null;
+  editingRoom: CinemaRoomResponse | null;
   loading: boolean;
+  form: FormInstance;
 }
 
 export const RoomFormModal: React.FC<RoomFormModalProps> = ({
@@ -20,8 +22,8 @@ export const RoomFormModal: React.FC<RoomFormModalProps> = ({
   onCancel,
   editingRoom,
   loading,
+  form,
 }) => {
-  const [form] = Form.useForm();
   const handleRoomTypeChange = (value: string) => {
     const multipliers = {
       STANDARD: 1.0,
@@ -87,16 +89,6 @@ export const RoomFormModal: React.FC<RoomFormModalProps> = ({
     return Promise.resolve();
   };
 
-  // Handle form submission
-  const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      await onOk(values);
-    } catch (error) {
-      console.error('Form validation failed:', error);
-    }
-  };
-
   return (
     <Modal
       title={
@@ -111,7 +103,7 @@ export const RoomFormModal: React.FC<RoomFormModalProps> = ({
       }
       
       open={visible}
-      onOk={handleSubmit}
+      onOk={onOk}
       onCancel={onCancel}
       width={800}
       className="professional-modal"
