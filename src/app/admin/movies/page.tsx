@@ -14,16 +14,10 @@ import {
   createMovieColumns
 } from './components';
 import { MovieData, MovieCreateRequest } from './types';
-import { useIsMobile } from "@/hooks/use-mobile";
-import useSupressFormWarnings from '@/hooks/useSupressFormWarnings';
 
 const { Text } = Typography;
 
 export default function AdminMovieManagement() {
-  // Suppress Form warnings
-  useSupressFormWarnings();
-  
-  const isMobile = useIsMobile();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMovie, setEditingMovie] = useState<MovieData | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
