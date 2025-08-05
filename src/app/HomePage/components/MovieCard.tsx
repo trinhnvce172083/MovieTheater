@@ -33,14 +33,17 @@ export const MovieCard = memo(function MovieCard({ movie, onViewDetails }: Movie
   }, [movie.price]);
 
   const genreArr = useMemo(() => {
-    const genres = Array.isArray(movie.genre)
-      ? movie.genre
-      : (typeof movie.genre === "string" ? movie.genre : movie.genres || "")
-          .split(",")
-          .map((g) => g.trim())
-          .filter(Boolean);
-    return genres;
-  }, [movie.genre, movie.genres]);
+    if (Array.isArray(movie.genres)) {
+      return movie.genres.filter(Boolean).map((g) => g.trim());
+    }
+    if (typeof movie.genres === "string") {
+      return movie.genres
+        .split(",")
+        .map((g) => g.trim())
+        .filter(Boolean);
+    }
+    return [];
+  }, [movie.genres]);
 
   const releaseYear = useMemo(() => {
     return movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : '2025';
