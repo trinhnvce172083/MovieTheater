@@ -1,19 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { message } from 'antd';
 import { getAllRooms, createRoom, updateRoom, deleteRoom, CinemaRoom, CinemaRoomCreateRequest, CinemaRoomUpdateRequest } from '@/api/admin/getAllRooms';
 
-export const useRoomManagement = () => {
-  const [state, setState] = useState<RoomManagementState>({
-    roomData: [],
-    loading: false,
-    currentPage: 1,
-    pageSize: 10,
-    totalElements: 0,
-    isModalVisible: false,
-    editingRoom: null,
-    isUsingApiData: true,
-    backendStatus: "checking",
-  });
+interface UseRoomManagementProps {
+  initialPageSize?: number;
+}
 
 interface Filters {
   searchTerm: string;
@@ -86,133 +77,31 @@ export const useRoomManagement = ({ initialPageSize = 10 }: UseRoomManagementPro
     } finally {
       setLoading(false);
     }
-  }, [checkBackendStatus]);
+  }, [pagination.currentPage, pagination.pageSize]);
 
-  const handleCreateRoom = useCallback(async (roomData: RoomCreateRequest) => {
-    setState(prev => ({ ...prev, loading: true }));
+  // Load data on component mount and when pagination changes
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
+
+  // Filtered data based on current filters
+  const filteredData = useMemo(() => {
+    if (!allRoomData || !Array.isArray(allRoomData)) return [];
     
-    try {
-      if (state.isUsingApiData) {
-        await createRoom(roomData);
-        message.success('Room created successfully!');
-      } else {
-        // Mock creation for offline mode
-        const newRoom: CinemaRoomResponse = {
-          cinemaRoomId: Math.max(...MOCK_ROOMS.map(r => r.cinemaRoomId)) + 1,
-          ...roomData,
-          isActive: roomData.isActive ?? true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        MOCK_ROOMS.push(newRoom);
-        message.success('Room created successfully! (Offline mode)');
-      }
+    return allRoomData.filter(room => {
+      const matchesSearch = !filters.searchTerm || 
+        room.cinemaRoomName.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        room.description?.toLowerCase().includes(filters.searchTerm.toLowerCase());
       
-      await fetchRooms(state.currentPage, state.pageSize);
-      setState(prev => ({ ...prev, isModalVisible: false }));
-    } catch (error) {
-      console.error('Error creating room:', error);
-      message.error('Failed to create room. Please try again.');
-    } finally {
-      setState(prev => ({ ...prev, loading: false }));
-    }
-  }, [state.isUsingApiData, state.currentPage, state.pageSize, fetchRooms]);
-
-  const handleUpdateRoom = useCallback(async (roomId: number, roomData: Partial<RoomCreateRequest>) => {
-    setState(prev => ({ ...prev, loading: true }));
-    
-    try {
-      if (state.isUsingApiData) {
-        await updateRoom(roomId, roomData);
-        message.success('Room updated successfully!');
-      } else {
-        // Mock update for offline mode
-        const index = MOCK_ROOMS.findIndex(r => r.cinemaRoomId === roomId);
-        if (index !== -1) {
-          MOCK_ROOMS[index] = { 
-            ...MOCK_ROOMS[index], 
-            ...roomData,
-            updatedAt: new Date().toISOString()
-          };
-        }
-        message.success('Room updated successfully! (Offline mode)');
-      }
+      const matchesType = !filters.filterType || room.roomType === filters.filterType;
       
-      await fetchRooms(state.currentPage, state.pageSize);
-      setState(prev => ({ ...prev, isModalVisible: false, editingRoom: null }));
-    } catch (error) {
-      console.error('Error updating room:', error);
-      message.error('Failed to update room. Please try again.');
-    } finally {
-      setState(prev => ({ ...prev, loading: false }));
-    }
-  }, [state.isUsingApiData, state.currentPage, state.pageSize, fetchRooms]);
-
-  const handleDeleteRoom = useCallback(async (roomId: number) => {
-    setState(prev => ({ ...prev, loading: true }));
-    
-    try {
-      if (state.isUsingApiData) {
-        await deleteRoom(roomId);
-        message.success('Room deleted successfully!');
-      } else {
-        // Mock deletion for offline mode
-        const index = MOCK_ROOMS.findIndex(r => r.cinemaRoomId === roomId);
-        if (index !== -1) {
-          MOCK_ROOMS.splice(index, 1);
-        }
-        message.success('Room deleted successfully! (Offline mode)');
-      }
+      const matchesStatus = !filters.filterStatus || 
+        (filters.filterStatus === 'active' && room.isActive) ||
+        (filters.filterStatus === 'inactive' && !room.isActive);
       
-      await fetchRooms(state.currentPage, state.pageSize);
-    } catch (error) {
-      console.error('Error deleting room:', error);
-      message.error('Failed to delete room. Please try again.');
-    } finally {
-      setState(prev => ({ ...prev, loading: false }));
-    }
-  }, [state.isUsingApiData, state.currentPage, state.pageSize, fetchRooms]);
-
-  // Computed values
-  const filteredRooms = filterRooms(state.roomData, filters);
-  const statistics = calculateRoomStatistics(state.roomData);
-
-  // Modal handlers
-  const showModal = useCallback((room?: CinemaRoomResponse) => {
-    setState(prev => ({
-      ...prev,
-      isModalVisible: true,
-      editingRoom: room || null,
-    }));
-  }, []);
-
-  const hideModal = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      isModalVisible: false,
-      editingRoom: null,
-    }));
-  }, []);
-
-  // Pagination handlers
-  const handlePageChange = useCallback((page: number, size?: number) => {
-    const newSize = size || state.pageSize;
-    setState(prev => ({ ...prev, currentPage: page, pageSize: newSize }));
-    fetchRooms(page, newSize);
-  }, [state.pageSize, fetchRooms]);
-
-  // Filter handlers
-  const updateFilters = useCallback((newFilters: Partial<RoomFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-  }, []);
-
-  const clearFilters = useCallback(() => {
-    setFilters({
-      searchTerm: '',
-      filterType: undefined,
-      filterStatus: undefined,
+      return matchesSearch && matchesType && matchesStatus;
     });
-  }, []);
+  }, [allRoomData, filters]);
 
   // Paginated data for display
   const paginatedData = useMemo(() => {
@@ -297,21 +186,25 @@ export const useRoomManagement = ({ initialPageSize = 10 }: UseRoomManagementPro
   }, [fetchRooms]);
 
   return {
-    // State
-    ...state,
-    filters,
-    filteredRooms,
+    // Data
+    allRoomData,
+    filteredData,
+    paginatedData,
     statistics,
     
+    // State
+    loading,
+    isUsingApiData,
+    totalElements,
+    filters,
+    pagination,
+    
     // Actions
+    setFilters,
+    setPagination,
     fetchRooms,
-    handleCreateRoom,
-    handleUpdateRoom,
-    handleDeleteRoom,
-    showModal,
-    hideModal,
-    handlePageChange,
-    updateFilters,
-    clearFilters,
+    createRoom: createRoomAction,
+    updateRoom: updateRoomAction,
+    deleteRoom: deleteRoomAction,
   };
 };

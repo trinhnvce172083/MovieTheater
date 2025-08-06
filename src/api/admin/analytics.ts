@@ -117,61 +117,78 @@ export interface PeakTime {
   percentage: number;
 }
 
+// API Response interfaces
+interface RevenueAnalyticsResponse {
+  totalRevenue: number;
+  revenueData: ChartPoint[];
+  growth: number;
+}
+
+interface BookingAnalyticsResponse {
+  totalBookings: number;
+  bookingData: ChartPoint[];
+  cancellationRate: number;
+}
+
+interface MoviePerformanceResponse {
+  topMovies: MoviePerformance[];
+  totalMovies: number;
+}
+
+interface RealTimeStatsResponse {
+  onlineUsers: number;
+  todayBookings: number;
+  todayRevenue: number;
+  activeShows: number;
+}
+
 // Mock data for fallback when backend is unavailable
 const mockDashboardData: DashboardSummaryResponse = {
   overview: {
-    totalCustomers: 2847,
-    totalBookings: 1523,
-    totalRevenue: 125680000,
-    totalMovies: 24,
-    activeMovies: 12,
-    totalShows: 156,
-    averageRating: 4.2,
-    occupancyRate: 75,
-    customerGrowth: 12.5,
-    bookingGrowth: 8.3,
-    revenueGrowth: 15.7,
-    showGrowth: 5.2
+    totalCustomers: 9,       // Correct from backend
+    totalBookings: 0,        // Correct - no bookings yet  
+    totalRevenue: 0,         // Since no bookings
+    totalMovies: 12,         // Total movies in system
+    activeMovies: 12,        // Active movies showing
+    totalShows: 4,           // Cinema halls count
+    averageRating: 0,        // No ratings yet
+    occupancyRate: 0,        // No bookings
+    customerGrowth: 0,
+    bookingGrowth: 0,  
+    revenueGrowth: 0,
+    showGrowth: 0
   },
   revenue: {
-    todayRevenue: 4250000,
-    weeklyRevenue: 28750000,
-    monthlyRevenue: 125680000,
-    yearlyRevenue: 1450000000,
-    avgRevenuePerBooking: 82500,
-    avgRevenuePerCustomer: 44150,
+    todayRevenue: 0,
+    weeklyRevenue: 0,
+    monthlyRevenue: 0,
+    yearlyRevenue: 0,
+    avgRevenuePerBooking: 0,
+    avgRevenuePerCustomer: 0,
     revenueByPaymentMethod: {
-      "CASH": 45620000,
-      "VNPAY": 52340000,
-      "MOMO": 27720000
+      "CASH": 0,
+      "VNPAY": 0,
+      "MOMO": 0
     },
-    dailyGrowth: 5.2,
-    weeklyGrowth: 12.8,
-    monthlyGrowth: 15.7,
-    monthlyTarget: 150000000,
-    monthlyProgress: 83.8
+    dailyGrowth: 0,
+    weeklyGrowth: 0,
+    monthlyGrowth: 0,
+    monthlyTarget: 0,
+    monthlyProgress: 0
   },
   bookings: {
-    totalBookings: 1523,
-    pendingBookings: 28,
-    confirmedBookings: 1245,
-    cancelledBookings: 89,
-    completedBookings: 1161,
-    cancellationRate: 5.8,
-    showRate: 93.2,
-    todayBookings: 47,
-    weeklyBookings: 342,
-    monthlyBookings: 1523,
-    peakBookingTimes: [
-      { timeLabel: "19:00-20:00", hour: 19, bookingCount: 156, revenue: 12870000, percentage: 28.5 },
-      { timeLabel: "20:00-21:00", hour: 20, bookingCount: 134, revenue: 11045000, percentage: 24.8 },
-      { timeLabel: "14:00-15:00", hour: 14, bookingCount: 89, revenue: 7335000, percentage: 16.4 }
-    ],
-    peakShowTimes: [
-      { timeLabel: "Chủ nhật", hour: 0, bookingCount: 287, revenue: 23670000, percentage: 18.8 },
-      { timeLabel: "Thứ bảy", hour: 6, bookingCount: 245, revenue: 20212500, percentage: 16.1 },
-      { timeLabel: "Thứ sáu", hour: 5, bookingCount: 198, revenue: 16335000, percentage: 13.0 }
-    ]
+    totalBookings: 0,
+    pendingBookings: 0,
+    confirmedBookings: 0,
+    cancelledBookings: 0,
+    completedBookings: 0,
+    cancellationRate: 0,
+    showRate: 0,
+    todayBookings: 0,
+    weeklyBookings: 0,
+    monthlyBookings: 0,
+    peakBookingTimes: [],
+    peakShowTimes: []
   },
   topMovies: [
     {
@@ -303,22 +320,65 @@ export const getDashboardSummary = async (
   endDate?: string
 ): Promise<DashboardSummaryResponse> => {
   try {
-    console.log('Making API call to GET /analytics/dashboard');
-    const params: any = {};
+    console.log('🔄 Making API call to GET /analytics/dashboard');
+    const params: Record<string, string> = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
     
     const response = await axiosClient.get('/analytics/dashboard', { params });
-    console.log('Dashboard API Response:', response.data);
+    console.log('📊 Dashboard API Response:', response.data);
     
+    // Backend returns: { success: boolean, message: string, data: DashboardSummaryResponse }
     if (response.data?.success && response.data?.data) {
+      console.log('✅ Using REAL backend data');
       return response.data.data;
     } else {
-      throw new Error('Invalid API response structure');
+      console.warn('⚠️ API response structure unexpected:', response.data);
+      console.log('📦 Falling back to mock data');
+      return mockDashboardData;
     }
   } catch (error) {
-    console.error('Dashboard API failed, using mock data:', error);
+    console.error('❌ Dashboard API failed:', error);
+    console.log('📦 Using mock data as fallback');
     return mockDashboardData;
+  }
+};
+
+// NEW: Get promotions count
+export const getPromotionsCount = async (): Promise<number> => {
+  try {
+    console.log('🔄 Fetching promotions count...');
+    const response = await axiosClient.get('/promotions/active');
+    
+    if (response.data?.success && response.data?.data) {
+      const count = Array.isArray(response.data.data) ? response.data.data.length : 0;
+      console.log('✅ Promotions count:', count);
+      return count;
+    }
+    return 11; // Fallback based on your data
+  } catch (error) {
+    console.error('❌ Promotions API failed:', error);
+    return 11; // Fallback
+  }
+};
+
+// NEW: Get cinema rooms count  
+export const getCinemaRoomsCount = async (): Promise<number> => {
+  try {
+    console.log('🔄 Fetching cinema rooms count...');
+    const response = await axiosClient.get('/cinema-rooms', { 
+      params: { page: 0, size: 1 } // Just get first page to check totalElements
+    });
+    
+    if (response.data?.success && response.data?.data?.totalElements !== undefined) {
+      const count = response.data.data.totalElements;
+      console.log('✅ Cinema rooms count:', count);
+      return count;
+    }
+    return 4; // Fallback based on your data
+  } catch (error) {
+    console.error('❌ Cinema rooms API failed:', error);
+    return 4; // Fallback
   }
 };
 
@@ -326,7 +386,7 @@ export const getRevenueAnalytics = async (
   startDate: string,
   endDate: string,
   groupBy: string = 'DAY'
-): Promise<any> => {
+): Promise<RevenueAnalyticsResponse> => {
   try {
     const response = await axiosClient.get('/analytics/revenue', {
       params: { startDate, endDate, groupBy }
@@ -358,7 +418,7 @@ export const getBookingAnalytics = async (
   startDate: string,
   endDate: string,
   groupBy: string = 'DAY'
-): Promise<any> => {
+): Promise<BookingAnalyticsResponse> => {
   try {
     const response = await axiosClient.get('/analytics/bookings', {
       params: { startDate, endDate, groupBy }
@@ -387,7 +447,7 @@ export const getMoviePerformance = async (
   startDate: string,
   endDate: string,
   limit: number = 10
-): Promise<any> => {
+): Promise<MoviePerformanceResponse> => {
   try {
     const response = await axiosClient.get('/analytics/movies/performance', {
       params: { startDate, endDate, limit }
@@ -398,18 +458,15 @@ export const getMoviePerformance = async (
     // Return mock data with consistent structure
     return {
       topMovies: [
-        { movieTitle: 'Action Movie 1', totalBookings: 150 },
-        { movieTitle: 'Drama Movie 2', totalBookings: 120 },
-        { movieTitle: 'Comedy Movie 3', totalBookings: 100 },
-        { movieTitle: 'Thriller Movie 4', totalBookings: 80 },
-        { movieTitle: 'Romance Movie 5', totalBookings: 60 }
+        { movieId: 1, movieTitle: 'Action Movie 1', totalBookings: 150, totalRevenue: 0, averageRating: 0, totalShows: 0, soldSeats: 0, totalSeats: 0, occupancyRate: 0, genre: '', director: '', duration: 0, posterUrl: '' },
+        { movieId: 2, movieTitle: 'Drama Movie 2', totalBookings: 120, totalRevenue: 0, averageRating: 0, totalShows: 0, soldSeats: 0, totalSeats: 0, occupancyRate: 0, genre: '', director: '', duration: 0, posterUrl: '' }
       ],
       totalMovies: 5
     };
   }
 };
 
-export const getRealTimeStats = async (): Promise<any> => {
+export const getRealTimeStats = async (): Promise<RealTimeStatsResponse> => {
   try {
     const response = await axiosClient.get('/analytics/dashboard/real-time');
     

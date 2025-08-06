@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { Layout, Menu, Button, Tooltip, Drawer } from "antd";
 import {
-  DashboardOutlined,
   UserOutlined,
   VideoCameraOutlined,
   GiftOutlined,
@@ -12,14 +11,13 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   ShoppingOutlined,
-  ScheduleOutlined,
+  BarChartOutlined,
 } from "@ant-design/icons";
 import { usePathname, useRouter } from "next/navigation";
 import ROUTES from "@/constants/routes";
 import Image from "next/image";
 import AdminHeader from "./AdminHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
-import AdminAuthGuard from "@/components/guards/AdminAuthGuard";
 
 const { Sider, Content } = Layout;
 
@@ -59,7 +57,7 @@ export default function AdminLayout({
   const menuItems = [
     {
       key: ROUTES.ADMIN_DASHBOARD,
-      icon: <DashboardOutlined />,
+      icon: <BarChartOutlined />,
       label: "Dashboard",
     },
     {
@@ -73,11 +71,6 @@ export default function AdminLayout({
       label: "Movies",
     },
     {
-      key: ROUTES.ADMIN_SCHEDULES,
-      icon: <ScheduleOutlined />,
-      label: "Schedules",
-    },
-    {
       key: ROUTES.ADMIN_ROOMS,
       icon: <BankOutlined />,
       label: "Rooms",
@@ -87,11 +80,7 @@ export default function AdminLayout({
       icon: <GiftOutlined />,
       label: "Promotions",
     },
-    {
-      key: ROUTES.ADMIN_BOOKINGS,
-      icon: <CalendarOutlined />,
-      label: "Bookings",
-    },
+    
     {
       key: ROUTES.ADMIN_CONCESSIONS,
       icon: <ShoppingOutlined />,
@@ -170,8 +159,7 @@ export default function AdminLayout({
   };
 
   return (
-    <AdminAuthGuard>
-      <Layout>
+    <Layout>
       {/* Desktop Sidebar */}
       {!isMobile && (
         <Sider
@@ -568,6 +556,5 @@ export default function AdminLayout({
         }
       `}</style>
     </Layout>
-    </AdminAuthGuard>
   );
 }

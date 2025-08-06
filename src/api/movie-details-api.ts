@@ -132,7 +132,7 @@ export class MovieDetailsApiService {
 
   static async getComingSoonMovies(): Promise<ApiResponse<MovieDetails[]>> {
     try {
-      console.log("🎬 Fetching coming soon movies from API");
+      // console.log("🎬 Fetching coming soon movies from API");
       const response = await axiosClient.get('/movies/coming-soon');
       const data = response.data;
       
