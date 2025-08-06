@@ -1,12 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { message } from 'antd';
-<<<<<<< HEAD
-import { getAllRooms } from '@/src/api/admin/rooms/getAllRooms';
-import { CinemaRoomResponse, RoomCreateRequest, RoomManagementState, RoomFilters, BackendStatus } from '../types';
-import { MOCK_ROOMS, filterRooms, calculateRoomStatistics } from '../utils';
-=======
 import { getAllRooms, createRoom, updateRoom, deleteRoom, CinemaRoom, CinemaRoomCreateRequest, CinemaRoomUpdateRequest } from '@/api/admin/getAllRooms';
->>>>>>> adminpage5
 
 export const useRoomManagement = () => {
   const [state, setState] = useState<RoomManagementState>({
@@ -21,9 +15,6 @@ export const useRoomManagement = () => {
     backendStatus: "checking",
   });
 
-<<<<<<< HEAD
-  const [filters, setFilters] = useState<RoomFilters>({
-=======
 interface Filters {
   searchTerm: string;
   filterType: string | undefined;
@@ -52,73 +43,11 @@ export const useRoomManagement = ({ initialPageSize = 10 }: UseRoomManagementPro
 
   // Filter state
   const [filters, setFilters] = useState<Filters>({
->>>>>>> adminpage5
     searchTerm: '',
     filterType: undefined,
     filterStatus: undefined,
   });
 
-<<<<<<< HEAD
-  const checkBackendStatus = useCallback(async (): Promise<BackendStatus> => {
-    try {
-      const response = await fetch('/api/admin/rooms/health', { 
-        method: 'HEAD',
-        timeout: 5000 
-      } as any);
-      return response.ok ? "connected" : "disconnected";
-    } catch {
-      return "disconnected";
-    }
-  }, []);
-
-  const fetchRooms = useCallback(async (page: number = 1, size: number = 10) => {
-    setState(prev => ({ ...prev, loading: true }));
-    
-    try {
-      const backendStatus = await checkBackendStatus();
-      setState(prev => ({ ...prev, backendStatus }));
-
-      if (backendStatus === "connected") {
-        const response = await getAllRooms(page - 1, size);
-        setState(prev => ({
-          ...prev,
-          roomData: response.content || response,
-          totalElements: response.totalElements || response.length || 0,
-          isUsingApiData: true,
-          loading: false,
-        }));
-      } else {
-        // Use mock data when backend is unavailable
-        const startIndex = (page - 1) * size;
-        const endIndex = startIndex + size;
-        const paginatedData = MOCK_ROOMS.slice(startIndex, endIndex);
-        
-        setState(prev => ({
-          ...prev,
-          roomData: paginatedData,
-          totalElements: MOCK_ROOMS.length,
-          isUsingApiData: false,
-          loading: false,
-        }));
-        message.warning('Backend unavailable. Using offline data.');
-      }
-    } catch (error) {
-      console.error('Error fetching rooms:', error);
-      
-      // Fallback to mock data
-      const startIndex = (page - 1) * size;
-      const endIndex = startIndex + size;
-      const paginatedData = MOCK_ROOMS.slice(startIndex, endIndex);
-      
-      setState(prev => ({
-        ...prev,
-        roomData: paginatedData,
-        totalElements: MOCK_ROOMS.length,
-        isUsingApiData: false,
-        loading: false,
-      }));
-      message.error('Failed to fetch rooms. Using offline data.');
-=======
   // Pagination state
   const [pagination, setPagination] = useState<Pagination>({
     currentPage: 1,
@@ -156,7 +85,6 @@ export const useRoomManagement = ({ initialPageSize = 10 }: UseRoomManagementPro
       setIsUsingApiData(false);
     } finally {
       setLoading(false);
->>>>>>> adminpage5
     }
   }, [checkBackendStatus]);
 
@@ -286,12 +214,6 @@ export const useRoomManagement = ({ initialPageSize = 10 }: UseRoomManagementPro
     });
   }, []);
 
-<<<<<<< HEAD
-  // Initialize data
-  useEffect(() => {
-    fetchRooms(1, state.pageSize);
-  }, []);
-=======
   // Paginated data for display
   const paginatedData = useMemo(() => {
     const startIndex = (pagination.currentPage - 1) * pagination.pageSize;
@@ -373,7 +295,6 @@ export const useRoomManagement = ({ initialPageSize = 10 }: UseRoomManagementPro
       setLoading(false);
     }
   }, [fetchRooms]);
->>>>>>> adminpage5
 
   return {
     // State

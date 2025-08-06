@@ -75,13 +75,6 @@ const MovieFormContent: React.FC<MovieFormModalProps> = ({
   const [backdropFileList, setBackdropFileList] = useState<UploadFile[]>([]);
   const [posterPreview, setPosterPreview] = useState<string>('');
   const [backdropPreview, setBackdropPreview] = useState<string>('');
-<<<<<<< HEAD
-
-  // Initialize form with editing data
-  useEffect(() => {
-    if (editingMovie && open) {
-      console.log('🎬 [MovieFormModal] Initializing form with editing data:', editingMovie);
-=======
   const [isInitialized, setIsInitialized] = useState(false);
   const [isFeaturedState, setIsFeaturedState] = useState(false); // Add controlled state
 
@@ -111,7 +104,6 @@ const MovieFormContent: React.FC<MovieFormModalProps> = ({
     }
 
     if (editingMovie && !isInitialized) {
->>>>>>> adminpage5
       
       // Transform data for form fields
       const formData = {
@@ -151,20 +143,10 @@ const MovieFormContent: React.FC<MovieFormModalProps> = ({
       // Clear file lists since we're showing existing images
       setPosterFileList([]);
       setBackdropFileList([]);
-<<<<<<< HEAD
-    } else if (open) {
-      console.log('🎬 [MovieFormModal] Resetting form for new movie');
-      form.resetFields();
-      setPosterPreview('');
-      setBackdropPreview('');
-      setPosterFileList([]);
-      setBackdropFileList([]);
-=======
       setIsInitialized(true);
     } else if (open && !editingMovie && !isInitialized) {
       resetFormState();
       setIsInitialized(true);
->>>>>>> adminpage5
     }
   }, [editingMovie, form, open]);
 
@@ -504,10 +486,6 @@ const MovieFormContent: React.FC<MovieFormModalProps> = ({
 
           <Row gutter={16}>
             <Col span={12}>
-<<<<<<< HEAD
-              <Form.Item name="productionCompany" label="Production Company" rules={[{ max: 100 }]}>
-                <Input placeholder="Enter production company..." />
-=======
               <Form.Item name="isFeatured" label="Featured Movie" valuePropName="checked" initialValue={false}>
                 <Space>
                   <Switch 
@@ -520,7 +498,6 @@ const MovieFormContent: React.FC<MovieFormModalProps> = ({
                     }}
                   />
                 </Space>
->>>>>>> adminpage5
               </Form.Item>
             </Col>
             <Col span={12}>

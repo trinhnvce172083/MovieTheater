@@ -59,9 +59,6 @@ export default function AppLineChart() {
   useEffect(() => {
     const fetchRevenueData = async () => {
       try {
-<<<<<<< HEAD
-        // Get booking data for last 7 days
-=======
         // Check token first
         const token = localStorage.getItem('accessToken');
         if (!token) {
@@ -70,7 +67,6 @@ export default function AppLineChart() {
         }
 
         // Get revenue data for last 7 days
->>>>>>> adminpage5
         const endDate = new Date().toISOString().split('T')[0];
         const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         

@@ -80,17 +80,6 @@ export const RoomFormModal: React.FC<RoomFormModalProps> = ({
     }
   };
 
-<<<<<<< HEAD
-  // Custom validation for seat calculation
-  const validateSeatCalculation = async (_: unknown, value: number) => {
-    const formValues = form.getFieldsValue();
-    const { rows, columns } = formValues;
-    
-    if (typeof rows === 'number' && typeof columns === 'number' && value !== rows * columns) {
-      throw new Error('Seat quantity must equal rows × columns');
-    }
-    return Promise.resolve();
-=======
   // Handle form submission
   const handleSubmit = async () => {
     try {
@@ -102,7 +91,6 @@ export const RoomFormModal: React.FC<RoomFormModalProps> = ({
     } catch (error) {
       console.error('Form validation failed:', error);
     }
->>>>>>> adminpage5
   };
 
   return (
