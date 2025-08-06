@@ -65,11 +65,13 @@ export const RoomFormModal: React.FC<RoomFormModalProps> = ({
   }, [visible, editingRoom, form]);
 
 
-  // Auto-calculate seatQuantity when rows or columns change
+  // Auto-calculate seatQuantity when rows or columns change (but not when seatQuantity is manually changed)
   const handleValuesChange = (changedValues: Record<string, unknown>, allValues: Record<string, unknown>) => {
+    // Only auto-calculate if rows or columns changed (not if seatQuantity was manually edited)
     if (
       (Object.prototype.hasOwnProperty.call(changedValues, 'rows') ||
         Object.prototype.hasOwnProperty.call(changedValues, 'columns')) &&
+      !Object.prototype.hasOwnProperty.call(changedValues, 'seatQuantity') &&
       typeof allValues.rows === 'number' && allValues.rows > 0 &&
       typeof allValues.columns === 'number' && allValues.columns > 0
     ) {
@@ -78,6 +80,7 @@ export const RoomFormModal: React.FC<RoomFormModalProps> = ({
     }
   };
 
+<<<<<<< HEAD
   // Custom validation for seat calculation
   const validateSeatCalculation = async (_: unknown, value: number) => {
     const formValues = form.getFieldsValue();
@@ -87,6 +90,19 @@ export const RoomFormModal: React.FC<RoomFormModalProps> = ({
       throw new Error('Seat quantity must equal rows × columns');
     }
     return Promise.resolve();
+=======
+  // Handle form submission
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+      console.log('🎯 Form values before submit:', values);
+      console.log('🎯 Manual seatQuantity:', values.seatQuantity);
+      console.log('🎯 Calculated from rows*columns:', values.rows * values.columns);
+      await onOk(values);
+    } catch (error) {
+      console.error('Form validation failed:', error);
+    }
+>>>>>>> adminpage5
   };
 
   return (
@@ -157,7 +173,14 @@ export const RoomFormModal: React.FC<RoomFormModalProps> = ({
           <Col xs={24} sm={8}>
             <Form.Item
               name="seatQuantity"
-              label="Total Seats"
+              label={
+                <span>
+                  Total Seats{' '}
+                  <Tooltip title="Auto-calculated from Rows × Columns, but you can manually override">
+                    <InfoCircleOutlined className="text-gray-400" />
+                  </Tooltip>
+                </span>
+              }
               rules={[
                 { required: true, message: "Please enter total seats" },
                 {
@@ -166,16 +189,13 @@ export const RoomFormModal: React.FC<RoomFormModalProps> = ({
                   max: 500,
                   message: "Seats must be between 1 and 500",
                 },
-                { validator: validateSeatCalculation },
               ]}
             >
               <InputNumber
-                placeholder="Total seats = Rows × Columns"
+                placeholder="Auto-calculated or enter manually"
                 className="w-full h-10"
                 min={1}
                 max={500}
-                readOnly
-                style={{ backgroundColor: '#f5f5f5' }}
               />
             </Form.Item>
           </Col>

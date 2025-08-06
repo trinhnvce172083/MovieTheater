@@ -31,6 +31,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const { Text } = Typography;
 
+<<<<<<< HEAD
 // Custom hook for debounced value
 const useDebounce = (value: string, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -51,6 +52,12 @@ const useDebounce = (value: string, delay: number) => {
 export default function CinemaRoomManagement() {
   const isMobile = useIsMobile();
   const [form] = Form.useForm();
+=======
+export default function AdminRoomManagement() {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<CinemaRoom | null>(null);
+  const [tableKey, setTableKey] = useState(0); // Force table re-render
+>>>>>>> adminpage5
   const router = useRouter();
   
   // State
@@ -215,6 +222,7 @@ export default function CinemaRoomManagement() {
 
   const handleModalOk = async () => {
     try {
+<<<<<<< HEAD
       const values = await form.validateFields();
       
       // Additional validation
@@ -240,6 +248,27 @@ export default function CinemaRoomManagement() {
     } catch (error) {
       console.error('Form validation failed:', error);
       // Form validation errors are automatically displayed by Ant Design
+=======
+      let success = false;
+      if (editingRoom) {
+        console.log('Updating room:', editingRoom.cinemaRoomId, roomData);
+        success = await updateRoom(editingRoom.cinemaRoomId, roomData);
+      } else {
+        console.log('Creating new room:', roomData);
+        success = await createRoom(roomData);
+      }
+
+      if (success) {
+        console.log('Operation successful, closing modal');
+        setIsModalVisible(false);
+        setEditingRoom(null);
+        setTableKey(prev => prev + 1); // Force table re-render
+        // The useRoomManagement hook already calls fetchRooms() after update/create
+      }
+    } catch (error) {
+      console.error('Modal submit error:', error);
+      message.error('Please check required fields and try again.');
+>>>>>>> adminpage5
     }
   };
 
@@ -353,6 +382,7 @@ export default function CinemaRoomManagement() {
           {/* Table Section */}
           <div className="bg-white">
             <Spin spinning={loading}>
+<<<<<<< HEAD
               {filteredData.length === 0 && !loading ? (
                 <div className="flex flex-col items-center justify-center py-16 px-4">
                   <div className="text-gray-400 text-6xl mb-4">🏠</div>
@@ -388,6 +418,20 @@ export default function CinemaRoomManagement() {
                   rowKey="cinemaRoomId"
                 />
               )}
+=======
+              <Table
+                dataSource={[...paginatedData]} // Force new array reference
+                columns={columns}
+                pagination={false}
+                scroll={{ x: 1200 }}
+                rowClassName="hover:bg-gray-50 transition-colors"
+                className="professional-table"
+                size="small"
+                rowKey="cinemaRoomId"
+                key={`table-${tableKey}-${paginatedData.length}`} // More specific key
+                sortDirections={['ascend', 'descend']}
+              />
+>>>>>>> adminpage5
             </Spin>
             
             {/* Pagination */}

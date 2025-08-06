@@ -42,8 +42,6 @@ const LockUserModal: React.FC<LockUserModalProps> = ({
       
       // Validate and get form values
       const values = await form.validateFields();
-      console.log('🔒 [LockUserModal] Form values received:', values);
-      console.log('🔒 [LockUserModal] Current user:', user);
       
       const lockData = {
         reason: values.reason,

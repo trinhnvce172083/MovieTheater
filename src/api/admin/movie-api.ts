@@ -99,20 +99,15 @@ export class MovieApiService {
                 }
             });
             
-            console.log(`🔧 Updating movie ${movieId} with data:`, cleanData);
-            
             const response = await axiosClient.put(`/movies/${movieId}`, cleanData, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            
-            console.log('✅ Movie update response:', response.data);
             
             return {
                 data: transformToFrontendFormat(response.data) as Movie,
                 success: true,
             };
         } catch (error) {
-            console.error('❌ Movie update error:', error);
             return {
                 data: null,
                 success: false,
