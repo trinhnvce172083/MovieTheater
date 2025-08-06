@@ -30,7 +30,7 @@ interface CustomerInfo {
   email: string;
   dateOfBirth?: string;
   address?: string;
-  membershipType: 'guest' | 'existing_member' | 'new_member';
+  membershipType: 'guest' | 'existing_member';
   memberId?: string;
 }
 
@@ -46,7 +46,7 @@ export default function CustomerInfoForm({
   loading = false 
 }: CustomerInfoFormProps) {
   const [form] = Form.useForm();
-  const [membershipType, setMembershipType] = useState<'guest' | 'existing_member' | 'new_member'>('guest');
+  const [membershipType, setMembershipType] = useState<'guest' | 'existing_member'>('guest');
   
   const { 
     loading: memberLoading, 
@@ -113,7 +113,6 @@ export default function CustomerInfoForm({
             <Space direction="vertical" className="w-full">
               <Radio value="guest">Khách vãng lai</Radio>
               <Radio value="existing_member">Thành viên hiện có</Radio>
-              <Radio value="new_member">Đăng ký thành viên mới</Radio>
             </Space>
           </Radio.Group>
         </Card>
@@ -196,34 +195,15 @@ export default function CustomerInfoForm({
             />
           </Form.Item>
 
-          {/* Date of Birth - required for new members */}
-          {membershipType === 'new_member' && (
-            <Form.Item
-              label="Ngày sinh"
-              name="dateOfBirth"
-              rules={[{ required: true, message: 'Vui lòng nhập ngày sinh' }]}
-            >
-              <Input
-                prefix={<CalendarOutlined />}
-                type="date"
-                size="large"
-              />
-            </Form.Item>
-          )}
 
-          {/* Address - optional for guests, required for new members */}
+
+          {/* Address - optional */}
           <Form.Item
             label="Địa chỉ"
             name="address"
-            rules={[
-              { 
-                required: membershipType === 'new_member', 
-                message: 'Vui lòng nhập địa chỉ' 
-              }
-            ]}
           >
             <TextArea
-              placeholder="Nhập địa chỉ"
+              placeholder="Nhập địa chỉ (tùy chọn)"
               rows={3}
             />
           </Form.Item>

@@ -86,15 +86,6 @@ export default function PaymentPage() {
     }
   }, [bookingId]);
 
-  const loadBookingDetails = async () => {
-    try {
-      const details = await getBookingDetails(bookingId!);
-      setBookingDetails(details);
-    } catch (error) {
-      console.error('Error loading booking details:', error);
-    }
-  };
-
   // Handler for customer info form submission (employee only)
   const handleCustomerInfoSubmit = (info: CustomerInfo) => {
     setCustomerInfo(info);
@@ -114,34 +105,20 @@ export default function PaymentPage() {
       return;
     }
 
-    // For employees, ensure customer info is provided
-    if (isEmployee && !customerInfo) {
-      message.error("Vui lòng nhập thông tin khách hàng trước khi thanh toán");
-      setShowCustomerForm(true);
-      return;
-    }
+    // Customer info đã được lưu trong booking, không cần validate lại cho payment
 
     try {
       const paymentRequest = {
         bookingId: Number(bookingId),
-        amount: bookingDetails?.finalAmount || bookingData.seatTotal || 0,
-        paymentMethod: selectedPaymentMethod,
-        customerInfo: isEmployee && customerInfo ? {
-          name: customerInfo.fullName,
-          email: customerInfo.email || '',
-          phone: customerInfo.phoneNumber
-        } : {
-          name: bookingDetails.customerName,
-          email: bookingDetails.customerEmail,
-          phone: bookingDetails.customerPhone
-        }
+        language: "vn"
       };
 
-      const response = await createPayment(paymentRequest);
+      const response = await createPayment(paymentRequest as any);
+      
       setPaymentResponse(response);
 
       if (selectedPaymentMethod === 'WALLET') {
-        if (response.paymentUrl) {
+        if (response?.paymentUrl) {
           window.open(response.paymentUrl, '_blank');
           message.success('Redirecting to VNPay...');
         } else {
@@ -154,7 +131,6 @@ export default function PaymentPage() {
         message.success("Payment created successfully. Please complete the payment.");
       }
     } catch (error) {
-      console.error('Error creating payment:', error);
       message.error("An error occurred while creating payment");
     }
   };
@@ -223,98 +199,7 @@ export default function PaymentPage() {
     router.back();
   };
 
-  // Render trạng thái thanh toán
-  const renderPaymentStatus = () => {
-    if (!paymentResponse) return null;
 
-    const statusConfig = {
-      PENDING: { icon: Clock, color: "bg-yellow-500", text: "Pending payment" },
-      PROCESSING: { icon: Clock, color: "bg-blue-500", text: "Processing" },
-      COMPLETED: { icon: CheckCircle, color: "bg-green-500", text: "Completed" },
-      FAILED: { icon: XCircle, color: "bg-red-500", text: "Failed" }
-    };
-
-    const config = statusConfig[paymentResponse.status as keyof typeof statusConfig];
-    const IconComponent = config.icon;
-
-    return (
-      <Card className="bg-[#1a2332] border-[#2d3748] mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <IconComponent className={`w-5 h-5 ${config.color} rounded-full p-1`} />
-            Payment Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400">Status:</span>
-              <Badge variant="secondary" className={config.color}>
-                {config.text}
-              </Badge>
-            </div>
-            
-            {paymentResponse.transactionId && (
-              <div className="flex justify-between items-center">
-                <span className="text-gray-400">Transaction ID:</span>
-                <span className="text-white font-mono">{paymentResponse.transactionId}</span>
-              </div>
-            )}
-
-            {paymentResponse.message && (
-              <div className="bg-gray-800 p-3 rounded-lg">
-                <p className="text-white">{paymentResponse.message}</p>
-              </div>
-            )}
-
-            {paymentResponse.status === 'PENDING' && (
-              <div className="space-y-3">
-                {paymentResponse.qrCode && (
-                  <div className="text-center">
-                    <p className="text-gray-400 mb-2">Scan QR code to complete payment:</p>
-                    <img 
-                      src={paymentResponse.qrCode} 
-                      alt="QR Code" 
-                      className="mx-auto w-48 h-48 bg-white p-2 rounded"
-                    />
-                  </div>
-                )}
-                
-                {/* {paymentResponse.paymentUrl && (
-                  <Button 
-                    onClick={() => window.open(paymentResponse.paymentUrl, '_blank')}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                  >
-                    Complete Online Payment
-                  </Button>
-                )} */}
-
-                <div className="space-y-2">
-                  <Button 
-                    onClick={handleCheckPaymentStatus}
-                    variant="outline"
-                    className="w-full"
-                    disabled={loading}
-                  >
-                    {loading ? "Checking..." : "Check Payment Status"}
-                  </Button>
-                  {isEmployee && (
-                    <Button 
-                      onClick={handleConfirmPayment}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white"
-                      disabled={loading}
-                    >
-                      {loading ? "Confirming..." : "✓ Confirm Cash Payment Received"}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
 
   const searchParams = useSearchParams();
 
@@ -474,7 +359,7 @@ export default function PaymentPage() {
             {/* Left Column - Payment Methods */}
             <div className="lg:col-span-2 space-y-6">
               {/* Payment Status */}
-              {renderPaymentStatus()}
+      
 
               {/* Payment Methods */}
               <Card className="bg-[#1a2332] border-[#2d3748]">
@@ -541,10 +426,32 @@ export default function PaymentPage() {
                     
                     <Separator className="bg-gray-600" />
                     
+                    {/* Breakdown giá */}
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Ghế:</span>
+                      <span>{bookingData.seatTotal?.toLocaleString() || '0'}đ</span>
+                    </div>
+                    
+                    {bookingData.selectedConcessions && bookingData.selectedConcessions.length > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Đồ ăn:</span>
+                        <span>{bookingData.concessionsTotal?.toLocaleString() || '0'}đ</span>
+                      </div>
+                    )}
+                    
+                    {bookingData.discountAmount > 0 && (
+                      <div className="flex justify-between text-red-400">
+                        <span>Giảm giá:</span>
+                        <span>-{bookingData.discountAmount?.toLocaleString()}đ</span>
+                      </div>
+                    )}
+                    
+                    <Separator className="bg-gray-600" />
+                    
                     <div className="flex justify-between">
                       <span className="text-gray-400">Total Amount:</span>
                       <span className="text-lg font-bold text-green-400">
-                        {bookingDetails?.finalAmount?.toLocaleString() || bookingData.seatTotal?.toLocaleString() || '0'}đ
+                        {bookingDetails?.finalAmount?.toLocaleString() || bookingData.finalAmount?.toLocaleString() || '0'}đ
                       </span>
                     </div>
                   </div>

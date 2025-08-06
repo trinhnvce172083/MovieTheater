@@ -168,9 +168,6 @@ export default function MemberPromotionsPage() {
             <Tag color="blue" className="text-base font-semibold px-4 py-2">
               Level: {memberInfo?.membershipLevel || 'N/A'}
             </Tag>
-            <Tag color="green" className="text-base font-semibold px-4 py-2">
-              Total Bookings: {memberInfo?.totalBookings ?? 0}
-            </Tag>
           </div>
         </div>
 

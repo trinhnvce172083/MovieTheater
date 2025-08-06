@@ -43,8 +43,8 @@ const MEMBER_TABS = [
     path: "/member/promotions",
   },
   {
-    key: "cancel",
-    label: "Cancel Ticket",
+    key: "cancelled",
+    label: "Cancelled Tickets",
     icon: <CloseCircleOutlined />,
     path: "/member/tickets",
   },
@@ -62,9 +62,9 @@ const MemberHeader: React.FC<MemberHeaderProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed lg:static top-0 min-h-screen flex flex-col justify-between p-6 lg:p-10">
+    <div className="min-h-screen flex flex-col p-6 lg:p-10 bg-[#d2e7f5]">
       {/* User Info (avatar, username, email từ API) */}
-      <div>
+      <div className="flex-1">
         <div className="pt-16 lg:pt-24 flex flex-col items-center mb-6">
           {/* Avatar, Name, Email */}
           <div className="flex flex-col items-center mb-6">
@@ -74,6 +74,7 @@ const MemberHeader: React.FC<MemberHeaderProps> = ({ onClose }) => {
                   src={profile.avatarUrl}
                   alt="avatar"
                   className="w-16 h-16 lg:w-20 lg:h-20 rounded-full object-cover"
+                  key={profile.avatarUrl} // Force re-render when avatar changes
                 />
               ) : (
                 <span>👤</span>
@@ -100,6 +101,16 @@ const MemberHeader: React.FC<MemberHeaderProps> = ({ onClose }) => {
               </Link>
             ))}
           </div>
+        </div>
+      </div>
+      
+      {/* Spacer to push footer to bottom */}
+      <div className="flex-grow bg-[#d2e7f5]"></div>
+      
+      {/* Footer */}
+      <div className="mt-auto pb-4 bg-[#d2e7f5]">
+        <div className="text-center text-gray-600 text-xs opacity-70">
+          © 2024 Lumiere Cinema
         </div>
       </div>
     </div>

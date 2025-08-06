@@ -3,13 +3,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { updateSelectedSeats, setSeatTotal, setScheduleInfo, initializeBooking } from "@/store/slices/bookingSlice";
 import { BookingApiService } from "@/api/booking-api";
+import axiosClient from "@/api/axiosClient";
 import { message } from "antd";
 import type { Seat } from "@/app/booking/seat-selection/seatType";
-import axiosClient from "@/api/axiosClient";
 
 export function useSeatSelection(scheduleId?: string | number, roomId?: string | number) {
   const dispatch = useDispatch();
-  const { selectedSeats } = useSelector((state: RootState) => state.booking);
+  const { selectedSeats, scheduleInfo } = useSelector((state: RootState) => state.booking);
   
   const [seats, setSeats] = useState<Seat[]>([]);
   const [loading, setLoading] = useState(false);
@@ -22,33 +22,52 @@ export function useSeatSelection(scheduleId?: string | number, roomId?: string |
     setLoading(true);
     setError(null);
     try {
-      // Try primary API first
-      let statusResponse;
       let seatData: Seat[] = [];
+      let seatLayoutData: Seat[] = [];
       
+      // Bước 1: Lấy seat layout từ cinema room (có seatType, priceMultiplier)
+      if (roomId) {
+        try {
+          console.log("Fetching seat layout from room API:", `/cinema-rooms/${roomId}/seats`);
+          const layoutResponse = await BookingApiService.getSeatLayout(roomId);
+          seatLayoutData = Array.isArray(layoutResponse.data) ? layoutResponse.data : [];
+          console.log("Seat layout API success:", seatLayoutData.length, "seats with types");
+        } catch (layoutErr: any) {
+          console.log("Seat layout API failed:", layoutErr.response?.status, layoutErr.message);
+        }
+      }
+      
+      // Bước 2: Lấy seat status từ schedule (có trạng thái booking)
       try {
-        console.log("Trying primary seat API:", `/bookings/schedules/${scheduleId}/seats`);
-        statusResponse = await BookingApiService.getSeatStatus(scheduleId);
-        seatData = Array.isArray(statusResponse.data?.seats) ? statusResponse.data.seats : [];
-        console.log("Primary API success:", seatData.length, "seats");
-      } catch (primaryErr: any) {
-        console.log("Primary API failed:", primaryErr.response?.status, primaryErr.message);
+        console.log("Fetching seat status from schedule API:", `/bookings/schedules/${scheduleId}/seats`);
+        const statusResponse = await BookingApiService.getSeatStatus(scheduleId);
+        const statusSeats = Array.isArray(statusResponse.data?.seats) ? statusResponse.data.seats : [];
+        console.log("Seat status API success:", statusSeats.length, "seats with status");
         
-        // If 403 and we have roomId, try cinema room API fallback
-        if (primaryErr.response?.status === 403 && roomId) {
-          console.log("Trying fallback cinema room API:", `/cinema-rooms/${roomId}/seats`);
-          try {
-            const roomResponse = await BookingApiService.getSeatLayout(roomId);
-            // Room API returns seat layout, we need to mark all as AVAILABLE for now
-            seatData = Array.isArray(roomResponse.data) ? 
-              roomResponse.data.map(seat => ({ ...seat, status: "AVAILABLE" })) : [];
-            console.log("Fallback API success:", seatData.length, "seats");
-          } catch (fallbackErr: any) {
-            console.log("Fallback API also failed:", fallbackErr.response?.status, fallbackErr.message);
-            throw primaryErr; // Throw original error
-          }
+        // Bước 3: Merge data - ưu tiên layout data, bổ sung status
+        if (seatLayoutData.length > 0) {
+          seatData = seatLayoutData.map(layoutSeat => {
+            const statusSeat = statusSeats.find(s => s.seatId === layoutSeat.seatId);
+            return {
+              ...layoutSeat, // Giữ seatType, priceMultiplier từ layout
+              status: statusSeat?.status || "AVAILABLE", // Cập nhật status từ schedule
+              reservedBySession: statusSeat?.reservedBySession,
+              reservationExpiry: statusSeat?.reservationExpiry
+            };
+          });
         } else {
-          throw primaryErr;
+          // Fallback: chỉ có status data
+          seatData = statusSeats;
+        }
+      } catch (statusErr: any) {
+        console.log("Seat status API failed:", statusErr.response?.status, statusErr.message);
+        
+        // Fallback: chỉ có layout data, mark tất cả AVAILABLE
+        if (seatLayoutData.length > 0) {
+          seatData = seatLayoutData.map(seat => ({ ...seat, status: "AVAILABLE" }));
+          console.log("Using layout data only, all seats marked AVAILABLE");
+        } else {
+          throw statusErr;
         }
       }
       
@@ -60,6 +79,14 @@ export function useSeatSelection(scheduleId?: string | number, roomId?: string |
         isTemporarilyReserved: seat.status === "TEMPORARILY_RESERVED",
       }));
       
+      // Debug: Log một vài ghế để kiểm tra seatType
+      console.log("Sample seats with seatType:", processedSeats.slice(0, 3).map(s => ({
+        seatId: s.seatId,
+        seatNumber: s.seatNumber,
+        seatType: s.seatType,
+        priceMultiplier: s.priceMultiplier
+      })));
+      
       setSeats(processedSeats);
 
       // Lấy lại schedule info từ API nếu cần cập nhật roomId
@@ -68,14 +95,15 @@ export function useSeatSelection(scheduleId?: string | number, roomId?: string |
           const scheduleResponse = await import("@/api/schedule-api").then(m => m.ScheduleApiService.getScheduleById(Number(scheduleId)));
           if (scheduleResponse.success && scheduleResponse.data) {
             const scheduleData = scheduleResponse.data;
-            dispatch(setScheduleInfo({
-              scheduleId: scheduleData.scheduleId,
-              displayTime: scheduleData.displayTime,
-              displayDate: scheduleData.displayDate,
-              cinemaRoomName: scheduleData.cinemaRoomName,
-              movieTitle: scheduleData.movieName,
-              movieId: scheduleData.movieId,
-            }));
+                                  dispatch(setScheduleInfo({
+                        scheduleId: scheduleData.scheduleId,
+                        displayTime: scheduleData.displayTime,
+                        displayDate: scheduleData.displayDate,
+                        cinemaRoomName: scheduleData.cinemaRoomName,
+                        movieTitle: scheduleData.movieName,
+                        movieId: scheduleData.movieId,
+                        basePrice: scheduleData.price, // Thêm basePrice từ schedule data
+                      }));
             if (scheduleData.cinemaRoomId && String(scheduleData.cinemaRoomId) !== String(roomId)) {
               dispatch(initializeBooking({
                 scheduleId: String(scheduleData.scheduleId),
@@ -87,7 +115,7 @@ export function useSeatSelection(scheduleId?: string | number, roomId?: string |
           console.warn("Không thể lấy thông tin schedule để cập nhật roomId", e);
         }
       }
-      return { seats: processedSeats, lastUpdated: statusResponse.data?.lastUpdated };
+      return { seats: processedSeats, lastUpdated: new Date().toISOString() };
     } catch (err: any) {
       setError(err?.response?.data?.message || err.message || "Không thể lấy trạng thái ghế");
     } finally {
@@ -95,12 +123,12 @@ export function useSeatSelection(scheduleId?: string | number, roomId?: string |
     }
   }, [scheduleId, roomId, dispatch]);
 
-  // Gọi fetchSeatStatus ngay khi scheduleId và roomId có giá trị
+  // Gọi fetchSeatStatus ngay khi scheduleId có giá trị
   useEffect(() => {
-    if (scheduleId && roomId) {
+    if (scheduleId) {
       fetchSeatStatus();
     }
-  }, [scheduleId, roomId, fetchSeatStatus]);
+  }, [scheduleId, fetchSeatStatus]);
 
   // Giữ chỗ tạm thời
   const reserveSeats = useCallback(async (seatIds: number[]) => {
@@ -237,7 +265,7 @@ export function useSeatSelection(scheduleId?: string | number, roomId?: string |
       dispatch(updateSelectedSeats(newSelectedSeats));
       const seatTotal = newSelectedSeats.reduce((total, selectedSeat) => {
         const multiplier = selectedSeat.priceMultiplier || 1;
-        const basePrice = 150000;
+        const basePrice = scheduleInfo?.basePrice || 150000; // Fallback to 150000 if not available
         return total + (basePrice * multiplier);
       }, 0);
       dispatch(setSeatTotal(seatTotal));
@@ -278,7 +306,7 @@ export function useSeatSelection(scheduleId?: string | number, roomId?: string |
     dispatch(updateSelectedSeats(newSelectedSeats));
     const seatTotal = newSelectedSeats.reduce((total, selectedSeat) => {
       const multiplier = selectedSeat.priceMultiplier || 1;
-      const basePrice = 150000;
+              const basePrice = scheduleInfo?.basePrice || 150000; // Fallback to 150000 if not available
       return total + (basePrice * multiplier);
     }, 0);
     dispatch(setSeatTotal(seatTotal));
@@ -314,7 +342,7 @@ export function useSeatSelection(scheduleId?: string | number, roomId?: string |
     dispatch(updateSelectedSeats(newSelectedSeats));
     const seatTotal = newSelectedSeats.reduce((total, selectedSeat) => {
       const multiplier = selectedSeat.priceMultiplier || 1;
-      const basePrice = 150000;
+              const basePrice = scheduleInfo?.basePrice || 150000; // Fallback to 150000 if not available
       return total + (basePrice * multiplier);
     }, 0);
     dispatch(setSeatTotal(seatTotal));

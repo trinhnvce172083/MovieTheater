@@ -19,7 +19,7 @@ export default function MemberLayout({
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-[#d2e7f5]">
       <header className="fixed top-0 left-0 right-0 z-50">
         <Header />
       </header>
@@ -45,16 +45,17 @@ export default function MemberLayout({
 
       {/* Sidebar */}
       <aside className={`
-        fixed lg:static top-0 left-0 h-full z-40
-        w-[280px] bg-gradient-to-b from-[#fef1df] to-[#d2e7f5]
+        fixed lg:static top-0 left-0 h-screen z-40
+        w-[280px] bg-[#d2e7f5]
         transform transition-transform duration-300 ease-in-out
+        overflow-y-auto
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <MemberHeader onClose={() => setSidebarOpen(false)} />
       </aside>
 
       {/* Nội dung chính */}
-      <main className="flex-1 p-4 lg:p-6 bg-white" style={{ paddingTop: 120 }}>
+      <main className="flex-1 p-4 lg:p-6 bg-white" style={{ paddingTop: 120, minHeight: '100vh' }}>
         {children}
       </main>
     </div>
