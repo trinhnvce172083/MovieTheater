@@ -177,8 +177,7 @@ export const getAllRooms = async (
         page, 
         size, 
         sortBy, 
-        sortDirection,
-        _t: Date.now() // Cache busting parameter
+        sortDirection
       }
     });
     console.log('Get rooms API Response received:', response.data); // Debug log
@@ -285,22 +284,37 @@ export const updateRoom = async (
   try {
     console.log(`Making API call to PUT /cinema-rooms/${id}`, roomData);
     
+    // Use manually provided seatQuantity if available, otherwise calculate from rows * columns
+    const finalSeatQuantity = roomData.seatQuantity || 
+      ((roomData.rows && roomData.columns) ? roomData.rows * roomData.columns : undefined);
+    
+    console.log('🧮 Seat quantity logic:', {
+      providedSeatQuantity: roomData.seatQuantity,
+      rows: roomData.rows,
+      columns: roomData.columns,
+      calculatedFromRowsColumns: (roomData.rows && roomData.columns) ? roomData.rows * roomData.columns : null,
+      finalSeatQuantity: finalSeatQuantity
+    });
+    
     // Transform frontend data to match backend expectations
     const backendPayload = {
       cinemaRoomName: roomData.cinemaRoomName,
-      // Map frontend roomType to backend enum (only STANDARD and VIP are supported)
-      roomType: (roomData.roomType === 'IMAX' || roomData.roomType === '4DX') ? 'VIP' : roomData.roomType,
-      // Backend expects 'totalSeats' not 'seatQuantity'
-      totalSeats: roomData.seatQuantity,
+      roomType: roomData.roomType, // Keep original roomType (backend should support all types)
+      seatQuantity: finalSeatQuantity,
       rows: roomData.rows,
       columns: roomData.columns,
       description: roomData.description,
-      isActive: roomData.isActive
-      // Note: has3D, hasDolbyAtmos, hasReclinerSeats, priceMultiplier are not supported by backend DTO
-      // They will be reset to defaults (false, false, false, 1.0) due to backend limitations
+      has3D: roomData.has3D ?? false,
+      hasDolbyAtmos: roomData.hasDolbyAtmos ?? false,
+      hasReclinerSeats: roomData.hasReclinerSeats ?? false,
+      priceMultiplier: roomData.priceMultiplier ?? 1.0,
+      isActive: roomData.isActive ?? true
     };
     
-    console.log('Transformed payload for backend:', backendPayload);
+    console.log('🔄 Frontend data received:', roomData);
+    console.log('🔄 Transformed payload for backend:', backendPayload);
+    console.log('🔄 Key field mapping: manual seatQuantity:', roomData.seatQuantity, '-> final seatQuantity:', finalSeatQuantity);
+    
     const response = await axiosClient.put(`/cinema-rooms/${id}`, backendPayload);
     console.log('Update API Response:', response.data);
     
@@ -314,6 +328,23 @@ export const updateRoom = async (
     }
   } catch (error) {
     console.error('Update API call failed:', error);
+    
+    // Enhanced error logging for debugging
+    if (axios.isAxiosError(error)) {
+      console.error('Axios Error Details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          data: error.config?.data
+        }
+      });
+    }
+    
     // First try to handle API error with proper error message
     try {
       handleApiError(error, 'Update room');
@@ -377,7 +408,7 @@ export const searchRooms = async (
       params: { keyword, page, size }
     });
     return response.data;
-  } catch (error) {
+  } catch {
     // Filter mock data by keyword
     const filtered = mockRooms.filter(room => 
       room.cinemaRoomName.toLowerCase().includes(keyword.toLowerCase()) ||
@@ -418,7 +449,7 @@ export const getRoomStatistics = async (): Promise<CinemaRoomStatistics> => {
   try {
     const response = await axiosClient.get('/cinema-rooms/statistics');
     return response.data;
-  } catch (error) {
+  } catch {
     // Calculate mock statistics
     const totalRooms = mockRooms.length;
     const activeRooms = mockRooms.filter(r => r.isActive).length;

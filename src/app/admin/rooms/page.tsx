@@ -31,26 +31,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const { Text } = Typography;
 
-// Custom hook for debounced value
-const useDebounce = (value: string, delay: number) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-};
-
-export default function CinemaRoomManagement() {
-  const isMobile = useIsMobile();
-  const [form] = Form.useForm();
+export default function AdminRoomManagement() {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<CinemaRoom | null>(null);
+  const [tableKey, setTableKey] = useState(0); // Force table re-render
   const router = useRouter();
   
   // State
@@ -215,31 +199,25 @@ export default function CinemaRoomManagement() {
 
   const handleModalOk = async () => {
     try {
-      const values = await form.validateFields();
-      
-      // Additional validation
-      if (values.rows * values.columns !== values.seatQuantity) {
-        message.error('Seat quantity must equal rows × columns');
-        return;
+      let success = false;
+      if (editingRoom) {
+        console.log('Updating room:', editingRoom.cinemaRoomId, roomData);
+        success = await updateRoom(editingRoom.cinemaRoomId, roomData);
+      } else {
+        console.log('Creating new room:', roomData);
+        success = await createRoom(roomData);
       }
 
-      if (editingRoom) {
-        const success = await updateRoomFunction(editingRoom.cinemaRoomId, values);
-        if (success) {
-          setIsModalVisible(false);
-          setEditingRoom(null);
-          form.resetFields();
-        }
-      } else {
-        const success = await createRoomFunction(values);
-        if (success) {
-          setIsModalVisible(false);
-          form.resetFields();
-        }
+      if (success) {
+        console.log('Operation successful, closing modal');
+        setIsModalVisible(false);
+        setEditingRoom(null);
+        setTableKey(prev => prev + 1); // Force table re-render
+        // The useRoomManagement hook already calls fetchRooms() after update/create
       }
     } catch (error) {
-      console.error('Form validation failed:', error);
-      // Form validation errors are automatically displayed by Ant Design
+      console.error('Modal submit error:', error);
+      message.error('Please check required fields and try again.');
     }
   };
 
@@ -353,41 +331,18 @@ export default function CinemaRoomManagement() {
           {/* Table Section */}
           <div className="bg-white">
             <Spin spinning={loading}>
-              {filteredData.length === 0 && !loading ? (
-                <div className="flex flex-col items-center justify-center py-16 px-4">
-                  <div className="text-gray-400 text-6xl mb-4">🏠</div>
-                  <h3 className="text-lg font-medium text-gray-600 mb-2">
-                    {allRoomData.length === 0 ? 'No rooms found' : 'No rooms match your filters'}
-                  </h3>
-                  <p className="text-gray-500 text-center mb-4">
-                    {allRoomData.length === 0 
-                      ? 'Create your first cinema room to get started'
-                      : 'Try adjusting your search terms or filters'
-                    }
-                  </p>
-                  {allRoomData.length === 0 && isUsingApiData && (
-                    <Button
-                      type="primary"
-                      icon={<PlusOutlined />}
-                      onClick={handleAddNewRoom}
-                    >
-                      Add Your First Room
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <Table
-                  dataSource={paginatedData}
-                  columns={columns}
-                  pagination={false}
-                  scroll={{ x: 950 }}
-                  rowClassName="hover:bg-gray-50 transition-colors"
-                  className="professional-table"
-                  size="small"
-                  loading={loading}
-                  rowKey="cinemaRoomId"
-                />
-              )}
+              <Table
+                dataSource={[...paginatedData]} // Force new array reference
+                columns={columns}
+                pagination={false}
+                scroll={{ x: 1200 }}
+                rowClassName="hover:bg-gray-50 transition-colors"
+                className="professional-table"
+                size="small"
+                rowKey="cinemaRoomId"
+                key={`table-${tableKey}-${paginatedData.length}`} // More specific key
+                sortDirections={['ascend', 'descend']}
+              />
             </Spin>
             
             {/* Pagination */}
