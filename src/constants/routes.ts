@@ -13,7 +13,7 @@ const ROUTES = {
   BOOKING: "/booking",
   BOOKING_SELECT_SEAT: "/booking/seat-selection",
   BOOKING_CONFIRM: "/booking/confirm",
-  BOOKING_PAYMENT: "/booking/payment",
+  BOOKING_PAYMENT: "/payment",
   BOOKING_CORNCHIP: "/booking/CornChip",
   CORNCHIP: "/booking/CornChip", // Alias for backward compatibility
 
