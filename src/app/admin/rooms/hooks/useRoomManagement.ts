@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { message } from 'antd';
 import { getAllRooms, createRoom, updateRoom, deleteRoom, CinemaRoom, CinemaRoomCreateRequest, CinemaRoomUpdateRequest } from '@/api/admin/getAllRooms';
 
@@ -129,16 +129,29 @@ export const useRoomManagement = ({ initialPageSize = 10 }: UseRoomManagementPro
   const createRoomAction = useCallback(async (roomData: CinemaRoomCreateRequest): Promise<boolean> => {
     setLoading(true);
     try {
-      await createRoom(roomData);
-      message.success('Room created successfully!');
-      await fetchRooms();
-      return true;
+      if (state.isUsingApiData) {
+        await createRoom(roomData);
+        message.success('Room created successfully!');
+      } else {
+        // Mock creation for offline mode
+        const newRoom: CinemaRoomResponse = {
+          cinemaRoomId: Math.max(...MOCK_ROOMS.map(r => r.cinemaRoomId)) + 1,
+          ...roomData,
+          isActive: roomData.isActive ?? true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        MOCK_ROOMS.push(newRoom);
+        message.success('Room created successfully! (Offline mode)');
+      }
+      
+      await fetchRooms(state.currentPage, state.pageSize);
+      setState(prev => ({ ...prev, isModalVisible: false }));
     } catch (error) {
-      console.error('Failed to create room:', error);
-      message.error('Failed to create room');
-      return false;
+      console.error('Error creating room:', error);
+      message.error('Failed to create room. Please try again.');
     } finally {
-      setLoading(false);
+      setState(prev => ({ ...prev, loading: false }));
     }
   }, [fetchRooms]);
 
@@ -165,46 +178,97 @@ export const useRoomManagement = ({ initialPageSize = 10 }: UseRoomManagementPro
       message.error('Failed to update room');
       return false;
     } finally {
-      setLoading(false);
+      setState(prev => ({ ...prev, loading: false }));
     }
-  }, [fetchRooms]);
+  }, [state.isUsingApiData, state.currentPage, state.pageSize, fetchRooms]);
 
-  const deleteRoomAction = useCallback(async (id: number): Promise<boolean> => {
-    setLoading(true);
+  const handleDeleteRoom = useCallback(async (roomId: number) => {
+    setState(prev => ({ ...prev, loading: true }));
+    
     try {
-      await deleteRoom(id);
-      message.success('Room deleted successfully!');
-      await fetchRooms();
-      return true;
+      if (state.isUsingApiData) {
+        await deleteRoom(roomId);
+        message.success('Room deleted successfully!');
+      } else {
+        // Mock deletion for offline mode
+        const index = MOCK_ROOMS.findIndex(r => r.cinemaRoomId === roomId);
+        if (index !== -1) {
+          MOCK_ROOMS.splice(index, 1);
+        }
+        message.success('Room deleted successfully! (Offline mode)');
+      }
+      
+      await fetchRooms(state.currentPage, state.pageSize);
     } catch (error) {
-      console.error('Failed to delete room:', error);
-      message.error('Failed to delete room');
-      return false;
+      console.error('Error deleting room:', error);
+      message.error('Failed to delete room. Please try again.');
     } finally {
-      setLoading(false);
+      setState(prev => ({ ...prev, loading: false }));
     }
-  }, [fetchRooms]);
+  }, [state.isUsingApiData, state.currentPage, state.pageSize, fetchRooms]);
+
+  // Computed values
+  const filteredRooms = filterRooms(state.roomData, filters);
+  const statistics = calculateRoomStatistics(state.roomData);
+
+  // Modal handlers
+  const showModal = useCallback((room?: CinemaRoomResponse) => {
+    setState(prev => ({
+      ...prev,
+      isModalVisible: true,
+      editingRoom: room || null,
+    }));
+  }, []);
+
+  const hideModal = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      isModalVisible: false,
+      editingRoom: null,
+    }));
+  }, []);
+
+  // Pagination handlers
+  const handlePageChange = useCallback((page: number, size?: number) => {
+    const newSize = size || state.pageSize;
+    setState(prev => ({ ...prev, currentPage: page, pageSize: newSize }));
+    fetchRooms(page, newSize);
+  }, [state.pageSize, fetchRooms]);
+
+  // Filter handlers
+  const updateFilters = useCallback((newFilters: Partial<RoomFilters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setFilters({
+      searchTerm: '',
+      filterType: undefined,
+      filterStatus: undefined,
+    });
+  }, []);
+
+  // Initialize data
+  useEffect(() => {
+    fetchRooms(1, state.pageSize);
+  }, []);
 
   return {
-    // Data
-    allRoomData,
-    filteredData,
-    paginatedData,
+    // State
+    ...state,
+    filters,
+    filteredRooms,
     statistics,
     
-    // State
-    loading,
-    isUsingApiData,
-    totalElements,
-    filters,
-    pagination,
-    
     // Actions
-    setFilters,
-    setPagination,
     fetchRooms,
-    createRoom: createRoomAction,
-    updateRoom: updateRoomAction,
-    deleteRoom: deleteRoomAction,
+    handleCreateRoom,
+    handleUpdateRoom,
+    handleDeleteRoom,
+    showModal,
+    hideModal,
+    handlePageChange,
+    updateFilters,
+    clearFilters,
   };
 };

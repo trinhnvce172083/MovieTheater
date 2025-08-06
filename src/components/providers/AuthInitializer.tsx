@@ -13,6 +13,9 @@ export default function AuthInitializer() {
   const dispatch = useDispatch();
 
   useEffect(() => {
+    // Only run on client side to prevent hydration mismatch
+    if (typeof window === 'undefined') return;
+    
     const initializeAuth = () => {
       try {
         const token = localStorage.getItem('accessToken');

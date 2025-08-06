@@ -85,7 +85,7 @@ function useAsyncData<T>(
         data: response.data,
         loading: false,
         error: null,
-        lastUpdated: Date.now(),
+        lastUpdated: null, // Remove Date.now() to prevent hydration mismatch
       });
       console.log("✅ State updated successfully");
     } catch (error: any) {
@@ -179,7 +179,7 @@ function useAsyncMutation<T, P = unknown>(
 // ==================== PROFILE HOOKS ====================
 
 /**
- * Simplified hook for member profile management
+ * Simplified hook for member profile management with global sync
  */
 export function useMemberProfile() {
   const [profile, setProfile] = useState<MemberProfile | null>(null);
@@ -196,6 +196,13 @@ export function useMemberProfile() {
       console.log("📦 Profile response:", response);
       setProfile(response.data);
       console.log("✅ Profile loaded successfully");
+      
+      // Broadcast profile update to all components (client-side only)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent("member-profile-updated", {
+          detail: response.data
+        }));
+      }
     } catch (err: any) {
       console.error("❌ Failed to load profile:", err);
       setError("Failed to load profile");
@@ -237,6 +244,23 @@ export function useMemberProfile() {
     loadProfile();
   }, [loadProfile]);
 
+  // Listen for global profile updates
+  useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
+    const handleProfileUpdate = (event: CustomEvent) => {
+      console.log("📡 Received global profile update:", event.detail);
+      setProfile(event.detail);
+    };
+
+    window.addEventListener("member-profile-updated", handleProfileUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener("member-profile-updated", handleProfileUpdate as EventListener);
+    };
+  }, []);
+
   useEffect(() => {
     loadProfile();
   }, []); // Remove loadProfile dependency to avoid infinite loop
@@ -245,7 +269,7 @@ export function useMemberProfile() {
     profile,
     loading,
     error,
-    lastUpdated: Date.now(),
+    lastUpdated: null, // Remove Date.now() to prevent hydration mismatch
     refetch,
 
     updateProfile,
