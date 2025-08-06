@@ -535,7 +535,7 @@ export default function BookingConfirmPage() {
                         {seatPrice.toLocaleString()} VND
                       </span>
                     </div>
-                  </div>
+                  </div>  
                 );
               })}
             </div>
@@ -645,16 +645,82 @@ export default function BookingConfirmPage() {
             </div>
 
             <div className="mt-8 space-y-4">
-              <Button
-                type="primary"
-                size="large"
-                block
-                loading={isProcessing}
-                onClick={handlePayment}
-                className="bg-blue-600 hover:bg-blue-700 h-12 text-lg font-semibold"
-              >
-                Thanh toán ngay
-              </Button>
+              {bookingFlowType === 'MEMBER' ? (
+                // Member flow - giữ nguyên nút "Thanh toán ngay"
+                <Button
+                  type="primary"
+                  size="large"
+                  block
+                  loading={isProcessing}
+                  onClick={handlePayment}
+                  className="bg-blue-600 hover:bg-blue-700 h-12 text-lg font-semibold"
+                >
+                  Thanh toán ngay
+                </Button>
+              ) : (
+                // Employee flow - nút xác nhận thanh toán
+                <Button
+                  type="primary"
+                  size="large"
+                  block
+                  loading={isProcessing}
+                  onClick={async () => {
+                    if (isProcessing) return;
+                    
+                    setIsProcessing(true);
+                    try {
+                      // Build booking request cho employee
+                      const bookingRequest = buildBookingRequest();
+                      validateBookingRequest(bookingRequest);
+                      
+                      // Tạo booking trước
+                      const bookingResponse = await createBooking(bookingRequest);
+                      
+                      if (bookingResponse?.bookingId) {
+                        // Lưu bookingId vào localStorage
+                        localStorage.setItem("currentBookingId", bookingResponse.bookingId.toString());
+                        
+                        // Gọi API xác nhận thanh toán
+                        const paymentMethod = 'CASH';
+                        const paymentReference = `CASH-${Date.now()}`;
+                        const notes = 'Nhân viên xác nhận đã nhận tiền mặt từ khách hàng';
+                        const refundAmount = bookingData.finalAmount || 0;
+
+                        const response = await import('@/api/axiosClient').then(m => m.default.post(`/bookings/${bookingResponse.bookingId}/payment/status`, {
+                          paymentStatus: 'SUCCESS',
+                          paymentReference,
+                          paymentMethod,
+                          notes,
+                          refundAmount
+                        }));
+
+                        if (response.data?.success) {
+                          message.success("Đã xác nhận thanh toán thành công!");
+                          setTimeout(() => {
+                            router.push('/employee');
+                          }, 2000);
+                        } else {
+                          throw new Error(response.data?.message || 'Không thể xác nhận thanh toán');
+                        }
+                      } else {
+                        message.error("Failed to get bookingId from backend!");
+                      }
+                    } catch (error: any) {
+                      if (error.message && error.message.includes('thông tin khách hàng')) {
+                        setShowCustomerForm(true);
+                        message.error(error.message);
+                        return;
+                      }
+                      message.error(error.message || "Có lỗi xảy ra khi xác nhận thanh toán. Vui lòng thử lại.");
+                    } finally {
+                      setIsProcessing(false);
+                    }
+                  }}
+                  className="bg-green-600 hover:bg-green-700 h-12 text-lg font-semibold"
+                >
+                  Xác nhận thanh toán
+                </Button>
+              )}
               
               <Button
                 size="large"
