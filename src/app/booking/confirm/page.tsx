@@ -49,7 +49,11 @@ export default function BookingConfirmPage() {
   // Check if current user is employee vs member
   const isEmployee = authState.userInfo?.Role === Role.EMPLOYEE;
   const isMember = authState.userInfo && !isEmployee;
-  
+
+  // const userInfo = localStorage.getItem("userInfo");
+  // const parsedUserInfo = userInfo ? JSON.parse(userInfo) : null;
+  // const userEmail = parsedUserInfo?.email || authState.userInfo?.email || "";
+  // const userPhone = parsedUserInfo?.phone || authState.userInfo?.phoneNumber || "";
 
   
   // Chỉ có 2 flow: MEMBER hoặc EMPLOYEE
@@ -60,23 +64,23 @@ export default function BookingConfirmPage() {
 
   // Load user info từ API cho MEMBER flow
   useEffect(() => {
-    const loadUserInfo = async () => {
-      if (bookingFlowType === 'MEMBER' && !userProfile) {
-        try {
-          // Sử dụng axiosClient để gọi API user profile
-          const response = await import('@/api/axiosClient').then(m => m.default.get('/users/profile'));
+    // const loadUserInfo = async () => {
+    //   if (bookingFlowType === 'MEMBER' && !userProfile) {
+    //     try {
+    //       // Sử dụng axiosClient để gọi API user profile
+    //       const response = await import('@/api/axiosClient').then(m => m.default.get('/users/profile'));
           
-          if (response.data) {
-            setUserProfile(response.data);
-          }
-        } catch (error) {
-          // MEMBER flow: Nếu không load được API, báo lỗi nhưng không hiển thị form
-          // User cần đăng nhập lại hoặc update profile từ trang profile
-        }
-      }
-    };
+    //       if (response.data) {
+    //         setUserProfile(response.data);
+    //       }
+    //     } catch (error) {
+    //       // MEMBER flow: Nếu không load được API, báo lỗi nhưng không hiển thị form
+    //       // User cần đăng nhập lại hoặc update profile từ trang profile
+    //     }
+    //   }
+    // };
     
-    loadUserInfo();
+    // loadUserInfo();
   }, [bookingFlowType, userProfile]);
 
   // Validate schedule time when component mounts
@@ -436,7 +440,7 @@ export default function BookingConfirmPage() {
                  bookingFlowType === 'MEMBER' ? 'Thành viên' : 'Nhân viên bán vé'
                }
              </Title>
-            {bookingFlowType === 'MEMBER' && (
+            {/* {bookingFlowType === 'MEMBER' && (
               <div className="space-y-1 text-gray-600">
                 <Text><strong>Họ tên:</strong> {userProfile?.fullName || userProfile?.userName || authState.userInfo?.userName || 'Sẽ lấy từ tài khoản'}</Text>
                 <br />
@@ -444,7 +448,7 @@ export default function BookingConfirmPage() {
                 <br />
                 <Text><strong>Số điện thoại:</strong> {userProfile?.phoneNumber || userProfile?.phone || 'Sẽ lấy từ tài khoản'}</Text>
               </div>
-            )}
+            )} */}
                          {bookingFlowType === 'EMPLOYEE' && customerInfo && (
               <div className="space-y-1 text-gray-600">
                  <Text><strong>Họ tên:</strong> {customerInfo?.fullName}</Text>
