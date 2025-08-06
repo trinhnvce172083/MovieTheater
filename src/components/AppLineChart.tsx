@@ -2,33 +2,39 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ChartContainer } from "@/components/ui/chart";
 import { useEffect, useState } from "react";
-import { getBookingAnalytics } from "@/api/admin/analytics";
+import { getRevenueAnalytics } from "@/api/admin/analytics";
 
 // Default chart data for fallback
 const defaultData: ChartData[] = [
-  { day: 'Mon', bookings: 120 },
-  { day: 'Tue', bookings: 200 },
-  { day: 'Wed', bookings: 150 },
-  { day: 'Thu', bookings: 300 },
-  { day: 'Fri', bookings: 180 },
-  { day: 'Sat', bookings: 250 },
-  { day: 'Sun', bookings: 220 },
+  { day: 'Mon', revenue: 15000000 },
+  { day: 'Tue', revenue: 18000000 },
+  { day: 'Wed', revenue: 22000000 },
+  { day: 'Thu', revenue: 19000000 },
+  { day: 'Fri', revenue: 25000000 },
+  { day: 'Sat', revenue: 26000000 },
+  { day: 'Sun', revenue: 24000000 },
 ];
 
 interface ChartData {
   day: string;
-  bookings: number;
+  revenue: number;
 }
 
 interface TooltipProps {
   active?: boolean;
-  payload?: any[];
+  payload?: Array<{ value: number; payload: ChartData }>;
   label?: string;
 }
 
 const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (active && payload && payload.length) {
     const value = payload[0].value;
+    // Format revenue in VND currency
+    const formattedValue = new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(value);
+    
     return (
       <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200 min-w-[120px]">
         <div className="flex items-center gap-2 mb-1">
@@ -36,10 +42,10 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
           <p className="text-sm font-medium text-gray-900">{label}</p>
         </div>
         <p className="text-lg font-bold text-green-600">
-          {value} bookings
+          {formattedValue}
         </p>
         <div className="text-xs text-gray-500 mt-1">
-          Daily Total
+          Daily Revenue
         </div>
       </div>
     );
@@ -51,7 +57,7 @@ export default function AppLineChart() {
   const [data, setData] = useState<ChartData[]>(defaultData);
 
   useEffect(() => {
-    const fetchBookingData = async () => {
+    const fetchRevenueData = async () => {
       try {
         // Check token first
         const token = localStorage.getItem('accessToken');
@@ -60,37 +66,36 @@ export default function AppLineChart() {
           return;
         }
 
-        // Get booking data for last 7 days
+        // Get revenue data for last 7 days
         const endDate = new Date().toISOString().split('T')[0];
         const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         
-        const bookingData = await getBookingAnalytics(startDate, endDate, 'DAY');
-        console.log('Booking analytics data:', bookingData);
+        const revenueData = await getRevenueAnalytics(startDate, endDate, 'DAY');
         
-        if (bookingData?.bookingData && Array.isArray(bookingData.bookingData)) {
+        if (revenueData?.revenueData && Array.isArray(revenueData.revenueData)) {
           // Transform backend data to chart format
-          const transformedData = bookingData.bookingData.map((item: { label?: string; value?: number; bookings?: number }, index: number) => {
+          const transformedData = revenueData.revenueData.map((item: { label?: string; value?: number; revenue?: number }, index: number) => {
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const dayIndex = (new Date().getDay() - bookingData.bookingData.length + 1 + index + 7) % 7;
+            const dayIndex = (new Date().getDay() - revenueData.revenueData.length + 1 + index + 7) % 7;
             
             return {
               day: item.label || days[dayIndex] || `Day ${index + 1}`,
-              bookings: item.value || item.bookings || 0
+              revenue: item.value || item.revenue || 0
             };
           });
           
           setData(transformedData);
         } else {
-          console.warn('No booking data available, keeping default data');
+          console.warn('No revenue data available, keeping default data');
           // Don't change data, keep default
         }
       } catch (error) {
-        console.error('Failed to fetch booking analytics:', error);
+        console.error('Failed to fetch revenue analytics:', error);
         // Keep default data
       }
     };
 
-    fetchBookingData();
+    fetchRevenueData();
   }, []);
 
   return (
@@ -112,7 +117,7 @@ export default function AppLineChart() {
                 <Tooltip content={<CustomTooltip />} />
                 <Line 
                   type="monotone" 
-                  dataKey="bookings" 
+                  dataKey="revenue" 
                   stroke="#10b981" 
                   strokeWidth={2}
                   dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
@@ -125,7 +130,7 @@ export default function AppLineChart() {
       ) : (
         <div className="h-40 flex items-center justify-center text-gray-500">
           <div className="text-center">
-            <div className="text-sm">No booking data</div>
+            <div className="text-sm">No revenue data</div>
           </div>
         </div>
       )}
