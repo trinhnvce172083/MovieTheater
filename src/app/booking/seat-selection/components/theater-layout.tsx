@@ -118,7 +118,7 @@ const TheaterLayout: React.FC<TheaterLayoutProps> = ({
       >
         Screen
       </div>
-      <div className="space-y-3 min-w-fit overflow-x-auto pt-4 min-h-[550px]">
+      <div className="space-y-3 min-w-fit overflow-x-auto pt-4 min-h-fit">
         {allRows.map((row, index) => {
           const rowSeats = rows[row];
           const mid = Math.floor(rowSeats.length / 2);
