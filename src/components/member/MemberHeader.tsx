@@ -8,7 +8,6 @@ import {
   HistoryOutlined,
   FileTextOutlined,
   SettingOutlined,
-  CloseCircleOutlined,
 } from "@ant-design/icons";
 import Image from "next/image";
 import { useMemberProfile } from "@/hooks/member";
@@ -41,12 +40,6 @@ const MEMBER_TABS = [
     label: "Promotions",
     icon: <SettingOutlined />,
     path: "/member/promotions",
-  },
-  {
-    key: "cancelled",
-    label: "Cancelled Tickets",
-    icon: <CloseCircleOutlined />,
-    path: "/member/tickets",
   },
 ];
 

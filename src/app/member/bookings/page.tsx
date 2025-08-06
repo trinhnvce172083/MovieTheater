@@ -55,6 +55,54 @@ const columns = [
     render: v => v || "—",
   },
   {
+    title: "SEATS",
+    key: "seats",
+    render: (_, record: MemberBooking) => {
+      // Kiểm tra và hiển thị thông tin ghế từ seats array (backend mới)
+      if (record.seats && record.seats.length > 0) {
+        const seatInfo = record.seats.map((seat: any) => {
+          return seat.seatNumber || seat.seatId;
+        }).join(", ");
+        
+        return (
+          <span className="font-medium text-blue-600">
+            {seatInfo}
+          </span>
+        );
+      }
+      
+      // Fallback: kiểm tra từ bookingDetails (backend cũ)
+      if (record.bookingDetails && record.bookingDetails.length > 0) {
+        const seats = record.bookingDetails.map((detail: any) => detail.seatName).join(", ");
+        return (
+          <span className="font-medium text-blue-600">
+            {seats}
+          </span>
+        );
+      }
+      
+      // Fallback: kiểm tra từ seatNames nếu có
+      if (record.seatNames && record.seatNames.length > 0) {
+        return (
+          <span className="font-medium text-blue-600">
+            {record.seatNames.join(", ")}
+          </span>
+        );
+      }
+      
+      // Fallback: kiểm tra từ seatName đơn lẻ
+      if (record.seatName) {
+        return (
+          <span className="font-medium text-blue-600">
+            {record.seatName}
+          </span>
+        );
+      }
+      
+      return "—";
+    },
+  },
+  {
     title: "TOTAL AMOUNT",
     dataIndex: "finalAmount",
     key: "finalAmount",
@@ -349,6 +397,36 @@ export default function BookedTicketsPage() {
                        })()}
                      </p>
                    </div>
+                                         <div>
+                       <span className="text-xs text-gray-500">Seats:</span>
+                       <p className="font-medium text-blue-600">
+                         {(() => {
+                           // Kiểm tra và hiển thị thông tin ghế từ seats array (backend mới)
+                           if (item.seats && item.seats.length > 0) {
+                             return item.seats.map((seat: any) => {
+                               return seat.seatNumber || seat.seatId;
+                             }).join(", ");
+                           }
+                           
+                           // Fallback: kiểm tra từ bookingDetails (backend cũ)
+                           if (item.bookingDetails && item.bookingDetails.length > 0) {
+                             return item.bookingDetails.map((detail: any) => detail.seatName).join(", ");
+                           }
+                           
+                           // Fallback: kiểm tra từ seatNames nếu có
+                           if (item.seatNames && item.seatNames.length > 0) {
+                             return item.seatNames.join(", ");
+                           }
+                           
+                           // Fallback: kiểm tra từ seatName đơn lẻ
+                           if (item.seatName) {
+                             return item.seatName;
+                           }
+                           
+                           return "—";
+                         })()}
+                       </p>
+                     </div>
                     <div>
                       <span className="text-xs text-gray-500">Amount:</span>
                       <p className="font-medium text-green-600">
