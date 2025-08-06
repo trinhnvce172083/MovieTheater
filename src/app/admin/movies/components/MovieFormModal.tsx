@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { 
   Modal, Form, Input, Select, DatePicker, InputNumber, Switch, Button, message,
   Row, Col, Tabs, Space, Upload, Image
 } from 'antd';
-import { UploadOutlined, PlusOutlined } from '@ant-design/icons';
-import type { UploadFile, UploadProps } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import type { UploadFile } from 'antd';
 import { MovieData, MovieCreateRequest, MovieUpdateRequest } from '../types';
 import dayjs, { Dayjs } from 'dayjs';
 
@@ -148,7 +148,7 @@ const MovieFormContent: React.FC<MovieFormModalProps> = ({
       resetFormState();
       setIsInitialized(true);
     }
-  }, [editingMovie, form, open]);
+  }, [editingMovie, form, open, isInitialized, resetFormState]);
 
   // Reset form when modal closes
   useEffect(() => {
@@ -260,7 +260,7 @@ const MovieFormContent: React.FC<MovieFormModalProps> = ({
           hasImages
         });
       }
-    } catch (error) {
+    } catch {
       message.error('Please fill all required fields correctly!');
     }
   };
@@ -586,19 +586,6 @@ const MovieFormContent: React.FC<MovieFormModalProps> = ({
                   placeholder="Enter IMDB rating..."
                   precision={1}
                 />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="isFeatured" label="Featured Movie" valuePropName="checked" initialValue={false}>
-                <Space>
-                  <Switch 
-                    checkedChildren="Featured" 
-                    unCheckedChildren="Normal" 
-                  />
-                </Space>
               </Form.Item>
             </Col>
           </Row>
