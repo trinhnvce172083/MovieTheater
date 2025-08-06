@@ -496,9 +496,10 @@ const MovieDetailPage: React.FC = () => {
               {movieDetail.description && (
                 <div className="mt-8 pt-6 border-t border-gray-100">
                   <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                    <VideoCameraOutlined className="mr-2" />
                     Description
                   </label>
-                  <Paragraph className="text-gray-700 leading-relaxed">
+                  <Paragraph className="text-gray-700 leading-relaxed text-base">
                     {movieDetail.description}
                   </Paragraph>
                 </div>

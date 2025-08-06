@@ -5,6 +5,42 @@ import { MemberData, MemberCreateRequest } from '../types';
 
 const { Option } = Select;
 
+// Utility functions to safely access member properties
+const getMemberName = (member: MemberData): string => {
+  const m = (member as unknown) as Record<string, unknown>;
+  return (m.name as string) || (m.fullName as string) || '';
+};
+
+const getMemberUsername = (member: MemberData): string => {
+  const m = (member as unknown) as Record<string, unknown>;
+  return (m.username as string) || (m.id as string) || '';
+};
+
+const getMemberPhone = (member: MemberData): string => {
+  const m = (member as unknown) as Record<string, unknown>;
+  return (m.phone as string) || (m.phoneNumber as string) || '';
+};
+
+const getMemberRole = (member: MemberData): string => {
+  const m = (member as unknown) as Record<string, unknown>;
+  return (m.type as string) || (m.role as string) || '';
+};
+
+const getMemberAddress = (member: MemberData): string => {
+  const m = (member as unknown) as Record<string, unknown>;
+  return (m.address as string) || '';
+};
+
+const getMemberDob = (member: MemberData): string => {
+  const m = (member as unknown) as Record<string, unknown>;
+  return (m.dob as string) || (m.dateOfBirth as string) || '';
+};
+
+const getMemberStatus = (member: MemberData): boolean => {
+  const m = (member as unknown) as Record<string, unknown>;
+  return (m.status as string) === 'active';
+};
+
 interface MemberFormModalProps {
   visible: boolean;
   editingMember: MemberData | null;
@@ -25,15 +61,24 @@ const MemberFormModal: React.FC<MemberFormModalProps> = ({
   // Set form values when editing
   useEffect(() => {
     if (editingMember && visible) {
+      // Map member data to form fields correctly using utility functions
       form.setFieldsValue({
-        name: editingMember.name,
-        username: editingMember.username || editingMember.id,
+        name: getMemberName(editingMember),
+        username: getMemberUsername(editingMember),
         email: editingMember.email,
-        phone: editingMember.phone,
-        type: editingMember.type,
-        joinDate: editingMember.joinDate,
-        address: editingMember.address || '',
-        dob: editingMember.dob ? dayjs(editingMember.dob) : null,
+        phone: getMemberPhone(editingMember),
+        type: getMemberRole(editingMember),
+        address: getMemberAddress(editingMember),
+        dob: getMemberDob(editingMember) ? dayjs(getMemberDob(editingMember)) : null,
+      });
+      console.log('Setting form values for editing:', {
+        name: getMemberName(editingMember),
+        username: getMemberUsername(editingMember),
+        email: editingMember.email,
+        phone: getMemberPhone(editingMember),
+        type: getMemberRole(editingMember),
+        address: getMemberAddress(editingMember),
+        dob: getMemberDob(editingMember),
       });
     } else if (!editingMember && visible) {
       form.resetFields();
@@ -52,7 +97,7 @@ const MemberFormModal: React.FC<MemberFormModalProps> = ({
         address: values.address || undefined,
         dateOfBirth: values.dob ? values.dob.format('YYYY-MM-DD') : undefined,
         role: values.type || 'MEMBER',
-        isActive: editingMember ? editingMember.status === 'active' : true,
+        isActive: editingMember ? getMemberStatus(editingMember) : true,
       };
 
       // Add password for create, or for update if provided
@@ -169,9 +214,10 @@ const MemberFormModal: React.FC<MemberFormModalProps> = ({
                   message: "Password must be at least 6 characters"
                 }
               ]}
+              help={editingMember ? "Leave blank to keep current password" : undefined}
             >
               <Input.Password
-                placeholder={editingMember ? "Leave blank to keep current password" : "Enter password"}
+                placeholder={editingMember ? "Leave blank to keep current password" : "Enter password (min 6 characters)"}
                 className="h-10"
               />
             </Form.Item>
@@ -186,10 +232,9 @@ const MemberFormModal: React.FC<MemberFormModalProps> = ({
             <Form.Item
               name="address"
               label="Address"
-              rules={[{ required: !editingMember, message: "Please enter address" }]}
             >
               <Input.TextArea 
-                placeholder="Enter address" 
+                placeholder="Enter address (optional)" 
                 rows={2} 
               />
             </Form.Item>
@@ -201,12 +246,11 @@ const MemberFormModal: React.FC<MemberFormModalProps> = ({
             <Form.Item
               name="dob"
               label="Date of Birth"
-              rules={[{ required: !editingMember, message: "Please select date of birth" }]}
             >
               <DatePicker 
                 className="w-full h-10" 
-                format="DD-MM-YYYY" 
-                disabled={!!editingMember}
+                format="DD-MM-YYYY"
+                placeholder="Select date of birth (optional)"
               />
             </Form.Item>
           </Col>
@@ -219,7 +263,6 @@ const MemberFormModal: React.FC<MemberFormModalProps> = ({
               <Select 
                 placeholder="Select role" 
                 className="h-10"
-                disabled={!!editingMember}
               >
                 <Option value="EMPLOYEE">Employee</Option>
                 <Option value="MEMBER">Member</Option>

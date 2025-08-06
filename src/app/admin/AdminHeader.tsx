@@ -31,7 +31,7 @@ export default function AdminHeader() {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("isLoggedIn");
-      router.push(ROUTES.LOGIN);
+      router.push(ROUTES.HOME);
 
       dispatch({ type: "auth/logout" });
     }
@@ -56,23 +56,7 @@ export default function AdminHeader() {
         )}
         
                 {/* Dashboard Icon */}
-        <button
-          onClick={() => {
-            if (pathname !== ROUTES.ADMIN_DASHBOARD) {
-              router.push(ROUTES.ADMIN_DASHBOARD);
-            }
-          }}
-          className={`${isMobile ? 'w-8 h-8' : 'w-10 h-10'} flex items-center justify-center rounded-lg ${
-            pathname === ROUTES.ADMIN_DASHBOARD 
-              ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
-              : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
-          } transition-all duration-200 shadow-md hover:shadow-lg group relative overflow-hidden`}
-          title={pathname === ROUTES.ADMIN_DASHBOARD ? "Current Dashboard" : "Go to Dashboard"}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-          <BarChart3 className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-white group-hover:scale-110 transition-transform duration-200 relative z-10`} />
-        </button>
-        
+       
         <Image
           src="/Logo.png"
           alt="Lumiere Logo"
@@ -96,9 +80,19 @@ export default function AdminHeader() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-[160px]">
             <DropdownMenuItem
-              onClick={() => router.push(ROUTES.MEMBER_DASHBOARD)}
+              onClick={() => router.push(ROUTES.ADMIN_DASHBOARD)}
             >
-              My Profile
+              Admin Dashboard
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => router.push('/admin/profile')}
+            >
+              Admin Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => router.push('/admin/settings')}
+            >
+              Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

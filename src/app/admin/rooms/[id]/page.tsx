@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Card,
   Button,
@@ -38,30 +38,30 @@ export default function RoomDetailPage() {
   const params = useParams();
   const roomId = params.id as string;
 
-  useEffect(() => {
-    const fetchRoomDetail = async (id: string) => {
-      try {
-        setLoading(true);
-        console.log('Fetching room with ID:', id);
-        console.log('Parsed ID:', parseInt(id));
-        
-        const roomData = await getRoomById(parseInt(id));
-        console.log('Room data received:', roomData);
-        setRoomData(roomData);
-      } catch (error) {
-        console.error('Error fetching room details:', error);
-        message.error('Failed to load room details');
-        router.push('/admin/rooms');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchRoomDetail = useCallback(async (id: string) => {
+    try {
+      setLoading(true);
+      console.log('Fetching room with ID:', id);
+      console.log('Parsed ID:', parseInt(id));
+      
+      const roomData = await getRoomById(parseInt(id));
+      console.log('Room data received:', roomData);
+      setRoomData(roomData);
+    } catch (error) {
+      console.error('Error fetching room details:', error);
+      message.error('Failed to load room details');
+      router.push('/admin/rooms');
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
 
+  useEffect(() => {
     if (roomId) {
       console.log('Room ID from params:', roomId);
       fetchRoomDetail(roomId);
     }
-  }, [roomId, router]);
+  }, [roomId, fetchRoomDetail]);
 
   const handleBack = () => {
     router.push('/admin/rooms');
