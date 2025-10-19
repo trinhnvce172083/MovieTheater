@@ -294,10 +294,12 @@ app:
 
 # Supabase Configuration
 supabase:
-  url: https://cuzwjjseeohnyrbfcngs.supabase.co
-  key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1endqanNlZW9obnlyYmZjbmdzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0OTQ1OTkwOCwiZXhwIjoyMDY1MDM1OTA4fQ.jxXiZFdGRR5lvFoXyb6a4E0Mwa-pYp_Sc73zYvl-FdA
-  bucket: image
-
+  url: https://qgjfmmrrpxfnyhbowyqq.supabase.co
+  key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnamZtbXJycHhmbnloYm93eXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MTAwOTMsImV4cCI6MjA3NDE4NjA5M30.oh7Pd0qz9WmUk8ieAth9TKjzrziU4N5T73S0NdI4rqo
+  bucket: movie-backdrops
+  bucket: concession-images
+  bucket: promotion-images
+  
 # VNPay Payment Configuration
 vnpay:
   tmnCode: G6UJ6GM0
