@@ -1,10 +1,10 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 /**
  * Token Blacklist Service Interface
  * Handles JWT token blacklisting for logout functionality
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public interface TokenBlacklistService {

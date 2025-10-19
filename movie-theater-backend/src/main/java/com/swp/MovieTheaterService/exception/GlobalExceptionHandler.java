@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.exception;
+﻿package com.swp.MovieTheaterService.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * Global Exception Handler - Optimized & Clean
  * Professional centralized exception handling with AppException integration
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 3.0.0 (Optimized)
  */
 @RestControllerAdvice

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.repository;
+﻿package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.Movie;
 import org.springframework.data.domain.Page;
@@ -17,7 +17,7 @@ import java.util.Optional;
  * Movie Repository Interface
  * Data access layer for Movie entity
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Repository

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.cinema;
+﻿package com.swp.MovieTheaterService.dto.cinema;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
  * Cinema Room Create Request DTO
  * Data transfer object for creating new cinema rooms
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

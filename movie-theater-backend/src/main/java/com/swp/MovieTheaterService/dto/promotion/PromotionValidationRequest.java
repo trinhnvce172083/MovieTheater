@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.promotion;
+﻿package com.swp.MovieTheaterService.dto.promotion;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,7 +11,7 @@ import jakarta.validation.constraints.DecimalMin;
  * Promotion Validation Request DTO
  * Data transfer object for validating promotion codes
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

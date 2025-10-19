@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.controller;
+﻿package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.loyalty.*;
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
@@ -27,7 +27,7 @@ import java.util.List;
  * Loyalty Controller
  * REST API endpoints for loyalty program management
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @RestController

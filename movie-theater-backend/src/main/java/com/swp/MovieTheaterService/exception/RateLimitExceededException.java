@@ -1,10 +1,10 @@
-package com.swp.MovieTheaterService.exception;
+﻿package com.swp.MovieTheaterService.exception;
 
 /**
  * Rate Limit Exceeded Exception
  * Thrown when rate limit is exceeded for an operation
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public class RateLimitExceededException extends RuntimeException {

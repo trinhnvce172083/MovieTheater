@@ -1,10 +1,10 @@
-package com.swp.MovieTheaterService.exception;
+﻿package com.swp.MovieTheaterService.exception;
 
 /**
  * Application Exception - Enhanced Professional Version
  * Centralized exception handling with ErrorCode enum
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 3.0.0 (Cleaned up)
  */
 public class AppException extends RuntimeException {

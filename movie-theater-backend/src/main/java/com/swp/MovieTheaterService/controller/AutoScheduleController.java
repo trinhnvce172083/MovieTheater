@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.controller;
+﻿package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.service.AutoScheduleService;
 import com.swp.MovieTheaterService.service.AutoScheduleService.AutoScheduleResult;
@@ -30,7 +30,7 @@ import java.util.HashMap;
  * Auto Schedule Controller
  * REST API endpoints cho tự động tạo lịch chiếu phim
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @RestController

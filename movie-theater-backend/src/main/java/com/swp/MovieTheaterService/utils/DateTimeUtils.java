@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.utils;
+﻿package com.swp.MovieTheaterService.utils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -12,7 +12,7 @@ import java.util.TimeZone;
  * DateTime Utility Class
  * Utility class để xử lý thời gian một cách nhất quán
  *
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Slf4j

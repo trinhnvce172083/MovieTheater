@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.enums;
+﻿package com.swp.MovieTheaterService.enums;
 
 import lombok.Getter;
 
@@ -6,7 +6,7 @@ import lombok.Getter;
  * Movie Status Enum
  * Các trạng thái của phim trong hệ thống rạp chiếu phim
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Getter

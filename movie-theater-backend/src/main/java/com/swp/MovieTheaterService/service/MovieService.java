@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.movie.MovieCreateRequest;
 import com.swp.MovieTheaterService.dto.movie.MovieFilterRequest;
@@ -18,7 +18,7 @@ import java.util.List;
  * Movie Service Interface
  * Business logic for movie management
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public interface MovieService {

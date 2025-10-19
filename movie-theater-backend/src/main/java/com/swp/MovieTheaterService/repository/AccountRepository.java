@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.repository;
+﻿package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.enums.Role;
@@ -15,7 +15,7 @@ import java.util.Optional;
  * Account Repository
  * Data access layer for Account entity
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Repository

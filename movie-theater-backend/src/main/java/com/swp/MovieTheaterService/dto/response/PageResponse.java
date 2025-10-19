@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.response;
+﻿package com.swp.MovieTheaterService.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -13,7 +13,7 @@ import java.util.List;
  * Custom Page Response DTO
  * Thay thế PageImpl để tránh warning serialization
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

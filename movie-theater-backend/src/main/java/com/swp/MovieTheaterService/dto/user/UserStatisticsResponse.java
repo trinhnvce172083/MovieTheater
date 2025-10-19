@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.user;
+﻿package com.swp.MovieTheaterService.dto.user;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,7 @@ import java.util.Map;
  * User Statistics Response DTO
  * Data Transfer Object for user statistics
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

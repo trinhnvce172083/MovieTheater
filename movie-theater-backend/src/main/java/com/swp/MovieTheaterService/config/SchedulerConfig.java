@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.config;
+﻿package com.swp.MovieTheaterService.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -11,7 +11,7 @@ import java.util.concurrent.Executors;
  * Scheduler Configuration
  * Cấu hình cho các tác vụ định thời (scheduled tasks)
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Configuration

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.entity.Movie;
 import com.swp.MovieTheaterService.enums.MovieStatus;
@@ -18,7 +18,7 @@ import java.util.HashMap;
  * Movie Status Scheduler Service
  * Tự động cập nhật trạng thái phim dựa trên ngày ra mắt
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Service

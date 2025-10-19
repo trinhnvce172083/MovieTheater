@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.cinema;
+﻿package com.swp.MovieTheaterService.dto.cinema;
 
 import com.swp.MovieTheaterService.enums.SeatStatus;
 import lombok.AllArgsConstructor;
@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * Seat Response DTO
  * Data transfer object for seat responses
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

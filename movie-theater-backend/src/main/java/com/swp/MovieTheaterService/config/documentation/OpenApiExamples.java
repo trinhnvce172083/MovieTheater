@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.config.documentation;
+﻿package com.swp.MovieTheaterService.config.documentation;
 
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
  * OpenAPI Examples Configuration
  * Chứa các dữ liệu mẫu cho Swagger UI
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Configuration

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.config.documentation;
+﻿package com.swp.MovieTheaterService.config.documentation;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.ExternalDocumentation;
@@ -21,7 +21,7 @@ import java.util.List;
  * OpenAPI Configuration v2.1.0 (SRS Compliant - Optimized)
  * Role-based API documentation theo Software Requirements Specification
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 2.1.0 (SRS Compliant - Optimized)
  */
 @Configuration

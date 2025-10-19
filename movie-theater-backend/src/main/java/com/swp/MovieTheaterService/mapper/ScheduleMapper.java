@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.mapper;
+﻿package com.swp.MovieTheaterService.mapper;
 
 import com.swp.MovieTheaterService.dto.schedule.ScheduleCreateRequest;
 import com.swp.MovieTheaterService.dto.schedule.ScheduleResponse;
@@ -16,7 +16,7 @@ import java.util.Locale;
  * Schedule Mapper
  * Maps between Schedule entity and DTOs
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Component

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.payment.PaymentRequest;
 import com.swp.MovieTheaterService.dto.payment.PaymentResponse;
@@ -12,7 +12,7 @@ import java.util.Map;
  * Payment Service Interface
  * Handles payment processing with multiple providers
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public interface PaymentService {

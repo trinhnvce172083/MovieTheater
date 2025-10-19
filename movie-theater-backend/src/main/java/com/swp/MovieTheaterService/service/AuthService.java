@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.request.ForgotPasswordRequest;
 import com.swp.MovieTheaterService.dto.request.LoginRequest;
@@ -16,7 +16,7 @@ import java.util.Map;
  * Authentication Service Interface
  * Business logic for authentication operations
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public interface AuthService {

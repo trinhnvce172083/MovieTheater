@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.entity;
+﻿package com.swp.MovieTheaterService.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  * User Promotion Code Entity
  * Tracks unique promotion codes purchased by users with points
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Entity

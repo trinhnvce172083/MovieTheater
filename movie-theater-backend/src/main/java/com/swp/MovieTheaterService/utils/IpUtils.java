@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.utils;
+﻿package com.swp.MovieTheaterService.utils;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
  * IP Address Utility
  * Utility methods for extracting client IP address
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Slf4j

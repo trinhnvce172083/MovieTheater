@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.request;
+﻿package com.swp.MovieTheaterService.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
  * Forgot Password Request DTO
  * Data Transfer Object for forgot password functionality
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

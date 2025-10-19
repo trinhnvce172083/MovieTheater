@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.entity;
+﻿package com.swp.MovieTheaterService.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -14,7 +14,7 @@ import java.util.List;
  * Movie Entity - Movie Management
  * Represents movies in the theater system
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Entity

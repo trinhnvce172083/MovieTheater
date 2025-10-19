@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.schedule;
+﻿package com.swp.MovieTheaterService.dto.schedule;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -16,7 +16,7 @@ import java.util.List;
  * Bulk Schedule Create Request DTO
  * Data transfer object for creating multiple schedules at once
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

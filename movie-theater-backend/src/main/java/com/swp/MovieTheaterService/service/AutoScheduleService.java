@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.schedule.*;
 import java.time.LocalDate;
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
  * Auto Schedule Service Interface
  * Dịch vụ tự động tạo lịch chiếu phim
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public interface AutoScheduleService {

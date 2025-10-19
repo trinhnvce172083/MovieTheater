@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.response;
+﻿package com.swp.MovieTheaterService.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

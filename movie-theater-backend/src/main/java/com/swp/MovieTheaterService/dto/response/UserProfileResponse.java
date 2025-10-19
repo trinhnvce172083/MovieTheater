@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.response;
+﻿package com.swp.MovieTheaterService.dto.response;
 
 import com.swp.MovieTheaterService.enums.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  * User Profile Response DTO
  * Response for user profile information
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

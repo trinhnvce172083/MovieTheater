@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.cinema;
+﻿package com.swp.MovieTheaterService.dto.cinema;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * Cinema Room Response DTO
  * Data transfer object for cinema room responses
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

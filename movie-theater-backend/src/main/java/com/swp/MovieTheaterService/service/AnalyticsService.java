@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.analytics.DashboardSummaryResponse;
 import com.swp.MovieTheaterService.dto.analytics.ReportRequest;
@@ -10,7 +10,7 @@ import java.util.Map;
  * Analytics Service Interface
  * Xử lý analytics và báo cáo
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public interface AnalyticsService {

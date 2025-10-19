@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.request;
+﻿package com.swp.MovieTheaterService.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.swp.MovieTheaterService.validator.PasswordMatching;
@@ -14,7 +14,7 @@ import java.time.LocalDate;
  * Register Request DTO - Lombok Pattern from Working Code
  * Following exact pattern from AuthenticationRequest that works
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 2.4.0 - Lombok Pattern (Working)
  */
 @Data

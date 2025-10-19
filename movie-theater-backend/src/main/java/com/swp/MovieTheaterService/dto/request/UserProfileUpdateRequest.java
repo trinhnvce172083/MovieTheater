@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.request;
+﻿package com.swp.MovieTheaterService.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
@@ -16,7 +16,7 @@ import java.time.LocalDate;
  * User Profile Update Request DTO
  * Request for updating user profile information
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

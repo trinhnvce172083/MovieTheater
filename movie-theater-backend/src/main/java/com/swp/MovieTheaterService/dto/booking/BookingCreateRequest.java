@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.booking;
+﻿package com.swp.MovieTheaterService.dto.booking;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -15,7 +15,7 @@ import java.util.List;
  * Booking Create Request DTO
  * Data Transfer Object for creating new bookings
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 3.0.0 - Simplified schema without reward points
  */
 @Data

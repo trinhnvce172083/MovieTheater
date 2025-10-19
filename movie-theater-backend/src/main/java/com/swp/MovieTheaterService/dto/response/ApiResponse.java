@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.response;
+﻿package com.swp.MovieTheaterService.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,7 +14,7 @@ import java.util.List;
  * Generic API Response
  * Standard response wrapper for all API endpoints
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 2.0.0 (Enhanced)
  */
 @Data

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.user;
+﻿package com.swp.MovieTheaterService.dto.user;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
  * Lock User Request DTO
  * Data Transfer Object for locking user account
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

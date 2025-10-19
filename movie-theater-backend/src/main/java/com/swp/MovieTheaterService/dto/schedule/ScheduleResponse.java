@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.schedule;
+﻿package com.swp.MovieTheaterService.dto.schedule;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,7 +12,7 @@ import java.time.LocalTime;
  * Schedule Response DTO
  * Data transfer object for schedule responses
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

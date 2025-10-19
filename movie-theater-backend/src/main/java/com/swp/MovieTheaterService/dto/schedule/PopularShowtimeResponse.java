@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.schedule;
+﻿package com.swp.MovieTheaterService.dto.schedule;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,7 +10,7 @@ import java.time.LocalTime;
  * Popular Showtime Response DTO
  * Data transfer object for popular showtime statistics
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

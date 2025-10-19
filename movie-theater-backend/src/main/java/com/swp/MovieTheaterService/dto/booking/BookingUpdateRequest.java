@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.booking;
+﻿package com.swp.MovieTheaterService.dto.booking;
 
 import com.swp.MovieTheaterService.enums.BookingStatus;
 import jakarta.validation.constraints.*;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
  * Booking Update Request DTO
  * Data transfer object for updating bookings
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

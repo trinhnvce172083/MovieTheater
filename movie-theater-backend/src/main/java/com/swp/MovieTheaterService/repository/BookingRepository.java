@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.repository;
+﻿package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.Booking;
 import com.swp.MovieTheaterService.enums.BookingStatus;
@@ -17,7 +17,7 @@ import java.util.Optional;
  * Booking Repository Interface
  * Data access layer for Booking entity
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Repository

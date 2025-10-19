@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service.impl;
+﻿package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.entity.Promotion;
@@ -21,7 +21,7 @@ import java.util.UUID;
  * User Promotion Code Service Implementation
  * Business logic for managing user-specific promotion codes
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Service

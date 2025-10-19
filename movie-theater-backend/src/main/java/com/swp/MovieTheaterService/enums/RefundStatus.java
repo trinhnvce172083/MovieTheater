@@ -1,10 +1,10 @@
-package com.swp.MovieTheaterService.enums;
+﻿package com.swp.MovieTheaterService.enums;
 
 /**
  * RefundStatus Enum - Refund Status
  * Defines different refund statuses in the system
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public enum RefundStatus {

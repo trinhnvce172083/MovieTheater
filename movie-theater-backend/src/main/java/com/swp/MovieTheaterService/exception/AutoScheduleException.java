@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.exception;
+﻿package com.swp.MovieTheaterService.exception;
 
 import lombok.Getter;
 
@@ -6,7 +6,7 @@ import lombok.Getter;
  * Custom Exception for Auto Schedule Operations
  * Exception chuyên dụng cho các thao tác tạo lịch chiếu tự động
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Getter

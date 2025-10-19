@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.mapper;
+﻿package com.swp.MovieTheaterService.mapper;
 
 import com.swp.MovieTheaterService.dto.movie.MovieCreateRequest;
 import com.swp.MovieTheaterService.dto.movie.MovieResponse;
@@ -14,7 +14,7 @@ import java.util.function.Consumer;
  * Movie Mapper
  * Maps between Movie entity and DTOs
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Component

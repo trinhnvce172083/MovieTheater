@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.entity;
+﻿package com.swp.MovieTheaterService.entity;
 
 import com.swp.MovieTheaterService.enums.BookingStatus;
 import jakarta.persistence.*;
@@ -19,7 +19,7 @@ import java.util.Set;
  * Booking Entity - Booking Management
  * Represents ticket bookings in the system
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Entity

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.cinema;
+﻿package com.swp.MovieTheaterService.dto.cinema;
 
 import com.swp.MovieTheaterService.enums.ConcessionCategory;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * Concession Response DTO
  * Data Transfer Object for concession responses
  *
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

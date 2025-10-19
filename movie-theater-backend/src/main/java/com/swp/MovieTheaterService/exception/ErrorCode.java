@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.exception;
+﻿package com.swp.MovieTheaterService.exception;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,7 @@ import org.springframework.http.HttpStatusCode;
  * Error Code Enumeration for Movie Theater Management System
  * Professional error handling with specific codes and HTTP status
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 2.0.0 - Cleaned up unused codes
  */
 @AllArgsConstructor

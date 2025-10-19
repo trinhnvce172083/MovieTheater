@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service.impl;
+﻿package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.dto.analytics.DashboardSummaryResponse;
 import com.swp.MovieTheaterService.dto.analytics.ReportRequest;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  * Analytics Service Implementation
  * Xử lý analytics và báo cáo cho hệ thống rạp chiếu phim
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Service

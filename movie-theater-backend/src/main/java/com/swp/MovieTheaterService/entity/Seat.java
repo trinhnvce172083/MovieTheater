@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.entity;
+﻿package com.swp.MovieTheaterService.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.swp.MovieTheaterService.enums.SeatStatus;
@@ -17,7 +17,7 @@ import java.util.List;
  * Seat Entity - Seat Management
  * Represents seats in cinema rooms
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Entity

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.booking.BookingResponse;
 
@@ -8,7 +8,7 @@ import java.util.Map;
  * Email Service Interface
  * Handles email notifications and communications
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public interface EmailService {

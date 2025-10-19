@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.payment;
+﻿package com.swp.MovieTheaterService.dto.payment;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
  * Refund Request DTO
  * Data Transfer Object for payment refund requests
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

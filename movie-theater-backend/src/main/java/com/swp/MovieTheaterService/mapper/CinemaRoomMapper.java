@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.mapper;
+﻿package com.swp.MovieTheaterService.mapper;
 
 import com.swp.MovieTheaterService.dto.cinema.CinemaRoomCreateRequest;
 import com.swp.MovieTheaterService.dto.cinema.CinemaRoomResponse;
@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * Cinema Room Mapper
  * Maps between CinemaRoom entity and DTOs
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Component

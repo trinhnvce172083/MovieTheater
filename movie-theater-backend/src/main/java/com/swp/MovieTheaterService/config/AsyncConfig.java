@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.config;
+﻿package com.swp.MovieTheaterService.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,7 +11,7 @@ import java.util.concurrent.Executor;
  * Async Configuration
  * Configuration for asynchronous task execution
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Configuration

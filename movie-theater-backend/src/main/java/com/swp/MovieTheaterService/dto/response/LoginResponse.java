@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.response;
+﻿package com.swp.MovieTheaterService.dto.response;
 
 import com.swp.MovieTheaterService.entity.Account;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * Login Response DTO
  * Data transfer object for login responses
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

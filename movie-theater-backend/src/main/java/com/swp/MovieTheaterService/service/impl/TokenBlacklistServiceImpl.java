@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service.impl;
+﻿package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.service.JwtService;
 import com.swp.MovieTheaterService.service.TokenBlacklistService;
@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentMap;
  * Token Blacklist Service Implementation
  * Uses in-memory cache for token blacklisting
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Slf4j

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service.impl;
+﻿package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.entity.BookingSeat;
 import com.swp.MovieTheaterService.entity.Schedule;
@@ -27,7 +27,7 @@ import java.util.Optional;
  * Seat Reservation Service Implementation
  * Handles real-time seat selection with in-memory cache
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Slf4j

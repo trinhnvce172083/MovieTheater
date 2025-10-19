@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.booking.*;
 import com.swp.MovieTheaterService.enums.BookingStatus;
@@ -12,7 +12,7 @@ import java.util.List;
  * Booking Service Interface
  * Business logic for booking management
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public interface BookingService {

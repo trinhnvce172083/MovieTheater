@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service.impl;
+﻿package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.dto.user.*;
 import com.swp.MovieTheaterService.entity.Account;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  * User Management Service Implementation
  * Business logic implementation for admin user management
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Service

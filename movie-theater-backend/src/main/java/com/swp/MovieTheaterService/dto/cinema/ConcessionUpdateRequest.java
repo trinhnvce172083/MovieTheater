@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.cinema;
+﻿package com.swp.MovieTheaterService.dto.cinema;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
@@ -12,7 +12,7 @@ import java.math.BigDecimal;
  * Concession Update Request DTO
  * Data Transfer Object for updating concession items
  *
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

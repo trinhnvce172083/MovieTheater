@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.repository;
+﻿package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.CinemaRoom;
 import com.swp.MovieTheaterService.enums.RoomType;
@@ -17,7 +17,7 @@ import java.util.Optional;
 /**
  * Cinema Room Repository
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Repository

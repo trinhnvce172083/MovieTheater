@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.controller;
+﻿package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.dto.request.RegisterRequest;
@@ -36,7 +36,7 @@ import com.swp.MovieTheaterService.entity.Promotion;
  * Test Controller
  * Simple controller for testing API without authentication
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Slf4j

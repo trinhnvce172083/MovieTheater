@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service.impl;
+﻿package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.dto.cinema.*;
 import com.swp.MovieTheaterService.entity.CinemaRoom;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * Cinema Room Service Implementation
  * Business logic implementation for cinema room management
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Service

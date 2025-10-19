@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.entity;
+﻿package com.swp.MovieTheaterService.entity;
 
 import com.swp.MovieTheaterService.enums.DiscountType;
 import jakarta.persistence.*;
@@ -16,7 +16,7 @@ import java.util.List;
  * Promotion Entity - Simplified Promotion Management
  * Represents promotions and discounts in the system
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 3.0.0 - Simplified structure
  */
 @Entity

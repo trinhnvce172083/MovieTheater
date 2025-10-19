@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.movie;
+﻿package com.swp.MovieTheaterService.dto.movie;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +12,7 @@ import java.util.List;
  * Movie Filter Request DTO
  * Data Transfer Object for movie filtering and pagination
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.controller;
+﻿package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.user.*;
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
@@ -34,7 +34,7 @@ import java.util.LinkedHashMap;
  * User Management Controller
  * REST API endpoints for admin user management operations
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @RestController

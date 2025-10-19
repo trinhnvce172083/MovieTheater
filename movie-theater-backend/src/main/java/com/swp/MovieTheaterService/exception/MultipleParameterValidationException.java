@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.exception;
+﻿package com.swp.MovieTheaterService.exception;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -9,7 +9,7 @@ import java.util.List;
  * Multiple Parameter Validation Exception
  * Xử lý lỗi validation cho nhiều tham số cùng lúc
  *
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

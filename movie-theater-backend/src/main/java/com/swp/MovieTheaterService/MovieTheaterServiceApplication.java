@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService;
+﻿package com.swp.MovieTheaterService;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * Movie Theater Management System
  * Main Application Class
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @SpringBootApplication

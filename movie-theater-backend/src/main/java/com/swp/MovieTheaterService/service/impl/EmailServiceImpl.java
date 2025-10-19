@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service.impl;
+﻿package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.dto.booking.BookingResponse;
 import com.swp.MovieTheaterService.service.EmailService;
@@ -21,7 +21,7 @@ import java.util.Map;
  * Email Service Implementation
  * Handles email notifications using Gmail SMTP and Thymeleaf templates
  *
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Service

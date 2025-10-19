@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.analytics;
+﻿package com.swp.MovieTheaterService.dto.analytics;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,7 +13,7 @@ import java.util.Map;
  * Dashboard Summary Response DTO
  * Thông tin tổng quan dashboard admin
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

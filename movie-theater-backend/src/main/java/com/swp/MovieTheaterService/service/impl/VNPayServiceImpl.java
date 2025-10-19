@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service.impl;
+﻿package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.config.VNPayConfig;
 import com.swp.MovieTheaterService.dto.payment.VNPayPaymentRequestDTO;
@@ -30,7 +30,7 @@ import java.util.*;
  * VNPay Service Implementation
  * Implementation cho dịch vụ thanh toán VNPay
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Service

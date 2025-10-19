@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.booking;
+﻿package com.swp.MovieTheaterService.dto.booking;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,7 +11,7 @@ import jakarta.validation.constraints.DecimalMin;
  * Payment Request DTO
  * Data transfer object for payment processing
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.schedule;
+﻿package com.swp.MovieTheaterService.dto.schedule;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * DTO response cho kết quả tạo lịch chiếu nhiều phim
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

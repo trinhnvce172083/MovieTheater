@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import java.util.Map;
 
@@ -6,7 +6,7 @@ import java.util.Map;
  * WebSocket Service Interface
  * Handles real-time messaging and notifications
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public interface WebSocketService {

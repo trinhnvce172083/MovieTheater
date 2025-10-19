@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.controller;
+﻿package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.entity.Promotion;
 import com.swp.MovieTheaterService.entity.Account;
@@ -38,7 +38,7 @@ import java.util.List;
  * Promotion Controller
  * REST API endpoints for promotion management
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 2.0.0 - Simplified structure
  */
 @RestController

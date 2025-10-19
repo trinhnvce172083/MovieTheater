@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.controller;
+﻿package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.request.ForgotPasswordRequest;
 import com.swp.MovieTheaterService.dto.request.LoginRequest;
@@ -33,7 +33,7 @@ import java.util.Map;
  * ✅ JSON parsing working với Spring's @RequestBody
  * ✅ Clean code, easy maintenance
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 2.5.0 - Simplified
  */
 @Slf4j

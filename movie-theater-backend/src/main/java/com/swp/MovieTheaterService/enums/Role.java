@@ -1,10 +1,10 @@
-package com.swp.MovieTheaterService.enums;
+﻿package com.swp.MovieTheaterService.enums;
 
 /**
  * Role Enum - User Roles
  * Defines different user roles in the system
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public enum Role {

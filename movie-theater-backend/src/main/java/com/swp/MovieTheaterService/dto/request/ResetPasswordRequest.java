@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.request;
+﻿package com.swp.MovieTheaterService.dto.request;
 
 import com.swp.MovieTheaterService.validator.PasswordMatching;
 import jakarta.validation.constraints.NotBlank;
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
  * Reset Password Request DTO
  * Data Transfer Object for reset password functionality
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

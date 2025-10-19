@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.mapper;
+﻿package com.swp.MovieTheaterService.mapper;
 
 import com.swp.MovieTheaterService.dto.cinema.SeatResponse;
 import com.swp.MovieTheaterService.entity.Seat;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
  * Seat Mapper
  * Maps between Seat entity and DTOs
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Component

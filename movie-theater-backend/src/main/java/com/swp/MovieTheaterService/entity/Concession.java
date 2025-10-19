@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.entity;
+﻿package com.swp.MovieTheaterService.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.swp.MovieTheaterService.enums.ConcessionCategory;
@@ -18,7 +18,7 @@ import java.util.List;
  * Concession Entity - Đồ ăn/uống đơn giản
  * Represents simple food and beverage items (popcorn and drinks)
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Entity

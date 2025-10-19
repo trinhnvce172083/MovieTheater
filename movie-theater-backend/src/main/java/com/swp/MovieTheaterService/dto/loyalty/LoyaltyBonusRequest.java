@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.loyalty;
+﻿package com.swp.MovieTheaterService.dto.loyalty;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
  * Loyalty Bonus Request DTO
  * Data transfer object for awarding bonus points
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.entity;
+﻿package com.swp.MovieTheaterService.entity;
 
 import com.swp.MovieTheaterService.enums.Role;
 import jakarta.persistence.*;
@@ -20,7 +20,7 @@ import java.util.List;
  * Account Entity - User Management
  * Represents all users in the system (Admin, Employee, Member, Customer)
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Entity

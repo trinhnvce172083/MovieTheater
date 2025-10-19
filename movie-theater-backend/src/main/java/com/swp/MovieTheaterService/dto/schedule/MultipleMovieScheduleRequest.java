@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.schedule;
+﻿package com.swp.MovieTheaterService.dto.schedule;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,7 +16,7 @@ import java.util.List;
  * DTO for creating schedules for multiple movies
  * Request để tạo lịch chiếu cho nhiều phim cùng lúc
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.user;
+﻿package com.swp.MovieTheaterService.dto.user;
 
 import com.swp.MovieTheaterService.enums.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -13,7 +13,7 @@ import java.time.LocalDate;
  * User Search Request DTO
  * Data Transfer Object for searching and filtering users
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 2.0.0
  */
 @Data

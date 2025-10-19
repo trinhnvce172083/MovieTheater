@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.user.*;
 import com.swp.MovieTheaterService.entity.Account;
@@ -12,7 +12,7 @@ import java.util.Map;
  * User Management Service Interface
  * Business logic for admin user management operations
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public interface UserManagementService {

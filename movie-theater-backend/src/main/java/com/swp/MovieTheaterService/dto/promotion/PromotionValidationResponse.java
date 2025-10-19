@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.promotion;
+﻿package com.swp.MovieTheaterService.dto.promotion;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
  * Promotion Validation Response DTO
  * Data transfer object for promotion validation results
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

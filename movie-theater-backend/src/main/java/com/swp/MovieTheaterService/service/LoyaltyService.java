@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.entity.Booking;
@@ -24,7 +24,7 @@ import java.util.List;
  * Loyalty Service
  * Business logic for loyalty points management
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Service

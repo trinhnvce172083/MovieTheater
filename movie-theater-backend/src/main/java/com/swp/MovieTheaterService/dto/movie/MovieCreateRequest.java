@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.movie;
+﻿package com.swp.MovieTheaterService.dto.movie;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -11,7 +11,7 @@ import java.time.LocalDate;
  * Movie Create Request DTO
  * Data transfer object for creating new movies
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

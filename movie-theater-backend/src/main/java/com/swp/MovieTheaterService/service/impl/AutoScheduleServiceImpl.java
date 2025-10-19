@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service.impl;
+﻿package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.dto.cinema.CinemaRoomCreateRequest;
 import com.swp.MovieTheaterService.dto.cinema.CinemaRoomResponse;
@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  * Auto Schedule Service Implementation
  * Triển khai dịch vụ tự động tạo lịch chiếu phim
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Service

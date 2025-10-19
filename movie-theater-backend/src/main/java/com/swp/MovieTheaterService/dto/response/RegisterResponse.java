@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.response;
+﻿package com.swp.MovieTheaterService.dto.response;
 
 import com.swp.MovieTheaterService.enums.Role;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * Register Response DTO
  * Data Transfer Object for registration response
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.entity;
+﻿package com.swp.MovieTheaterService.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * Base Entity - Audit Fields
  * Abstract base class for all entities with audit information
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @MappedSuperclass

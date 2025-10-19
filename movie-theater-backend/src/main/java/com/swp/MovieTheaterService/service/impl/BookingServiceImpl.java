@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service.impl;
+﻿package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.dto.booking.*;
 import com.swp.MovieTheaterService.entity.*;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * Booking Service Implementation
  * Business logic implementation for booking management
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Service

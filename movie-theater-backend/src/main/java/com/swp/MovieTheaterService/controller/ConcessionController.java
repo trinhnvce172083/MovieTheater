@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.controller;
+﻿package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.entity.Concession;
@@ -29,7 +29,7 @@ import java.util.Map;
  * Concession Controller
  * REST API endpoints for concession management (simple food & beverage system)
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.2.0 - Added image management
  */
 @RestController

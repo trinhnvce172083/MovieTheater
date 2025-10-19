@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.controller;
+﻿package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.config.documentation.OpenApiExamples;
 import com.swp.MovieTheaterService.dto.payment.VNPayPaymentRequestDTO;
@@ -28,7 +28,7 @@ import java.util.Map;
  * VNPay Payment Controller
  * Controller xử lý thanh toán VNPay
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @RestController

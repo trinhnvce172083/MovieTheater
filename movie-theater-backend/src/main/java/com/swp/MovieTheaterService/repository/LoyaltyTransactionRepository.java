@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.repository;
+﻿package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.LoyaltyTransaction;
 import org.springframework.data.domain.Page;
@@ -15,7 +15,7 @@ import java.util.List;
  * Loyalty Transaction Repository
  * Data access layer for LoyaltyTransaction entity
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Repository

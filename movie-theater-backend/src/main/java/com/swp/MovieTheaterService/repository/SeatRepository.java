@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.repository;
+﻿package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.Seat;
 import com.swp.MovieTheaterService.enums.SeatStatus;
@@ -19,7 +19,7 @@ import jakarta.persistence.LockModeType;
  * Seat Repository Interface
  * Data access layer for Seat entity
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Repository

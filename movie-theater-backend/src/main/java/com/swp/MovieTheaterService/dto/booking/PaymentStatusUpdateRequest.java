@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.booking;
+﻿package com.swp.MovieTheaterService.dto.booking;
 
 import com.swp.MovieTheaterService.enums.PaymentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
  * Payment Status Update Request DTO
  * Request để cập nhật trạng thái thanh toán của booking
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

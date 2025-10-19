@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.repository;
+﻿package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.entity.Promotion;
@@ -18,7 +18,7 @@ import java.util.Optional;
  * User Promotion Code Repository
  * Handles database operations for user-specific promotion codes
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Repository

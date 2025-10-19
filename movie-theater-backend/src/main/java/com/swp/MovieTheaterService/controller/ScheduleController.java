@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.controller;
+﻿package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.schedule.*;
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
@@ -28,7 +28,7 @@ import java.util.List;
  * Schedule Controller
  * REST API endpoints for movie schedule management
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @RestController

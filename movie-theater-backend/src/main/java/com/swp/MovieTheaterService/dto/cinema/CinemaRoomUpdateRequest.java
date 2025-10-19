@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.cinema;
+﻿package com.swp.MovieTheaterService.dto.cinema;
 
 import com.swp.MovieTheaterService.enums.RoomType;
 import lombok.AllArgsConstructor;
@@ -13,7 +13,7 @@ import jakarta.validation.constraints.Positive;
 /**
  * Cinema Room Update Request DTO
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

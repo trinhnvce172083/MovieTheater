@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.promotion;
+﻿package com.swp.MovieTheaterService.dto.promotion;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * Response DTO for user promotion codes
  * Hiển thị thông tin promotion code của user
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

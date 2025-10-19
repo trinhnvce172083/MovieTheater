@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.user;
+﻿package com.swp.MovieTheaterService.dto.user;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * Sort Options for User Search
  * Định nghĩa các tùy chọn sắp xếp cho API tìm kiếm user
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Schema(description = "Available sort options for user search")

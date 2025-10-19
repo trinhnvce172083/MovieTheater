@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.entity.Promotion;
@@ -14,7 +14,7 @@ import java.util.Optional;
  * User Promotion Code Service Interface
  * Business logic for managing user-specific promotion codes
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public interface UserPromotionCodeService {

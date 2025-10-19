@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.repository;
+﻿package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.Promotion;
 import com.swp.MovieTheaterService.enums.DiscountType;
@@ -18,7 +18,7 @@ import java.util.Optional;
  * Data access layer for Promotion entity
  * Updated for simplified entity structure
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Repository

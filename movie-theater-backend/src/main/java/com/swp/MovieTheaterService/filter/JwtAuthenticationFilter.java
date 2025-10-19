@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.filter;
+﻿package com.swp.MovieTheaterService.filter;
 
 import com.swp.MovieTheaterService.service.JwtService;
 import com.swp.MovieTheaterService.service.TokenBlacklistService;
@@ -32,7 +32,7 @@ import java.util.List;
  * - Comprehensive error handling
  * - Guest booking support
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 2.0.0 (Merged)
  */
 @Slf4j

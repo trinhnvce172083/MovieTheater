@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.schedule.*;
 import org.springframework.data.domain.Page;
@@ -12,7 +12,7 @@ import java.util.List;
  * Schedule Service Interface
  * Business logic for schedule management
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public interface ScheduleService {

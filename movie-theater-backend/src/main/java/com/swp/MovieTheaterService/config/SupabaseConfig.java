@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.config;
+﻿package com.swp.MovieTheaterService.config;
 
 import lombok.Getter;
 import lombok.Setter;

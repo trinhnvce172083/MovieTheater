@@ -1,10 +1,10 @@
-package com.swp.MovieTheaterService.enums;
+﻿package com.swp.MovieTheaterService.enums;
 
 /**
  * BookingStatus Enum - Booking Status
  * Defines different booking statuses in the system
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public enum BookingStatus {

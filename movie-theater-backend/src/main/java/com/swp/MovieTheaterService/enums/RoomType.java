@@ -1,9 +1,9 @@
-package com.swp.MovieTheaterService.enums;
+﻿package com.swp.MovieTheaterService.enums;
 
 /**
  * Room Type Enum
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public enum RoomType {

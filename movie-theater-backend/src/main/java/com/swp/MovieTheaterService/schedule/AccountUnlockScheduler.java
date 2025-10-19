@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.schedule;
+﻿package com.swp.MovieTheaterService.schedule;
 
 import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.repository.AccountRepository;
@@ -18,7 +18,7 @@ import java.util.Map;
  * Account Unlock Scheduler
  * Tự động mở khóa các tài khoản hết hạn khóa
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Component

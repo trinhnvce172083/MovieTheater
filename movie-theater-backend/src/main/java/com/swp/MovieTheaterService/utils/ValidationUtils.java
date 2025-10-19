@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.utils;
+﻿package com.swp.MovieTheaterService.utils;
 
 import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.exception.MultipleParameterValidationException;
@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
  * Validation Utilities
  * Hỗ trợ validation và parameter checking
  *
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public class ValidationUtils {

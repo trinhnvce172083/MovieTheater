@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service.impl;
+﻿package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.dto.schedule.*;
 import com.swp.MovieTheaterService.entity.CinemaRoom;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * Schedule Service Implementation
  * Business logic implementation for schedule management
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Service

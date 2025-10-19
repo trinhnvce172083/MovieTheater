@@ -1,10 +1,10 @@
-package com.swp.MovieTheaterService.enums;
+﻿package com.swp.MovieTheaterService.enums;
 
 /**
  * SeatStatus Enum - Seat Status
  * Defines different seat statuses in the system
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public enum SeatStatus {

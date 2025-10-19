@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.promotion;
+﻿package com.swp.MovieTheaterService.dto.promotion;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
  * Request DTO for purchasing point-based promotions
  * User đổi điểm để nhận unique promotion code
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service.impl;
+﻿package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.service.RateLimitService;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentMap;
  * Rate Limiting Service Implementation
  * Uses in-memory cache for rate limiting
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Slf4j

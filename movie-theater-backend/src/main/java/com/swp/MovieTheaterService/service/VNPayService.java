@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.payment.VNPayPaymentRequestDTO;
 import org.springframework.lang.NonNull;
@@ -9,7 +9,7 @@ import java.util.Map;
  * VNPay Service Interface
  * Interface cho dịch vụ thanh toán VNPay
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public interface VNPayService {

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service.impl;
+﻿package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.entity.Concession;
 import com.swp.MovieTheaterService.enums.ConcessionCategory;
@@ -19,7 +19,7 @@ import java.util.List;
  * Concession Service Implementation
  * Business logic implementation for concession management
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.1.0 - Added CRUD operations
  */
 @Service

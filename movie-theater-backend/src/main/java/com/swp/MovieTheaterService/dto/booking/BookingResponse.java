@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.booking;
+﻿package com.swp.MovieTheaterService.dto.booking;
 
 import com.swp.MovieTheaterService.enums.BookingStatus;
 import lombok.AllArgsConstructor;
@@ -14,7 +14,7 @@ import java.util.List;
  * Booking Response DTO
  * Data Transfer Object for booking information
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

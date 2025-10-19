@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.controller;
+﻿package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.booking.BookingCreateRequest;
 import com.swp.MovieTheaterService.dto.booking.BookingResponse;
@@ -39,7 +39,7 @@ import java.util.Map;
  * Booking Controller
  * REST API endpoints for movie ticket booking system
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @RestController

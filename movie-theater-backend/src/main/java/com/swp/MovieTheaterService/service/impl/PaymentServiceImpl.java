@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service.impl;
+﻿package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.dto.payment.*;
 import com.swp.MovieTheaterService.entity.Booking;
@@ -20,7 +20,7 @@ import com.swp.MovieTheaterService.utils.DateTimeUtils;
  * Payment Service Implementation
  * Wrapper service that delegates to specific payment providers
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Service("vnpayService")

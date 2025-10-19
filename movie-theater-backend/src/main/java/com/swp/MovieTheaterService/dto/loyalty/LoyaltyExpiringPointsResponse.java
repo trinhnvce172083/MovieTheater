@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.loyalty;
+﻿package com.swp.MovieTheaterService.dto.loyalty;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,7 +11,7 @@ import java.util.List;
  * Loyalty Expiring Points Response DTO
  * Data transfer object for expiring loyalty points
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

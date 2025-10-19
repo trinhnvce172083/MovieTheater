@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.controller;
+﻿package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.cinema.*;
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
@@ -28,7 +28,7 @@ import java.util.Map;
  * Cinema Room Controller
  * REST API endpoints for cinema room management
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @RestController

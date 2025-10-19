@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.config;
+﻿package com.swp.MovieTheaterService.config;
 
 import com.swp.MovieTheaterService.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ import java.util.List;
  * - MEMBER: Customer privileges + booking, account management
  * - CUSTOMER: Public access - view movies, promotions, prices
  *
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 2.1.0 (Optimized)
  */
 @Configuration

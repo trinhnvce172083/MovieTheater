@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.entity.Account;
@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Example Service - Minh họa cách sử dụng hệ thống Error Handling
  *
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Service

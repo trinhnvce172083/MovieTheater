@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.repository;
+﻿package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.BookingSeat;
 import com.swp.MovieTheaterService.enums.BookingStatus;
@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Booking Seat Repository
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Repository

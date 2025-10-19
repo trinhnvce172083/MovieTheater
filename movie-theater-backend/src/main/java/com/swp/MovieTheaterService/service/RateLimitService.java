@@ -1,10 +1,10 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 /**
  * Rate Limiting Service Interface
  * Handles rate limiting for sensitive operations
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public interface RateLimitService {

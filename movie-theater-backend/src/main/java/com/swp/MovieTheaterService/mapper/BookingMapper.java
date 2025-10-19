@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.mapper;
+﻿package com.swp.MovieTheaterService.mapper;
 
 import com.swp.MovieTheaterService.dto.booking.*;
 import com.swp.MovieTheaterService.entity.*;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * Booking Mapper v2.0.0 (Builder Pattern Compatible)
  * Object mapping between Booking entities and DTOs
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 2.0.0
  */
 @Component

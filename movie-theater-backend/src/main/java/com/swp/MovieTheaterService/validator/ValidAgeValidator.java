@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.validator;
+﻿package com.swp.MovieTheaterService.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -9,7 +9,7 @@ import java.time.Period;
 /**
  * Age Validator Implementation
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public class ValidAgeValidator implements ConstraintValidator<ValidAge, LocalDate> {

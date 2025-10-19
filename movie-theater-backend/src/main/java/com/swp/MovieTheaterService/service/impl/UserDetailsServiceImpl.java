@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service.impl;
+﻿package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.repository.AccountRepository;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
  * UserDetailsService Implementation - User Authentication
  * Loads user details for Spring Security authentication
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Service

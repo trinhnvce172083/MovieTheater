@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.promotion;
+﻿package com.swp.MovieTheaterService.dto.promotion;
 
 import lombok.Data;
 import jakarta.validation.constraints.*;
@@ -8,7 +8,7 @@ import com.swp.MovieTheaterService.enums.DiscountType;
  * Promotion Create Request DTO
  * Data transfer object for creating promotions
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

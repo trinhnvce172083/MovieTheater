@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.config;
+﻿package com.swp.MovieTheaterService.config;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
  * VNPay Configuration
  * Cấu hình thanh toán VNPay cho Movie Theater System
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Component

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.movie;
+﻿package com.swp.MovieTheaterService.dto.movie;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -20,7 +20,7 @@ import java.time.LocalDate;
  * - Để không thay đổi field: không gửi field hoặc để null
  * - Để update field: gửi giá trị mới
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

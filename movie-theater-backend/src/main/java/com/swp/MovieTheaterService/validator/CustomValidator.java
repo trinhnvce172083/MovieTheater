@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.validator;
+﻿package com.swp.MovieTheaterService.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -9,7 +9,7 @@ import java.util.Objects;
  * Custom Validator Implementation
  * Validation logic cho CustomConstraint
  *
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public class CustomValidator implements ConstraintValidator<CustomConstraint, String> {

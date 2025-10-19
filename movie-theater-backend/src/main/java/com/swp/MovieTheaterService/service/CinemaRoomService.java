@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.service;
+﻿package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.cinema.*;
 import org.springframework.data.domain.Page;
@@ -12,7 +12,7 @@ import java.util.List;
  * Cinema Room Service Interface
  * Business logic for cinema room management
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public interface CinemaRoomService {

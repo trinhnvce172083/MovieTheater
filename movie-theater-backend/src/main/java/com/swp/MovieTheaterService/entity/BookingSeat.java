@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.entity;
+﻿package com.swp.MovieTheaterService.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.swp.MovieTheaterService.enums.SeatStatus;
@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
  * BookingSeat Entity - Booking Seat Junction
  * Junction table for many-to-many relationship between Booking and Seat
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Entity

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.entity;
+﻿package com.swp.MovieTheaterService.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  * BookingConcession Entity - Liên kết đặt vé với đồ ăn/uống đơn giản
  * Represents the relationship between bookings and concession items
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Entity

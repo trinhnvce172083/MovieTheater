@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.analytics;
+﻿package com.swp.MovieTheaterService.dto.analytics;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -13,7 +13,7 @@ import java.util.List;
  * Report Request DTO
  * Thông tin yêu cầu tạo báo cáo
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

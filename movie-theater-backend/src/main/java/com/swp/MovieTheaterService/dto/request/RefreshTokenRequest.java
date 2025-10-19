@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.request;
+﻿package com.swp.MovieTheaterService.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
  * Refresh Token Request DTO
  * Data transfer object for refresh token requests
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

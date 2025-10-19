@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.utils;
+﻿package com.swp.MovieTheaterService.utils;
 
 import com.swp.MovieTheaterService.exception.AppException;
 import com.swp.MovieTheaterService.exception.ErrorCode;
@@ -18,7 +18,7 @@ import java.util.*;
  * VNPay Hash Utilities
  * Tiện ích mã hóa và xác thực cho VNPay
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Slf4j

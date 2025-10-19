@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.enums;
+﻿package com.swp.MovieTheaterService.enums;
 
 import java.time.LocalDateTime;
 
@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
  * CheckInStatus Enum - Check-in Status
  * Defines different check-in statuses for bookings
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public enum CheckInStatus {

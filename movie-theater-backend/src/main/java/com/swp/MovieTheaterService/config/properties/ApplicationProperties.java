@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.config.properties;
+﻿package com.swp.MovieTheaterService.config.properties;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
  * Application Configuration Properties
  * Central place for all application configuration properties
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

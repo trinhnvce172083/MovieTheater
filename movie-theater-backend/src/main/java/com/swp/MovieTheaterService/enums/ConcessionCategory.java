@@ -1,10 +1,10 @@
-package com.swp.MovieTheaterService.enums;
+﻿package com.swp.MovieTheaterService.enums;
 
 /**
  * ConcessionCategory Enum - Loại đồ ăn/uống
  * Categories for popcorn, drinks, and combos
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 public enum ConcessionCategory {

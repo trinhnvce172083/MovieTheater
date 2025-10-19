@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.loyalty;
+﻿package com.swp.MovieTheaterService.dto.loyalty;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * Loyalty Transaction Summary Response DTO
  * Data transfer object for loyalty transaction summaries
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.validator;
+﻿package com.swp.MovieTheaterService.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
  * Password Matching Validator Implementation
  * Enhanced to work better with Lombok-generated classes
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.1.0
  */
 public class PasswordMatchingValidator implements ConstraintValidator<PasswordMatching, Object> {

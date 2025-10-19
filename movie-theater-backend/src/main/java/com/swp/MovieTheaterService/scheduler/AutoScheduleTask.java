@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.scheduler;
+﻿package com.swp.MovieTheaterService.scheduler;
 
 import com.swp.MovieTheaterService.service.AutoScheduleService;
 import com.swp.MovieTheaterService.service.AutoScheduleService.AutoScheduleResult;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * Auto Schedule Task
  * Tác vụ tự động tạo lịch chiếu phim hàng ngày
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Component

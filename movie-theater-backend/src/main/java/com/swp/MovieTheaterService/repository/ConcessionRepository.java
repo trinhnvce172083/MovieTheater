@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.repository;
+﻿package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.Concession;
 import com.swp.MovieTheaterService.enums.ConcessionCategory;
@@ -13,7 +13,7 @@ import java.util.List;
  * Concession Repository Interface
  * Data access layer for Concession entity
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Repository

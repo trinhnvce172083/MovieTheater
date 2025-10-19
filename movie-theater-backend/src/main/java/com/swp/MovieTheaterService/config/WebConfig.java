@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.config;
+﻿package com.swp.MovieTheaterService.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -21,7 +21,7 @@ import java.util.List;
  * conflict)
  * Fix PageImpl serialization warning với VIA_DTO mode
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.1
  */
 @Configuration

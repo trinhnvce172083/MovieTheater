@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.dto.payment;
+﻿package com.swp.MovieTheaterService.dto.payment;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * Refund Response DTO
  * Data Transfer Object for payment refund responses
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Data

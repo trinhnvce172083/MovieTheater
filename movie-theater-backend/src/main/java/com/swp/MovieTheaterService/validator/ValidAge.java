@@ -1,4 +1,4 @@
-package com.swp.MovieTheaterService.validator;
+﻿package com.swp.MovieTheaterService.validator;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
@@ -8,7 +8,7 @@ import java.lang.annotation.*;
 /**
  * Custom validation annotation for age validation
  * 
- * @author Dũng_Solo
+ * @author Ngo Viet Trinh
  * @version 1.0.0
  */
 @Documented
