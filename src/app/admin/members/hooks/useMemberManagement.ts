@@ -1,0 +1,472 @@
+import { useState, useEffect, useMemo } from 'react';
+import { message } from 'antd';
+import { getAllUsers, lockUser, unlockUser, activateUser, deactivateUser } from '@/api/admin/getAllUsers';
+import axiosClient from '@/api/axiosClient';
+import { 
+  MemberData, 
+  MemberCreateRequest, 
+  ApiErrorResponse, 
+  MemberStatistics,
+  CurrentUser,
+  MemberFilters,
+  PaginationState
+} from '../types';
+import { 
+  transformApiUserToMemberData, 
+  getCurrentUserFromStorage, 
+  checkAuthToken,
+  validateEmail,
+  validateUsername
+} from '../utils/memberUtils';
+
+export const useMemberManagement = () => {
+  // State management
+  const [memberData, setMemberData] = useState<MemberData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [showAuthWarning, setShowAuthWarning] = useState(false);
+  const [isUsingApiData, setIsUsingApiData] = useState(true);
+
+  // Filters and pagination
+  const [filters, setFilters] = useState<MemberFilters>({
+    searchTerm: "",
+    filterStatus: "",
+    filterType: ""
+  });
+  
+  const [pagination, setPagination] = useState<PaginationState>({
+    currentPage: 1,
+    pageSize: 10
+  });
+
+  // Initialize auth and user data
+  useEffect(() => {
+    const hasToken = checkAuthToken();
+    setShowAuthWarning(!hasToken);
+    
+    if (hasToken) {
+      setCurrentUser(getCurrentUserFromStorage());
+    }
+  }, []);
+
+  // Fetch users from API
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      console.log("🔍 [useMemberManagement] Starting fetchUsers...");
+      
+      const response = await getAllUsers();
+      console.log("📦 [useMemberManagement] getAllUsers response:", response);
+      console.log("📦 [useMemberManagement] Response type:", typeof response);
+      console.log("📦 [useMemberManagement] Response keys:", response ? Object.keys(response) : 'null');
+
+      if (!response) {
+        console.log("⚠️ [useMemberManagement] No response received");
+        setMemberData([]);
+        setIsUsingApiData(false);
+        return;
+      }
+
+      // Check if response has content property (paginated response)
+      if (response.content && Array.isArray(response.content)) {
+        console.log("📋 [useMemberManagement] Found content array with", response.content.length, "items");
+        const transformedData: MemberData[] = response.content.map(transformApiUserToMemberData);
+        console.log("✨ [useMemberManagement] Transformed data:", transformedData);
+        setMemberData(transformedData || []);
+        setIsUsingApiData(true);
+      } 
+      // Check if response is direct array
+      else if (Array.isArray(response)) {
+        console.log("📋 [useMemberManagement] Response is direct array with", response.length, "items");
+        const transformedData: MemberData[] = response.map(transformApiUserToMemberData);
+        console.log("✨ [useMemberManagement] Transformed data:", transformedData);
+        setMemberData(transformedData || []);
+        setIsUsingApiData(true);
+      }
+      // Check if response has data property
+      else if ('data' in response && Array.isArray((response as { data: unknown[] }).data)) {
+        const responseData = (response as { data: unknown[] }).data;
+        console.log("📋 [useMemberManagement] Found data array with", responseData.length, "items");
+        const transformedData: MemberData[] = responseData.map(transformApiUserToMemberData);
+        console.log("✨ [useMemberManagement] Transformed data:", transformedData);
+        setMemberData(transformedData || []);
+        setIsUsingApiData(true);
+      }
+      else {
+        console.log("⚠️ [useMemberManagement] Unexpected response structure:", response);
+        setMemberData([]);
+        setIsUsingApiData(false);
+      }
+    } catch (error) {
+      console.error("❌ [useMemberManagement] fetchUsers error:", error);
+      
+      // Check if it's an authentication error
+      if (error && typeof error === 'object' && 'message' in error) {
+        const errorMessage = (error as { message: string }).message;
+        if (errorMessage.includes('Authentication failed')) {
+          message.error("Authentication failed. Please log in again.");
+          setShowAuthWarning(true);
+        } else if (errorMessage.includes('Access denied')) {
+          message.error("Access denied. You don't have admin permissions.");
+        } else {
+          message.error("Failed to fetch users: " + errorMessage);
+        }
+      } else {
+        message.error("Failed to fetch users. Please check your connection.");
+      }
+      
+      setMemberData([]);
+      setIsUsingApiData(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Filter and search logic
+  const filteredData = useMemo(() => {
+    try {
+      if (!memberData || !Array.isArray(memberData)) {
+        return [];
+      }
+
+      return memberData.filter((member) => {
+        try {
+          if (!member) return false;
+
+          // Hide inactive (soft deleted) members unless explicitly filtering
+          const isActiveOrExplicitlyFilteringInactive = 
+            member.status === 'active' || filters.filterStatus === 'inactive';
+          if (!isActiveOrExplicitlyFilteringInactive) return false;
+
+          const matchesSearch = !filters.searchTerm ||
+            (member.name && member.name.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
+            (member.email && member.email.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
+            (member.id && member.id.toLowerCase().includes(filters.searchTerm.toLowerCase()));
+
+          const matchesStatus = !filters.filterStatus || member.status === filters.filterStatus;
+          const matchesType = !filters.filterType || member.type === filters.filterType;
+
+          return matchesSearch && matchesStatus && matchesType;
+        } catch (error) {
+          return false;
+        }
+      });
+    } catch (error) {
+      return [];
+    }
+  }, [filters.searchTerm, filters.filterStatus, filters.filterType, memberData]);
+
+  // Paginated data
+  const paginatedData = useMemo(() => {
+    const startIndex = (pagination.currentPage - 1) * pagination.pageSize;
+    const endIndex = startIndex + pagination.pageSize;
+    return filteredData.slice(startIndex, endIndex);
+  }, [filteredData, pagination.currentPage, pagination.pageSize]);
+
+  // Reset current page when filters change
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+  }, [filters.searchTerm, filters.filterStatus, filters.filterType]);
+
+  // Statistics calculations
+  const statistics: MemberStatistics = useMemo(() => {
+    try {
+      const activeMembers = memberData?.filter(m => m.status === "active")?.length || 0;
+      const totalMembers = activeMembers;
+
+      const newMembers = memberData?.filter((m) => {
+        try {
+          if (m.status !== 'active') return false;
+          const join = new Date(m.joinDate);
+          const now = new Date();
+          return (
+            join.getMonth() === now.getMonth() &&
+            join.getFullYear() === now.getFullYear()
+          );
+        } catch (error) {
+          return false;
+        }
+      })?.length || 0;
+
+      const types = memberData?.reduce((acc: Record<string, number>, m) => {
+        try {
+          if (m.status === 'active') {
+            acc[m.type] = (acc[m.type] || 0) + 1;
+          }
+          return acc;
+        } catch (error) {
+          return acc;
+        }
+      }, {}) || {};
+
+      return { totalMembers, activeMembers, newMembers, types };
+    } catch (error) {
+      return { totalMembers: 0, activeMembers: 0, newMembers: 0, types: {} };
+    }
+  }, [memberData]);
+
+  // CRUD Operations
+  const createMember = async (memberData: MemberCreateRequest): Promise<boolean> => {
+    try {
+      setLoading(true);
+      
+      // Validation
+      if (!memberData.fullName || !memberData.email || !memberData.username) {
+        message.error('Please fill in all required fields: Full Name, Email, and Username');
+        return false;
+      }
+      
+      if (!validateEmail(memberData.email)) {
+        message.error('Please enter a valid email address');
+        return false;
+      }
+      
+      if (!validateUsername(memberData.username)) {
+        message.error('Username can only contain letters, numbers, and underscores');
+        return false;
+      }
+      
+      const payload = {
+        username: memberData.username.trim(),
+        fullName: memberData.fullName.trim(),
+        email: memberData.email.trim().toLowerCase(),
+        password: memberData.password || undefined,
+        phoneNumber: memberData.phoneNumber?.trim() || undefined,
+        address: memberData.address?.trim() || undefined,
+        dateOfBirth: memberData.dateOfBirth || undefined,
+        role: (memberData.role?.toUpperCase() || 'MEMBER') as 'ADMIN' | 'EMPLOYEE' | 'MEMBER' | 'CUSTOMER',
+        isActive: memberData.isActive !== false,
+      };
+
+      console.log('Sending payload:', payload);
+      const response = await axiosClient.post('/admin/users', payload);
+      console.log('Create response:', response.data);
+      message.success('Member created successfully');
+      await fetchUsers();
+      return true;
+    } catch (error) {
+      handleApiError(error as ApiErrorResponse);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateMember = async (id: string, memberData: MemberCreateRequest): Promise<boolean> => {
+    try {
+      setLoading(true);
+      await axiosClient.put(`/admin/users/${id}`, memberData);
+      message.success("Member updated successfully");
+      await fetchUsers();
+      return true;
+    } catch (error) {
+      handleApiError(error as ApiErrorResponse);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteMember = async (id: string, name: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      await axiosClient.delete(`/admin/users/${id}`);
+      message.success(`Deleted member "${name}" successfully`);
+      await fetchUsers();
+      return true;
+    } catch (error) {
+      handleApiError(error as ApiErrorResponse);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApiError = (error: ApiErrorResponse) => {
+    if (error && typeof error === "object" && "response" in error) {
+      const status = error.response?.status;
+      const errorData = error.response?.data;
+      
+      switch (status) {
+        case 400:
+          message.error('Validation error. Please check all required fields are filled correctly.');
+          break;
+        case 401:
+          message.error('Authentication failed. Please login again.');
+          break;
+        case 403:
+          message.error('Access denied. You may not have admin permissions.');
+          break;
+        case 409:
+          let conflictMessage = 'A member with this information already exists.';
+          if (errorData && typeof errorData === 'object' && 'message' in errorData) {
+            const message = (errorData as { message: string }).message;
+            if (message.includes('email')) {
+              conflictMessage = 'A member with this email address already exists.';
+            } else if (message.includes('username')) {
+              conflictMessage = 'A member with this username already exists.';
+            } else {
+              conflictMessage = message;
+            }
+          }
+          message.error(conflictMessage);
+          break;
+        case 422:
+          message.error('Invalid data format. Please check your input.');
+          break;
+        case 500:
+          message.error('Server error. Please try again later.');
+          break;
+        default:
+          message.error(`Failed to process request: ${status || 'Unknown error'}`);
+      }
+    } else {
+      message.error('Failed to process request. Please check your network connection.');
+    }
+  };
+
+  // Lock user function
+  const lockUserAccount = async (userId: string, lockDurationHours: number, reason: string, sendNotificationEmail: boolean = true): Promise<boolean> => {
+    try {
+      setLoading(true);
+      console.log('🔒 [lockUserAccount] Starting lock user process...');
+      console.log('🔒 [lockUserAccount] User ID:', userId);
+      console.log('🔒 [lockUserAccount] Duration:', lockDurationHours);
+      console.log('🔒 [lockUserAccount] Reason:', reason);
+      console.log('🔒 [lockUserAccount] Send notification:', sendNotificationEmail);
+      
+      const lockData = {
+        reason: reason.trim(),
+        lockHours: lockDurationHours,
+        sendNotificationEmail,
+        notes: `Locked by admin: ${reason.trim()}`
+      };
+      
+      console.log('🔒 [lockUserAccount] Lock data payload:', lockData);
+      
+      const result = await lockUser(parseInt(userId), lockData);
+      console.log('🔒 [lockUserAccount] Lock result:', result);
+      
+      message.success('User locked successfully');
+      await fetchUsers(); // Refresh data
+      return true;
+    } catch (error: unknown) {
+      console.error('❌ [lockUserAccount] Lock user error:', error);
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { 
+          response: { 
+            data?: { message?: string; error?: string; details?: string }; 
+            status: number;
+            statusText?: string;
+          } 
+        };
+        
+        console.error('❌ [lockUserAccount] Error response data:', axiosError.response.data);
+        console.error('❌ [lockUserAccount] Error status:', axiosError.response.status);
+        console.error('❌ [lockUserAccount] Error status text:', axiosError.response.statusText);
+        
+        const errorMessage = axiosError.response.data?.message || 
+                            axiosError.response.data?.error || 
+                            axiosError.response.data?.details ||
+                            `HTTP ${axiosError.response.status}: ${axiosError.response.statusText}`;
+        
+        message.error(`Failed to lock user: ${errorMessage}`);
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        const errorMessage = (error as { message: string }).message;
+        console.error('❌ [lockUserAccount] Error message:', errorMessage);
+        message.error(`Failed to lock user: ${errorMessage}`);
+      } else {
+        console.error('❌ [lockUserAccount] Unknown error:', error);
+        message.error('Failed to lock user: Network or server error');
+      }
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Unlock user function
+  const unlockUserAccount = async (userId: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      await unlockUser(parseInt(userId));
+      message.success('User unlocked successfully');
+      await fetchUsers(); // Refresh data
+      return true;
+    } catch (error: unknown) {
+      console.error('❌ [unlockUserAccount] Unlock user error:', error);
+      message.error('Failed to unlock user');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Activate user function
+  const activateUserAccount = async (userId: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      await activateUser(parseInt(userId));
+      message.success('User activated successfully');
+      await fetchUsers(); // Refresh data
+      return true;
+    } catch (error: unknown) {
+      console.error('❌ [activateUserAccount] Activate user error:', error);
+      message.error('Failed to activate user');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Deactivate user function
+  const deactivateUserAccount = async (userId: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      await deactivateUser(parseInt(userId));
+      message.success('User deactivated successfully');
+      await fetchUsers(); // Refresh data
+      return true;
+    } catch (error: unknown) {
+      console.error('❌ [deactivateUserAccount] Deactivate user error:', error);
+      message.error('Failed to deactivate user');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    // Data
+    memberData,
+    filteredData,
+    paginatedData,
+    statistics,
+    currentUser,
+    
+    // State
+    loading,
+    showAuthWarning,
+    isUsingApiData,
+    filters,
+    pagination,
+    
+    // Actions
+    setFilters,
+    setPagination,
+    fetchUsers,
+    createMember,
+    updateMember,
+    deleteMember,
+    lockUserAccount,
+    unlockUserAccount,
+    activateUserAccount,
+    deactivateUserAccount,
+  };
+};

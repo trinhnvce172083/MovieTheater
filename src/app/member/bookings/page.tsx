@@ -1,0 +1,476 @@
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
+import { Table, Input, Select, Typography, Pagination, Spin, Alert, Button, Empty } from "antd";
+import type { Breakpoint } from "antd/es/_util/responsiveObserver";
+import { useMemberBookings } from "@/hooks/member";
+import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
+import type { MemberBooking } from "@/types/member";
+
+const { Option } = Select;
+
+const columns = [
+  {
+    title: "#",
+    key: "index",
+    render: (_: any, __: any, idx: number) => idx + 1,
+    width: 50,
+  },
+  {
+    title: "SHOW TIME",
+    key: "showTime",
+    render: (_, record: MemberBooking) => {
+      // Ưu tiên sử dụng formattedShowDateTime từ schedule nếu có
+      if (record.schedule?.formattedShowDateTime) {
+        return record.schedule.formattedShowDateTime;
+      }
+      
+      // Fallback: sử dụng showDate + startTime
+      if (record.showDate && record.startTime) {
+        const showDate = new Date(record.showDate);
+        const day = showDate.getDate().toString().padStart(2, '0');
+        const month = (showDate.getMonth() + 1).toString().padStart(2, '0');
+        const year = showDate.getFullYear();
+        return `${day}/${month}/${year} ${record.startTime}`;
+      }
+      
+      // Fallback: sử dụng schedule.showDateTime
+      if (record.schedule?.showDateTime) {
+        const showDateTime = new Date(record.schedule.showDateTime);
+        const day = showDateTime.getDate().toString().padStart(2, '0');
+        const month = (showDateTime.getMonth() + 1).toString().padStart(2, '0');
+        const year = showDateTime.getFullYear();
+        const hour = showDateTime.getHours().toString().padStart(2, '0');
+        const minute = showDateTime.getMinutes().toString().padStart(2, '0');
+        return `${day}/${month}/${year} ${hour}:${minute}`;
+      }
+      
+      return "—";
+    },
+  },
+  {
+    title: "MOVIE NAME",
+    dataIndex: "movieTitle",
+    key: "movieTitle",
+    render: v => v || "—",
+  },
+  {
+    title: "SEATS",
+    key: "seats",
+    render: (_, record: MemberBooking) => {
+      // Kiểm tra và hiển thị thông tin ghế từ seats array (backend mới)
+      if (record.seats && record.seats.length > 0) {
+        const seatInfo = record.seats.map((seat: any) => {
+          return seat.seatNumber || seat.seatId;
+        }).join(", ");
+        
+        return (
+          <span className="font-medium text-blue-600">
+            {seatInfo}
+          </span>
+        );
+      }
+      
+      // Fallback: kiểm tra từ bookingDetails (backend cũ)
+      if (record.bookingDetails && record.bookingDetails.length > 0) {
+        const seats = record.bookingDetails.map((detail: any) => detail.seatName).join(", ");
+        return (
+          <span className="font-medium text-blue-600">
+            {seats}
+          </span>
+        );
+      }
+      
+      // Fallback: kiểm tra từ seatNames nếu có
+      if (record.seatNames && record.seatNames.length > 0) {
+        return (
+          <span className="font-medium text-blue-600">
+            {record.seatNames.join(", ")}
+          </span>
+        );
+      }
+      
+      // Fallback: kiểm tra từ seatName đơn lẻ
+      if (record.seatName) {
+        return (
+          <span className="font-medium text-blue-600">
+            {record.seatName}
+          </span>
+        );
+      }
+      
+      return "—";
+    },
+  },
+  {
+    title: "TOTAL AMOUNT",
+    dataIndex: "finalAmount",
+    key: "finalAmount",
+    render: v => v ? new Intl.NumberFormat('vi-VN').format(v) : "—",
+  },
+  {
+    title: "STATUS",
+    dataIndex: "status",
+    key: "status",
+    render: (v: string) => {
+      console.log("📊 Booking status from API:", v); // Debug log
+      if (!v) return "—";
+      
+      // Hiển thị status gốc với màu sắc phù hợp
+      if (v === "COMPLETED") {
+        return <span style={{
+          color: "#d97706", 
+          backgroundColor: "#fef3c7", 
+          padding: "2px 8px", 
+          borderRadius: "4px",
+          fontSize: "12px",
+          fontWeight: "600"
+        }}>COMPLETED</span>;
+      }
+      
+      if (v === "CANCELLED") {
+        return <span style={{
+          color: "#6b7280", 
+          backgroundColor: "#f3f4f6", 
+          padding: "2px 8px", 
+          borderRadius: "4px",
+          fontSize: "12px",
+          fontWeight: "600"
+        }}>CANCELLED</span>;
+      }
+      
+      if (v === "PENDING") {
+        return <span style={{
+          color: "#2563eb", 
+          backgroundColor: "#dbeafe", 
+          padding: "2px 8px", 
+          borderRadius: "4px",
+          fontSize: "12px",
+          fontWeight: "600"
+        }}>PENDING</span>;
+      }
+      
+      if (v === "CONFIRMED" || v === "PAID") {
+        return <span style={{
+          color: "#059669", 
+          backgroundColor: "#d1fae5", 
+          padding: "2px 8px", 
+          borderRadius: "4px",
+          fontSize: "12px",
+          fontWeight: "600"
+        }}>{v}</span>;
+      }
+      
+      if (v === "EXPIRED") {
+        return <span style={{
+          color: "#dc2626", 
+          backgroundColor: "#fee2e2", 
+          padding: "2px 8px", 
+          borderRadius: "4px",
+          fontSize: "12px",
+          fontWeight: "600"
+        }}>EXPIRED</span>;
+      }
+      
+      // Default: hiển thị status gốc
+      return <span style={{
+        color: "#374151", 
+        backgroundColor: "#f9fafb", 
+        padding: "2px 8px", 
+        borderRadius: "4px",
+        fontSize: "12px",
+        fontWeight: "600"
+      }}>{v}</span>;
+    },
+  },
+];
+
+export default function BookedTicketsPage() {
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
+  console.log("🔄 BookedTicketsPage render");
+
+  const { bookings, loading, error, refresh, totalElements } = useMemberBookings();
+
+  console.log("📊 BookedTicketsPage received:", { 
+    bookingsLength: bookings.length, 
+    loading, 
+    error, 
+    totalElements 
+  });
+
+  // Reset lại trang khi bookings thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [bookings]);
+
+  // Đảm bảo bookings luôn là mảng
+  const bookingsArray = Array.isArray(bookings) ? bookings : [];
+
+  // Đảm bảo filter không lỗi khi bookings chưa có dữ liệu
+  const filteredData = bookingsArray.filter((item: MemberBooking) =>
+    (item.movieTitle || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.bookingCode || "").toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const pagedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return filteredData.slice(startIndex, endIndex);
+  }, [filteredData, currentPage, pageSize]);
+
+  const handlePageChange = (page: number, size?: number) => {
+    setCurrentPage(page);
+    if (size) setPageSize(size);
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusFilter = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("");
+    setCurrentPage(1);
+  };
+
+  // Hiển thị loading chỉ khi lần đầu load
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
+        <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm p-4 lg:p-6">
+          <div className="flex justify-center items-center py-12">
+            <Spin size="large" />
+            <span className="ml-3">Đang tải bookings...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
+        <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm p-4 lg:p-6">
+          <Alert
+            message="Error Loading Bookings"
+            description={error}
+            type="error"
+            showIcon
+            action={
+              <Button size="small" type="primary" onClick={refresh}>
+                Retry
+              </Button>
+            }
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Render Table theo filteredData.length
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
+      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm p-4 lg:p-6">
+        <Typography.Title level={4} className="text-center mb-6 lg:mb-8 mt-8">
+          Booked ticket
+        </Typography.Title>
+        
+        {/* Search and Controls */}
+        <div className="flex flex-col lg:flex-row lg:items-center gap-4 mb-6">
+          {/* Page Size Selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Show</span>
+            <Select 
+              value={pageSize} 
+              className="w-20" 
+              onChange={setPageSize}
+              size="middle"
+            >
+            {[10, 20, 50].map((num) => (
+              <Option key={num} value={num}>{num}</Option>
+            ))}
+          </Select>
+            <span className="text-sm text-gray-600">entries</span>
+          </div>
+
+          {/* Search Input */}
+          <div className="flex-1 lg:flex-none lg:ml-auto">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600 hidden lg:block">Search:</span>
+          <Input
+            value={searchTerm}
+            onChange={e => { handleSearch(e.target.value); }}
+                className="w-full lg:w-64"
+            allowClear
+            placeholder="Search by movie name or booking code"
+                prefix={<SearchOutlined />}
+                size="middle"
+          />
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={refresh}
+            loading={loading}
+                size="middle"
+          >
+                <span className="hidden lg:inline">Refresh</span>
+          </Button>
+            </div>
+          </div>
+        </div>
+        
+        {filteredData.length === 0 ? (
+          <div className="text-center py-12">
+            <Empty
+              description="Chưa có vé đã đặt"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          </div>
+        ) : (
+          <>
+            {/* Mobile Card View */}
+            <div className="lg:hidden space-y-4 mb-6">
+              {pagedData.map((item: MemberBooking, index: number) => (
+                <div key={item.bookingCode} className="border rounded-lg p-4 bg-gray-50">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="font-medium text-sm text-gray-600">#{((currentPage - 1) * pageSize) + index + 1}</span>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      item.status === "COMPLETED"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : item.status === "CANCELLED"
+                        ? "bg-gray-100 text-gray-800"
+                        : item.status === "PENDING"
+                        ? "bg-blue-100 text-blue-800"
+                        : item.status === "CONFIRMED" || item.status === "PAID"
+                        ? "bg-green-100 text-green-800"
+                        : item.status === "EXPIRED"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}>
+                      {item.status || "—"}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <span className="text-xs text-gray-500">Movie:</span>
+                      <p className="font-medium">{item.movieTitle || "—"}</p>
+                    </div>
+                                       <div>
+                     <span className="text-xs text-gray-500">Show Time:</span>
+                     <p className="text-sm">
+                       {(() => {
+                         // Ưu tiên sử dụng formattedShowDateTime từ schedule nếu có
+                         if (item.schedule?.formattedShowDateTime) {
+                           return item.schedule.formattedShowDateTime;
+                         }
+                         
+                         // Fallback: sử dụng showDate + startTime
+                         if (item.showDate && item.startTime) {
+                           const showDate = new Date(item.showDate);
+                           const day = showDate.getDate().toString().padStart(2, '0');
+                           const month = (showDate.getMonth() + 1).toString().padStart(2, '0');
+                           const year = showDate.getFullYear();
+                           return `${day}/${month}/${year} ${item.startTime}`;
+                         }
+                         
+                         // Fallback: sử dụng schedule.showDateTime
+                         if (item.schedule?.showDateTime) {
+                           const showDateTime = new Date(item.schedule.showDateTime);
+                           const day = showDateTime.getDate().toString().padStart(2, '0');
+                           const month = (showDateTime.getMonth() + 1).toString().padStart(2, '0');
+                           const year = showDateTime.getFullYear();
+                           const hour = showDateTime.getHours().toString().padStart(2, '0');
+                           const minute = showDateTime.getMinutes().toString().padStart(2, '0');
+                         return `${day}/${month}/${year} ${hour}:${minute}`;
+                         }
+                         
+                         return "—";
+                       })()}
+                     </p>
+                   </div>
+                                         <div>
+                       <span className="text-xs text-gray-500">Seats:</span>
+                       <p className="font-medium text-blue-600">
+                         {(() => {
+                           // Kiểm tra và hiển thị thông tin ghế từ seats array (backend mới)
+                           if (item.seats && item.seats.length > 0) {
+                             return item.seats.map((seat: any) => {
+                               return seat.seatNumber || seat.seatId;
+                             }).join(", ");
+                           }
+                           
+                           // Fallback: kiểm tra từ bookingDetails (backend cũ)
+                           if (item.bookingDetails && item.bookingDetails.length > 0) {
+                             return item.bookingDetails.map((detail: any) => detail.seatName).join(", ");
+                           }
+                           
+                           // Fallback: kiểm tra từ seatNames nếu có
+                           if (item.seatNames && item.seatNames.length > 0) {
+                             return item.seatNames.join(", ");
+                           }
+                           
+                           // Fallback: kiểm tra từ seatName đơn lẻ
+                           if (item.seatName) {
+                             return item.seatName;
+                           }
+                           
+                           return "—";
+                         })()}
+                       </p>
+                     </div>
+                    <div>
+                      <span className="text-xs text-gray-500">Amount:</span>
+                      <p className="font-medium text-green-600">
+                        {item.finalAmount ? new Intl.NumberFormat('vi-VN').format(item.finalAmount) : "—"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden lg:block">
+            <Table
+              columns={columns}
+              dataSource={pagedData}
+              pagination={false}
+              bordered
+              size="middle"
+              loading={loading}
+              rowKey="bookingCode"
+                scroll={{ x: 800 }}
+            />
+            </div>
+            
+            {/* Pagination */}
+            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mt-6">
+              <span className="text-sm text-gray-600 text-center lg:text-left">
+                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} entries
+              </span>
+              <Pagination
+                current={currentPage}
+                pageSize={pageSize}
+                total={filteredData.length}
+                onChange={handlePageChange}
+                showSizeChanger={false}
+                showQuickJumper
+                size="default"
+                className="flex justify-center lg:justify-end"
+              />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
