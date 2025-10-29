@@ -18,6 +18,7 @@ import { Modal } from 'antd';
 import CustomerInfoForm from "@/components/employee/CustomerInfoForm";
 import { Role } from "@/constants/roles";
 import axiosClient from "@/api/axiosClient";
+import VNPayQRCode from "@/components/payment/VNPayQRCode";
 
 interface CustomerInfo {
   fullName: string;
@@ -394,6 +395,14 @@ export default function PaymentPage() {
                   ))}
                 </CardContent>
               </Card>
+
+              {/* Hiển thị QR Code cho tất cả phương thức thanh toán online */}
+              {selectedPaymentMethod && selectedPaymentMethod !== 'CASH' && bookingId && (
+                <VNPayQRCode 
+                  amount={bookingDetails?.finalAmount || bookingData.finalAmount || 0}
+                  bookingId={bookingId}
+                />
+              )}
             </div>
 
             {/* Right Column - Order Summary */}
