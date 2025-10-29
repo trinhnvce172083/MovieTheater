@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.schedule;
+package com.swp.MovieTheaterService.dto.schedule;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -60,4 +60,4 @@ public class BulkScheduleCreateRequest {
         private String subtitleLanguage = "Vietnamese";
         private String audioLanguage = "Vietnamese";
     }
-} 
+}

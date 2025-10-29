@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.validator;
+package com.swp.MovieTheaterService.validator;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
@@ -28,4 +28,4 @@ public @interface CustomConstraint {
     int min() default 0;
 
     int max() default Integer.MAX_VALUE;
-} 
+}

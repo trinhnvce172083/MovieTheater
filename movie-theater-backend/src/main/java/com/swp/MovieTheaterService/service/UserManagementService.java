@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.user.*;
 import com.swp.MovieTheaterService.entity.Account;

@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.exception;
+package com.swp.MovieTheaterService.exception;
 
 import lombok.Getter;
 

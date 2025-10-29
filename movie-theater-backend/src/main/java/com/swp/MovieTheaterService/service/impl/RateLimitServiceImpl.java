@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service.impl;
+package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.service.RateLimitService;
 import lombok.extern.slf4j.Slf4j;
@@ -117,4 +117,4 @@ public class RateLimitServiceImpl implements RateLimitService {
             attemptsByTime.entrySet().removeIf(entry -> entry.getKey().isBefore(cutoff));
         }
     }
-} 
+}

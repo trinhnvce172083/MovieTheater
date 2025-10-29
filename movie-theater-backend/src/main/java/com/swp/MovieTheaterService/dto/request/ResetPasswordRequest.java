@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.request;
+package com.swp.MovieTheaterService.dto.request;
 
 import com.swp.MovieTheaterService.validator.PasswordMatching;
 import jakarta.validation.constraints.NotBlank;
@@ -32,4 +32,4 @@ public class ResetPasswordRequest {
 
     @NotBlank(message = "Xác nhận mật khẩu không được để trống")
     private String confirmPassword;
-} 
+}

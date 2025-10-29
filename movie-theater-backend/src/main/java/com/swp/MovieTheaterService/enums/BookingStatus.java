@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.enums;
+package com.swp.MovieTheaterService.enums;
 
 /**
  * BookingStatus Enum - Booking Status
@@ -47,4 +47,4 @@ public enum BookingStatus {
     public boolean isActive() {
         return this == PENDING || this == CONFIRMED || this == PAID;
     }
-} 
+}

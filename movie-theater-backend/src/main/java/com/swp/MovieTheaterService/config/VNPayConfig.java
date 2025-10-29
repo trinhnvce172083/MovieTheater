@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.config;
+package com.swp.MovieTheaterService.config;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,4 +39,4 @@ public class VNPayConfig {
     
     @Value("${vnpay.apiUrl:https://sandbox.vnpayment.vn/merchant_webapi/api/transaction}")
     private String apiUrl;
-} 
+}

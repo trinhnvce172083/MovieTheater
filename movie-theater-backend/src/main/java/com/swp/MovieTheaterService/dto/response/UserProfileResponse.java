@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.response;
+package com.swp.MovieTheaterService.dto.response;
 
 import com.swp.MovieTheaterService.enums.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -71,4 +71,4 @@ public class UserProfileResponse {
 
     @Schema(description = "Last update date", example = "2024-01-15T10:30:00")
     private LocalDateTime updatedAt;
-} 
+}

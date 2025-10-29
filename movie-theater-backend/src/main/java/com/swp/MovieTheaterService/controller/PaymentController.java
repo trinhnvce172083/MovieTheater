@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.controller;
+package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.payment.*;
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
@@ -340,4 +340,4 @@ public class PaymentController {
         
         return request.getRemoteAddr();
     }
-} 
+}

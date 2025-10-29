@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.schedule;
+package com.swp.MovieTheaterService.schedule;
 
 import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.repository.AccountRepository;

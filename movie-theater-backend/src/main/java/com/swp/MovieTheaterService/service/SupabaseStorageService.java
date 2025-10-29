@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.config.SupabaseConfig;
 import com.swp.MovieTheaterService.exception.AppException;
@@ -182,4 +182,4 @@ public class SupabaseStorageService {
         return UUID.randomUUID().toString() + 
                (extension.isEmpty() ? "" : "." + extension);
     }
-} 
+}

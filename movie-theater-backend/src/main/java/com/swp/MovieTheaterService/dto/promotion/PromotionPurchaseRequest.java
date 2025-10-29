@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.promotion;
+package com.swp.MovieTheaterService.dto.promotion;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -23,4 +23,4 @@ public class PromotionPurchaseRequest {
     private Long promotionId;
 
     private String note; // Optional note from user
-} 
+}

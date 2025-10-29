@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service.impl;
+package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.dto.analytics.DashboardSummaryResponse;
 import com.swp.MovieTheaterService.dto.analytics.ReportRequest;
@@ -755,4 +755,4 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 "by_movie", "breakdown by movies"
         );
     }
-} 
+}

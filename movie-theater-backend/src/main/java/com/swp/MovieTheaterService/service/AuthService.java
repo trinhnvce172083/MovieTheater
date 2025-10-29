@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.request.ForgotPasswordRequest;
 import com.swp.MovieTheaterService.dto.request.LoginRequest;
@@ -144,4 +144,4 @@ public interface AuthService {
      * @return thông tin profile đã cập nhật
      */
     UserProfileResponse updateProfileWithAvatar(String username, String profileDataJson, MultipartFile avatarFile);
-} 
+}

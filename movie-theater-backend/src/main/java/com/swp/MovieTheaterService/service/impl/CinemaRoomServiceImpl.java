@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service.impl;
+package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.dto.cinema.*;
 import com.swp.MovieTheaterService.entity.CinemaRoom;
@@ -537,4 +537,4 @@ public class CinemaRoomServiceImpl implements CinemaRoomService {
         
         return overview;
     }
-} 
+}

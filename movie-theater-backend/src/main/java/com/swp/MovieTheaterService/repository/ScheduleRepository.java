@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.repository;
+package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.Schedule;
 import org.springframework.data.domain.Page;

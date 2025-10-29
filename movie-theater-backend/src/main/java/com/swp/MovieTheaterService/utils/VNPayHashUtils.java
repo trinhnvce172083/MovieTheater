@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.utils;
+package com.swp.MovieTheaterService.utils;
 
 import com.swp.MovieTheaterService.exception.AppException;
 import com.swp.MovieTheaterService.exception.ErrorCode;
@@ -125,4 +125,4 @@ public class VNPayHashUtils {
             throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         }
     }
-} 
+}

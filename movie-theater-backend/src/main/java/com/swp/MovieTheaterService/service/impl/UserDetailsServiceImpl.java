@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service.impl;
+package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.repository.AccountRepository;
@@ -36,4 +36,4 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         log.debug("Successfully loaded user details for: {}", username);
         return account;
     }
-} 
+}

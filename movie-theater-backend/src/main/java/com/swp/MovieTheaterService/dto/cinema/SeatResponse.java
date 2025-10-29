@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.cinema;
+package com.swp.MovieTheaterService.dto.cinema;
 
 import com.swp.MovieTheaterService.enums.SeatStatus;
 import lombok.AllArgsConstructor;
@@ -46,4 +46,4 @@ public class SeatResponse {
     private Boolean isCouple;
     private Boolean isWheelchair;
     private Boolean isPremium;
-} 
+}

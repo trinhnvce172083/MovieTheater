@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.movie;
+package com.swp.MovieTheaterService.dto.movie;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -85,4 +85,4 @@ public class MovieCreateRequest {
 
     @Min(value = 0, message = "Doanh thu phải lớn hơn hoặc bằng 0")
     private Long boxOffice;
-} 
+}

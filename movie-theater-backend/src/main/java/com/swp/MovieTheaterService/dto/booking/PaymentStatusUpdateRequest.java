@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.booking;
+package com.swp.MovieTheaterService.dto.booking;
 
 import com.swp.MovieTheaterService.enums.PaymentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;

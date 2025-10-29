@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.loyalty;
+package com.swp.MovieTheaterService.dto.loyalty;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,4 +31,4 @@ public class LoyaltyTransactionResponse {
     private String redeemRate;
     private Integer discountAmount;
     private Integer amountSpent;
-} 
+}

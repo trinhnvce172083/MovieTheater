@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.enums;
+package com.swp.MovieTheaterService.enums;
 
 /**
  * PaymentStatus Enum - Payment Status
@@ -124,4 +124,4 @@ public enum PaymentStatus {
                 return "secondary"; // Gray
         }
     }
-} 
+}

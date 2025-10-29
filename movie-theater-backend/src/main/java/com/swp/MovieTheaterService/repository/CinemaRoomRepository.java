@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.repository;
+package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.CinemaRoom;
 import com.swp.MovieTheaterService.enums.RoomType;
@@ -141,4 +141,4 @@ public interface CinemaRoomRepository extends JpaRepository<CinemaRoom, Long> {
      * Check if room name exists
      */
     boolean existsByCinemaRoomName(String cinemaRoomName);
-} 
+}

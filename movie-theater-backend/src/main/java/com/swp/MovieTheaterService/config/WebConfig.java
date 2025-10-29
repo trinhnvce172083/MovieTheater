@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.config;
+package com.swp.MovieTheaterService.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;

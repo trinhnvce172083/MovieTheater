@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.controller;
+package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.loyalty.*;
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
@@ -60,4 +60,4 @@ public class LoyaltyController {
     }
 
 
-} 
+}

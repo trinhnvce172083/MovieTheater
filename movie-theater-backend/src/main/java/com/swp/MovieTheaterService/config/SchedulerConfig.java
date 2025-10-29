@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.config;
+package com.swp.MovieTheaterService.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;

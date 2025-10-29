@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.entity.Booking;
@@ -279,4 +279,4 @@ public class LoyaltyService {
             return "BRONZE";
         }
     }
-} 
+}

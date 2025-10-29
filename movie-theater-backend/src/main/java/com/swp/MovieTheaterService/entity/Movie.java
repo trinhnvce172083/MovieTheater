@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.entity;
+package com.swp.MovieTheaterService.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -149,4 +149,4 @@ public class Movie extends BaseEntity {
     public void setGenre(String genre) {
         this.genres = genre;
     }
-} 
+}

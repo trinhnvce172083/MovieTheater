@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.cinema;
+package com.swp.MovieTheaterService.dto.cinema;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -43,4 +43,4 @@ public class CinemaRoomResponse {
     private Integer occupiedSeats;
     private Integer temporarilyReservedSeats;
     private Integer scheduleCount; // Number of schedules for this room
-} 
+}

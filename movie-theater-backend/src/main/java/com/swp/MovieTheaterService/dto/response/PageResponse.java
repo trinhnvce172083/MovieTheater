@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.response;
+package com.swp.MovieTheaterService.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

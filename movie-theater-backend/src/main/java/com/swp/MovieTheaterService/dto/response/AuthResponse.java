@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.response;
+package com.swp.MovieTheaterService.dto.response;
 
 import com.swp.MovieTheaterService.enums.Role;
 import lombok.AllArgsConstructor;
@@ -31,4 +31,4 @@ public class AuthResponse {
         private Role role;
         private boolean emailVerified;
     }
-} 
+}

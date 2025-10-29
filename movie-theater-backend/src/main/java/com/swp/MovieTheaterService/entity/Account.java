@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.entity;
+package com.swp.MovieTheaterService.entity;
 
 import com.swp.MovieTheaterService.enums.Role;
 import jakarta.persistence.*;
@@ -282,4 +282,4 @@ public class Account extends BaseEntity implements UserDetails {
         this.accountLockedUntil = null;
         this.lastFailedLogin = null;
     }
-} 
+}

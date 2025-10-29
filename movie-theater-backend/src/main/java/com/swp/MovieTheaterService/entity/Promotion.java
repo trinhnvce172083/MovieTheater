@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.entity;
+package com.swp.MovieTheaterService.entity;
 
 import com.swp.MovieTheaterService.enums.DiscountType;
 import jakarta.persistence.*;
@@ -197,4 +197,4 @@ public class Promotion extends BaseEntity {
     public String getPromotionCode() {
         return promotionCode;
     }
-} 
+}

@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.exception;
+package com.swp.MovieTheaterService.exception;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -25,4 +25,4 @@ public class MultipleParameterValidationException extends RuntimeException {
     public List<String> getMissingParameters() {
         return missingParameters;
     }
-} 
+}

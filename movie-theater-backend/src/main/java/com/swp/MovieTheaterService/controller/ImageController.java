@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.controller;
+package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.service.ImageManagementService;
@@ -199,4 +199,4 @@ public class ImageController {
             return ResponseEntity.internalServerError().body(response);
         }
     }
-} 
+}

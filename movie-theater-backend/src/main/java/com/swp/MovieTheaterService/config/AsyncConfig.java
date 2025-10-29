@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.config;
+package com.swp.MovieTheaterService.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,4 +30,4 @@ public class AsyncConfig {
         executor.initialize();
         return executor;
     }
-} 
+}

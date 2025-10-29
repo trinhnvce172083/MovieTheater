@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.entity;
+package com.swp.MovieTheaterService.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -94,4 +94,4 @@ public class BookingConcession {
             getTotalPriceDisplay()
         );
     }
-} 
+}

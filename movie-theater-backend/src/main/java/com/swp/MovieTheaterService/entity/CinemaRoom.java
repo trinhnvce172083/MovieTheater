@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.entity;
+package com.swp.MovieTheaterService.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -102,4 +102,4 @@ public class CinemaRoom extends BaseEntity {
     public double calculatePrice(double basePrice) {
         return basePrice * priceMultiplier;
     }
-} 
+}

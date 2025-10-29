@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.config;
+package com.swp.MovieTheaterService.config;
 
 import com.swp.MovieTheaterService.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;

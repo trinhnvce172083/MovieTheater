@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.loyalty;
+package com.swp.MovieTheaterService.dto.loyalty;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,4 +19,4 @@ public class LoyaltyBonusRequest {
     private Long userId;
     private Integer bonusPoints;
     private String reason;
-} 
+}

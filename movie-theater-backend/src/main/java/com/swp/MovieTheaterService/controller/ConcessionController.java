@@ -1,12 +1,14 @@
-﻿package com.swp.MovieTheaterService.controller;
+package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
+import com.swp.MovieTheaterService.dto.cinema.ConcessionDTO;
 import com.swp.MovieTheaterService.entity.Concession;
 import com.swp.MovieTheaterService.enums.ConcessionCategory;
 import com.swp.MovieTheaterService.service.ConcessionService;
 import com.swp.MovieTheaterService.service.ImageManagementService;
 import com.swp.MovieTheaterService.utils.ImageUtils;
 import com.swp.MovieTheaterService.dto.cinema.ConcessionCreateRequest;
+import com.swp.MovieTheaterService.mapper.ConcessionMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,6 +43,7 @@ public class ConcessionController {
 
     private final ConcessionService concessionService;
     private final ImageManagementService imageManagementService;
+    private final ConcessionMapper concessionMapper;
 
     // ==================== PUBLIC READ OPERATIONS ====================
 
@@ -49,17 +52,18 @@ public class ConcessionController {
      */
     @GetMapping
     @Operation(summary = "Get all concessions", description = "Get all available concessions for customers")
-    public ResponseEntity<ApiResponse<List<Concession>>> getAllConcessions() {
+    public ResponseEntity<ApiResponse<List<ConcessionDTO>>> getAllConcessions() {
         log.info("GET /api/concessions - Getting all available concessions");
         
         List<Concession> concessions = concessionService.getAllAvailableConcessions();
+        List<ConcessionDTO> concessionDTOs = concessionMapper.toDTOList(concessions);
         
-        log.info("Found {} available concessions", concessions.size());
+        log.info("Found {} available concessions", concessionDTOs.size());
 
-        ApiResponse<List<Concession>> apiResponse = ApiResponse.<List<Concession>>builder()
+        ApiResponse<List<ConcessionDTO>> apiResponse = ApiResponse.<List<ConcessionDTO>>builder()
                 .success(true)
                 .message("Lấy danh sách đồ ăn thức uống thành công")
-                .data(concessions)
+                .data(concessionDTOs)
                 .build();
 
         return ResponseEntity.ok(apiResponse);
@@ -575,4 +579,4 @@ public class ConcessionController {
             return ResponseEntity.badRequest().build();
         }
     }
-} 
+}

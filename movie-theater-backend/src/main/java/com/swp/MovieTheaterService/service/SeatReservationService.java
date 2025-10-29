@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -141,4 +141,4 @@ public interface SeatReservationService {
         public LocalDateTime getReservationExpiry() { return reservationExpiry; }
         public void setReservationExpiry(LocalDateTime reservationExpiry) { this.reservationExpiry = reservationExpiry; }
     }
-} 
+}

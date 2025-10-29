@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service.impl;
+package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.config.VNPayConfig;
 import com.swp.MovieTheaterService.dto.payment.VNPayPaymentRequestDTO;
@@ -353,4 +353,4 @@ public class VNPayServiceImpl implements VNPayService {
                 "Message", message
         );
     }
-} 
+}

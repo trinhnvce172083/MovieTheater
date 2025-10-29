@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.cinema;
+package com.swp.MovieTheaterService.dto.cinema;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -61,4 +61,4 @@ public class CinemaRoomCreateRequest {
         }
         return true; // Let other validations handle null cases
     }
-} 
+}

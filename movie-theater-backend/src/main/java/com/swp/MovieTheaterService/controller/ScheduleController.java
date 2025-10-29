@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.controller;
+package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.schedule.*;
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
@@ -280,4 +280,4 @@ public class ScheduleController {
 
         return ResponseEntity.ok(apiResponse);
     }
-} 
+}

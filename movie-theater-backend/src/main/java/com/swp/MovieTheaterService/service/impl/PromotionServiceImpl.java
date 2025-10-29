@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service.impl;
+package com.swp.MovieTheaterService.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -310,4 +310,4 @@ public class PromotionServiceImpl implements PromotionService {
         promotion.setCodeValidityHours(request.getCodeValidityHour());
         return promotion;
     }
-} 
+}

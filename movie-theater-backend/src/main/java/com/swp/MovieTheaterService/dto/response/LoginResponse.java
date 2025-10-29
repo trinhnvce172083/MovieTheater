@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.response;
+package com.swp.MovieTheaterService.dto.response;
 
 import com.swp.MovieTheaterService.entity.Account;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -124,4 +124,4 @@ public class LoginResponse {
                 .message("Login successful")
                 .build();
     }
-} 
+}

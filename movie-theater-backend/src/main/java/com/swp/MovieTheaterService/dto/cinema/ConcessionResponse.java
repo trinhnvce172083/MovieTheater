@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.cinema;
+package com.swp.MovieTheaterService.dto.cinema;
 
 import com.swp.MovieTheaterService.enums.ConcessionCategory;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -90,4 +90,4 @@ public class ConcessionResponse {
     public boolean isAvailableForOrder() {
         return isAvailable != null && isAvailable && isInStock();
     }
-} 
+}

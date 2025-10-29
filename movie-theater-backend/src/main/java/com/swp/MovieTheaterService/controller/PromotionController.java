@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.controller;
+package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.entity.Promotion;
 import com.swp.MovieTheaterService.entity.Account;
@@ -560,4 +560,4 @@ public class PromotionController {
                     .build());
         }
     }
-} 
+}

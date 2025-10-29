@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.loyalty;
+package com.swp.MovieTheaterService.dto.loyalty;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -122,4 +122,4 @@ public class LoyaltyPointsResponse {
             default: return "BRONZE";
         }
     }
-} 
+}

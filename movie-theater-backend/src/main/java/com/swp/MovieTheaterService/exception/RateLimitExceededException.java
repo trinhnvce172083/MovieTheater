@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.exception;
+package com.swp.MovieTheaterService.exception;
 
 /**
  * Rate Limit Exceeded Exception
@@ -16,4 +16,4 @@ public class RateLimitExceededException extends RuntimeException {
     public RateLimitExceededException(String message, Throwable cause) {
         super(message, cause);
     }
-} 
+}

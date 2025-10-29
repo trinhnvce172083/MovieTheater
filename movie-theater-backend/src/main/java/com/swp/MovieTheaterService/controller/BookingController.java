@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.controller;
+package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.booking.BookingCreateRequest;
 import com.swp.MovieTheaterService.dto.booking.BookingResponse;

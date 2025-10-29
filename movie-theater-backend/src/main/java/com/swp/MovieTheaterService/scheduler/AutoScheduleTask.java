@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.scheduler;
+package com.swp.MovieTheaterService.scheduler;
 
 import com.swp.MovieTheaterService.service.AutoScheduleService;
 import com.swp.MovieTheaterService.service.AutoScheduleService.AutoScheduleResult;

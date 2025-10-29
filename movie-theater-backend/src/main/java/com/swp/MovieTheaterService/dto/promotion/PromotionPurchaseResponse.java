@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.promotion;
+package com.swp.MovieTheaterService.dto.promotion;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,4 +29,4 @@ public class PromotionPurchaseResponse {
     private LocalDateTime purchasedAt;
     private String discountDisplayText;
     private String statusMessage;
-} 
+}

@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.request;
+package com.swp.MovieTheaterService.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -34,4 +34,4 @@ public class LoginRequest {
 
     @Schema(description = "Remember me option", example = "true")
     private Boolean rememberMe = false;
-} 
+}

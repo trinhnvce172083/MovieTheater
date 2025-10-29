@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.controller;
+package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.config.documentation.OpenApiExamples;
 import com.swp.MovieTheaterService.dto.payment.VNPayPaymentRequestDTO;
@@ -135,4 +135,4 @@ public class VNPayController {
             return ResponseEntity.status(500).body(apiResponse);
         }
     }
-} 
+}

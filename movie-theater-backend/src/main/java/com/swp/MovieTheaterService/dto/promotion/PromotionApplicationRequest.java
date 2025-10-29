@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.promotion;
+package com.swp.MovieTheaterService.dto.promotion;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,4 +23,4 @@ public class PromotionApplicationRequest {
 
     @NotNull(message = "Booking ID is required")
     private Long bookingId;
-} 
+}

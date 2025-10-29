@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.entity;
+package com.swp.MovieTheaterService.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -116,4 +116,4 @@ public class LoyaltyTransaction extends BaseEntity {
         transaction.setUpdatedAt(LocalDateTime.now());
         return transaction;
     }
-} 
+}

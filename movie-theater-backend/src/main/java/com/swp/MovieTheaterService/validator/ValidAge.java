@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.validator;
+package com.swp.MovieTheaterService.validator;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
@@ -26,4 +26,4 @@ public @interface ValidAge {
     int min() default 13;
     
     int max() default 120;
-} 
+}

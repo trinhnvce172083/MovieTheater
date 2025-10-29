@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.repository;
+package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.Promotion;
 import com.swp.MovieTheaterService.enums.DiscountType;
@@ -105,4 +105,4 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
     // Find by code (case insensitive)
     @Query("SELECT p FROM Promotion p WHERE LOWER(p.promotionCode) = LOWER(:code)")
     Optional<Promotion> findByPromotionCodeIgnoreCase(@Param("code") String code);
-} 
+}

@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service.impl;
+package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.dto.booking.BookingResponse;
 import com.swp.MovieTheaterService.service.EmailService;

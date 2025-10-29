@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.entity.Promotion;
@@ -97,4 +97,4 @@ public interface UserPromotionCodeService {
      * Validate user promotion code
      */
     boolean isValidUserPromotionCode(String uniqueCode, Account account);
-} 
+}

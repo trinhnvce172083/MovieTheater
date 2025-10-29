@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service.impl;
+package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.entity.Promotion;
@@ -186,4 +186,4 @@ public class UserPromotionCodeServiceImpl implements UserPromotionCodeService {
         // Check if code is valid
         return userPromotionCode.isValid();
     }
-} 
+}

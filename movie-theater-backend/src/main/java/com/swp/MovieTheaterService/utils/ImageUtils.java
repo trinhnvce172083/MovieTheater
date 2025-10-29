@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.utils;
+package com.swp.MovieTheaterService.utils;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -71,4 +71,4 @@ public class ImageUtils {
         
         return "File hợp lệ";
     }
-} 
+}

@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.mapper;
+package com.swp.MovieTheaterService.mapper;
 
 import com.swp.MovieTheaterService.dto.cinema.CinemaRoomCreateRequest;
 import com.swp.MovieTheaterService.dto.cinema.CinemaRoomResponse;
@@ -117,4 +117,4 @@ public class CinemaRoomMapper {
 
         return response;
     }
-} 
+}

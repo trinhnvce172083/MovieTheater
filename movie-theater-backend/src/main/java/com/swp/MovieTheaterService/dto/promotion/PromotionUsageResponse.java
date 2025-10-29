@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.promotion;
+package com.swp.MovieTheaterService.dto.promotion;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -38,4 +38,4 @@ public class PromotionUsageResponse {
         private Integer usageCount;
         private Double totalDiscount;
     }
-} 
+}

@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.enums;
+package com.swp.MovieTheaterService.enums;
 
 /**
  * RefundStatus Enum - Refund Status
@@ -186,4 +186,4 @@ public enum RefundStatus {
                 return false; // Terminal states cannot transition
         }
     }
-} 
+}

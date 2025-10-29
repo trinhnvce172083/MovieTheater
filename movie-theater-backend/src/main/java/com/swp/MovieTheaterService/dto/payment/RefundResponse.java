@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.payment;
+package com.swp.MovieTheaterService.dto.payment;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -112,4 +112,4 @@ public class RefundResponse {
                 return 7; // 7 days for others
         }
     }
-} 
+}

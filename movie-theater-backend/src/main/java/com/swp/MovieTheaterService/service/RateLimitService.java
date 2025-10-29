@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 /**
  * Rate Limiting Service Interface
@@ -60,4 +60,4 @@ public interface RateLimitService {
      * @param ipAddress client IP address
      */
     void clearRateLimit(String ipAddress);
-} 
+}

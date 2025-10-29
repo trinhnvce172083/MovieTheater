@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.repository;
+package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.Concession;
 import com.swp.MovieTheaterService.enums.ConcessionCategory;
@@ -41,4 +41,4 @@ public interface ConcessionRepository extends JpaRepository<Concession, Long> {
     // Find by name containing
     @Query("SELECT c FROM Concession c WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%')) AND c.isActive = true ORDER BY c.displayOrder")
     List<Concession> findByNameContainingIgnoreCase(@Param("name") String name);
-} 
+}

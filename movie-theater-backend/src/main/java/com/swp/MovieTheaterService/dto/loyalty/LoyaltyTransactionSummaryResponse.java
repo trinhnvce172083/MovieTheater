@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.loyalty;
+package com.swp.MovieTheaterService.dto.loyalty;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,4 +24,4 @@ public class LoyaltyTransactionSummaryResponse {
     private String description;
     private LocalDateTime transactionDate;
     private Boolean isExpiring;
-} 
+}

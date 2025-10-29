@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.movie;
+package com.swp.MovieTheaterService.dto.movie;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;

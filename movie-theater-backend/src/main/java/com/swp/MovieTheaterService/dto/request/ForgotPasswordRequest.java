@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.request;
+package com.swp.MovieTheaterService.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -21,4 +21,4 @@ public class ForgotPasswordRequest {
     @NotBlank(message = "Email không được để trống")
     @Email(message = "Email không hợp lệ", regexp = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
     private String email;
-} 
+}

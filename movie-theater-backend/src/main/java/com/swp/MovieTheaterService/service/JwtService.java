@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.entity.Account;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -102,4 +102,4 @@ public interface JwtService {
     String generateToken(UserDetails userDetails);
     
     Long getExpirationTime();
-} 
+}

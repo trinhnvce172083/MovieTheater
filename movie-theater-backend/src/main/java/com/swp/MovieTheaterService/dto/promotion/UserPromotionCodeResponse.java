@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.promotion;
+package com.swp.MovieTheaterService.dto.promotion;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,4 +38,4 @@ public class UserPromotionCodeResponse {
     private Long bookingId;
     private String movieTitle;
     private String showTime;
-} 
+}

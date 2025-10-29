@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.utils;
+package com.swp.MovieTheaterService.utils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -126,4 +126,4 @@ public class DateTimeUtils {
                 dateTime != null ? dateTime.toString() : "null",
                 formatForDisplay(dateTime));
     }
-} 
+}

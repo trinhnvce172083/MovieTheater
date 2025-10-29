@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.cinema;
+package com.swp.MovieTheaterService.dto.cinema;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -47,4 +47,4 @@ public class SeatLayoutRequest {
         
         private Double priceMultiplier = 1.0;
     }
-} 
+}

@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.cinema;
+package com.swp.MovieTheaterService.dto.cinema;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
@@ -64,4 +64,4 @@ public class ConcessionCreateRequest {
     @Min(value = 0, message = "Thứ tự hiển thị phải lớn hơn hoặc bằng 0")
     @Schema(description = "Thứ tự hiển thị", example = "1")
     private Integer displayOrder;
-} 
+}

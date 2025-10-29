@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.entity;
+package com.swp.MovieTheaterService.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -105,4 +105,4 @@ public class UserPromotionCode {
         if (isExpired()) return "Đã hết hạn";
         return "Có thể sử dụng";
     }
-} 
+}

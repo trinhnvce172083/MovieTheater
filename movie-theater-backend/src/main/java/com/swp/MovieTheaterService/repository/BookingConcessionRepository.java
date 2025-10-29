@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.repository;
+package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.BookingConcession;
 import org.springframework.data.jpa.repository.JpaRepository;

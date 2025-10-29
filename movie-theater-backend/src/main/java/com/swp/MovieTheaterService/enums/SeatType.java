@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.enums;
+package com.swp.MovieTheaterService.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

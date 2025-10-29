@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.movie.MovieCreateRequest;
 import com.swp.MovieTheaterService.dto.movie.MovieFilterRequest;
@@ -208,4 +208,4 @@ public interface MovieService {
         public Double getAveragePrice() { return averagePrice; }
         public void setAveragePrice(Double averagePrice) { this.averagePrice = averagePrice; }
     }
-} 
+}

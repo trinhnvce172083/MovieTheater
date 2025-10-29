@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.payment;
+package com.swp.MovieTheaterService.dto.payment;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -33,4 +33,4 @@ public class VNPayPaymentRequestDTO {
     private String returnUrl;
     
     private String cancelUrl;
-} 
+}

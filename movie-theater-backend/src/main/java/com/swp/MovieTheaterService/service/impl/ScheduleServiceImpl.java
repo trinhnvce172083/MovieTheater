@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service.impl;
+package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.dto.schedule.*;
 import com.swp.MovieTheaterService.entity.CinemaRoom;
@@ -910,4 +910,4 @@ public class ScheduleServiceImpl implements ScheduleService {
         if (hour >= 18 && hour < 22) return "EVENING";
         return "NIGHT";
     }
-} 
+}

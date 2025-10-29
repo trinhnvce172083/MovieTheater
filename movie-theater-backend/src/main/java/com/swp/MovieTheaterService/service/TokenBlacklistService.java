@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 /**
  * Token Blacklist Service Interface
@@ -35,4 +35,4 @@ public interface TokenBlacklistService {
      * @return number of blacklisted tokens
      */
     int getBlacklistSize();
-} 
+}

@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.movie;
+package com.swp.MovieTheaterService.dto.movie;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -32,4 +32,4 @@ public class MovieSummaryResponse {
     private Double imdbRating;
     private Boolean isFeatured;
     private Boolean isAdultContent;
-} 
+}

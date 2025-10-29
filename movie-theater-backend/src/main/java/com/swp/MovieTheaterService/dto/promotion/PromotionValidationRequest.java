@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.promotion;
+package com.swp.MovieTheaterService.dto.promotion;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,4 +31,4 @@ public class PromotionValidationRequest {
     private Long roomId;
     private String showDate;
     private String showTime;
-} 
+}

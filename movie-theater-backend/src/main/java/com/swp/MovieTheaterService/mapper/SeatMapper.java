@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.mapper;
+package com.swp.MovieTheaterService.mapper;
 
 import com.swp.MovieTheaterService.dto.cinema.SeatResponse;
 import com.swp.MovieTheaterService.entity.Seat;
@@ -55,4 +55,4 @@ public class SeatMapper {
 
         return response;
     }
-} 
+}

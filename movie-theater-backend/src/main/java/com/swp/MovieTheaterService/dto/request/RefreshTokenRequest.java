@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.request;
+package com.swp.MovieTheaterService.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -24,4 +24,4 @@ public class RefreshTokenRequest {
     @NotBlank(message = "Refresh token không được để trống")
     @Schema(description = "JWT refresh token", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
     private String refreshToken;
-} 
+}

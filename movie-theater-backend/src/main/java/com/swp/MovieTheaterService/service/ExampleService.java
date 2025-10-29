@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.entity.Account;
@@ -188,4 +188,4 @@ public class ExampleService {
         // Transfer logic here...
         log.info("Points transfer completed successfully");
     }
-} 
+}

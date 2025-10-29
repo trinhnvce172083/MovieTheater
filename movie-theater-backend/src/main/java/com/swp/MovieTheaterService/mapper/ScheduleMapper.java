@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.mapper;
+package com.swp.MovieTheaterService.mapper;
 
 import com.swp.MovieTheaterService.dto.schedule.ScheduleCreateRequest;
 import com.swp.MovieTheaterService.dto.schedule.ScheduleResponse;

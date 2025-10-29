@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.movie;
+package com.swp.MovieTheaterService.dto.movie;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -67,4 +67,4 @@ public class MovieListResponse {
         private boolean isAdultContent;
         private boolean availableToday;
     }
-} 
+}

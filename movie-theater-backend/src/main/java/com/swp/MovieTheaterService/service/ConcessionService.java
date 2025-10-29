@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.entity.Concession;
 import com.swp.MovieTheaterService.enums.ConcessionCategory;
@@ -77,4 +77,4 @@ public interface ConcessionService {
      * Update stock quantity (decrease for orders)
      */
     void updateStock(Long concessionId, Integer quantity);
-} 
+}

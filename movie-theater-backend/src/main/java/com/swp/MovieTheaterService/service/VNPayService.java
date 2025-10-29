@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.payment.VNPayPaymentRequestDTO;
 import org.springframework.lang.NonNull;
@@ -38,4 +38,4 @@ public interface VNPayService {
      * @return phản hồi cho VNPay
      */
     Map<String, String> processIPNResponse(@NonNull Map<String, String> response);
-} 
+}

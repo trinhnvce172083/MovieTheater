@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.exception;
+package com.swp.MovieTheaterService.exception;
 
 /**
  * Application Exception - Enhanced Professional Version

@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.payment.PaymentRequest;
 import com.swp.MovieTheaterService.dto.payment.PaymentResponse;
@@ -143,4 +143,4 @@ public interface PaymentService {
         public java.time.LocalDateTime getUpdatedAt() { return updatedAt; }
         public void setUpdatedAt(java.time.LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     }
-} 
+}

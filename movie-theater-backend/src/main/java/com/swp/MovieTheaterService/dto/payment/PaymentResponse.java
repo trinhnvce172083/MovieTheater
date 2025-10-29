@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.payment;
+package com.swp.MovieTheaterService.dto.payment;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -106,4 +106,4 @@ public class PaymentResponse {
         if (amount == null) return "";
         return String.format("%,.0f %s", amount, currency != null ? currency : "VND");
     }
-} 
+}

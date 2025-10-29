@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.config.properties;
+package com.swp.MovieTheaterService.config.properties;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -42,4 +42,4 @@ public class ApplicationProperties {
         private int defaultPageSize = 20;
         private int maxPageSize = 100;
     }
-} 
+}

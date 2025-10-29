@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.payment;
+package com.swp.MovieTheaterService.dto.payment;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -123,4 +123,4 @@ public class PaymentRequest {
     public boolean isMobilePayment() {
         return "MOBILE".equals(deviceType);
     }
-} 
+}

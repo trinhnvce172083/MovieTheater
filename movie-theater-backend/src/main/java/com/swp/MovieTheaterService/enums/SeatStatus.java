@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.enums;
+package com.swp.MovieTheaterService.enums;
 
 /**
  * SeatStatus Enum - Seat Status
@@ -37,4 +37,4 @@ public enum SeatStatus {
     public boolean isBookable() {
         return this == AVAILABLE;
     }
-} 
+}

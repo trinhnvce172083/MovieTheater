@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.booking;
+package com.swp.MovieTheaterService.dto.booking;
 
 import com.swp.MovieTheaterService.enums.BookingStatus;
 import jakarta.validation.constraints.*;
@@ -67,4 +67,4 @@ public class BookingUpdateRequest {
     public boolean isStatusUpdate() {
         return bookingStatus != null;
     }
-} 
+}

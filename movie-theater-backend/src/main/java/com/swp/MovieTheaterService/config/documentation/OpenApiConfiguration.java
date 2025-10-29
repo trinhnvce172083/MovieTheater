@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.config.documentation;
+package com.swp.MovieTheaterService.config.documentation;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.ExternalDocumentation;
@@ -205,4 +205,4 @@ public class OpenApiConfiguration {
                         .description("Cấu trúc phản hồi khi có lỗi")
                         .value(OpenApiExamples.ERROR_RESPONSE_EXAMPLE));
     }
-} 
+}

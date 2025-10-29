@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.schedule;
+package com.swp.MovieTheaterService.dto.schedule;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

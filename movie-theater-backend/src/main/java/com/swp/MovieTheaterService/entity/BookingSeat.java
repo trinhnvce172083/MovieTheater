@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.entity;
+package com.swp.MovieTheaterService.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.swp.MovieTheaterService.enums.SeatStatus;
@@ -99,4 +99,4 @@ public class BookingSeat extends BaseEntity {
     public void setIsActive(boolean isActive) {
         this.active = isActive;
     }
-} 
+}

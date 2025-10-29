@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.controller;
+package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.analytics.DashboardSummaryResponse;
 import com.swp.MovieTheaterService.dto.analytics.ReportRequest;
@@ -404,4 +404,4 @@ public class AnalyticsController {
             default: return MediaType.TEXT_PLAIN;
         }
     }
-} 
+}

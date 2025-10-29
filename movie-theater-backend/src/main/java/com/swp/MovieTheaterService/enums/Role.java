@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.enums;
+package com.swp.MovieTheaterService.enums;
 
 /**
  * Role Enum - User Roles
@@ -38,4 +38,4 @@ public enum Role {
     public boolean isCustomer() {
         return this == CUSTOMER;
     }
-} 
+}

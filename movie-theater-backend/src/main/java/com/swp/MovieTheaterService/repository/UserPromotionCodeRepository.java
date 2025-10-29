@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.repository;
+package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.Account;
 import com.swp.MovieTheaterService.entity.Promotion;
@@ -100,4 +100,4 @@ public interface UserPromotionCodeRepository extends JpaRepository<UserPromotion
 
     @Query("SELECT SUM(upc.pointsSpent) FROM UserPromotionCode upc WHERE upc.account = :account")
     Long sumPointsSpentByAccount(@Param("account") Account account);
-} 
+}

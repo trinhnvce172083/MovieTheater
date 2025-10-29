@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.validator;
+package com.swp.MovieTheaterService.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -37,4 +37,4 @@ public class ValidAgeValidator implements ConstraintValidator<ValidAge, LocalDat
         int age = Period.between(dateOfBirth, now).getYears();
         return age >= minAge && age <= maxAge;
     }
-} 
+}

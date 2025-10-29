@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.movie;
+package com.swp.MovieTheaterService.dto.movie;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,4 +47,4 @@ public class MovieFilterRequest {
     // Special filters
     private Boolean isAdultContent; // Filter based on rating
     private Boolean availableToday; // Has schedules today
-} 
+}

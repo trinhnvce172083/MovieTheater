@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.schedule;
+package com.swp.MovieTheaterService.dto.schedule;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -50,4 +50,4 @@ public class ScheduleSummaryResponse {
     private Double occupancyRate;
     private String specialFeatures;
     private String priceDisplay;
-} 
+}

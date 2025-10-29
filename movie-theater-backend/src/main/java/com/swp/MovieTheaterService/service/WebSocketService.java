@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import java.util.Map;
 
@@ -127,4 +127,4 @@ public interface WebSocketService {
         String CINEMA_UPDATES = "/topic/cinemas";
         String PAYMENT_UPDATES = "/queue/payments";
     }
-} 
+}

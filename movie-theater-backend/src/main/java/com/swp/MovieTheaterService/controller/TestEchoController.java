@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.controller;
+package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -114,4 +114,4 @@ public class TestEchoController {
         response.put("role", "EMPLOYEE");
         return ResponseEntity.ok(response);
     }
-} 
+}

@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.entity;
+package com.swp.MovieTheaterService.entity;
 
 import com.swp.MovieTheaterService.enums.BookingStatus;
 import jakarta.persistence.*;

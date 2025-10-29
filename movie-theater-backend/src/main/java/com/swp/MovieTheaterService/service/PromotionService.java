@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.entity.Promotion;
 import com.swp.MovieTheaterService.dto.promotion.PromotionCreateRequest;
@@ -68,4 +68,4 @@ public interface PromotionService {
     Long getActivePromotionsCount();
 
     Long getCurrentPromotionsCount();
-} 
+}

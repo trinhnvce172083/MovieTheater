@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.enums;
+package com.swp.MovieTheaterService.enums;
 
 /**
  * Discount Type Enumeration
@@ -60,4 +60,4 @@ public enum DiscountType {
     public boolean isPoints() {
         return this == POINTS;
     }
-} 
+}

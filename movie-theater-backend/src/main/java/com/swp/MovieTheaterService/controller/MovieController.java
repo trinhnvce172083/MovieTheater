@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.controller;
+package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.movie.MovieCreateRequest;
 import com.swp.MovieTheaterService.dto.movie.MovieFilterRequest;
@@ -119,7 +119,7 @@ public class MovieController {
             - **Preserve Original**: Giữ nguyên giá trị cũ nếu không gửi field
 
             **Examples:**
-            ```json
+            json
             {
               "title": "Updated Title",     // Update title
               "description": "CLEAR_FIELD", // Clear description (set to null)
@@ -127,13 +127,13 @@ public class MovieController {
               "price": 150000.0            // Update price
               // Other fields not sent -> keep original values
             }
-            ```
+            
 
             **Use Cases:**
-            1. Update chỉ title: `{"title": "New Title"}`
-            2. Clear description: `{"description": "CLEAR_FIELD"}`
-            3. Update multiple fields: `{"title": "New Title", "price": 200000.0}`
-            4. Mixed operations: `{"title": "New Title", "description": "CLEAR_FIELD", "genre": "Action"}`
+            1. Update chỉ title: {"title": "New Title"}
+            2. Clear description: {"description": "CLEAR_FIELD"}
+            3. Update multiple fields: {"title": "New Title", "price": 200000.0}
+            4. Mixed operations: {"title": "New Title", "description": "CLEAR_FIELD", "genre": "Action"}
             """)
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponse<MovieResponse>> updateMovie(

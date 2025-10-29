@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.enums;
+package com.swp.MovieTheaterService.enums;
 
 /**
  * ConcessionCategory Enum - Loại đồ ăn/uống
@@ -10,6 +10,7 @@
 public enum ConcessionCategory {
     POPCORN("Bắp rang", "Bắp rang với các vị khác nhau"),
     DRINKS("Nước uống", "Các loại nước uống"),
+    FOOD("Đồ ăn", "Các loại đồ ăn nhanh"),
     COMBO("Combo", "Combo đồ ăn/uống");
 
 
@@ -28,4 +29,4 @@ public enum ConcessionCategory {
     public String getDescription() {
         return description;
     }
-} 
+}

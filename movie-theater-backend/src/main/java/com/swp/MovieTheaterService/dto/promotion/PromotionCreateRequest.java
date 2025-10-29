@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.promotion;
+package com.swp.MovieTheaterService.dto.promotion;
 
 import lombok.Data;
 import jakarta.validation.constraints.*;
@@ -63,4 +63,4 @@ public class PromotionCreateRequest {
 
     @Positive(message = "Thời gian hiệu lực code phải lớn hơn 0")
     private Integer codeValidityHour = 24;
-} 
+}

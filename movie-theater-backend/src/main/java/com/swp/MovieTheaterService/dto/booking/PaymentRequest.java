@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.booking;
+package com.swp.MovieTheaterService.dto.booking;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -91,4 +91,4 @@ public class PaymentRequest {
     public Double getPaidAmount() {
         return amount;
     }
-} 
+}

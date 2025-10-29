@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.config;
+package com.swp.MovieTheaterService.config;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -30,4 +30,4 @@ public class SupabaseConfig {
                 .writeTimeout(Duration.ofSeconds(30))
                 .build();
     }
-} 
+}

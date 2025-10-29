@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.promotion;
+package com.swp.MovieTheaterService.dto.promotion;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -62,4 +62,4 @@ public class PromotionUpdateRequest {
     private Boolean isPointsPromotion;
     private Integer pointsRequired;
     private Integer pointsValue;
-} 
+}

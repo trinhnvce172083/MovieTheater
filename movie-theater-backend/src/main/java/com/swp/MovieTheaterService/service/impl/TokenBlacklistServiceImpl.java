@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service.impl;
+package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.service.JwtService;
 import com.swp.MovieTheaterService.service.TokenBlacklistService;
@@ -86,4 +86,4 @@ public class TokenBlacklistServiceImpl implements TokenBlacklistService {
     public int getBlacklistSize() {
         return blacklistedTokens.size();
     }
-} 
+}

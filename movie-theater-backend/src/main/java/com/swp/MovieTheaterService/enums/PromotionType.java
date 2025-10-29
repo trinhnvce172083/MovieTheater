@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.enums;
+package com.swp.MovieTheaterService.enums;
 
 /**
  * Promotion Type Enumeration
@@ -52,4 +52,4 @@ public enum PromotionType {
     public boolean isPointBased() {
         return this == POINT_BASED;
     }
-} 
+}

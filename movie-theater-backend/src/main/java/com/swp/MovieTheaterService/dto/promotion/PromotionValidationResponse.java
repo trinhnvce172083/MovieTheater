@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.promotion;
+package com.swp.MovieTheaterService.dto.promotion;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,4 +28,4 @@ public class PromotionValidationResponse {
     private String validationDetails;
     private Boolean canApply;
     private Long promotionId;
-} 
+}

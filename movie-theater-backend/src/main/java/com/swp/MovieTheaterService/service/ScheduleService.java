@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.schedule.*;
 import org.springframework.data.domain.Page;
@@ -333,4 +333,4 @@ public interface ScheduleService {
         public Double getAveragePrice() { return averagePrice; }
         public void setAveragePrice(Double averagePrice) { this.averagePrice = averagePrice; }
     }
-} 
+}

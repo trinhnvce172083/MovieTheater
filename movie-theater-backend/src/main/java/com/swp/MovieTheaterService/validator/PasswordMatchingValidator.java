@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.validator;
+package com.swp.MovieTheaterService.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

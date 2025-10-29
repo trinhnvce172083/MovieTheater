@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.analytics;
+package com.swp.MovieTheaterService.dto.analytics;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -221,4 +221,4 @@ public class ReportRequest {
         return startDate != null && endDate != null &&
                startDate.equals(startOfWeek) && endDate.equals(endOfWeek);
     }
-} 
+}

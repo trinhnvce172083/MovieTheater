@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.utils;
+package com.swp.MovieTheaterService.utils;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -80,4 +80,4 @@ public class IpUtils {
             return false;
         }
     }
-} 
+}

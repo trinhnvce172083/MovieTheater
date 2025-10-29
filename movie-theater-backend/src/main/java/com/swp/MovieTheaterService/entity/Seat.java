@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.entity;
+package com.swp.MovieTheaterService.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.swp.MovieTheaterService.enums.SeatStatus;
@@ -137,4 +137,4 @@ public class Seat extends BaseEntity {
         double basePrice = 100000.0; // 100,000 VND base price
         return basePrice * priceMultiplier;
     }
-} 
+}

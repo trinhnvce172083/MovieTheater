@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.payment;
+package com.swp.MovieTheaterService.dto.payment;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -49,4 +49,4 @@ public class RefundRequest {
     private String bankAccount;
     private String bankName;
     private String accountHolder;
-} 
+}

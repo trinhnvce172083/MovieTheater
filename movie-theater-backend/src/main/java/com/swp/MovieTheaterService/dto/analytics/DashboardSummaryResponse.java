@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.analytics;
+package com.swp.MovieTheaterService.dto.analytics;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -226,4 +226,4 @@ public class DashboardSummaryResponse {
         }
         return "0%";
     }
-} 
+}

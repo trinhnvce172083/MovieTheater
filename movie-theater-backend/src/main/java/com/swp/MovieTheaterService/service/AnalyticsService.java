@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.analytics.DashboardSummaryResponse;
 import com.swp.MovieTheaterService.dto.analytics.ReportRequest;
@@ -145,4 +145,4 @@ public interface AnalyticsService {
      * @return dữ liệu thời gian thực
      */
     Map<String, Object> getRealTimeStats();
-} 
+}

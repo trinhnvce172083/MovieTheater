@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.mapper;
+package com.swp.MovieTheaterService.mapper;
 
 import com.swp.MovieTheaterService.dto.booking.*;
 import com.swp.MovieTheaterService.entity.*;
@@ -337,4 +337,4 @@ public class BookingMapper {
             return "Không thể hủy vé";
         }
     }
-} 
+}

@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.response;
+package com.swp.MovieTheaterService.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,4 +16,4 @@ public class FileUploadResponse {
     private String fileName;
     private Long fileSize;
     private String contentType;
-} 
+}

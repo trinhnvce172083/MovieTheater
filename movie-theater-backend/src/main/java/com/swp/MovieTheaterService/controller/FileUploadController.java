@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.controller;
+package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
 import com.swp.MovieTheaterService.service.SupabaseStorageService;
@@ -125,4 +125,4 @@ public class FileUploadController {
             return ResponseEntity.internalServerError().body(apiResponse);
         }
     }
-} 
+}

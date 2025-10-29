@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.config.properties;
+package com.swp.MovieTheaterService.config.properties;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -33,4 +33,4 @@ public class EmailProperties {
         private String welcome = "email/welcome";
         private String passwordReset = "email/password-reset";
     }
-} 
+}

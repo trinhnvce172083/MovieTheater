@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.cinema;
+package com.swp.MovieTheaterService.dto.cinema;
 
 import com.swp.MovieTheaterService.enums.RoomType;
 import lombok.AllArgsConstructor;
@@ -60,4 +60,4 @@ public class CinemaRoomUpdateRequest {
     public Double getPriceMultiplier() {
         return 1.0; // Default value since field not in this DTO
     }
-} 
+}

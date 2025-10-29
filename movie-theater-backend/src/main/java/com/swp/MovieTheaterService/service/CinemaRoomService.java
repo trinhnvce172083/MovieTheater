@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service;
+package com.swp.MovieTheaterService.service;
 
 import com.swp.MovieTheaterService.dto.cinema.*;
 import org.springframework.data.domain.Page;
@@ -210,4 +210,4 @@ public interface CinemaRoomService {
         public Double getAveragePriceMultiplier() { return averagePriceMultiplier; }
         public void setAveragePriceMultiplier(Double averagePriceMultiplier) { this.averagePriceMultiplier = averagePriceMultiplier; }
     }
-} 
+}

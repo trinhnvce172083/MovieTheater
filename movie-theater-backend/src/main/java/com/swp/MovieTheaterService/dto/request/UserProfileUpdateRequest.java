@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.request;
+package com.swp.MovieTheaterService.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
@@ -48,4 +48,4 @@ public class UserProfileUpdateRequest {
 
     @Schema(description = "Accept marketing emails", example = "true")
     private Boolean acceptMarketing;
-} 
+}

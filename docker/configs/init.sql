@@ -1,12 +1,16 @@
 -- Movie Theater Database Initialization
--- Updated với phim thực tế từ tháng 6/2025 trở đi (ngày hiện tại: 12/06/2025)
+-- Updated với phim thực tế từ tháng 10/2025 trở đi (ngày hiện tại: 19/10/2025)
+
+-- Comment out for DBeaver execution (database already selected in connection)
+-- CREATE DATABASE IF NOT EXISTS cinema_db CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+-- USE cinema_db;
 
 SET NAMES utf8mb4;
 SET CHARACTER SET utf8mb4;
-CREATE DATABASE IF NOT EXISTS cinema_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE cinema_db;
-GRANT ALL PRIVILEGES ON cinema_db.* TO 'cinema_user'@'%';
-FLUSH PRIVILEGES;
+
+-- Comment out GRANT (requires root privileges)
+-- GRANT ALL PRIVILEGES ON cinema_db.* TO 'cinema_user'@'%';
+-- FLUSH PRIVILEGES;
 
 -- Account table
 CREATE TABLE IF NOT EXISTS movietheater_account (
@@ -233,7 +237,7 @@ CREATE TABLE IF NOT EXISTS movietheater_booking_seat (
 -- THÊM TÀI KHOẢN ADMIN VÀ MEMBER
 -- =============================================
 
--- Tạo tài khoản Admin
+-- Tạo tài khoản Admin 
 INSERT INTO movietheater_account (
     username,
     email,
@@ -298,185 +302,185 @@ INSERT INTO movietheater_account (
              NOW(),
              'SYSTEM'
          );
--- Employee 1: Trần Quang Thuận
-INSERT INTO movietheater_account (username,
-                                  email,
-                                  password,
-                                  full_name,
-                                  phone_number,
-                                  role,
-                                  is_active,
-                                  is_verified,
-                                  email_verified,
-                                  membership_points,
-                                  membership_level,
-                                  created_at,
-                                  updated_at,
-                                  created_by)
-VALUES ('thuan.tq',
-        'thuan.tq@lumierecinema.com',
-        '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
-        'Trần Quang Thuận',
-        '0123456781',
-        'EMPLOYEE',
-        TRUE,
-        TRUE,
-        TRUE,
-        10000,
-        'PLATINUM',
-        NOW(),
-        NOW(),
-        'SYSTEM');
+-- -- Employee 1: Trần Quang Thuận
+-- INSERT INTO movietheater_account (username,
+--                                   email,
+--                                   password,
+--                                   full_name,
+--                                   phone_number,
+--                                   role,
+--                                   is_active,
+--                                   is_verified,
+--                                   email_verified,
+--                                   membership_points,
+--                                   membership_level,
+--                                   created_at,
+--                                   updated_at,
+--                                   created_by)
+-- VALUES ('thuan.tq',
+--         'thuan.tq@lumierecinema.com',
+--         '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
+--         'Trần Quang Thuận',
+--         '0123456781',
+--         'EMPLOYEE',
+--         TRUE,
+--         TRUE,
+--         TRUE,
+--         10000,
+--         'PLATINUM',
+--         NOW(),
+--         NOW(),
+--         'SYSTEM');
 
--- Employee 2: Lê Đức Anh
-INSERT INTO movietheater_account (username,
-                                  email,
-                                  password,
-                                  full_name,
-                                  phone_number,
-                                  role,
-                                  is_active,
-                                  is_verified,
-                                  email_verified,
-                                  membership_points,
-                                  membership_level,
-                                  created_at,
-                                  updated_at,
-                                  created_by)
-VALUES ('anh.ld',
-        'anh.ld@lumierecinema.com',
-        '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
-        'Lê Đức Anh',
-        '0123456782',
-        'EMPLOYEE',
-        TRUE,
-        TRUE,
-        TRUE,
-        10000,
-        'PLATINUM',
-        NOW(),
-        NOW(),
-        'SYSTEM');
+-- -- Employee 2: Lê Đức Anh
+-- INSERT INTO movietheater_account (username,
+--                                   email,
+--                                   password,
+--                                   full_name,
+--                                   phone_number,
+--                                   role,
+--                                   is_active,
+--                                   is_verified,
+--                                   email_verified,
+--                                   membership_points,
+--                                   membership_level,
+--                                   created_at,
+--                                   updated_at,
+--                                   created_by)
+-- VALUES ('anh.ld',
+--         'anh.ld@lumierecinema.com',
+--         '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
+--         'Lê Đức Anh',
+--         '0123456782',
+--         'EMPLOYEE',
+--         TRUE,
+--         TRUE,
+--         TRUE,
+--         10000,
+--         'PLATINUM',
+--         NOW(),
+--         NOW(),
+--         'SYSTEM');
 
--- Employee 3: Ngô Việt Trinh
-INSERT INTO movietheater_account (username,
-                                  email,
-                                  password,
-                                  full_name,
-                                  phone_number,
-                                  role,
-                                  is_active,
-                                  is_verified,
-                                  email_verified,
-                                  membership_points,
-                                  membership_level,
-                                  created_at,
-                                  updated_at,
-                                  created_by)
-VALUES ('trinh.nv',
-        'trinh.nv@lumierecinema.com',
-        '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
-        'Ngô Việt Trinh',
-        '0123456783',
-        'EMPLOYEE',
-        TRUE,
-        TRUE,
-        TRUE,
-        10000,
-        'PLATINUM',
-        NOW(),
-        NOW(),
-        'SYSTEM');
+-- -- Employee 3: Ngô Việt Trinh
+-- INSERT INTO movietheater_account (username,
+--                                   email,
+--                                   password,
+--                                   full_name,
+--                                   phone_number,
+--                                   role,
+--                                   is_active,
+--                                   is_verified,
+--                                   email_verified,
+--                                   membership_points,
+--                                   membership_level,
+--                                   created_at,
+--                                   updated_at,
+--                                   created_by)
+-- VALUES ('trinh.nv',
+--         'trinh.nv@lumierecinema.com',
+--         '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
+--         'Ngô Việt Trinh',
+--         '0123456783',
+--         'EMPLOYEE',
+--         TRUE,
+--         TRUE,
+--         TRUE,
+--         10000,
+--         'PLATINUM',
+--         NOW(),
+--         NOW(),
+--         'SYSTEM');
 
--- Employee 4: Nguyễn Tiến Dũng
-INSERT INTO movietheater_account (username,
-                                  email,
-                                  password,
-                                  full_name,
-                                  phone_number,
-                                  role,
-                                  is_active,
-                                  is_verified,
-                                  email_verified,
-                                  membership_points,
-                                  membership_level,
-                                  created_at,
-                                  updated_at,
-                                  created_by)
-VALUES ('dung.nt',
-        'dung.nt@lumierecinema.com',
-        '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
-        'Nguyễn Tiến Dũng',
-        '0123456784',
-        'EMPLOYEE',
-        TRUE,
-        TRUE,
-        TRUE,
-        10000,
-        'PLATINUM',
-        NOW(),
-        NOW(),
-        'SYSTEM');
+-- -- Employee 4: Nguyễn Tiến Dũng
+-- INSERT INTO movietheater_account (username,
+--                                   email,
+--                                   password,
+--                                   full_name,
+--                                   phone_number,
+--                                   role,
+--                                   is_active,
+--                                   is_verified,
+--                                   email_verified,
+--                                   membership_points,
+--                                   membership_level,
+--                                   created_at,
+--                                   updated_at,
+--                                   created_by)
+-- VALUES ('dung.nt',
+--         'dung.nt@lumierecinema.com',
+--         '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
+--         'Nguyễn Tiến Dũng',
+--         '0123456784',
+--         'EMPLOYEE',
+--         TRUE,
+--         TRUE,
+--         TRUE,
+--         10000,
+--         'PLATINUM',
+--         NOW(),
+--         NOW(),
+--         'SYSTEM');
 
--- Employee 5: Phạm Thị Minh Ánh
-INSERT INTO movietheater_account (username,
-                                  email,
-                                  password,
-                                  full_name,
-                                  phone_number,
-                                  role,
-                                  is_active,
-                                  is_verified,
-                                  email_verified,
-                                  membership_points,
-                                  membership_level,
-                                  created_at,
-                                  updated_at,
-                                  created_by)
-VALUES ('minhanh.pt',
-        'minhanh.pt@lumierecinema.com',
-        '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
-        'Phạm Thị Minh Ánh',
-        '0123456785',
-        'EMPLOYEE',
-        TRUE,
-        TRUE,
-        TRUE,
-        10000,
-        'PLATINUM',
-        NOW(),
-        NOW(),
-        'SYSTEM');
+-- -- Employee 5: Phạm Thị Minh Ánh
+-- INSERT INTO movietheater_account (username,
+--                                   email,
+--                                   password,
+--                                   full_name,
+--                                   phone_number,
+--                                   role,
+--                                   is_active,
+--                                   is_verified,
+--                                   email_verified,
+--                                   membership_points,
+--                                   membership_level,
+--                                   created_at,
+--                                   updated_at,
+--                                   created_by)
+-- VALUES ('minhanh.pt',
+--         'minhanh.pt@lumierecinema.com',
+--         '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
+--         'Phạm Thị Minh Ánh',
+--         '0123456785',
+--         'EMPLOYEE',
+--         TRUE,
+--         TRUE,
+--         TRUE,
+--         10000,
+--         'PLATINUM',
+--         NOW(),
+--         NOW(),
+--         'SYSTEM');
 
--- Employee 6: Lê Công Vinh
-INSERT INTO movietheater_account (username,
-                                  email,
-                                  password,
-                                  full_name,
-                                  phone_number,
-                                  role,
-                                  is_active,
-                                  is_verified,
-                                  email_verified,
-                                  membership_points,
-                                  membership_level,
-                                  created_at,
-                                  updated_at,
-                                  created_by)
-VALUES ('vinh.lc',
-        'vinh.lc@lumierecinema.com',
-        '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
-        'Lê Công Vinh',
-        '0123456786',
-        'EMPLOYEE',
-        TRUE,
-        TRUE,
-        TRUE,
-        10000,
-        'PLATINUM',
-        NOW(),
-        NOW(),
-        'SYSTEM');
+-- -- Employee 6: Lê Công Vinh
+-- INSERT INTO movietheater_account (username,
+--                                   email,
+--                                   password,
+--                                   full_name,
+--                                   phone_number,
+--                                   role,
+--                                   is_active,
+--                                   is_verified,
+--                                   email_verified,
+--                                   membership_points,
+--                                   membership_level,
+--                                   created_at,
+--                                   updated_at,
+--                                   created_by)
+-- VALUES ('vinh.lc',
+--         'vinh.lc@lumierecinema.com',
+--         '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa',
+--         'Lê Công Vinh',
+--         '0123456786',
+--         'EMPLOYEE',
+--         TRUE,
+--         TRUE,
+--         TRUE,
+--         10000,
+--         'PLATINUM',
+--         NOW(),
+--         NOW(),
+--         'SYSTEM');
 
 -- Thông báo tài khoản đã tạo
 SELECT
@@ -500,46 +504,47 @@ INSERT IGNORE INTO movietheater_cinema_room (
 ('VIP Cinema Room', 60, 'VIP', true, 'Trải nghiệm VIP sang trọng với ghế massage và bàn ăn', 6, 10, true, true, true, 1.8, false, false, true, NOW(), NOW());
 
 
--- REAL MOVIES từ tháng 6/2025 trở đi
+-- PHIM THỰC TẾ từ tháng 10/2025 trở đi
 INSERT INTO movietheater_movie (
     title, original_title, description, duration, genres, director, cast, language, country,
     release_date, end_date, rating, poster_url, backdrop_url, trailer_url,
     is_active, is_featured, price, status, imdb_rating, production_company,
     auto_schedule_enabled, priority_score, min_daily_shows, max_daily_shows, preferred_room_types
 ) VALUES
--- NOW_SHOWING (đang chiếu từ 6/2025)
-('From the World of John Wick: Ballerina', 'Ballerina', 'Ana de Armas trong vai nữ sát thủ báo thù trong vũ trụ John Wick.', 109, 'Action, Thriller', 'Len Wiseman', 'Ana de Armas, Keanu Reeves, Norman Reedus', 'English', 'USA', '2025-06-06', '2025-09-06', 'R', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/a1e85f97-7146-42de-b2af-cb66f5e50beb.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/ballerina-movie-3840x2160-22626.jpg', 'https://www.youtube.com/watch?v=ballerina_trailer', TRUE, TRUE, 150000, 'NOW_SHOWING', 7.8, 'Lionsgate Films', TRUE, 9, 3, 5, 'STANDARD,IMAX,VIP'),
+-- NOW_SHOWING (đang chiếu tháng 10/2025)
+('CỤC VÀNG CỦA NGOẠI', 'CỤC VÀNG CỦA NGOẠI', 'Cục Vàng Của Ngoại phim cảm động về tình bà cháu trong một xóm nhỏ đầy nghĩa tình. Bà Hậu – người phụ nữ tần tảo, trở thành chỗ dựa duy nhất cho đứa cháu khi con gái bỏ đi. Dù cuộc sống vất vả, bà vẫn dành trọn tình yêu thương cho cháu – cục vàng của đời mình. Bộ phim gợi lại những ký ức tuổi thơ ấm áp, với tình cảm gia đình, xóm giềng chan hòa và sự giản dị, chân thành của con người quê.', 119, 'Gia đình, Tâm Lý', 'Khương Ngọc', 'Việt Hương, Hồng Đào, Lê Khánh, Băng Di, Lâm Thanh Mỹ, Hữu Châu, Tuấn Khải, Thư Đan, Panda', 'Tiếng Việt - Phụ đề tiếng Anh', 'Việt Nam', '2025-10-17', '2026-01-03', 'T13', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/poster/cucvangcuangoai.png', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/banner/cucvangcuangoai.jpg', 'https://youtu.be/YPCtgD0KnGk', TRUE, TRUE, 150000, 'NOW_SHOWING', 7.5, 'Sony Pictures', TRUE, 9, 3, 5, 'STANDARD,IMAX,VIP'),
 
-('How to Train Your Dragon', 'How to Train Your Dragon (Live-Action)', 'Phiên bản live-action về chàng trai Viking kết bạn với rồng.', 104, 'Adventure, Family, Fantasy', 'Dean DeBlois', 'Mason Thames, Nico Parker, Gerard Butler', 'English', 'USA', '2025-06-13', '2025-09-13', 'PG', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/b3a7dcad-a4d1-4747-ae48-354e6c5a1eea.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/how-to-train-your-dragon-teaser-poster.avif', 'https://www.youtube.com/watch?v=httyd_trailer', TRUE, TRUE, 140000, 'NOW_SHOWING', 7.2, 'Universal Pictures', TRUE, 8, 3, 5, 'STANDARD,IMAX,4DX'),
+('GIÓ VẪN THỔI', 'GIÓ VẪN THỔI', 'The Wind Rises lấy bối cảnh Nhật Bản thời Taishō và Shōwa, kể về Jirō Horikoshi – chàng trai khao khát được bay dù bị cận thị. Được truyền cảm hứng từ nhà thiết kế Caproni, Jirō trở thành kỹ sư hàng không tài năng. Sau trận động đất Kantō, anh gặp và yêu Nahoko, nhưng hạnh phúc của họ bị thử thách khi cô mắc bệnh lao. Giữa lúc đất nước bước vào chiến tranh, Jirō phải đối mặt với mâu thuẫn giữa đam mê sáng tạo và hiện thực tàn khốc của thời cuộc.', 127, 'Hoạt Hình', 'Hayao Miyazaki', 'Hideaki Anno, Miori Takimoto, Hidetoshi Nishijima', 'Tiếng Nhật - Lồng tiếng/Phụ đề Tiếng Việt', 'Nhật Bản', '2025-10-17', '2026-01-17', 'R', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/poster/poster_gio_van_thoi_1.jpg', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/banner/giovanthoi.jpg', 'https://youtu.be/rp9VsYzVltw', TRUE, TRUE, 140000, 'NOW_SHOWING', 7.8, 'Paramount Pictures', TRUE, 9, 3, 5, 'STANDARD,IMAX'),
 
-('Materialists', 'Materialists', 'Cô gái mai mối ở New York bị kẹt giữa tình yêu hoàn hảo và người yêu cũ.', 115, 'Comedy, Romance', 'Celine Song', 'Dakota Johnson, Chris Evans, Pedro Pascal', 'English', 'USA', '2025-06-13', '2025-09-13', 'R', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/d3ec6cb4-6911-42c1-96e5-6ad7b3961a0c.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/2025-06-12T203A34.webp', 'https://www.youtube.com/watch?v=materialists_trailer', TRUE, TRUE, 130000, 'NOW_SHOWING', 6.9, 'A24', TRUE, 7, 2, 4, 'STANDARD,VIP'),
+('NHÀ MA XÓ', 'NHÀ MA XÓ', 'Nhà Ma Xó xoay quanh câu chuyện về bà Hiền, người phụ nữ một mình nuôi 3 người con sau tai nạn chồng qua đời. Mọi chuyện bắt đầu khi người con trai giữa trong một lần thả lưới bắt cá vớt được một cái khạp bằng sành, nắp đậy kín. Từ đó, những hiện tượng kỳ quái liên tiếp xảy ra trong gia đình.', 108, 'Gia đình, Kinh Dị', 'Trương Dũng', 'Quang Tuấn, Huỳnh Đông, Vân Trang,Hoàng Kim Ngọc, Lan Thy, NS Thanh Hằng, Lâm Thanh Nhã, Vương Khang, Thạch Kim Long…', 'Tiếng Việt', 'Việt Nam', '2025-10-24', '2026-01-10', 'T16', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/poster/nhamaxo.png', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/banner/nhamaxo.png', 'https://youtu.be/iKFVjVJxv4Q?si=4-bCHU20xkTzuVoL', TRUE, TRUE, 130000, 'NOW_SHOWING', 8.2, 'DreamWorks Animation', TRUE, 8, 3, 4, 'STANDARD,4DX'),
 
-('28 Years Later', '28 Years Later', 'Virus rage trở lại tàn phá nhân loại trong phần tiếp theo 28 Weeks Later.', 118, 'Horror, Thriller', 'Danny Boyle', 'Jodie Comer, Aaron Taylor-Johnson, Cillian Murphy', 'English', 'UK', '2025-06-20', '2025-09-20', 'R', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/75ad0f6a-d67b-46b3-806d-9fd89e44b7b7.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/28-years-later-2025-3840x2160-20235.jpg', 'https://www.youtube.com/watch?v=28years_trailer', TRUE, TRUE, 160000, 'NOW_SHOWING', 8.1, 'Sony Pictures', TRUE, 9, 3, 5, 'STANDARD,IMAX'),
+('GOOD BOY – CHÓ CƯNG ĐỪNG SỢ', 'GOOD BOY – CHÓ CƯNG ĐỪNG SỢ', 'Phim kể về chú chó Indy, chuyển đến sống cùng chủ nhân Todd ở một ngôi nhà nông thôn. Indy sớm phát hiện ra những thế lực siêu nhiên ẩn nấp trong bóng tối và phải chiến đấu để bảo vệ người chủ yêu thương khi những thực thể hắc ám đe dọa Todd.', 73, 'Kinh Dị', 'Ben Leonberg', 'Indy, Shane Jensen, Arielle Friedman, Larry Fessenden,…', 'Tiêng Anh - Phụ đề Tiếng Việt', 'USA', '2025-10-24', '2026-01-11', 'T16', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/poster/good_boy_-_payoff_poster_-_kc_24102025.jpg', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/banner/goodboy.png', 'https://youtu.be/zaPcin5knJk?si=4NSWwNZdrp4WjWHu', TRUE, TRUE, 145000, 'NOW_SHOWING', 7.0, 'Cineverse', TRUE, 7, 2, 4, 'STANDARD'),
 
-('Elio', 'Elio', 'Cậu bé được đưa qua thiên hà và nhầm làm đại sứ cho hành tinh Trái Đất.', 101, 'Animation, Adventure, Family', 'Adrian Molina', 'Yonas Kibreab, America Ferrera, Zoe Saldana', 'English', 'USA', '2025-06-20', '2025-09-20', 'PG', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/bf2ec2d6-26f5-40e5-99a1-c8d15b480f77.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/1397053.jpg', 'https://www.youtube.com/watch?v=elio_trailer', TRUE, TRUE, 120000, 'NOW_SHOWING', 7.5, 'Pixar Animation Studios', TRUE, 8, 3, 4, 'STANDARD,4DX'),
+('TEE YOD: QUỶ ĂN TẠNG PHẦN 3', 'TEE YOD: QUỶ ĂN TẠNG PHẦN 3', 'Yak và gia đình phải đối mặt với nỗi kinh hoàng mới khi “Yee” – cô em út – đột ngột mất tích bí ẩn. Yak buộc phải cùng Yos, Yod và Papan lên đường đến “Bong Sa Noh Bian” – khu rừng ma ám – để cứu Yee trước khi những linh hồn tà ác một lần nữa bị đánh thức.', 104, 'Kinh Dị', 'Narit Yuvaboon', 'Nadech Kugimiya, Denise Jelilcha Kapaun, Mim Rattawadee Wongthong, Junior Kajbhunditt Jaidee, Friend Peerakrit Phacharaboonyakiat', 'Tiếng Thái - Phụ đề Tiếng Việt và Tiếng Anh', 'Thái Lan', '2025-10-10', '2026-01-04', 'T16', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/poster/quyantang3%20(1).jpg', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/banner/quyantang3.jpg', 'https://youtu.be/DMOGnGokm4c', TRUE, TRUE, 160000, 'NOW_SHOWING', 8.5, 'Warner Bros. Pictures', TRUE, 10, 4, 6, 'STANDARD,IMAX,VIP'),
 
-('Mission: Impossible - The Final Reckoning', 'Mission: Impossible - The Final Reckoning', 'Ethan Hunt đối mặt nhiệm vụ nguy hiểm nhất trong phần kết của series.', 163, 'Action, Adventure, Thriller', 'Christopher McQuarrie', 'Tom Cruise, Hayley Atwell, Ving Rhames', 'English', 'USA', '2025-05-23', '2025-09-23', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/25146c4e-d95e-4b39-8f34-375976bfe6dd.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/tom-cruise-mission-3840x2160-22283.jpg', 'https://www.youtube.com/watch?v=mi_trailer', TRUE, TRUE, 180000, 'NOW_SHOWING', 8.7, 'Paramount Pictures', TRUE, 10, 3, 5, 'STANDARD,IMAX'),
+('TỔ QUỐC TRONG TIM: THE CONCERT FILM', 'TỔ QUỐC TRONG TIM: THE CONCERT FILM', 'Sau thành công rực rỡ của Concert Quốc gia – Tổ Quốc Trong Tim tổ chức ngày 10/8 tại SVĐ Quốc gia Mỹ Đình, cùng sự mong đợi và yêu cầu từ đông đảo công chúng, Báo Nhân Dân quyết định mang đến Tổ Quốc Trong Tim: The Concert Film. Bộ phim không chỉ tái hiện lại một sự kiện văn hóa – nghệ thuật lịch sử, mà còn là cách để lan tỏa sâu sắc tình yêu Tổ quốc và niềm tự hào dân tộc.', 120, 'Hòa nhạc, Phim tài liệu', 'Nguyễn Mạnh Tuấn - Vũ Liêm', 'Các nghệ sĩ Việt Nam', 'Tiếng Việt', 'Việt Nam', '2025-10-17', '2025-12-06', 'P', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/poster/toquoc.jpg', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/banner/toquoc.jpg', 'https://youtu.be/TOM9arDO1ok', TRUE, TRUE, 145000, 'NOW_SHOWING', 7.8, 'Warner Bros. Pictures', TRUE, 8, 3, 5, 'STANDARD,IMAX'),
 
--- COMING_SOON (sắp chiếu)
-('F1: The Movie', 'F1', 'Tay đua F1 nghỉ hưu trở lại hướng dẫn tay đua trẻ.', 155, 'Action, Drama, Sport', 'Joseph Kosinski', 'Brad Pitt, Damson Idris, Javier Bardem', 'English', 'USA', '2025-06-27', '2025-10-27', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/5dfaa3d7-c7b4-4f2b-9259-14e1c1c3017c.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/f1-the-movie-8k-3840x2160-22458.jpg', 'https://www.youtube.com/watch?v=f1_trailer', TRUE, TRUE, 180000, 'COMING_SOON', 8.3, 'Warner Bros. Pictures', TRUE, 9, 3, 5, 'STANDARD,IMAX'),
+-- COMING_SOON (sắp chiếu cuối tháng 10 và tháng 11/2025)
+('ĐIỆN THOẠI ĐEN 2', 'ĐIỆN THOẠI ĐEN 2', 'Bốn năm sau khi thoát khỏi The Grabber, Finn vẫn bị ám ảnh, còn em gái Gwen bắt đầu mơ thấy những cuộc gọi kỳ lạ từ chiếc điện thoại đen. Khi cả hai tìm hiểu, họ phát hiện bí mật kinh hoàng về The Grabber và gia đình mình, buộc phải đối đầu với kẻ sát nhân đã chết nhưng còn đáng sợ hơn xưa.', 114, 'Hồi hộp, Kinh Dị', 'Scott Derrickson', 'Ethan Hawke, Mason Thames, Madeleine McGraw, Demián Bichir, Miguel Mora, Jeremy Davies, Arianna Rivas', 'Tiếng Anh - phụ đề Tiếng Việt', 'USA', '2025-10-31', '2026-02-15', 'PG-13', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/poster/dienthoaiden.jpg', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/banner/blackphone2poster2.jpg', 'https://youtu.be/Uo5sNWGrFQ8', TRUE, TRUE, 155000, 'COMING_SOON', 7.2, 'Amazon MGM Studios', TRUE, 8, 3, 5, 'STANDARD,IMAX'),
 
-('M3GAN 2.0', 'M3GAN 2.0', 'M3GAN trở lại với nâng cấp chết người.', 119, 'Horror, Science Fiction', 'Gerard Johnstone', 'Allison Williams, Violet McGraw, Jemaine Clement', 'English', 'USA', '2025-06-27', '2025-10-27', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/a03dbeb5-859c-4314-962c-b5fb8cc077b3.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/hq720.webp', 'https://www.youtube.com/watch?v=megan2_trailer', TRUE, TRUE, 150000, 'COMING_SOON', 7.4, 'Universal Pictures', TRUE, 8, 3, 5, 'STANDARD,IMAX'),
+('PHÁ ĐÁM - SINH NHẬT MẸ', 'PHÁ ĐÁM - SINH NHẬT MẸ', 'Bị giang hồ đe doạ, một người con trai đã làm đám ma giả cho mẹ mình để lừa tiền bảo hiểm. Nhưng kế hoạch bất hiếu điên rồ của anh liên tục bị phá đám bởi từ người lạ đến người quen, nhất là khi ngày anh đưa mẹ vào hòm lại tình cờ là ngày sinh nhật 60 tuổi của bà.', 91, 'Gia đình, Hài, Kịch tính', 'Nguyễn Thanh Bình', 'Nghệ sĩ Ái Như, Thành Hội, Trần Kim Hải, Tín Nguyễn, Samuel An, Hồng Ánh, Bé Sam, Hoàng Phi, NSƯT Hữu Châu, Huy Khánh, Ngọc Sơn', 'Tiếng Việt', 'Việt Nam', '2025-10-31', '2026-02-22', 'R', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/poster/snme.jpg', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/banner/snme.png', 'https://youtu.be/nZVu2iogGu0', TRUE, TRUE, 170000, 'COMING_SOON', 8.6, 'Paramount Pictures', TRUE, 10, 4, 6, 'STANDARD,IMAX,VIP'),
 
-('Jurassic World: Rebirth', 'Jurassic World: Rebirth', 'Nhiệm vụ khai thác DNA khủng long cho nghiên cứu y học.', 134, 'Action, Adventure, Science Fiction', 'Gareth Edwards', 'Scarlett Johansson, Jonathan Bailey, Mahershala Ali', 'English', 'USA', '2025-07-02', '2025-11-02', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/550dee9e-b1a3-4ac3-970c-d9683929017a.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/jurassic_world_rebirth_ver9.jpg', 'https://www.youtube.com/watch?v=jw_trailer', TRUE, TRUE, 170000, 'COMING_SOON', 8.0, 'Universal Pictures', TRUE, 9, 3, 5, 'STANDARD,IMAX,4DX'),
+('BỊT MẮT BẮT NAI', 'BỊT MẮT BẮT NAI', 'Trang - một nhân viên bất động sản bị cưỡng bức. Cô lo sợ bạn trai Hiệp sẽ chia tay nên đã “dụ” anh đến một homestay để cầu hôn. Tại đây, cô hoảng loạn khi gặp Long - chủ homestay, người giống hệt kẻ đã hãm hại mình; bên cạnh đó Ngọc - vợ của Long cũng là nạn nhân của tên này. Khi Trang âm thầm tìm hiểu sự thật, thì mọi thứ càng lại càng phức tạp hơn và có một âm mưu đen tối đang chờ đợi tất cả bọn họ.', 92, 'Hồi hộp, Tâm Lý', 'Hoàng Thơ', 'Lương Gia Huy, Thái Trà My, Dũng Bino, Bích Ngọc', 'Tiếng Việt - Phụ đề Tiếng Anh', 'Việt Nam', '2025-10-31', '2026-02-27', 'PG', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/poster/matnai.jpg', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/banner/bitmatbatnai_2.jpg', 'https://youtu.be/AVm6gVRaOQE', TRUE, TRUE, 165000, 'COMING_SOON', 8.4, 'Universal Pictures', TRUE, 9, 3, 5, 'STANDARD,IMAX,VIP'),
 
-('Superman', 'Superman', 'Man of Steel trở lại trong bản khởi động lại epic.', 129, 'Action, Adventure, Science Fiction', 'James Gunn', 'David Corenswet, Rachel Brosnahan, Nicholas Hoult', 'English', 'USA', '2025-07-11', '2025-11-11', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/51ad98ed-cb24-443c-b329-ed11db19216c.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/superman-character-3840x2160-22993.jpg', 'https://www.youtube.com/watch?v=superman_trailer', TRUE, TRUE, 180000, 'COMING_SOON', 8.5, 'DC Studios', TRUE, 10, 4, 6, 'STANDARD,IMAX'),
+('GODZILLA MINUS ONE', 'GODZILLA MINUS ONE', 'Năm 1945, phi công Nhật Koichi Shikishima chạm trán Godzilla nhưng không thể tiêu diệt nó, mang theo nỗi tội lỗi suốt đời. Anh tìm thấy hy vọng bên Noriko và bé Akiko, nhưng nhiều năm sau, Godzilla — giờ nhiễm phóng xạ và mạnh mẽ hơn — trở lại, buộc Shikishima phải đối mặt với quá khứ và con quái vật từng ám ảnh mình.', 125, 'Hành Động, Khoa Học Viễn Tưởng, Phiêu Lưu', 'Takashi Yamazaki', 'Ryûnosuke Kamiki, Minami Hamabe, Yuki Yamada,...', 'Tiếng Nhật – Phụ đề Tiếng Việt & Tiếng Anh', 'Nhật Bản', '2025-11-7', '2026-02-27', 'PG', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/poster/godzilla.jpg', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/banner/godzilla-minus-one-banner.avif', 'https://youtu.be/ZctQf1MbyBQ', TRUE, TRUE, 140000, 'COMING_SOON', 8.0, 'Walt Disney Animation', TRUE, 9, 3, 5, 'STANDARD,IMAX,4DX'),
 
-('I Know What You Did Last Summer', 'I Know What You Did Last Summer', 'Thế hệ mới đối mặt hậu quả của bí mật đen tối.', 108, 'Horror, Thriller', 'Jennifer Kaytin Robinson', 'Madelyn Cline, Chase Sui Wonders, Jonah Hauer-King', 'English', 'USA', '2025-07-18', '2025-10-18', 'R', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/57123d13-3983-4e6d-8cb2-3652ab9aec67.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/images.jpg', 'https://www.youtube.com/watch?v=ikwydls_trailer', TRUE, TRUE, 140000, 'COMING_SOON', 6.8, 'Sony Pictures', TRUE, 7, 2, 4, 'STANDARD,IMAX'),
+('CẢI MẢ', 'CẢI MẢ', 'Khi đại gia đình ông Quang trở về quê để thực hiện nghi lễ cải táng đã bị trì hoãn quá lâu, họ không chỉ đối diện với những nghi thức tâm linh, mà còn vô tình khơi dậy vòng xoáy nghiệp báo truyền đời.', 115, 'Kinh Dị', 'Thắng Vũ', 'Rima Thanh Vy, Hoàng Phúc, Thúy Hạnh, Avin Lu, Kim Hải, Lâm Thanh Nhã, Kiều Trinh, Hoàng Mèo, Kim Long,…', 'Tiếng Việt', 'Việt Nam', '2025-10-31', '2026-03-20', 'PG', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/poster/caima.jpg', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/banner/caima.png', 'https://youtu.be/KxvLXJqFCPY', TRUE, TRUE, 135000, 'COMING_SOON', 7.8, 'Paramount Pictures', TRUE, 8, 3, 5, 'STANDARD,4DX'),
 
-('The Fantastic Four: First Steps', 'The Fantastic Four: First Steps', 'Gia đình đầu tiên của Marvel trở lại chống Galactus.', 130, 'Action, Adventure, Science Fiction', 'Matt Shakman', 'Pedro Pascal, Vanessa Kirby, Joseph Quinn', 'English', 'USA', '2025-07-25', '2025-11-25', 'PG-13', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/posters/3aa59057-6000-43b1-9d0e-90a06404fcde.jpg', 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/movies/backdrops/the-fantastic-four-3840x2160-23280.jpg', 'https://www.youtube.com/watch?v=ff_trailer', TRUE, TRUE, 170000, 'COMING_SOON', 8.2, 'Marvel Studios', TRUE, 9, 3, 5, 'STANDARD,IMAX');
--- MINIMAL SCHEDULES - CHỈ MẪU CHO HÔM NAY
+('WICKED: PHẦN 2', 'WICKED: PHẦN 2', 'Wicked: Phần 2 là chương cuối đầy cảm xúc của hiện tượng điện ảnh toàn cầu. Sau khi chia cách, Elphaba bị coi là Phù thủy độc ác còn Glinda trở thành biểu tượng của Lòng tốt. Khi cô gái từ Kansas xuất hiện và làm đảo lộn xứ Oz, hai người buộc phải hợp sức đối mặt định mệnh, tìm lại sự thấu hiểu và quyết định liệu họ có thể thay đổi tương lai của xứ sở phép màu hay không.', 160, 'Nhạc kịch, Thần thoại', 'Jon M. Chu', 'Cynthia Erivo, Ariana Grande, Jonathan Bailey, Ethan Slater, Bowen Yang, Marissa Bode, with Michelle Yeoh and Jeff Goldblum', 'Tiếng Anh - phụ đề Tiếng Việt', 'USA', '2025-11-21', '2026-03-20', 'PG', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/poster/wicked2.jpg', 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/movie-backdrops/banner/wicked-2-750_1749194656682.jpg', 'https://youtu.be/lZ4_nMbdlFQ', TRUE, TRUE, 150000, 'COMING_SOON', 8.1, 'Walt Disney Pictures', TRUE, 9, 3, 5, 'STANDARD,IMAX,VIP');
+
+-- MINIMAL SCHEDULES - CHỈ MẪU CHO HÔM NAY (19/10/2025)
 SET @std_room1 = (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 1' LIMIT 1);
 SET @std_room2 = (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'Standard Room 2' LIMIT 1);
 SET @vip_room = (SELECT cinema_room_id FROM movietheater_cinema_room WHERE cinema_room_name = 'VIP Cinema Room' LIMIT 1);
 
-SET @ballerina_id = (SELECT movie_id FROM movietheater_movie WHERE title = 'From the World of John Wick: Ballerina' LIMIT 1);
-SET @httyd_id = (SELECT movie_id FROM movietheater_movie WHERE title = 'How to Train Your Dragon' LIMIT 1);
-SET @materialists_id = (SELECT movie_id FROM movietheater_movie WHERE title = 'Materialists' LIMIT 1);
+SET @venom_id = (SELECT movie_id FROM movietheater_movie WHERE title = 'Venom: The Last Dance' LIMIT 1);
+SET @smile2_id = (SELECT movie_id FROM movietheater_movie WHERE title = 'Smile 2' LIMIT 1);
+SET @joker2_id = (SELECT movie_id FROM movietheater_movie WHERE title = 'Joker: Folie à Deux' LIMIT 1);
 
 -- Chỉ 3 lịch chiếu mẫu cho hôm nay để test auto-schedule
 INSERT IGNORE INTO movietheater_schedule (
@@ -548,11 +553,11 @@ INSERT IGNORE INTO movietheater_schedule (
     audio_language, available_seats, booked_seats, auto_generated,
     time_slot_type, created_at, updated_at
 ) VALUES
-(@ballerina_id, @std_room1, CURDATE(), '09:00:00', '10:49:00', 150000, true, 'SCHEDULED',
+(@venom_id, @std_room1, CURDATE(), '09:00:00', '10:49:00', 150000, true, 'SCHEDULED',
  false, false, false, 'Vietnamese', 'English', 120, 0, false, 'MORNING', NOW(), NOW()),
-(@httyd_id, @std_room2, CURDATE(), '14:30:00', '16:14:00', 140000, true, 'SCHEDULED',
- false, false, false, 'Vietnamese', 'English', 140, 0, false, 'AFTERNOON', NOW(), NOW()),
-(@materialists_id, @vip_room, CURDATE(), '21:00:00', '22:55:00', 234000, true, 'SCHEDULED',
+(@smile2_id, @std_room2, CURDATE(), '14:30:00', '16:37:00', 140000, true, 'SCHEDULED',
+ false, false, false, 'Vietnamese', 'English', 120, 0, false, 'AFTERNOON', NOW(), NOW()),
+(@joker2_id, @vip_room, CURDATE(), '21:00:00', '23:18:00', 288000, true, 'SCHEDULED',
  false, false, false, 'Vietnamese', 'English', 60, 0, false, 'EVENING', NOW(), NOW());
 
 -- Promotion table (simplified structure)
@@ -633,75 +638,97 @@ CREATE TABLE IF NOT EXISTS movietheater_promotion
 )
     );
 
--- Sample promotion data
+-- PROMOTIONS MỚI - Tháng 10/2025
 INSERT INTO movietheater_promotion (promotion_code, promotion_name, description, discount_type, discount_value,
                                     max_discount_amount, min_purchase_amount, start_date, end_date,
                                     max_usage_count, current_usage_count, max_usage_per_user, is_featured,
                                     banner_image_url, points_required, code_validity_hours, is_active,
                                     created_at, updated_at, created_by)
 VALUES
--- Percentage discount promotion
-('SUMMER2025', 'Khuyến mãi hè 2025', 'Giảm giá 20% cho tất cả các vé trong tháng 7', 'PERCENTAGE', 20.0,
- 50000, 100000, '2025-07-01', '2025-07-31',
- 1000, 0, 2, TRUE,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/433a0240-fed0-4ccd-a6cc-8e5b58145a4b.png',
- 0, 24, TRUE,
+-- Halloween 2025 Special Promotion
+('HALLOWEEN25', 'Halloween Spooktacular 2025', 'Giảm 25% cho tất cả phim kinh dị - Đặc biệt Halloween!', 'PERCENTAGE', 25.0,
+ 80000, 120000, '2025-10-15', '2025-10-31',
+ 1500, 0, 3, TRUE,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/promotion-images/hlw25.jpg',
+ 0, 48, TRUE,
  NOW(), NOW(), 'SYSTEM'),
 
--- Fixed amount discount promotion
+
+-- Welcome New Customer
 ('WELCOME50K', 'Chào mừng khách hàng mới', 'Giảm 50,000 VNĐ cho đơn hàng đầu tiên', 'FIXED', 50000,
- 50000, 150000, '2025-06-01', '2025-12-31',
- 500, 0, 1, FALSE,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/833459f5-e190-4a63-b163-360b4637f3ec.png',
- 0, 24, TRUE,
- NOW(), NOW(), 'SYSTEM'),
--- VIP promotion
-('VIP30', 'Ưu đãi VIP', 'Giảm 30% cho khách hàng VIP', 'PERCENTAGE', 30.0,
- 100000, 200000, '2025-06-01', '2025-12-31',
- 100, 0, 3, TRUE,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/d2c37620-7794-433a-a52c-c11a18cf76c3.png',
+ 50000, 150000, '2025-10-01', '2025-12-31',
+ 800, 0, 1, TRUE,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/promotion-images/khachmoi.jpg',
  0, 24, TRUE,
  NOW(), NOW(), 'SYSTEM'),
 
--- Student promotion
-('STUDENT15', 'Ưu đãi sinh viên', 'Giảm 15% cho sinh viên', 'PERCENTAGE', 15.0,
- 30000, 80000, '2025-06-01', '2025-12-31',
- 2000, 0, 2, FALSE,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/0e17ab77-38f3-4dd7-b86f-e51b3b64e009.png',
+-- Weekend Special
+('WEEKEND30', 'Ưu đãi cuối tuần', 'Giảm 30% cho suất chiếu cuối tuần (Thứ 7, CN)', 'PERCENTAGE', 30.0,
+ 100000, 200000, '2025-10-01', '2025-12-31',
+ 500, 0, 2, TRUE,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/promotion-images/cuoituan.jpg',
  0, 24, TRUE,
  NOW(), NOW(), 'SYSTEM'),
 
+-- Student Promotion
+('STUDENT20', 'Ưu đãi sinh viên', 'Giảm 20% cho sinh viên (có thẻ sinh viên)', 'PERCENTAGE', 20.0,
+ 40000, 80000, '2025-10-01', '2025-12-31',
+ 2000, 0, 3, FALSE,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/promotion-images/sinhvien.jpg',
+ 0, 24, TRUE,
+ NOW(), NOW(), 'SYSTEM'),
 
--- Points-based promotion
-('POINTS100', 'Đổi điểm ưu đãi', 'Đổi 100 điểm để giảm 30,000 VNĐ', 'POINTS', 30000,
- 30000, 50000, '2025-06-01', '2025-12-31',
- 200, 0, 5, TRUE,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/09d5aa8a-73e9-4c96-9654-fcf1315e9fbc.png',
+-- Early Bird Special
+('EARLYBIRD', 'Suất chiếu sớm siêu rẻ', 'Giảm 35% cho suất chiếu trước 12h trưa', 'PERCENTAGE', 35.0,
+ 70000, 100000, '2025-10-01', '2025-12-31',
+ 1200, 0, 2, FALSE,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/promotion-images/suatsom.jpg',
+ 0, 24, TRUE,
+ NOW(), NOW(), 'SYSTEM'),
+
+-- Group Booking
+('GROUP4PLUS', 'Ưu đãi nhóm 4+', 'Giảm 100,000 VNĐ khi đặt từ 4 vé trở lên', 'FIXED', 100000,
+ 100000, 400000, '2025-10-01', '2025-12-31',
+ 300, 0, 1, TRUE,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/promotion-images/4+.jpg',
+ 0, 24, TRUE,
+ NOW(), NOW(), 'SYSTEM'),
+
+-- Points Redemption Promotions
+('POINTS100', 'Đổi 100 điểm', 'Đổi 100 điểm để giảm 30,000 VNĐ', 'POINTS', 30000,
+ 30000, 50000, '2025-10-01', '2025-12-31',
+ 500, 0, 5, TRUE,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/promotion-images/doi30k.jpg',
  100, 24, TRUE,
  NOW(), NOW(), 'SYSTEM'),
 
--- Points-based promotion 2: 200 points for 60,000 VND discount
-('POINTS200', 'Đổi điểm ưu đãi 200', 'Đổi 200 điểm để giảm 60,000 VNĐ', 'POINTS', 60000,
- 60000, 100000, '2025-06-01', '2025-12-31',
- 150, 0, 5, TRUE,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/09d5aa8a-73e9-4c96-9654-fcf1315e9fbc.png',
+('POINTS200', 'Đổi 200 điểm', 'Đổi 200 điểm để giảm 70,000 VNĐ', 'POINTS', 70000,
+ 70000, 100000, '2025-10-01', '2025-12-31',
+ 400, 0, 5, TRUE,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/promotion-images/doi70k.jpg',
  200, 24, TRUE,
  NOW(), NOW(), 'SYSTEM'),
 
--- Points-based promotion 3: 300 points for 90,000 VND discount
-('POINTS300', 'Đổi điểm ưu đãi 300', 'Đổi 300 điểm để giảm 90,000 VNĐ', 'POINTS', 90000,
- 90000, 150000, '2025-06-01', '2025-12-31',
- 100, 0, 5, TRUE,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/09d5aa8a-73e9-4c96-9654-fcf1315e9fbc.png',
+('POINTS300', 'Đổi 300 điểm', 'Đổi 300 điểm để giảm 110,000 VNĐ', 'POINTS', 110000,
+ 110000, 150000, '2025-10-01', '2025-12-31',
+ 300, 0, 5, TRUE,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/promotion-images/doi110k.jpg',
  300, 24, TRUE,
  NOW(), NOW(), 'SYSTEM'),
 
--- Points-based promotion 4: 500 points for 150,000 VND discount
-('POINTS500', 'Đổi điểm ưu đãi 500', 'Đổi 500 điểm để giảm 150,000 VNĐ', 'POINTS', 150000,
- 150000, 250000, '2025-06-01', '2025-12-31',
- 80, 0, 5, TRUE,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/promotions/banners/09d5aa8a-73e9-4c96-9654-fcf1315e9fbc.png',
+('POINTS500', 'Đổi 500 điểm', 'Đổi 500 điểm để giảm 180,000 VNĐ', 'POINTS', 180000,
+ 180000, 250000, '2025-10-01', '2025-12-31',
+ 200, 0, 5, TRUE,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/promotion-images/doi180k.jpg',
  500, 24, TRUE,
+ NOW(), NOW(), 'SYSTEM'),
+
+-- Black Friday Early Bird
+('BLACKFRI25', 'Black Friday Sớm', 'Giảm giá 40% - Đón Black Friday sớm!', 'PERCENTAGE', 40.0,
+ 120000, 200000, '2025-10-25', '2025-11-05',
+ 600, 0, 2, TRUE,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/promotion-images/blackfriday.jpg',
+ 0, 48, TRUE,
  NOW(), NOW(), 'SYSTEM');
 
 
@@ -843,66 +870,132 @@ CREATE TABLE IF NOT EXISTS movietheater_concession
 )
     );
 
+-- ĐỒ ĂN & NƯỚC UỐNG MỚI - Tháng 10/2025
 INSERT INTO movietheater_concession (
     name, description, category, price, image_url, flavor, size,
     stock_quantity, is_available, is_active, display_order,
     created_at, updated_at
 )
 VALUES
--- Popcorn
-('Bắp rang bơ (Lớn)', 'Bắp rang bơ thơm ngon, giòn tan', 'POPCORN', 45000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/f60b35a0-43e7-4090-9b83-19a79b0d867c.png', 'Original', 'L',
- 100, TRUE, TRUE, 1, NOW(), NOW()),
+-- =========================
+-- POPCORN (Bắp rang)
+-- =========================
+('Bắp rang bơ Original (Lớn)', 'Bắp rang bơ truyền thống, thơm ngon, giòn tan - Size lớn', 'POPCORN', 50000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/lon.jpg', 'Original', 'L',
+ 150, TRUE, TRUE, 1, NOW(), NOW()),
 
-('Bắp rang bơ', 'Bắp rang bơ vị truyền thống, thơm ngon, giòn rụm', 'POPCORN', 35000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/43c58afa-7f93-4ac2-a53e-88e002cd8baa.jpg', 'Truyền thống', 'Lớn',
- 100, TRUE, TRUE, 1, NOW(), NOW()),
+('Bắp rang bơ Original (Vừa)', 'Bắp rang bơ thơm ngon, giòn rụm - Size vừa', 'POPCORN', 40000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/vua.jpg', 'Original', 'M',
+ 150, TRUE, TRUE, 2, NOW(), NOW()),
 
-('Bắp rang phô mai', 'Bắp rang phô mai đậm đà, béo ngậy', 'POPCORN', 40000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/2e79516c-a07a-41be-8a52-18a73189f1e2.webp', 'Phô mai', 'Lớn',
- 80, TRUE, TRUE, 2, NOW(), NOW()),
+('Bắp rang bơ Original (Nhỏ)', 'Bắp rang bơ size nhỏ gọn, hoàn hảo cho 1 người', 'POPCORN', 30000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/nho.jpg', 'Original', 'S',
+ 180, TRUE, TRUE, 3, NOW(), NOW()),
 
-('Bắp rang caramel', 'Bắp rang caramel ngọt ngào, giòn tan', 'POPCORN', 45000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/80b00715-40ff-45de-9925-df2a51616ec8.png', 'Caramel', 'Lớn',
- 60, TRUE, TRUE, 3, NOW(), NOW()),
+('Bắp rang Phô mai (Lớn)', 'Bắp rang phủ phô mai đậm đà, béo ngậy - Size lớn', 'POPCORN', 55000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/phomailon.jpg', 'Cheese', 'L',
+ 120, TRUE, TRUE, 4, NOW(), NOW()),
 
-('Bắp rang phô mai (Vừa)', 'Bắp rang phủ phô mai thơm béo hấp dẫn', 'POPCORN', 40000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/a8b6e38d-76ee-4dee-aba9-7198c5465111.png', 'Cheese', 'M',
- 80, TRUE, TRUE, 4, NOW(), NOW()),
+('Bắp rang Phô mai (Vừa)', 'Bắp rang phô mai thơm béo hấp dẫn', 'POPCORN', 45000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/phomaivua.jpg', 'Cheese', 'M',
+ 100, TRUE, TRUE, 5, NOW(), NOW()),
 
-('Bắp rang Caramel (Nhỏ)', 'Bắp rang Caramel ngọt ngào, giòn rụm', 'POPCORN', 30000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/b9e9c31a-7cea-4c5c-a808-964daa71e964.png', 'Caramel', 'S',
- 70, TRUE, TRUE, 5, NOW(), NOW()),
+('Bắp rang Caramel (Lớn)', 'Bắp rang caramel ngọt ngào, giòn tan - Size lớn', 'POPCORN', 60000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/caramellon.jpg', 'Caramel', 'L',
+ 80, TRUE, TRUE, 6, NOW(), NOW()),
 
--- Drinks
-('Coca Cola', 'Nước ngọt Coca Cola mát lạnh', 'DRINKS', 25000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/cad4cd23-2adc-405d-8a9c-cb3d64dffdd3.webp', 'Cola', 'Lớn',
- 150, TRUE, TRUE, 4, NOW(), NOW()),
+('Bắp rang Caramel (Vừa)', 'Bắp rang Caramel ngọt dịu, giòn rụm', 'POPCORN', 50000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/caramelvua.jpg', 'Caramel', 'M',
+ 90, TRUE, TRUE, 7, NOW(), NOW()),
 
-('Pepsi', 'Nước ngọt Pepsi sảng khoái', 'DRINKS', 25000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/352cfd71-e3da-4771-8fef-87729575859a.png', 'Cola', 'Lớn',
- 120, TRUE, TRUE, 5, NOW(), NOW()),
+('Bắp rang Halloween Special', 'Bắp rang phô mai & caramel mix - Đặc biệt Halloween 2025!', 'POPCORN', 65000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/halloween.jpg', 'Mixed', 'L',
+ 50, TRUE, TRUE, 8, NOW(), NOW()),
 
-('Sprite', 'Nước ngọt Sprite thanh mát', 'DRINKS', 25000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/fb983a64-bf12-474c-b711-e81930254333.jpg', 'Chanh', 'Lớn',
- 100, TRUE, TRUE, 6, NOW(), NOW()),
+-- =========================
+-- DRINKS (Nước uống)
+-- =========================
+('Coca Cola (Lớn)', 'Nước ngọt Coca Cola mát lạnh - 700ml', 'DRINKS', 30000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/coca700.jpg', 'Cola', 'L',
+ 200, TRUE, TRUE, 9, NOW(), NOW()),
 
-('Nước suối', 'Nước suối tinh khiết', 'DRINKS', 15000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/4ca0c3bb-29b0-4a4f-8632-7dab9dc91e44.webp', 'Không vị', '500ml',
- 200, TRUE, TRUE, 7, NOW(), NOW()),
+('Coca Cola (Vừa)', 'Nước ngọt Coca Cola - 500ml', 'DRINKS', 25000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/coca500.jpg', 'Cola', 'M',
+ 250, TRUE, TRUE, 10, NOW(), NOW()),
 
--- Combos
-('Combo Snack Ngọt', 'Bắp rang bơ (L) + Coca Cola (500ml)', 'COMBO', 65000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/afd43137-f04d-4a4d-93cb-2dfe03b876ab.png', 'Mix', 'L',
- 100, TRUE, TRUE, 1, NOW(), NOW()),
+('Sprite (Lớn)', 'Nước ngọt Sprite chanh mát lạnh - 700ml', 'DRINKS', 30000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/spirte700.jpg', 'Lemon', 'L',
+ 180, TRUE, TRUE, 13, NOW(), NOW()),
 
-('Combo Đôi Ngọt Ngào', '2 Bắp rang Caramel (M) + 2 Coca Cola (500ml)', 'COMBO', 150000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/2582c7b1-a421-4ff5-9a83-89b2db86bd2c.jpg', 'Caramel', 'Combo',
- 40, TRUE, TRUE, 9, NOW(), NOW()),
+('Sprite (Vừa)', 'Nước ngọt Sprite thanh mát - 500ml', 'DRINKS', 25000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/sprite500.jpg', 'Lemon', 'M',
+ 200, TRUE, TRUE, 14, NOW(), NOW()),
 
-('Combo Gia Đình', '1 Bắp rang phô mai (L) + 1 Bắp rang Caramel (L) + 3 Pepsi (500ml)', 'COMBO', 210000,
- 'https://cuzwjjseeohnyrbfcngs.supabase.co/storage/v1/object/public/image/concessions/images/155eeee8-1a7d-44da-b04a-6d251d520ba8.png', 'Mix', 'Combo',
- 30, TRUE, TRUE, 10, NOW(), NOW());
+('Nước suối Aquafina', 'Nước suối tinh khiết 500ml', 'DRINKS', 15000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/aquafina.jpg', 'Plain', '500ml',
+ 300, TRUE, TRUE, 15, NOW(), NOW()),
+
+('Trà xanh không độ', 'Trà xanh 0 độ mát lạnh - 450ml', 'DRINKS', 20000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/0do.jpg', 'Green Tea', '450ml',
+ 150, TRUE, TRUE, 16, NOW(), NOW()),
+
+('7Up Mojito', 'Nước ngọt 7Up vị Mojito sảng khoái - 500ml', 'DRINKS', 28000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/7up.jpg', 'Mojito', '500ml',
+ 120, TRUE, TRUE, 17, NOW(), NOW()),
+
+-- =========================
+-- FOOD (Đồ ăn)
+-- =========================
+('Hot Dog Phô mai', 'Hot dog xúc xích Đức kèm phô mai cheddar tan chảy', 'FOOD', 45000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/hotdogpm.jpg', 'Cheese', 'Regular',
+ 80, TRUE, TRUE, 18, NOW(), NOW()),
+
+('Hot Dog Bò BBQ', 'Hot dog xúc xích bò nướng BBQ đậm đà', 'FOOD', 50000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/hotdogbo.jpg', 'BBQ', 'Regular',
+ 70, TRUE, TRUE, 19, NOW(), NOW()),
+
+('Nachos Phô mai', 'Nachos giòn rụm kèm sốt phô mai cheddar nóng hổi', 'FOOD', 55000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/nachos.jpg', 'Cheese', 'Regular',
+ 60, TRUE, TRUE, 20, NOW(), NOW()),
+
+('Khoai tây chiên', 'Khoai tây chiên giòn vàng, thơm ngon', 'FOOD', 40000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/khoai.jpg', 'Original', 'Regular',
+ 100, TRUE, TRUE, 21, NOW(), NOW()),
+
+('Gà popcorn giòn', '12 miếng gà popcorn giòn rụm, thơm phức', 'FOOD', 65000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/ga.jpg', 'Original', '12pcs',
+ 50, TRUE, TRUE, 22, NOW(), NOW()),
+
+-- =========================
+-- COMBO (Combo đặc biệt)
+-- =========================
+('💑 Combo Đôi Ngọt Ngào', '2 Bắp rang (M) + 2 Coca/Pepsi (M) - Hoàn hảo cho cặp đôi', 'COMBO', 140000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/combodoi.jpg', 'Mix', 'Combo',
+ 80, TRUE, TRUE, 23, NOW(), NOW()),
+
+('👨‍👩‍👧‍👦 Combo Gia Đình', '2 Bắp rang (L) + 4 Nước ngọt (M) + 1 Nachos - Dành cho gia đình', 'COMBO', 250000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/combogiadinh.jpg', 'Family', 'Combo',
+ 50, TRUE, TRUE, 24, NOW(), NOW()),
+
+('🎬 Combo Solo', '1 Bắp rang (M) + 1 Coca/Pepsi (M) - Tiết kiệm cho 1 người', 'COMBO', 65000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/combosolo.jpg', 'Solo', 'Combo',
+ 120, TRUE, TRUE, 25, NOW(), NOW()),
+
+('🌟 Combo VIP', '1 Bắp rang Caramel (L) + 2 Nước ngọt (L) + 1 Hot Dog + 1 Khoai tây chiên', 'COMBO', 180000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/combovip.jpg', 'VIP', 'Combo',
+ 40, TRUE, TRUE, 26, NOW(), NOW()),
+
+('🎃 Combo Halloween Special', '2 Bắp rang Halloween (L) + 2 Pepsi (L) + 1 Nachos - Ưu đãi đặc biệt!', 'COMBO', 220000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/combohlw.jpg', 'Halloween', 'Combo',
+ 30, TRUE, TRUE, 27, NOW(), NOW()),
+
+('🍿 Combo Snack Đêm', '1 Bắp rang Phô mai (M) + 1 Hot Dog + 1 Sprite (M)', 'COMBO', 110000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/cobodem.jpg', 'Night', 'Combo',
+ 60, TRUE, TRUE, 28, NOW(), NOW()),
+
+('👫 Combo Bạn Thân', '2 Bắp rang (M) + 2 Nước ngọt (M) + 1 Khoai tây chiên', 'COMBO', 160000,
+ 'https://qgjfmmrrpxfnyhbowyqq.supabase.co/storage/v1/object/public/concession-images/combobanthan.jpg', 'Friends', 'Combo',
+ 70, TRUE, TRUE, 29, NOW(), NOW());
 -- Booking table
 CREATE TABLE IF NOT EXISTS movietheater_booking
 (

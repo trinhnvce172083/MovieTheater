@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.utils;
+package com.swp.MovieTheaterService.utils;
 
 import com.swp.MovieTheaterService.exception.ErrorCode;
 import com.swp.MovieTheaterService.exception.MultipleParameterValidationException;
@@ -97,4 +97,4 @@ public class ValidationUtils {
     public static boolean isNonNegative(double value) {
         return value >= 0;
     }
-} 
+}

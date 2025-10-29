@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.schedule;
+package com.swp.MovieTheaterService.dto.schedule;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,4 +26,4 @@ public class PopularShowtimeResponse {
     private Integer totalSchedules;
     private String displayTime;
     private Double popularityScore;
-} 
+}

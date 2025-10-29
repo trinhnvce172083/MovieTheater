@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.booking;
+package com.swp.MovieTheaterService.dto.booking;
 
 import com.swp.MovieTheaterService.enums.BookingStatus;
 import lombok.AllArgsConstructor;
@@ -318,4 +318,4 @@ public class BookingResponse {
         return schedule.getShowDateTime().isBefore(LocalDateTime.now()) && 
                (bookingStatus == BookingStatus.PENDING || bookingStatus == BookingStatus.CONFIRMED);
     }
-} 
+}

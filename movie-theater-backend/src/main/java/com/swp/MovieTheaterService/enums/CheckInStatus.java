@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.enums;
+package com.swp.MovieTheaterService.enums;
 
 import java.time.LocalDateTime;
 
@@ -156,4 +156,4 @@ public enum CheckInStatus {
                 return "";
         }
     }
-} 
+}

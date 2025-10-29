@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service.impl;
+package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.entity.BookingSeat;
 import com.swp.MovieTheaterService.entity.Schedule;
@@ -305,4 +305,4 @@ public class SeatReservationServiceImpl implements SeatReservationService {
         public LocalDateTime getExpiryTime() { return expiryTime; }
         public void setExpiryTime(LocalDateTime expiryTime) { this.expiryTime = expiryTime; }
     }
-} 
+}

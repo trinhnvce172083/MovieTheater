@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.service.impl;
+package com.swp.MovieTheaterService.service.impl;
 
 import com.swp.MovieTheaterService.dto.movie.MovieCreateRequest;
 import com.swp.MovieTheaterService.dto.movie.MovieFilterRequest;
@@ -711,4 +711,4 @@ public class MovieServiceImpl implements MovieService {
         
         return movieMapper.toResponse(movie);
     }
-} 
+}

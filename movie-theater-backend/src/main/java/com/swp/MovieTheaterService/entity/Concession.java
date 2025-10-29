@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.entity;
+package com.swp.MovieTheaterService.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.swp.MovieTheaterService.enums.ConcessionCategory;
@@ -81,7 +81,7 @@ public class Concession {
     private LocalDateTime updatedAt;
 
     // Relationships
-    @OneToMany(mappedBy = "concession", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "concession", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
     @JsonIgnore  // Prevent circular reference: Concession -> BookingConcession -> Concession
     private List<BookingConcession> bookingConcessions;
 
@@ -140,4 +140,4 @@ public class Concession {
     public void increaseStock(int quantity) {
         stockQuantity += quantity;
     }
-} 
+}

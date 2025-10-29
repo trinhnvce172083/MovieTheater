@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.schedule;
+package com.swp.MovieTheaterService.dto.schedule;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;

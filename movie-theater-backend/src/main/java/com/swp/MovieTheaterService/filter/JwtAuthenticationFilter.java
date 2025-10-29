@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.filter;
+package com.swp.MovieTheaterService.filter;
 
 import com.swp.MovieTheaterService.service.JwtService;
 import com.swp.MovieTheaterService.service.TokenBlacklistService;

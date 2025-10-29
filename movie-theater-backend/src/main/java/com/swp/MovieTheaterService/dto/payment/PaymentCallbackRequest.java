@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.dto.payment;
+package com.swp.MovieTheaterService.dto.payment;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -46,4 +46,4 @@ public class PaymentCallbackRequest {
     private String vnpayData; // For VNPay
     private String momoData;  // For MoMo
     private String zalopayData; // For ZaloPay
-} 
+}

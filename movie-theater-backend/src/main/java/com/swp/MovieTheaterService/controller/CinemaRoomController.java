@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.controller;
+package com.swp.MovieTheaterService.controller;
 
 import com.swp.MovieTheaterService.dto.cinema.*;
 import com.swp.MovieTheaterService.dto.response.ApiResponse;
@@ -329,4 +329,4 @@ public class CinemaRoomController {
         Map<String, Object> overview = cinemaRoomService.getSeatStatusOverview(id);
         return ResponseEntity.ok(overview);
     }
-} 
+}

@@ -1,4 +1,4 @@
-﻿package com.swp.MovieTheaterService.repository;
+package com.swp.MovieTheaterService.repository;
 
 import com.swp.MovieTheaterService.entity.LoyaltyTransaction;
 import org.springframework.data.domain.Page;
@@ -127,4 +127,4 @@ public interface LoyaltyTransactionRepository extends JpaRepository<LoyaltyTrans
            "lt.transactionDate BETWEEN :startDate AND :endDate")
     Integer getTotalRedeemedPointsByDateRange(@Param("startDate") LocalDateTime startDate,
                                             @Param("endDate") LocalDateTime endDate);
-} 
+}
