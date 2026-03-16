@@ -1,0 +1,22 @@
+{
+  "name": "movietheater-claude-integration",
+  "version": "1.0.0",
+  "description": "MovieTheater application with Claude AI integration",
+  "main": "claude_integration_examples.js",
+  "type": "module",
+  "scripts": {
+    "start": "node claude_integration_examples.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "claude",
+    "ai",
+    "movie-theater",
+    "anthropic"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0"
+  }
+}
